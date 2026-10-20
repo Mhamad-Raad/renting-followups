@@ -8,9 +8,12 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "dev": "node scripts/placeholder.mjs run",
-    "build": "node scripts/placeholder.mjs build",
-    "typecheck": "tsc --noEmit",
+    "predev": "install-electron",
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "prepreview": "install-electron",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run",
@@ -50,5 +53,6 @@
     "better-sqlite3": false,
     "electron-winstaller": false,
     "fsevents": false
-  }
+  },
+  "main": "./out/main/index.js"
 }
