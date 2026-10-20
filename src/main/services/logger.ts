@@ -1,5 +1,6 @@
 import { appendFileSync, existsSync, mkdirSync, renameSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { stackFrames } from '@shared/errors';
 
 /**
  * Log details are IDs, codes and counts only. Names, phone numbers, amounts
@@ -11,7 +12,6 @@ type Level = 'info' | 'warn' | 'error';
 const FILE_NAME = 'app.log';
 const MAX_FILE_BYTES = 1_000_000;
 const KEPT_OLD_FILES = 3;
-const MAX_STACK_FRAMES = 12;
 
 let logDirectory: string | null = null;
 
@@ -55,10 +55,5 @@ export const logger = {
  */
 export function describeError(error: unknown): LogDetails {
   if (!(error instanceof Error)) return { errorName: typeof error };
-  const frames = (error.stack ?? '')
-    .split('\n')
-    .filter((line) => line.trimStart().startsWith('at '))
-    .slice(0, MAX_STACK_FRAMES)
-    .map((line) => line.trim());
-  return { errorName: error.name, stack: frames.join(' | ') };
+  return { errorName: error.name, stack: stackFrames(error) };
 }
