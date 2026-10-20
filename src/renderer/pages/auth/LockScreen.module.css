@@ -1,0 +1,7 @@
+/* A visible but quieter second choice under the main Open button. */
+.forgot {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-accent);
+  text-decoration: underline;
+}

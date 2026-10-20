@@ -1,0 +1,31 @@
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  animation: notice-enter var(--duration-normal) var(--ease) both;
+}
+
+.success {
+  background: var(--status-paid-bg);
+  color: var(--status-paid);
+}
+
+.warning {
+  background: var(--status-due-bg);
+  color: var(--status-due);
+}
+
+.error {
+  background: var(--status-late-bg);
+  color: var(--status-late);
+}
+
+@keyframes notice-enter {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--slide-distance) * -1));
+  }
+}

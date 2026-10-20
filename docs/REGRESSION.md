@@ -25,3 +25,21 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] _manual_ The title bar shows "[DEV]" when run with `npm run dev`, and never in the installed app.
 - [ ] _manual_ A screen that crashes shows "Something went wrong. Your data is safe." with Go back, while the sidebar keeps working.
 - [ ] _manual_ A database from a newer app version shows the plain three-language message and is not changed.
+
+## Iteration 2: Authentication
+
+Automated (`npm run test:e2e`) unless marked _manual_.
+
+- [ ] First start shows "Create your password" with the "Write down your recovery phrase" warning.
+- [ ] Two different passwords, a password under 4 characters or a phrase under 8 letters are explained in plain words; nothing opens.
+- [ ] After setup the app opens; every later start shows the lock screen in the last used language.
+- [ ] A wrong password says how many tries are left, clears the box and puts the cursor back in it.
+- [ ] Five wrong tries show a 30-second countdown and disable the Open button.
+- [ ] "Forgot password?" → the recovery phrase (any case, extra spaces, Arabic or Kurdish letters) sets a new password; the old one stops working.
+- [ ] Settings → Security → Change password needs the current password; the new one works on the next start.
+- [ ] Settings → Security → Change recovery phrase needs the current password.
+- [ ] While locked, nothing but the lock screen's own requests is answered by the main process.
+- [ ] The password and phrase never appear in the database, its WAL file or the logs.
+- [ ] Starting the app a second time does not open a second copy.
+- [ ] _manual_ On Windows, starting the app again from the desktop shortcut brings the open window to the front.
+- [ ] _manual_ Show/Hide reveals the typed password; Caps Lock shows a warning under the box.

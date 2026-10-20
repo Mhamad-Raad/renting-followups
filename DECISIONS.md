@@ -138,3 +138,45 @@ The preload API has no main-to-screen events yet; the subscribe/unsubscribe patt
 ### Sorani and Arabic wording
 
 All terms are collected in `docs/glossary.md`. The owner approved the current wording: "Areas" is شوێنەکان in Sorani and العقارات in Arabic; the app name is بەدواداچوونی کرێ / متابعة الإيجارات; a receipt is پسوولە / وصل.
+
+## Iteration 2: Authentication
+
+### Honest scope: the password locks the screen, not the file
+
+The password locks the app interface; it does **not** encrypt the database file. Someone with access to the Windows account could read the file with other software. This is acceptable for one PC and one user (as `ARCHITECTURE.md` section 10 says). If real protection is wanted later, switch to SQLCipher (`better-sqlite3-multiple-ciphers`) with a key derived from the password; all database access goes through `src/main/db/connection.ts`, so only that file changes.
+
+### Hashing
+
+scrypt with N = 2^15, r = 8, p = 1, a 64-byte key and a new 16-byte random salt per secret (about 0.1 s per check). Stored as `password_hash`/`password_salt` and `recovery_hash`/`recovery_salt` in the settings table. Hashes carry a format prefix (`scrypt1:`) so stronger settings can be introduced later without breaking existing passwords. Comparison is constant-time. The hashes are kept in a separate repository and never returned with the normal settings.
+
+### Password exact, recovery phrase forgiving
+
+The password is compared exactly as typed. The recovery phrase is written on paper and typed again much later, so it is compared after the same normalization as search: case, extra spaces, and Arabic/Kurdish letter variants (ي/ی, ك/ک, ه/ە…) do not matter.
+
+### The 5-tries rule covers every secret check
+
+`ARCHITECTURE.md` asks for the 5-wrong-attempts/30-seconds rule on the recovery phrase. It is applied to every check of a secret (unlocking, recovery, and the current password when changing the password or phrase), counted together, because the password needs the same protection against guessing. After the wait, five more tries are allowed. The count is kept in memory, so it starts again when the app restarts (restarting takes long enough that this does not help guessing much, and it keeps the owner from being stuck).
+
+### Minimum lengths
+
+A password needs at least 4 characters and a recovery phrase at least 8, and the phrase may not simply repeat the password. `ARCHITECTURE.md` sets no lengths; these keep the rules gentle for the owner while preventing an empty or trivial secret.
+
+### Changing the recovery phrase needs the current password
+
+`ARCHITECTURE.md` says only "Change recovery phrase". It asks for the current password too, so nobody can quietly replace the phrase at an unlocked computer and then use it to take over the password.
+
+### The main process enforces the lock
+
+The lock is not only on screen. Each IPC channel is marked in `OPEN_WHILE_LOCKED` (`src/shared/ipc.ts`); until the password is entered, the main process refuses every channel except reading settings (for the lock screen's language and theme), crash reports and the auth channels themselves. The lock screen cannot change the language; it uses the last one used.
+
+### Secrets are never logged or kept on screen
+
+Only outcomes are logged (`auth.unlock ok=false`), never the typed text; invalid IPC input is logged by field name only. Dialogs render their content only while open, so a typed password is discarded as soon as the dialog closes. A test reads every database, WAL and log file after setup and checks neither secret appears.
+
+### Single running copy
+
+`app.requestSingleInstanceLock()` keeps one copy per data folder; a second launch only brings the existing window to the front (in ghost mode it does nothing, so tests never take focus).
+
+### Friendlier password boxes
+
+Every password box has a **Show/Hide** button and warns when Caps Lock is on. After a wrong password the box is cleared and the cursor returns to it.

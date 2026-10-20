@@ -29,3 +29,32 @@ export async function launchApp(dataDir: string): Promise<LaunchedApp> {
   await page.waitForLoadState('domcontentloaded');
   return { app, page, dataDir };
 }
+
+export const TEST_PASSWORD = 'test-pass-1';
+export const TEST_RECOVERY_PHRASE = 'blue door on the old street';
+
+/**
+ * Starts the app and gets past the password, creating it on first run. Goes
+ * through IPC rather than the screen so it works in any language; the auth
+ * screens themselves are tested in auth.spec.ts.
+ */
+export async function launchUnlocked(dataDir: string): Promise<LaunchedApp> {
+  const launched = await launchApp(dataDir);
+  const { page } = launched;
+  const status = await page.evaluate(() => window.api.invoke('auth:status'));
+  if (!status.ok) throw new Error('Could not read the lock status');
+  if (status.data === 'setup') {
+    await page.evaluate(
+      ([password, recoveryPhrase]) => window.api.invoke('auth:setup', { password, recoveryPhrase }),
+      [TEST_PASSWORD, TEST_RECOVERY_PHRASE] as const,
+    );
+  } else if (status.data === 'locked') {
+    await page.evaluate(
+      (password) => window.api.invoke('auth:unlock', { password }),
+      TEST_PASSWORD,
+    );
+  }
+  await page.reload();
+  await page.getByRole('navigation').waitFor();
+  return launched;
+}

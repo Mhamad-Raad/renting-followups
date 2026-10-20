@@ -4,9 +4,10 @@ import type { ThemeMode } from '@shared/settings';
 import { closeDatabase, openDatabase } from './db/connection';
 import { migrate } from './db/migrate';
 import { MIGRATIONS } from './db/migrations';
-import { createSettingsRepository } from './db/repositories/settings';
+import { createCredentialsRepository, createSettingsRepository } from './db/repositories/settings';
 import { registerIpcHandlers } from './ipc';
 import { hardenSession, hardenWindow } from './security';
+import { createAuthService } from './services/auth';
 import { writeSafetySnapshot } from './services/backup';
 import { describeError, initLogger, logger } from './services/logger';
 import { startupFailureMessage } from './services/messages';
@@ -24,6 +25,7 @@ const MEMORY_LOG_INTERVAL_MS = 30_000;
 const WINDOW_BACKGROUND: Record<ThemeMode, string> = { light: '#f6f4ef', dark: '#1b1d21' };
 
 let memoryLogTimer: NodeJS.Timeout | null = null;
+let mainWindow: BrowserWindow | null = null;
 
 /**
  * Development and tests never touch the owner's real data: they use a separate
@@ -52,7 +54,8 @@ function startServices(): { themeMode: ThemeMode } {
   logger.info('app.started', { schemaFrom: from, schemaTo: to, packaged: app.isPackaged });
 
   const settings = createSettingsRepository(db);
-  registerIpcHandlers({ settings });
+  const auth = createAuthService(createCredentialsRepository(db));
+  registerIpcHandlers({ settings, auth });
   return { themeMode: settings.getAll().themeMode };
 }
 
@@ -84,6 +87,10 @@ function createMainWindow(themeMode: ThemeMode): void {
     },
   });
   hardenWindow(window);
+  mainWindow = window;
+  window.on('closed', () => {
+    mainWindow = null;
+  });
 
   // The page sets a translated title; development builds add a visible marker.
   window.on('page-title-updated', (event, title) => {
@@ -111,9 +118,15 @@ function createMainWindow(themeMode: ThemeMode): void {
   }
 }
 
-configureDataDirectory();
+/** A second launch only brings the open window to the front: two copies must never share one database. */
+function focusMainWindow(): void {
+  if (!mainWindow || isGhost) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
 
-void app.whenReady().then(() => {
+function startApp(): void {
   // Windows gets no menu bar: the app's own sidebar is the only navigation.
   if (process.platform === 'win32') Menu.setApplicationMenu(null);
   if (isGhost) app.dock?.hide();
@@ -134,7 +147,16 @@ void app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow(themeMode);
   });
-});
+}
+
+configureDataDirectory();
+
+if (app.requestSingleInstanceLock()) {
+  app.on('second-instance', focusMainWindow);
+  void app.whenReady().then(startApp);
+} else {
+  app.quit();
+}
 
 app.on('window-all-closed', () => {
   app.quit();

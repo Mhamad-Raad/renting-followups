@@ -5,11 +5,13 @@ import type { IpcErrorCode } from '@shared/ipc';
 import { FONT_SIZES, LANGUAGES, type SettingsUpdate } from '@shared/settings';
 import { useSettings } from '../app/SettingsContext';
 import { ChoiceGroup } from '../components/ChoiceGroup';
+import { Notice } from '../components/Notice';
 import { PageHeader } from '../components/PageHeader';
 import { LANGUAGE_NAMES } from '../i18n';
+import { SecuritySection } from './SecuritySection';
 import styles from './SettingsPage.module.css';
 
-/** Iteration 1 covers language, number style, light/dark and text size; the rest comes in iteration 10. */
+/** Language, number style, light/dark, text size and security so far; the rest comes in iteration 10. */
 export function SettingsPage() {
   const { t } = useTranslation();
   const { settings, updateSettings } = useSettings();
@@ -22,11 +24,7 @@ export function SettingsPage() {
   return (
     <>
       <PageHeader title={t('pages.settings.title')} />
-      {error && (
-        <p className={styles.error} role="alert">
-          {t('settings.saveFailed')}
-        </p>
-      )}
+      {error && <Notice tone="error">{t('settings.saveFailed')}</Notice>}
 
       <section className={styles.section}>
         <ChoiceGroup
@@ -73,6 +71,8 @@ export function SettingsPage() {
           onChange={(fontSize) => change({ fontSize })}
         />
       </section>
+
+      <SecuritySection />
     </>
   );
 }

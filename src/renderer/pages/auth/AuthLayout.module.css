@@ -1,0 +1,41 @@
+.screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-6);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  width: min(34rem, 100%);
+  padding: var(--space-6) var(--space-7);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  animation: card-enter var(--duration-normal) var(--ease) both;
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--direction-sign) * var(--slide-distance)));
+  }
+}
+
+.appName {
+  color: var(--color-accent);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.title {
+  font-size: var(--text-2xl);
+  line-height: 1.3;
+}
+
+.intro {
+  color: var(--color-text-muted);
+}

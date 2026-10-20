@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { createDataDir, launchApp, removeDataDir } from './launch';
+import { createDataDir, launchUnlocked, removeDataDir } from './launch';
 
 test('settings are saved in the database and survive a restart', async () => {
   const dataDir = createDataDir();
   try {
-    const first = await launchApp(dataDir);
+    const first = await launchUnlocked(dataDir);
     const initial = await first.page.evaluate(() => window.api.invoke('settings:get'));
     expect(initial).toMatchObject({ ok: true, data: { language: 'ckb', themeMode: 'light' } });
     const updated = await first.page.evaluate(() =>
@@ -13,7 +13,7 @@ test('settings are saved in the database and survive a restart', async () => {
     expect(updated).toMatchObject({ ok: true, data: { language: 'en', themeMode: 'dark' } });
     await first.app.close();
 
-    const second = await launchApp(dataDir);
+    const second = await launchUnlocked(dataDir);
     const reloaded = await second.page.evaluate(() => window.api.invoke('settings:get'));
     expect(reloaded).toMatchObject({ ok: true, data: { language: 'en', themeMode: 'dark' } });
     await second.app.close();
@@ -24,7 +24,7 @@ test('settings are saved in the database and survive a restart', async () => {
 
 test('the main process rejects invalid input', async () => {
   const dataDir = createDataDir();
-  const { app, page } = await launchApp(dataDir);
+  const { app, page } = await launchUnlocked(dataDir);
   try {
     const result = await page.evaluate(() =>
       // Deliberately bypass the types to send what a compromised page might send.
