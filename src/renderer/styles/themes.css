@@ -1,0 +1,66 @@
+/*
+ * Colours for light and dark mode. Status colours (paid, due/partial, late,
+ * upcoming, not applicable) stay clearly different from each other in both.
+ */
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+  --color-background: #f6f4ef;
+  --color-surface: #ffffff;
+  --color-surface-muted: #efece5;
+  --color-border: #d6d1c7;
+  --color-text: #1f2328;
+  --color-text-muted: #545b63;
+  --color-accent: #1f5f99;
+  --color-accent-hover: #194e7e;
+  --color-accent-soft: #e2ecf6;
+  --color-on-accent: #ffffff;
+  --color-danger: #b3261e;
+  --color-danger-hover: #93201a;
+  --color-focus: #f0a43a;
+  --color-backdrop: rgb(20 22 26 / 45%);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 6%), 0 2px 8px rgb(0 0 0 / 5%);
+  --shadow-dialog: 0 12px 40px rgb(0 0 0 / 22%);
+
+  --status-paid: #1e6b2a;
+  --status-paid-bg: #dff0e0;
+  --status-due: #9a4a00;
+  --status-due-bg: #fde8cc;
+  --status-late: #a3211a;
+  --status-late-bg: #f8dcd9;
+  --status-upcoming: #545b63;
+  --status-upcoming-bg: #eceef0;
+  --status-na: #7a7f86;
+  --status-na-bg: #f6f6f6;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-background: #1b1d21;
+  --color-surface: #24272c;
+  --color-surface-muted: #2c3036;
+  --color-border: #3b4048;
+  --color-text: #eceef1;
+  --color-text-muted: #aab0b8;
+  --color-accent: #6ea8e0;
+  --color-accent-hover: #8dbbe8;
+  --color-accent-soft: #23364a;
+  --color-on-accent: #0f1a26;
+  --color-danger: #f08a80;
+  --color-danger-hover: #f5a59d;
+  --color-focus: #f0b45a;
+  --color-backdrop: rgb(0 0 0 / 60%);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-dialog: 0 12px 40px rgb(0 0 0 / 55%);
+
+  --status-paid: #8fd694;
+  --status-paid-bg: #1f3b25;
+  --status-due: #ffbf66;
+  --status-due-bg: #4a3418;
+  --status-late: #f4a09a;
+  --status-late-bg: #4d2325;
+  --status-upcoming: #b4bac1;
+  --status-upcoming-bg: #30343a;
+  --status-na: #8a9098;
+  --status-na-bg: #26292e;
+}
