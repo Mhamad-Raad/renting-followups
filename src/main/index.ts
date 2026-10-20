@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { app, BrowserWindow, Menu } from 'electron';
+import { app, BrowserWindow, dialog, Menu } from 'electron';
 import type { ThemeMode } from '@shared/settings';
 import { closeDatabase, openDatabase } from './db/connection';
 import { migrate } from './db/migrate';
@@ -8,7 +8,8 @@ import { createSettingsRepository } from './db/repositories/settings';
 import { registerIpcHandlers } from './ipc';
 import { hardenSession, hardenWindow } from './security';
 import { writeSafetySnapshot } from './services/backup';
-import { initLogger, logger } from './services/logger';
+import { describeError, initLogger, logger } from './services/logger';
+import { startupFailureMessage } from './services/messages';
 
 const APP_NAME = 'Rent Tracker';
 const MIN_WIDTH = 1100;
@@ -105,7 +106,17 @@ void app.whenReady().then(() => {
   // Windows gets no menu bar: the app's own sidebar is the only navigation.
   if (process.platform === 'win32') Menu.setApplicationMenu(null);
   hardenSession(rendererDirectory);
-  const { themeMode } = startServices();
+  let themeMode: ThemeMode;
+  try {
+    ({ themeMode } = startServices());
+  } catch (error) {
+    // Nothing has been changed (migrations are all-or-nothing); explain plainly and stop.
+    logger.error('app.start_failed', describeError(error));
+    const { title, body } = startupFailureMessage();
+    dialog.showErrorBox(title, body);
+    app.quit();
+    return;
+  }
   if (isDev) startMemoryLog();
   createMainWindow(themeMode);
   app.on('activate', () => {
