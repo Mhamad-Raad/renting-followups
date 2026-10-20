@@ -15,12 +15,9 @@ export const MAX_MONTHLY_PRICE = 10_000_000_000_000;
 const id = z.number().int().positive();
 const areaName = z.string().trim().min(1).max(AREA_NAME_MAX);
 const monthlyPrice = z.number().int().min(0).max(MAX_MONTHLY_PRICE);
-// Digits of any style, spaces, +, - and brackets: how people write phone numbers.
-const phone = z
-  .string()
-  .trim()
-  .max(PHONE_MAX)
-  .regex(/^[0-9\u0660-\u0669\u06F0-\u06F9+\-()\s]*$/);
+/** Digits of any style, spaces, +, - and brackets: how people write phone numbers. */
+export const PHONE_PATTERN = /^[0-9\u0660-\u0669\u06F0-\u06F9+\-()\s]*$/;
+const phone = z.string().trim().max(PHONE_MAX).regex(PHONE_PATTERN);
 const renterDetails = z
   .object({ fullName: z.string().trim().min(1).max(PERSON_NAME_MAX), phone })
   .strict();
