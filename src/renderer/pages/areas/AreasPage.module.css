@@ -95,3 +95,8 @@
 .muted {
   color: var(--color-text-muted);
 }
+
+/* Phone numbers and amounts never break across lines; names may. */
+.number {
+  white-space: nowrap;
+}

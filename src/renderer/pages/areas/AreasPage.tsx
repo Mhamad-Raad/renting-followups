@@ -147,8 +147,10 @@ export function AreasPage() {
                   <td>
                     {area.renterName ?? <span className={styles.muted}>{t('areas.noRenter')}</span>}
                   </td>
-                  <td>{area.renterPhone && <PhoneText phone={area.renterPhone} />}</td>
-                  <td>
+                  <td className={styles.number}>
+                    {area.renterPhone && <PhoneText phone={area.renterPhone} />}
+                  </td>
+                  <td className={styles.number}>
                     <RentText price={area.currentPrice} currency={area.currency} />
                   </td>
                 </tr>
