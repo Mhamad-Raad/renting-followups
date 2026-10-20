@@ -34,6 +34,12 @@ export function CategoriesPage() {
     categories.refresh();
   };
 
+  // A category with areas cannot be deleted: say why at once instead of asking first.
+  const askToDelete = (category: Category) => {
+    if (category.areaCount > 0) setMessage({ tone: 'error', text: t('categories.has_areas') });
+    else setDeleting(category);
+  };
+
   const remove = async (category: Category) => {
     setDeleting(null);
     const result = await callIpc('categories:delete', { id: category.id });
@@ -76,7 +82,7 @@ export function CategoriesPage() {
                     })}
                   </span>
                   <BigButton onClick={() => setEditing({ category })}>{t('common.edit')}</BigButton>
-                  <BigButton onClick={() => setDeleting(category)}>{t('common.delete')}</BigButton>
+                  <BigButton onClick={() => askToDelete(category)}>{t('common.delete')}</BigButton>
                 </li>
               ))}
             </ul>
