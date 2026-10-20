@@ -4,9 +4,10 @@ import type { ThemeMode } from '@shared/settings';
 import { closeDatabase, openDatabase } from './db/connection';
 import { migrate } from './db/migrate';
 import { MIGRATIONS } from './db/migrations';
-import { createSettingsRepository } from './db/repositories/settings';
+import { createCredentialsRepository, createSettingsRepository } from './db/repositories/settings';
 import { registerIpcHandlers } from './ipc';
 import { hardenSession, hardenWindow } from './security';
+import { createAuthService } from './services/auth';
 import { writeSafetySnapshot } from './services/backup';
 import { describeError, initLogger, logger } from './services/logger';
 import { startupFailureMessage } from './services/messages';
@@ -52,7 +53,8 @@ function startServices(): { themeMode: ThemeMode } {
   logger.info('app.started', { schemaFrom: from, schemaTo: to, packaged: app.isPackaged });
 
   const settings = createSettingsRepository(db);
-  registerIpcHandlers({ settings });
+  const auth = createAuthService(createCredentialsRepository(db));
+  registerIpcHandlers({ settings, auth });
   return { themeMode: settings.getAll().themeMode };
 }
 
@@ -111,9 +113,7 @@ function createMainWindow(themeMode: ThemeMode): void {
   }
 }
 
-configureDataDirectory();
-
-void app.whenReady().then(() => {
+function startApp(): void {
   // Windows gets no menu bar: the app's own sidebar is the only navigation.
   if (process.platform === 'win32') Menu.setApplicationMenu(null);
   if (isGhost) app.dock?.hide();
@@ -134,7 +134,11 @@ void app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow(themeMode);
   });
-});
+}
+
+configureDataDirectory();
+
+void app.whenReady().then(startApp);
 
 app.on('window-all-closed', () => {
   app.quit();
