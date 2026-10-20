@@ -15,6 +15,8 @@ const APP_NAME = 'Rent Tracker';
 const MIN_WIDTH = 1100;
 const MIN_HEIGHT = 700;
 const isDev = !app.isPackaged;
+// Automated tests run the app invisibly so they never take over the developer's screen.
+const isGhost = isDev && process.env['RENT_TRACKER_GHOST'] === '1';
 const rendererDirectory = join(import.meta.dirname, '../renderer');
 const DATABASE_FILE = 'rent-tracker.db';
 const MEMORY_LOG_INTERVAL_MS = 30_000;
@@ -70,6 +72,8 @@ function createMainWindow(themeMode: ThemeMode): void {
     minWidth: MIN_WIDTH,
     minHeight: MIN_HEIGHT,
     show: false,
+    focusable: !isGhost,
+    skipTaskbar: isGhost,
     webPreferences: {
       preload: join(import.meta.dirname, '../preload/index.cjs'),
       contextIsolation: true,
@@ -89,6 +93,13 @@ function createMainWindow(themeMode: ThemeMode): void {
   });
   window.once('ready-to-show', () => {
     window.maximize();
+    if (isGhost) {
+      // Still rendered (so tests can drive it), but invisible, unfocused and click-through.
+      window.setOpacity(0);
+      window.setIgnoreMouseEvents(true);
+      window.showInactive();
+      return;
+    }
     window.show();
   });
 
@@ -105,6 +116,7 @@ configureDataDirectory();
 void app.whenReady().then(() => {
   // Windows gets no menu bar: the app's own sidebar is the only navigation.
   if (process.platform === 'win32') Menu.setApplicationMenu(null);
+  if (isGhost) app.dock?.hide();
   hardenSession(rendererDirectory);
   let themeMode: ThemeMode;
   try {

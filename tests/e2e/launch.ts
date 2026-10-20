@@ -22,7 +22,8 @@ export function removeDataDir(dataDir: string): void {
 export async function launchApp(dataDir: string): Promise<LaunchedApp> {
   const app = await electron.launch({
     args: [join(import.meta.dirname, '../../out/main/index.js')],
-    env: { ...process.env, RENT_TRACKER_DATA_DIR: dataDir },
+    // Ghost mode keeps the test window invisible so it never interrupts the person at the computer.
+    env: { ...process.env, RENT_TRACKER_DATA_DIR: dataDir, RENT_TRACKER_GHOST: '1' },
   });
   const page = await app.firstWindow();
   await page.waitForLoadState('domcontentloaded');
