@@ -37,3 +37,7 @@ Runs typecheck, then lint (ESLint and `prettier --check`), then unit tests. Vite
 | `eslint`, `@eslint/js`, `typescript-eslint`, `globals` | Linting: catches `any`, stray `console.log`, unsafe patterns.                 |
 | `prettier`, `eslint-config-prettier`                   | One code format; the ESLint config turns off rules that would fight Prettier. |
 | `vitest`                                               | Unit tests (required by the stack).                                           |
+
+### npm install scripts are opt-in
+
+npm 11 only runs a dependency's install script when it is approved in `package.json` (`allowScripts`). Today the only package with one is `fsevents`, a macOS-only file watcher that Windows never installs, so it stays unapproved and the warning on macOS is harmless. Iteration 1 must explicitly approve `electron` and `better-sqlite3` (and the `electron-builder install-app-deps` step), or the app will not start.
