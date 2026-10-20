@@ -59,3 +59,23 @@ export type UnlockInput = z.infer<typeof unlockInputSchema>;
 export type RecoverInput = z.infer<typeof recoverInputSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordInputSchema>;
 export type ChangeRecoveryPhraseInput = z.infer<typeof changeRecoveryPhraseInputSchema>;
+
+export type NewSecretProblem =
+  'passwordTooShort' | 'passwordsDiffer' | 'phraseTooShort' | 'phraseSameAsPassword';
+
+/** Checks a new password typed twice. Returns the first problem, or null when it is fine. */
+export function checkNewPassword(password: string, again: string): NewSecretProblem | null {
+  if (normalizePassword(password).length < MIN_PASSWORD_LENGTH) return 'passwordTooShort';
+  if (normalizePassword(password) !== normalizePassword(again)) return 'passwordsDiffer';
+  return null;
+}
+
+/** Checks a new recovery phrase; it must not simply repeat the password. */
+export function checkNewRecoveryPhrase(phrase: string, password?: string): NewSecretProblem | null {
+  const normalized = normalizeRecoveryPhrase(phrase);
+  if (normalized.length < MIN_RECOVERY_PHRASE_LENGTH) return 'phraseTooShort';
+  if (password !== undefined && normalized === normalizeRecoveryPhrase(password)) {
+    return 'phraseSameAsPassword';
+  }
+  return null;
+}

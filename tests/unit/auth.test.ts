@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { changePasswordInputSchema, setupInputSchema } from '@shared/auth';
+import {
+  changePasswordInputSchema,
+  checkNewPassword,
+  checkNewRecoveryPhrase,
+  setupInputSchema,
+} from '@shared/auth';
 import { createConnection, type Db } from '../../src/main/db/connection';
 import { migrate } from '../../src/main/db/migrate';
 import { MIGRATIONS } from '../../src/main/db/migrations';
@@ -215,5 +220,25 @@ describe('input rules', () => {
       changePasswordInputSchema.safeParse({ currentPassword: 'x'.repeat(201), newPassword: 'abcd' })
         .success,
     ).toBe(false);
+  });
+});
+
+describe('new secret checks', () => {
+  it.each([
+    ['abc', 'abc', 'passwordTooShort'],
+    ['abcd', 'abce', 'passwordsDiffer'],
+    ['abcd', 'abcd', null],
+  ])('password %j typed again as %j gives %s', (password, again, problem) => {
+    expect(checkNewPassword(password, again)).toBe(problem);
+  });
+
+  it.each([
+    ['short', undefined, 'phraseTooShort'],
+    ['   short   ', undefined, 'phraseTooShort'],
+    ['Gul-12345', 'gul-12345', 'phraseSameAsPassword'],
+    [PHRASE, PASSWORD, null],
+    [PHRASE, undefined, null],
+  ])('phrase %j with password %j gives %s', (phrase, password, problem) => {
+    expect(checkNewRecoveryPhrase(phrase, password)).toBe(problem);
   });
 });
