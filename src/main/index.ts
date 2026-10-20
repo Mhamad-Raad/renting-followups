@@ -25,6 +25,7 @@ const MEMORY_LOG_INTERVAL_MS = 30_000;
 const WINDOW_BACKGROUND: Record<ThemeMode, string> = { light: '#f6f4ef', dark: '#1b1d21' };
 
 let memoryLogTimer: NodeJS.Timeout | null = null;
+let mainWindow: BrowserWindow | null = null;
 
 /**
  * Development and tests never touch the owner's real data: they use a separate
@@ -86,6 +87,10 @@ function createMainWindow(themeMode: ThemeMode): void {
     },
   });
   hardenWindow(window);
+  mainWindow = window;
+  window.on('closed', () => {
+    mainWindow = null;
+  });
 
   // The page sets a translated title; development builds add a visible marker.
   window.on('page-title-updated', (event, title) => {
@@ -113,6 +118,14 @@ function createMainWindow(themeMode: ThemeMode): void {
   }
 }
 
+/** A second launch only brings the open window to the front: two copies must never share one database. */
+function focusMainWindow(): void {
+  if (!mainWindow || isGhost) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
+
 function startApp(): void {
   // Windows gets no menu bar: the app's own sidebar is the only navigation.
   if (process.platform === 'win32') Menu.setApplicationMenu(null);
@@ -138,7 +151,12 @@ function startApp(): void {
 
 configureDataDirectory();
 
-void app.whenReady().then(startApp);
+if (app.requestSingleInstanceLock()) {
+  app.on('second-instance', focusMainWindow);
+  void app.whenReady().then(startApp);
+} else {
+  app.quit();
+}
 
 app.on('window-all-closed', () => {
   app.quit();
