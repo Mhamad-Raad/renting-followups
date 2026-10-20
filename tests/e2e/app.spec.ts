@@ -113,3 +113,20 @@ test('makes no network requests and logs no errors', async () => {
     removeDataDir(dataDir);
   }
 });
+
+test('the window starts maximized and never gets smaller than 1100×700', async () => {
+  const dataDir = createDataDir();
+  const { app } = await launchApp(dataDir);
+  try {
+    const readWindow = () =>
+      app.evaluate(({ BrowserWindow }) => {
+        const window = BrowserWindow.getAllWindows()[0];
+        return { minimumSize: window?.getMinimumSize(), maximized: window?.isMaximized() };
+      });
+    await expect.poll(async () => (await readWindow()).maximized).toBe(true);
+    expect((await readWindow()).minimumSize).toEqual([1100, 700]);
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
