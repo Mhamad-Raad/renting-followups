@@ -11,11 +11,21 @@
     "settings": "Settings"
   },
   "pages": {
-    "home": { "title": "Home" },
-    "areas": { "title": "Areas" },
-    "reports": { "title": "Reports" },
-    "notifications": { "title": "Notifications" },
-    "settings": { "title": "Settings" },
+    "home": {
+      "title": "Home"
+    },
+    "areas": {
+      "title": "Areas"
+    },
+    "reports": {
+      "title": "Reports"
+    },
+    "notifications": {
+      "title": "Notifications"
+    },
+    "settings": {
+      "title": "Settings"
+    },
     "comingSoon": "This screen will be ready in a later step."
   },
   "settings": {
@@ -33,7 +43,12 @@
       "extraLarge": "Extra large"
     },
     "saved": "Saved.",
-    "saveFailed": "The setting could not be saved. Please try again."
+    "saveFailed": "The setting could not be saved. Please try again.",
+    "security": "Security",
+    "changePassword": "Change password",
+    "changeRecoveryPhrase": "Change recovery phrase",
+    "passwordChanged": "Password changed.",
+    "phraseChanged": "Recovery phrase changed."
   },
   "common": {
     "ok": "OK",
@@ -41,7 +56,9 @@
     "close": "Close",
     "yes": "Yes",
     "loading": "Loading…",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "save": "Save",
+    "back": "Back"
   },
   "currency": {
     "IQD": "IQD",
@@ -49,7 +66,8 @@
   },
   "errors": {
     "invalid_input": "Some information is not correct. Please check it and try again.",
-    "unexpected": "Something went wrong. Your data is safe. Please try again."
+    "unexpected": "Something went wrong. Your data is safe. Please try again.",
+    "locked": "The app is locked. Please enter your password."
   },
   "crash": {
     "title": "Something went wrong.",
@@ -58,5 +76,43 @@
   },
   "startup": {
     "failed": "Rent Tracker could not open its data. Your data has not been changed. Please close the app and open it again."
+  },
+  "auth": {
+    "password": "Password",
+    "passwordAgain": "Password again",
+    "newPassword": "New password",
+    "newPasswordAgain": "New password again",
+    "currentPassword": "Current password",
+    "recoveryPhrase": "Recovery phrase",
+    "newRecoveryPhrase": "New recovery phrase",
+    "recoveryPhraseHint": "A sentence only you know, for example the name of your first school and your street. At least {{min}} letters.",
+    "writeItDown": "Write down your recovery phrase and keep it safe. If you lose both the password and the recovery phrase, nobody can open your data.",
+    "show": "Show",
+    "hide": "Hide",
+    "capsLock": "Caps Lock is on.",
+    "forgot": "Forgot password?",
+    "setup": {
+      "title": "Create your password",
+      "intro": "Choose a password to open the app, and a recovery phrase to use if you ever forget the password.",
+      "submit": "Save and open"
+    },
+    "lock": {
+      "title": "Enter your password",
+      "submit": "Open"
+    },
+    "recover": {
+      "title": "Forgot password",
+      "intro": "Type your recovery phrase, then choose a new password.",
+      "submit": "Set new password and open"
+    },
+    "problems": {
+      "passwordTooShort": "The password needs at least {{min}} characters.",
+      "passwordsDiffer": "The two passwords are not the same. Please type them again.",
+      "phraseTooShort": "The recovery phrase needs at least {{min}} letters.",
+      "phraseSameAsPassword": "The recovery phrase must be different from the password."
+    },
+    "wrongPassword": "That password is not correct. Tries left: {{tries}}.",
+    "wrongPhrase": "That recovery phrase is not correct. Tries left: {{tries}}.",
+    "wait": "Too many wrong tries. Please wait a moment. Seconds left: {{seconds}}."
   }
 }
