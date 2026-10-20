@@ -49,3 +49,92 @@ No dependency needs an install script, so every entry is `false`:
 - `fsevents`: macOS-only file watcher, optional.
 
 Electron downloads its own binary on first run, so it needs no install script either.
+
+## Iteration 1: App skeleton
+
+### Shared code lives in `src/shared/` (folder structure deviation, owner to confirm)
+
+`ARCHITECTURE.md` places `parseNumber.ts` and `normalizeText.ts` in `src/main/util/`. Both are also needed by the screen (amount fields, search box), and the main process needs them too (Excel import, stored search columns). To keep one copy of each, they live in a new folder, `src/shared/`, together with other pure code used by more than one process: the IPC contract (`ipc.ts`), settings schema, currency rules, digit handling and number formatting. A lint rule forbids Node or Electron imports in `src/shared/`, so it stays safe to load anywhere.
+
+### SQLite build: no rebuild step
+
+`better-sqlite3` 13 ships ready-made builds for Windows and macOS inside the package, and the same build loads in plain Node and in Electron 44. So the unit tests run the real database under plain Node, `npm test` works from a fresh clone, and there is no `electron-builder install-app-deps` step and no need for Visual Studio build tools. Packaging (iteration 14) must still unpack it from the asar archive (`asarUnpack`).
+
+### Electron downloads itself on first use
+
+Electron 44 no longer downloads its program during `npm install`. `npm run dev`, `npm run preview` and `npm run test:e2e` first run `install-electron`, which downloads it once and otherwise does nothing.
+
+### Migrations
+
+Numbered `.sql` files in `src/main/db/migrations/`, bundled at build time. All pending migrations run in **one** transaction, so the file is either fully upgraded or untouched. Before upgrading an existing database, a complete copy is written with SQLite's `VACUUM INTO` to `safety-copies/` in the data folder. These copies are not deleted automatically (they only appear when the app is updated). A database from a newer app version is refused.
+
+### Data folders
+
+The app is named `Rent Tracker`. Development runs use the `Rent Tracker-dev` folder; end-to-end tests point each test at its own temporary folder with `RENT_TRACKER_DATA_DIR`. Both overrides only work in unpackaged builds, so the installed app always uses its real folder.
+
+### Ghost mode for tests
+
+With `RENT_TRACKER_GHOST=1` (unpackaged builds only) the window is still rendered but invisible, unfocusable, click-through and has no Dock icon. The end-to-end tests always use it, so they never interrupt someone working on the same computer.
+
+### Security
+
+On top of `contextIsolation`, no `nodeIntegration` and a sandboxed preload: a Content Security Policy meta tag, every request outside the app's own files blocked in the main process, all permission requests denied, webviews blocked, new windows denied, and all navigation blocked (page changes use the URL hash, which is not navigation). DevTools are off in the packaged app. IPC handlers check that the caller is the app's own page and validate every input with zod. An end-to-end test confirms no request leaves `file://`.
+
+### Windows has no menu bar
+
+The app's sidebar is the only navigation, so the standard File/Edit/View menu bar is removed on Windows.
+
+### Settings apply instantly
+
+A changed setting is shown at once and saved in the background. If saving fails, the screen goes back to what is really stored and says so in plain words.
+
+### Number parsing is strict rather than clever
+
+Amounts are rejected rather than guessed when they are ambiguous: decimals the currency does not have (`1.000` for IQD), wrongly grouped thousands (`1,5`), or more than 15 digits. This avoids silently saving a wrong amount.
+
+### Search normalization goes slightly beyond the spec
+
+Besides the letters listed in `ARCHITECTURE.md`, search also treats ھ like ە, the alef forms أ إ آ ٱ like ا, and ignores zero-width joiners and direction marks, which are common when typing or pasting Sorani. Different Sorani letters (ڕ/ر, ڵ/ل, ۆ/و, ێ/ی) are never merged.
+
+### Default number style is Western (1 2 3), owner to confirm
+
+`ARCHITECTURE.md` does not say which digit style is the default. Western digits are the default until the owner says otherwise.
+
+### Fonts: system font until iteration 10
+
+For now the app uses the Windows system font (Segoe UI, which covers Sorani) through the `--font-family` variable. Bundling open-licence fonts, with the automated Sorani letter test, is part of the font setting in iteration 10.
+
+### Styles
+
+Global tokens, themes and base styles are in `src/renderer/styles/`; each component keeps its own CSS module next to it. All layout uses CSS logical properties, so right-to-left needs no separate styles. Animations respect `prefers-reduced-motion`. Contrast of every text colour pair is checked by a unit test in both themes.
+
+### Logging
+
+`userData/logs/app.log`, JSON lines, rotated at 1 MB with three old files kept. Errors are logged by type and stack frames only, never the message, because messages can contain names or numbers the owner typed. Development runs also log memory use every 30 seconds.
+
+### Startup failure
+
+If the data cannot be opened, the app shows one plain message in all three languages (the saved language may not be readable then), logs the error and closes without changing anything. Restore from backup is offered here in iteration 11.
+
+### Not yet built
+
+The preload API has no main-to-screen events yet; the subscribe/unsubscribe pattern is added with the first event (notifications, iteration 9).
+
+### Dependencies added in iteration 1
+
+| Package                                                     | Why                                                  |
+| ----------------------------------------------------------- | ---------------------------------------------------- |
+| `electron`, `electron-vite`, `vite`, `@vitejs/plugin-react` | The stack: desktop shell and build tool.             |
+| `react`, `react-dom`, `react-router`                        | The stack: screens and `HashRouter`.                 |
+| `better-sqlite3` (+ types)                                  | The stack: SQLite.                                   |
+| `zod`                                                       | The stack: validation of every IPC input.            |
+| `i18next`, `react-i18next`                                  | The stack: three languages.                          |
+| `electron-builder`                                          | The stack: Windows installer (used in iteration 14). |
+| `@playwright/test`                                          | The stack: end-to-end tests of the real app.         |
+| `eslint-plugin-react-hooks`                                 | Catches missing effect cleanups and wrong hook use.  |
+
+`npm audit` reports 8 moderate issues, all inside `electron-builder`'s download tooling (`global-agent` → `sprintf-js`). It runs only on the developer's machine at build time and is not part of the installed app. Re-check when `electron-builder` updates.
+
+### Sorani and Arabic wording needs review
+
+All terms are collected in `docs/glossary.md`. Choices to confirm: "Areas" is شوێنەکان in Sorani and العقارات in Arabic; the app name is بەدواداچوونی کرێ / متابعة الإيجارات; a receipt is پسوولە / وصل.
