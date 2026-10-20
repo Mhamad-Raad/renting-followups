@@ -16,9 +16,6 @@
 
 ## Open questions
 
-- Owner to confirm: shared code in `src/shared/` instead of `src/main/util/` for `parseNumber`/`normalizeText`.
-- Owner to confirm: default number style (currently Western 1 2 3).
-- Sorani and Arabic wording in `docs/glossary.md` needs a native speaker's review.
 - Which fields of a receipt can be edited (amount, date, months)? To decide in iteration 5.
 
 ## Working notes

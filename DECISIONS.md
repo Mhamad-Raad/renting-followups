@@ -52,7 +52,7 @@ Electron downloads its own binary on first run, so it needs no install script ei
 
 ## Iteration 1: App skeleton
 
-### Shared code lives in `src/shared/` (folder structure deviation, owner to confirm)
+### Shared code lives in `src/shared/` (folder structure deviation, approved by the owner)
 
 `ARCHITECTURE.md` places `parseNumber.ts` and `normalizeText.ts` in `src/main/util/`. Both are also needed by the screen (amount fields, search box), and the main process needs them too (Excel import, stored search columns). To keep one copy of each, they live in a new folder, `src/shared/`, together with other pure code used by more than one process: the IPC contract (`ipc.ts`), settings schema, currency rules, digit handling and number formatting. A lint rule forbids Node or Electron imports in `src/shared/`, so it stays safe to load anywhere.
 
@@ -96,9 +96,9 @@ Amounts are rejected rather than guessed when they are ambiguous: decimals the c
 
 Besides the letters listed in `ARCHITECTURE.md`, search also treats ھ like ە, the alef forms أ إ آ ٱ like ا, and ignores zero-width joiners and direction marks, which are common when typing or pasting Sorani. Different Sorani letters (ڕ/ر, ڵ/ل, ۆ/و, ێ/ی) are never merged.
 
-### Default number style is Western (1 2 3), owner to confirm
+### Default number style is Western (1 2 3)
 
-`ARCHITECTURE.md` does not say which digit style is the default. Western digits are the default until the owner says otherwise.
+`ARCHITECTURE.md` does not say which digit style is the default. The owner confirmed Western digits.
 
 ### Fonts: system font until iteration 10
 
@@ -135,6 +135,6 @@ The preload API has no main-to-screen events yet; the subscribe/unsubscribe patt
 
 `npm audit` reports 8 moderate issues, all inside `electron-builder`'s download tooling (`global-agent` → `sprintf-js`). It runs only on the developer's machine at build time and is not part of the installed app. Re-check when `electron-builder` updates.
 
-### Sorani and Arabic wording needs review
+### Sorani and Arabic wording
 
-All terms are collected in `docs/glossary.md`. Choices to confirm: "Areas" is شوێنەکان in Sorani and العقارات in Arabic; the app name is بەدواداچوونی کرێ / متابعة الإيجارات; a receipt is پسوولە / وصل.
+All terms are collected in `docs/glossary.md`. The owner approved the current wording: "Areas" is شوێنەکان in Sorani and العقارات in Arabic; the app name is بەدواداچوونی کرێ / متابعة الإيجارات; a receipt is پسوولە / وصل.
