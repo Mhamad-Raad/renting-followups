@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
-import type { AreaListItem } from '@shared/areas';
+import { SEARCH_MAX, type AreaListItem } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
 import { useIpcQuery } from '../../app/ipc';
 import { useFlashNotice } from '../../app/flash';
@@ -104,7 +104,12 @@ export function AreasPage() {
             ),
           )}
         </div>
-        <SearchField label={t('areas.search')} value={search} onChange={setSearch} />
+        <SearchField
+          label={t('areas.search')}
+          value={search}
+          onChange={setSearch}
+          maxLength={SEARCH_MAX}
+        />
         <p className={styles.count} aria-live="polite">
           {t('areas.count', { number: formatPlain(sorted.length, settings.digitStyle) })}
         </p>

@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PHONE_PATTERN, type AreaDetails, type RenterChange } from '@shared/areas';
+import {
+  PERSON_NAME_MAX,
+  PHONE_MAX,
+  PHONE_PATTERN,
+  type AreaDetails,
+  type RenterChange,
+} from '@shared/areas';
 import { dateStringFromLocal, formatDate } from '@shared/dates';
 import { callIpc } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
@@ -92,6 +98,7 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
             value={fullName}
             onChange={setFullName}
             error={showProblems ? nameProblem : null}
+            maxLength={PERSON_NAME_MAX}
             autoFocus
             dir="auto"
           />
@@ -100,6 +107,7 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
             value={phone}
             onChange={setPhone}
             error={showProblems ? phoneProblem : null}
+            maxLength={PHONE_MAX}
             inputMode="tel"
             dir="ltr"
           />

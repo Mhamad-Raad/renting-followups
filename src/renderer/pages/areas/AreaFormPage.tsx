@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
-import { PHONE_PATTERN, type AreaDetails } from '@shared/areas';
+import {
+  ADDRESS_MAX,
+  AREA_NAME_MAX,
+  NOTES_MAX,
+  PHONE_PATTERN,
+  type AreaDetails,
+} from '@shared/areas';
+import { CATEGORY_NAME_MAX } from '@shared/categories';
 import { dateStringFromLocal, yearMonthOf, type DateString } from '@shared/dates';
 import { callIpc, useIpcQuery } from '../../app/ipc';
 import { flash } from '../../app/flash';
@@ -161,6 +168,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
             value={name}
             onChange={setName}
             error={shown(fieldProblems.name)}
+            maxLength={AREA_NAME_MAX}
             autoFocus
             dir="auto"
           />
@@ -187,6 +195,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
               value={newCategoryName}
               onChange={setNewCategoryName}
               error={shown(fieldProblems.category)}
+              maxLength={CATEGORY_NAME_MAX}
               dir="auto"
             />
           )}
@@ -216,6 +225,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
             label={`${t('areaForm.address')} ${t('common.optional')}`}
             value={address}
             onChange={setAddress}
+            maxLength={ADDRESS_MAX}
             dir="auto"
           />
           <Checkbox
@@ -236,6 +246,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
               rows={4}
+              maxLength={NOTES_MAX}
               dir="auto"
             />
           </label>

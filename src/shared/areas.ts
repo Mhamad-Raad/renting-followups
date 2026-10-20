@@ -9,6 +9,7 @@ export const PERSON_NAME_MAX = 120;
 export const PHONE_MAX = 30;
 export const ADDRESS_MAX = 300;
 export const NOTES_MAX = 5000;
+export const SEARCH_MAX = 200;
 /** The largest monthly rent accepted, in minor units: far above any real rent. */
 export const MAX_MONTHLY_PRICE = 10_000_000_000_000;
 
@@ -66,7 +67,7 @@ export const renterChangeSchema = z.discriminatedUnion('kind', [
 export type RenterChange = z.infer<typeof renterChangeSchema>;
 
 export const areaListQuerySchema = z
-  .object({ search: z.string().max(200), categoryId: id.nullable() })
+  .object({ search: z.string().max(SEARCH_MAX), categoryId: id.nullable() })
   .strict();
 export type AreaListQuery = z.infer<typeof areaListQuerySchema>;
 

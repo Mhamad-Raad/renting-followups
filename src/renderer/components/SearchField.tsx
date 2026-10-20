@@ -4,10 +4,11 @@ interface SearchFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  maxLength?: number;
 }
 
 /** A big search box; the label is also its placeholder so the purpose is always visible. */
-export function SearchField({ label, value, onChange }: SearchFieldProps) {
+export function SearchField({ label, value, onChange, maxLength }: SearchFieldProps) {
   return (
     <input
       type="search"
@@ -15,6 +16,7 @@ export function SearchField({ label, value, onChange }: SearchFieldProps) {
       aria-label={label}
       placeholder={label}
       value={value}
+      maxLength={maxLength}
       dir="auto"
       autoComplete="off"
       spellCheck={false}

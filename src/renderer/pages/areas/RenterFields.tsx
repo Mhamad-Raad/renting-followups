@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { PERSON_NAME_MAX, PHONE_MAX } from '@shared/areas';
 import type { DateString } from '@shared/dates';
 import { DateField } from '../../components/DateField';
 import { TextField } from '../../components/TextField';
@@ -41,6 +42,7 @@ export function RenterFields({
         value={renter.name}
         onChange={(name) => change({ name })}
         error={nameError}
+        maxLength={PERSON_NAME_MAX}
         dir="auto"
       />
       <TextField
@@ -48,6 +50,7 @@ export function RenterFields({
         value={renter.phone}
         onChange={(phone) => change({ phone })}
         error={phoneError}
+        maxLength={PHONE_MAX}
         inputMode="tel"
         dir="ltr"
       />

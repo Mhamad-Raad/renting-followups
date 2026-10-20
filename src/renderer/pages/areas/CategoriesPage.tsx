@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Category, CategoryColor } from '@shared/categories';
+import { CATEGORY_NAME_MAX, type Category, type CategoryColor } from '@shared/categories';
 import { formatPlain } from '@shared/formatNumber';
 import { callIpc, useIpcQuery } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
@@ -150,6 +150,7 @@ function CategoryForm({ category, onSaved, onCancel }: CategoryFormProps) {
         value={name}
         onChange={setName}
         error={showProblems ? nameProblem : null}
+        maxLength={CATEGORY_NAME_MAX}
         autoFocus
         dir="auto"
       />
