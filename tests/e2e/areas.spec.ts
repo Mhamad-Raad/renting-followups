@@ -172,3 +172,19 @@ test('200 areas open in under a second and Sorani search works across letter var
     removeDataDir(dataDir);
   }
 });
+
+test('phone numbers follow the chosen digit style', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    await createAreasThroughIpc(page, ['Shop 1']);
+    await page.evaluate(() => window.api.invoke('settings:update', { digitStyle: 'arabic' }));
+    await page.reload();
+    await expect(page.getByRole('row').nth(1)).toContainText('٠٧٥٠ ٠');
+    await page.getByRole('link', { name: 'Shop 1' }).click();
+    await expect(page.getByText('٠٧٥٠ ٠').first()).toBeVisible();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
