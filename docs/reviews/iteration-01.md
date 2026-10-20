@@ -18,8 +18,8 @@ Electron 44 + React 19 + TypeScript + Vite (electron-vite) in the `ARCHITECTURE.
 
 ## Regression results
 
-- `npm run check`: typecheck (3 configs), ESLint, Prettier, **130 unit tests** pass.
-- `npm run test:e2e`: **8 end-to-end tests** pass locally (ghost mode) and on Windows in GitHub Actions: Sorani RTL start with sidebar on the right, all five screens, English flips to LTR, dark mode and text size apply and survive a restart, settings stored in the real database inside Electron, invalid IPC input rejected, unknown IPC channel rejected, no network requests and no console errors, window maximized with minimum 1100×700.
+- `npm run check`: typecheck (3 configs), ESLint, Prettier, **125 unit tests** pass.
+- `npm run test:e2e`: **7 end-to-end tests** pass locally (ghost mode) and on Windows in GitHub Actions: Sorani RTL start with sidebar on the right, all five screens, English flips to LTR, dark mode and text size apply and survive a restart, settings stored in the real database inside Electron, invalid IPC input rejected, unknown IPC channel rejected, no network requests and no console errors, window maximized with minimum 1100×700.
 - Development mode checked with the live-reload server: no CSP or console errors, title shows "[DEV]".
 - Checked with temporary test screens (not committed): the confirm dialog (dimmed backdrop, RTL, Enter confirms, Esc cancels, focus on the main button), money display (`1,250,000 دینار`, `1,234.56 دۆلار`), and a deliberate page crash (friendly screen, sidebar still works, Go back works, log contains no name or phone number).
 - Startup with a too-new database: no window, error logged by type only, database unchanged. The message box itself could not be photographed (macOS blocks screen capture here).
