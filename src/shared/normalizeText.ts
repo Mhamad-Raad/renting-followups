@@ -31,3 +31,8 @@ export function normalizeText(text: string): string {
     .replace(/\s+/g, ' ')
     .trim();
 }
+
+/** The digits of a phone number in Western form, so "٠٧٥٠ 123-45" and "075012345" match. */
+export function normalizePhone(phone: string): string {
+  return toWesternDigits(phone).replace(/\D/g, '');
+}
