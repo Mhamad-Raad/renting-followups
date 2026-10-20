@@ -12,6 +12,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { LinkButton } from '../../components/LinkButton';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
+import { PhoneText } from '../../components/PhoneText';
 import { SearchField } from '../../components/SearchField';
 import styles from './AreasPage.module.css';
 import { RentText } from './RentText';
@@ -141,9 +142,7 @@ export function AreasPage() {
                   <td>
                     {area.renterName ?? <span className={styles.muted}>{t('areas.noRenter')}</span>}
                   </td>
-                  <td>
-                    <bdi dir="ltr">{area.renterPhone}</bdi>
-                  </td>
+                  <td>{area.renterPhone && <PhoneText phone={area.renterPhone} />}</td>
                   <td>
                     <RentText price={area.currentPrice} currency={area.currency} />
                   </td>

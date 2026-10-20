@@ -13,6 +13,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { LinkButton } from '../../components/LinkButton';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
+import { PhoneText } from '../../components/PhoneText';
 import styles from './AreaPage.module.css';
 import { parseAreaId } from './parseAreaId';
 import { PriceDialog, type PriceMode } from './PriceDialog';
@@ -105,9 +106,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
             </div>
             <div>
               <dt>{t('area.phone')}</dt>
-              <dd>
-                <bdi dir="ltr">{renter?.phone || '—'}</bdi>
-              </dd>
+              <dd>{renter?.phone ? <PhoneText phone={renter.phone} /> : '—'}</dd>
             </div>
             <div>
               <dt>{t('area.category')}</dt>
@@ -184,7 +183,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
                 {area.renters.map((entry) => (
                   <li key={entry.id}>
                     <span>
-                      <strong>{entry.fullName}</strong> <bdi dir="ltr">{entry.phone}</bdi>
+                      <strong>{entry.fullName}</strong> <PhoneText phone={entry.phone} />
                     </span>
                     <span>
                       {entry.endedOn
