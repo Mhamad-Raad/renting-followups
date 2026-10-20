@@ -38,6 +38,14 @@ Runs typecheck, then lint (ESLint and `prettier --check`), then unit tests. Vite
 | `prettier`, `eslint-config-prettier`                   | One code format; the ESLint config turns off rules that would fight Prettier. |
 | `vitest`                                               | Unit tests (required by the stack).                                           |
 
-### npm install scripts are opt-in
+### npm install scripts are reviewed in `allowScripts`
 
-npm 11 only runs a dependency's install script when it is approved in `package.json` (`allowScripts`). Today the only package with one is `fsevents`, a macOS-only file watcher that Windows never installs, so it stays unapproved and the warning on macOS is harmless. Iteration 1 must explicitly approve `electron` and `better-sqlite3` (and the `electron-builder install-app-deps` step), or the app will not start.
+npm 11 lists every dependency install script that is not reviewed in `package.json` (`allowScripts`). Today this is a warning only; a future npm release will block unreviewed scripts. (Corrected in iteration 1: the first version of this note wrongly said npm already blocks them.)
+
+No dependency needs an install script, so every entry is `false`:
+
+- `better-sqlite3`: ships ready-made native builds for Windows and macOS inside the package, and the same build loads in plain Node and in Electron. Its fallback compile step must never run.
+- `electron-winstaller`: part of the Squirrel installer, which we do not use (we use NSIS).
+- `fsevents`: macOS-only file watcher, optional.
+
+Electron downloads its own binary on first run, so it needs no install script either.
