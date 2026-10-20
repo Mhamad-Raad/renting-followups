@@ -1,0 +1,40 @@
+.group {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.legend {
+  margin-block-end: var(--space-2);
+  padding: 0;
+  font-weight: 600;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* The inner labels (Day, Month, Year) are small helpers under the main label. */
+.row label {
+  font-weight: 400;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.row > * {
+  min-width: 7rem;
+}
+
+.hint {
+  margin-block-start: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.error {
+  margin-block-start: var(--space-2);
+  color: var(--status-late);
+  font-weight: 600;
+}
