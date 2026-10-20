@@ -1,1 +1,37 @@
+# Owner-only notes, never committed
 CLAUDE.md
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+out/
+release/
+coverage/
+*.tsbuildinfo
+
+# Databases, backups and personal data
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+backups/
+rent-backup-*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Environment and secrets
+.env
+.env.*
+
+# Editor and OS files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
