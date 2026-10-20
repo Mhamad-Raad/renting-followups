@@ -55,7 +55,7 @@ function startServices(): { themeMode: ThemeMode } {
 
   const repos = createRepositories(db);
   const auth = createAuthService(repos.credentials);
-  registerIpcHandlers({ settings: repos.settings, auth });
+  registerIpcHandlers({ repos, auth });
   return { themeMode: repos.settings.getAll().themeMode };
 }
 
