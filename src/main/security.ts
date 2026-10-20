@@ -15,12 +15,19 @@ function createUrlAllowList(rendererDirectory: string): (url: string) => boolean
   return (url) => allowedPrefixes.some((prefix) => url.startsWith(prefix));
 }
 
+let isAllowedUrl: (url: string) => boolean = () => false;
+
+/** True when a URL belongs to the app itself, for example the sender of an IPC call. */
+export function isAppUrl(url: string): boolean {
+  return isAllowedUrl(url);
+}
+
 /**
  * Blocks every network request, permission prompt and webview. The app must
  * make zero network requests. Call once, before any window opens.
  */
 export function hardenSession(rendererDirectory: string): void {
-  const isAllowedUrl = createUrlAllowList(rendererDirectory);
+  isAllowedUrl = createUrlAllowList(rendererDirectory);
   const defaultSession = session.defaultSession;
   defaultSession.webRequest.onBeforeRequest((details, callback) => {
     callback({ cancel: !isAllowedUrl(details.url) });

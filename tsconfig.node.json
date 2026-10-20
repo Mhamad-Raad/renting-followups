@@ -4,5 +4,5 @@
     "lib": ["ES2023"],
     "types": ["node", "vite/client"]
   },
-  "include": ["src/main", "src/preload", "src/shared", "tests", "scripts", "*.config.ts"]
+  "include": ["src/main", "src/preload", "src/shared", "tests/unit", "scripts", "*.config.ts"]
 }
