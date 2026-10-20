@@ -13,11 +13,14 @@
   font-size: var(--text-xl);
 }
 
-.error {
-  margin-block-end: var(--space-5);
-  padding: var(--space-4) var(--space-5);
-  border-radius: var(--radius-md);
-  background: var(--status-late-bg);
-  color: var(--status-late);
-  font-weight: 600;
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.dialogForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
 }
