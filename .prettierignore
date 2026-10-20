@@ -1,0 +1,11 @@
+node_modules/
+dist/
+out/
+release/
+coverage/
+package-lock.json
+
+# Specification files are kept exactly as the owner wrote them
+ARCHITECTURE.md
+IMPLEMENTATION.md
+CLAUDE.md
