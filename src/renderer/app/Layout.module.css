@@ -1,0 +1,28 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+}
+
+.main {
+  min-width: 0;
+  padding: var(--space-6) var(--space-7);
+}
+
+.page {
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  animation: page-enter var(--duration-normal) var(--ease) both;
+}
+
+/* A short fade and a small slide in the reading direction. */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--direction-sign) * var(--slide-distance)));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
