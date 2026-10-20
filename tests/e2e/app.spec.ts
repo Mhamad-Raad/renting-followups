@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { createDataDir, launchApp, removeDataDir } from './launch';
+import { createDataDir, launchUnlocked, removeDataDir } from './launch';
 
 async function rootAttributes(page: Page) {
   return page.evaluate(() => {
@@ -24,7 +24,7 @@ async function sidebarSide(page: Page): Promise<'left' | 'right'> {
 
 test('opens in Sorani, right to left, with the five sidebar items', async () => {
   const dataDir = createDataDir();
-  const { app, page } = await launchApp(dataDir);
+  const { app, page } = await launchUnlocked(dataDir);
   try {
     await expect(page.getByRole('navigation').getByRole('link')).toHaveCount(5);
     expect(await rootAttributes(page)).toEqual({
@@ -44,7 +44,7 @@ test('opens in Sorani, right to left, with the five sidebar items', async () => 
 test('switching language, theme and text size applies at once and is remembered', async () => {
   const dataDir = createDataDir();
   try {
-    const first = await launchApp(dataDir);
+    const first = await launchUnlocked(dataDir);
     await first.page.getByRole('navigation').getByRole('link').nth(4).click();
     await first.page.getByRole('radio', { name: 'English', exact: true }).check();
     await expect(first.page.getByRole('heading', { level: 1 })).toHaveText('Settings');
@@ -60,7 +60,7 @@ test('switching language, theme and text size applies at once and is remembered'
     });
     await first.app.close();
 
-    const second = await launchApp(dataDir);
+    const second = await launchUnlocked(dataDir);
     await expect(second.page.getByRole('navigation')).toBeVisible();
     expect(await rootAttributes(second.page)).toEqual({
       lang: 'en',
@@ -76,7 +76,7 @@ test('switching language, theme and text size applies at once and is remembered'
 
 test('every sidebar item opens its screen', async () => {
   const dataDir = createDataDir();
-  const { app, page } = await launchApp(dataDir);
+  const { app, page } = await launchUnlocked(dataDir);
   try {
     const links = page.getByRole('navigation').getByRole('link');
     for (let index = 0; index < 5; index += 1) {
@@ -93,7 +93,7 @@ test('every sidebar item opens its screen', async () => {
 
 test('makes no network requests and logs no errors', async () => {
   const dataDir = createDataDir();
-  const { app, page } = await launchApp(dataDir);
+  const { app, page } = await launchUnlocked(dataDir);
   const requests: string[] = [];
   const consoleErrors: string[] = [];
   page.on('request', (request) => requests.push(request.url()));
@@ -116,7 +116,7 @@ test('makes no network requests and logs no errors', async () => {
 
 test('the window starts maximized and never gets smaller than 1100×700', async () => {
   const dataDir = createDataDir();
-  const { app } = await launchApp(dataDir);
+  const { app } = await launchUnlocked(dataDir);
   try {
     const readWindow = () =>
       app.evaluate(({ BrowserWindow }) => {
