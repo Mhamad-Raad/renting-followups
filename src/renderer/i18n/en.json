@@ -130,7 +130,7 @@
     "categories": "Categories",
     "search": "Search by area, renter or phone",
     "all": "All",
-    "count": "Areas shown: {{count}}",
+    "count": "Areas shown: {{number}}",
     "empty": {
       "title": "No areas yet",
       "body": "Add your first area to start keeping track of rent.",
@@ -226,12 +226,12 @@
     "phone": "New renter phone",
     "startsOn": "Starts on",
     "leftTitle": "The renter left",
-    "leftButton": "The renter left, no new renter",
     "leftOn": "Left on",
     "before_current_renter": "This date is before the current renter started ({{date}}).",
     "no_current_renter": "This area has no renter right now.",
     "saved": "Renter saved.",
-    "leftSaved": "The renter is marked as left."
+    "leftSaved": "The renter is marked as left.",
+    "newRenter": "New renter"
   },
   "categories": {
     "title": "Categories",
@@ -240,7 +240,7 @@
     "name": "Category name",
     "color": "Colour",
     "noColor": "No colour",
-    "areaCount": "Areas: {{count}}",
+    "areaCount": "Areas: {{number}}",
     "empty": "No categories yet. Add one to group your areas, for example “Houses”.",
     "duplicate_name": "A category with this name already exists.",
     "has_areas": "This category still has areas. Move or delete them first.",

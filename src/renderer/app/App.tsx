@@ -3,7 +3,7 @@ import { AuthGate } from './AuthGate';
 import { CrashScreen } from './CrashScreen';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Layout } from './Layout';
-import { NAV_ITEMS } from './routes';
+import { INNER_ROUTES, NAV_ITEMS } from './routes';
 import { SettingsProvider } from './SettingsContext';
 import { StatusScreen } from './StatusScreen';
 
@@ -18,8 +18,8 @@ export function App() {
           <HashRouter>
             <Routes>
               <Route element={<Layout />}>
-                {NAV_ITEMS.map((item) => (
-                  <Route key={item.path} path={item.path} element={item.element} />
+                {[...NAV_ITEMS, ...INNER_ROUTES].map((route) => (
+                  <Route key={route.path} path={route.path} element={route.element} />
                 ))}
                 <Route path="*" element={NAV_ITEMS[0]?.element} />
               </Route>
