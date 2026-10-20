@@ -1,0 +1,62 @@
+.dialog {
+  width: min(32rem, calc(100vw - 4rem));
+  padding: var(--space-6);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-dialog);
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity var(--duration-normal) var(--ease),
+    transform var(--duration-normal) var(--ease),
+    overlay var(--duration-normal) allow-discrete,
+    display var(--duration-normal) allow-discrete;
+}
+
+.dialog:not([open]) {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+@starting-style {
+  .dialog[open] {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.dialog::backdrop {
+  background: var(--color-backdrop);
+  opacity: 1;
+  transition:
+    opacity var(--duration-normal) var(--ease),
+    overlay var(--duration-normal) allow-discrete,
+    display var(--duration-normal) allow-discrete;
+}
+
+.dialog:not([open])::backdrop {
+  opacity: 0;
+}
+
+@starting-style {
+  .dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+.title {
+  font-size: var(--text-xl);
+  margin-block-end: var(--space-4);
+}
+
+.body {
+  font-size: var(--text-md);
+  margin-block-end: var(--space-6);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+}
