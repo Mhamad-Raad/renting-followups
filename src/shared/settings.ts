@@ -29,3 +29,9 @@ export const DEFAULT_SETTINGS: Settings = {
   themeMode: 'light',
   fontSize: 'normal',
 };
+
+/** The settings after a change, validated; an invalid change leaves them as they were. */
+export function applySettingsUpdate(current: Settings, changes: SettingsUpdate): Settings {
+  const merged = settingsSchema.safeParse({ ...current, ...changes });
+  return merged.success ? merged.data : current;
+}

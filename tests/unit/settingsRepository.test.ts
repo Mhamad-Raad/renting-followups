@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { DEFAULT_SETTINGS, settingsUpdateSchema } from '@shared/settings';
+import {
+  applySettingsUpdate,
+  DEFAULT_SETTINGS,
+  settingsUpdateSchema,
+  type SettingsUpdate,
+} from '@shared/settings';
 import { createConnection, type Db } from '../../src/main/db/connection';
 import { migrate } from '../../src/main/db/migrate';
 import { MIGRATIONS } from '../../src/main/db/migrations';
@@ -55,4 +60,18 @@ describe('settings update validation', () => {
       expect(settingsUpdateSchema.safeParse(input).success).toBe(false);
     },
   );
+});
+
+describe('applySettingsUpdate', () => {
+  it('merges a change into the current settings', () => {
+    expect(applySettingsUpdate(DEFAULT_SETTINGS, { fontSize: 'large' })).toEqual({
+      ...DEFAULT_SETTINGS,
+      fontSize: 'large',
+    });
+  });
+
+  it('ignores an invalid change', () => {
+    const invalid = { language: 'fr' } as unknown as SettingsUpdate;
+    expect(applySettingsUpdate(DEFAULT_SETTINGS, invalid)).toEqual(DEFAULT_SETTINGS);
+  });
 });

@@ -31,7 +31,9 @@ export const IPC_CHANNELS = Object.keys(CHANNELS) as IpcChannel[];
 export type IpcErrorCode = 'invalid_input' | 'unexpected';
 export type IpcResult<T> = { ok: true; data: T } | { ok: false; error: IpcErrorCode };
 
-type InvokeArgs<C extends IpcChannel> = IpcInput<C> extends undefined ? [] : [input: IpcInput<C>];
+/** The arguments after the channel name: none when the channel takes no input. */
+export type InvokeArgs<C extends IpcChannel> =
+  IpcInput<C> extends undefined ? [] : [input: IpcInput<C>];
 
 /** What the preload script exposes to the screen as `window.api`. */
 export interface RendererApi {
