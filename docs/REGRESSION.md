@@ -43,3 +43,20 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] Starting the app a second time does not open a second copy.
 - [ ] _manual_ On Windows, starting the app again from the desktop shortcut brings the open window to the front.
 - [ ] _manual_ Show/Hide reveals the typed password; Caps Lock shows a warning under the box.
+
+## Iteration 3: Categories and areas
+
+Automated (`npm run test:e2e`) unless marked _manual_.
+
+- [ ] With no areas, Areas shows one large message and "Add your first area".
+- [ ] Add area: name, category (or a new one typed in place), currency, monthly rent with live thousands separators, rent start month, optional renter, address, contract start and notes; then the area page shows "Area saved."
+- [ ] Missing name or rent, and a duplicate name in the same category, are explained in plain words; nothing is saved.
+- [ ] Change price from a month keeps earlier months' price; both rows show in Price history.
+- [ ] Mark as vacant shows "Vacant" on the list; the button becomes "Set rent again".
+- [ ] Change renter: the new renter shows on the list; the old one stays in Renter history with an end date.
+- [ ] Delete an area (with confirmation), then Settings → Deleted items → Restore brings it back.
+- [ ] 200 areas open in under a second; search with Arabic letters (ي ك ه) finds Kurdish names.
+- [ ] With Arabic-Indic digits chosen, phone numbers show ٠٧٥٠…
+- [ ] _manual_ Categories: add with a colour, rename, recolour; the chip on Areas shows the colour; a category with areas cannot be deleted.
+- [ ] _manual_ The currency cannot be changed on Edit area.
+- [ ] _manual_ In Sorani and Arabic the table, form and dialogs read right to left; in dark mode everything stays readable.
