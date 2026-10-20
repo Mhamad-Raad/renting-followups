@@ -51,7 +51,12 @@ export function parseDateString(
 /** A real calendar date such as 2026-02-28; impossible dates such as 2026-02-30 are rejected. */
 export const dateStringSchema = z.string().refine((value) => parseDateString(value) !== null);
 
-/** Today's date from a JavaScript Date in local time (the Windows clock). Only for callers outside business logic. */
+/** The month of a JavaScript Date in local time. Callers pass the clock in; this never reads it. */
+export function yearMonthOf(date: Date): YearMonth {
+  return { year: date.getFullYear(), month: date.getMonth() + 1 };
+}
+
+/** The date of a JavaScript Date in local time. Callers pass the clock in; this never reads it. */
 export function dateStringFromLocal(date: Date): DateString {
   return toDateString(date.getFullYear(), date.getMonth() + 1, date.getDate());
 }
