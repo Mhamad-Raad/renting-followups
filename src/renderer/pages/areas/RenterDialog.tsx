@@ -76,7 +76,7 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
     <Form className={styles.dialogForm} onSubmit={() => void submit()}>
       {current && (
         <ChoiceGroup
-          label={t('renterDialog.title')}
+          label={t('renterDialog.what')}
           value={kind}
           choices={[
             { value: 'new', label: t('renterDialog.newRenter') },

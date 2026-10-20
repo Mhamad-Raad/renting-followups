@@ -231,7 +231,8 @@
     "no_current_renter": "This area has no renter right now.",
     "saved": "Renter saved.",
     "leftSaved": "The renter is marked as left.",
-    "newRenter": "New renter"
+    "newRenter": "New renter",
+    "what": "What happened?"
   },
   "categories": {
     "title": "Categories",
