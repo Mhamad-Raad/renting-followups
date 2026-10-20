@@ -182,7 +182,8 @@
       "duplicate_name": "Another area in this category already has this name. Please choose another name.",
       "category_not_found": "That category no longer exists. Please choose another one.",
       "not_found": "This area was not found. It may have been deleted.",
-      "duplicate_category": "A category with this name already exists. Choose it from the list."
+      "duplicate_category": "A category with this name already exists. Choose it from the list.",
+      "renterNameKept": "The renter’s name cannot be empty. If this renter left, use Change renter on the area page."
     },
     "saved": "Area saved."
   },

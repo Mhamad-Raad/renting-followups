@@ -88,9 +88,11 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
         : null,
     phone: PHONE_PATTERN.test(renter.phone) ? null : t('areaForm.problems.phone'),
     renterName:
-      renter.name.trim() === '' && renter.phone.trim() !== ''
-        ? t('areaForm.problems.renterNameNeeded')
-        : null,
+      currentRenter && renter.name.trim() === ''
+        ? t('areaForm.problems.renterNameKept')
+        : renter.name.trim() === '' && renter.phone.trim() !== ''
+          ? t('areaForm.problems.renterNameNeeded')
+          : null,
   };
   const shown = (message: string | null) => (showProblems ? message : null);
 
