@@ -1,0 +1,22 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  min-height: 100vh;
+  padding: var(--space-6);
+  font-size: var(--text-lg);
+  text-align: center;
+}
+
+/* Loading is usually instant; only show the message if it takes a noticeable moment. */
+.delayed {
+  animation: appear var(--duration-normal) var(--ease) 400ms both;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "app": {
+    "name": "Rent Tracker"
+  },
+  "nav": {
+    "label": "Main menu",
+    "home": "Home",
+    "areas": "Areas",
+    "reports": "Reports",
+    "notifications": "Notifications",
+    "settings": "Settings"
+  },
+  "pages": {
+    "home": { "title": "Home" },
+    "areas": { "title": "Areas" },
+    "reports": { "title": "Reports" },
+    "notifications": { "title": "Notifications" },
+    "settings": { "title": "Settings" },
+    "comingSoon": "This screen will be ready in a later step."
+  },
+  "settings": {
+    "language": "Language",
+    "digitStyle": "Number style",
+    "appearance": "Appearance",
+    "themeMode": "Light or dark",
+    "light": "Light",
+    "dark": "Dark",
+    "fontSize": "Text size",
+    "fontSizes": {
+      "small": "Small",
+      "normal": "Normal",
+      "large": "Large",
+      "extraLarge": "Extra large"
+    },
+    "saved": "Saved.",
+    "saveFailed": "The setting could not be saved. Please try again."
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "close": "Close",
+    "yes": "Yes",
+    "loading": "Loading…",
+    "tryAgain": "Try again"
+  },
+  "currency": {
+    "IQD": "IQD",
+    "USD": "USD"
+  },
+  "errors": {
+    "invalid_input": "Some information is not correct. Please check it and try again.",
+    "unexpected": "Something went wrong. Your data is safe. Please try again."
+  },
+  "crash": {
+    "title": "Something went wrong.",
+    "body": "Your data is safe. You can go back and continue working.",
+    "goBack": "Go back"
+  },
+  "startup": {
+    "failed": "Rent Tracker could not open its data. Your data has not been changed. Please close the app and open it again."
+  }
+}

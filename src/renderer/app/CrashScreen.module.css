@@ -1,0 +1,26 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  max-width: 36rem;
+  margin: var(--space-7) auto;
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.icon {
+  width: 3rem;
+  height: 3rem;
+  color: var(--status-due);
+}
+
+.title {
+  font-size: var(--text-2xl);
+}
+
+.body {
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+  margin-block-end: var(--space-4);
+}

@@ -1,0 +1,62 @@
+/*
+ * Sizes, spacing and motion shared by every screen. Sizes are in rem, so the
+ * Font size setting (set on <html>) scales the whole interface together.
+ */
+:root {
+  --font-family: 'Segoe UI', Tahoma, 'Noto Sans Arabic', 'Geeza Pro', sans-serif;
+  --font-size-root: 18px;
+
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.6rem;
+  --text-2xl: 2rem;
+  --line-height: 1.6;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* Large, easy targets: never below 48px, and growing with the font size. */
+  --control-height: max(48px, 2.75rem);
+  --sidebar-width: 15rem;
+  --content-max-width: 72rem;
+  --focus-ring: 0 0 0 3px var(--color-focus);
+
+  --duration-fast: 150ms;
+  --duration-normal: 220ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --slide-distance: 8px;
+  /* Flips slide animations so they follow the reading direction. */
+  --direction-sign: 1;
+}
+
+:root[dir='rtl'] {
+  --direction-sign: -1;
+}
+
+:root[data-font-size='small'] {
+  --font-size-root: 16px;
+}
+:root[data-font-size='large'] {
+  --font-size-root: 20px;
+}
+:root[data-font-size='extraLarge'] {
+  --font-size-root: 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 1ms;
+    --duration-normal: 80ms;
+    --slide-distance: 0px;
+  }
+}
