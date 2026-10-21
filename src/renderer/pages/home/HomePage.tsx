@@ -154,8 +154,10 @@ function AttentionRow({ item }: { item: AttentionItem }) {
         )}
       </div>
       <div className={styles.owed}>
+        {/* A label above the amount reads correctly in every language's word order. */}
+        <span className={styles.second}>{t('home.owes')}</span>
         <strong>
-          {t('home.owes')} <MoneyText amount={standing.owed} currency={item.currency} />
+          <MoneyText amount={standing.owed} currency={item.currency} />
         </strong>
         {standing.lateMonths > 0 ? (
           <StatusPill status="late">

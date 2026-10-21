@@ -349,7 +349,7 @@
     "lateAreas": "Late areas",
     "attention": "Needs attention now",
     "attentionNone": "Nothing needs attention. All rent is paid up to this month.",
-    "owes": "Owes",
+    "owes": "Still owes",
     "lateMonths": "Late months: {{number}}",
     "dueNow": "This month is due",
     "chooseArea": "Choose the area that paid, then press \"Record payment\".",
