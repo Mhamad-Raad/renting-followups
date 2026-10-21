@@ -22,6 +22,8 @@ The key words of the app in Sorani, English and Arabic. Every translation uses t
 | Late                    | دواکەوتوو          | متأخر            | A past month not fully paid (red).                                                  |
 | Upcoming                | داهاتوو            | قادم             | A future month with nothing paid yet (grey).                                        |
 | Vacant                  | بەتاڵ              | شاغر             | An area with no rent for now; never late.                                           |
+| Not started             | دەستی پێنەکردووە   | لم يبدأ          | A month before the area's rent started; nothing is expected (hatched).              |
+| Nothing due             | هیچ داواکراو نییە  | لا شيء مستحق     | A year with no rent expected up to now, for example rent starting later.            |
 | Report                  | ڕاپۆرت             | تقرير            | A printable table of areas and totals.                                              |
 | Notifications           | ئاگادارکردنەوەکان  | التنبيهات        | Reminders about late rent and backups.                                              |
 | Settings                | ڕێکخستنەکان        | الإعدادات        | Language, appearance, printing, backup, security.                                   |

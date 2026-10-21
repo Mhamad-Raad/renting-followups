@@ -139,10 +139,9 @@
     "noMatch": "No areas match. Try another word or choose All.",
     "columns": {
       "name": "Area",
-      "category": "Category",
       "renter": "Renter",
-      "phone": "Phone",
-      "rent": "Monthly rent"
+      "rent": "Monthly rent",
+      "thisYear": "This year"
     },
     "vacant": "Vacant",
     "notStarted": "Rent not started yet",
@@ -264,5 +263,25 @@
     "not_found": "This item was not found.",
     "open": "Deleted items",
     "back": "Settings"
+  },
+  "months": {
+    "title": "Months of {{year}}",
+    "box": "Month {{month}}: {{status}}",
+    "status": {
+      "paid": "Paid",
+      "due": "Due",
+      "partial": "Partly paid",
+      "late": "Late",
+      "upcoming": "Upcoming",
+      "vacant": "Vacant",
+      "notStarted": "Not started"
+    },
+    "summary": {
+      "late": "Late",
+      "due": "Due",
+      "partial": "Partly paid",
+      "paid": "Paid",
+      "nothing_due": "Nothing due"
+    }
   }
 }
