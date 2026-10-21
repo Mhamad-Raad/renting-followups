@@ -234,3 +234,28 @@ Search runs in the main process (SQL `LIKE` on the normalized columns, with `%` 
 ### Test setup
 
 Vitest's persistent module cache is turned off: it keys files by their own content, so the migration list (built from the folder's `.sql` files) did not see a newly added migration file.
+
+## Iteration 4: Month status engine
+
+### Where the logic lives
+
+`src/main/services/monthStatus.ts` is the only code that decides a month's status, the yearly figures and the year's summary word. The main process works them out and sends them to the screen ready to show (`areas:list` carries the current year's 12 boxes; `areas:year` gives any year of one area). The screen only maps a status to a colour, in one stylesheet (`MonthBoxes.module.css`). Shared types are in `src/shared/months.ts`.
+
+### Rules as built
+
+- Status uses the month only, not the day: a month turns late on the 1st of the next month.
+- A month with money on it that later became vacant (price 0) is not applicable and counts for nothing; the warning before such a change arrives in iteration 6.
+- "Received" in the yearly figures is capped per month at the rent, as the spec asks; allocation (iteration 5) never fills a month past its rent anyway.
+- Year summary word (Areas list): **Late** if any month is late, else **Due** if this month is not fully paid, else **Partly paid** if a future month is part-paid, else **Paid** if any month is paid, else **Nothing due** (rent not started, or vacant all year so far). The Reports "Partial" filter (iteration 7) will be Due or Partly paid.
+- A month that is not applicable says why: **Vacant** (price 0) or **Not started** (before "Rent starts from").
+
+### Screens
+
+- Areas list: the category moved under the area name and the phone under the renter's name, and the status word sits under the month strip, so the table fits a 1100px window. With extra-large text only the table scrolls sideways, never the page.
+- The compact strip shows a symbol in each box (✓ paid, ! late, • due, ½ partly paid, – vacant or not started, empty for upcoming), with the full words as each box's label. The large boxes show month number, amount paid and the word.
+- The area page shows this year's 12 boxes; the year selector, figures and receipts come in iteration 6.
+
+### Not yet
+
+- Until payments exist (iteration 5) nothing is paid, so every past month with rent shows as **Late**.
+- The "computer date looks wrong" warning needs the latest payment date, so it is added with payments in iteration 5.

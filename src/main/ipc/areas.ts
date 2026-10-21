@@ -3,6 +3,7 @@ import {
   areaCreateSchema,
   areaListQuerySchema,
   areaUpdateSchema,
+  areaYearQuerySchema,
   priceChangeSchema,
   renterChangeSchema,
 } from '@shared/areas';
@@ -14,6 +15,9 @@ import { handle } from './handle';
 export function registerAreaIpc({ areas, categories }: Repositories): void {
   handle('areas:list', areaListQuerySchema, (query) => areas.list(query, currentYearMonth()));
   handle('areas:get', idInputSchema, ({ id }) => areas.get(id));
+  handle('areas:year', areaYearQuerySchema, ({ id, year }) =>
+    areas.year(id, year, currentYearMonth()),
+  );
   handle('areas:create', areaCreateSchema, (input) => areas.create(input));
   handle('areas:update', areaUpdateSchema, (input) => areas.update(input));
   handle('areas:changePrice', priceChangeSchema, (input) => areas.changePrice(input));

@@ -14,6 +14,7 @@ import type {
   AreaListQuery,
   AreaSaveResult,
   AreaUpdate,
+  AreaYearQuery,
   DeletedItems,
   PriceChange,
   PriceChangeResult,
@@ -29,6 +30,7 @@ import type {
   CategoryUpdate,
   IdInput,
 } from './categories';
+import type { AreaYear } from './months';
 import type { Settings, SettingsUpdate } from './settings';
 
 /** A renderer crash report: error type and stack frames, never the message. */
@@ -58,6 +60,7 @@ export interface IpcContract {
   'categories:restore': { input: IdInput; output: RestoreResult };
   'areas:list': { input: AreaListQuery; output: AreaListItem[] };
   'areas:get': { input: IdInput; output: AreaDetails | null };
+  'areas:year': { input: AreaYearQuery; output: AreaYear | null };
   'areas:create': { input: AreaCreate; output: AreaSaveResult };
   'areas:update': { input: AreaUpdate; output: AreaSaveResult };
   'areas:changePrice': { input: PriceChange; output: PriceChangeResult };
@@ -93,6 +96,7 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'categories:restore': false,
   'areas:list': false,
   'areas:get': false,
+  'areas:year': false,
   'areas:create': false,
   'areas:update': false,
   'areas:changePrice': false,

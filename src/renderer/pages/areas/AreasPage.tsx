@@ -10,6 +10,7 @@ import { useDebouncedValue } from '../../app/useDebouncedValue';
 import { CategoryDot } from '../../components/CategoryDot';
 import { EmptyState } from '../../components/EmptyState';
 import { LinkButton } from '../../components/LinkButton';
+import { MonthBoxes, YearSummaryText } from '../../components/MonthBoxes';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { PhoneText } from '../../components/PhoneText';
@@ -31,6 +32,8 @@ export function AreasPage() {
   const categories = useIpcQuery('categories:list');
   const areas = useIpcQuery('areas:list', { search: query, categoryId });
 
+  // The list shows the current year; the main process decides each month's status.
+  const year = new Date().getFullYear();
   const collator = useMemo(() => new Intl.Collator(settings.language), [settings.language]);
   const sorted = useMemo<AreaListItem[]>(
     () =>
@@ -116,47 +119,61 @@ export function AreasPage() {
         {sorted.length === 0 ? (
           <EmptyState title={t('areas.noMatch')} />
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>{t('areas.columns.name')}</th>
-                <th>{t('areas.columns.category')}</th>
-                <th>{t('areas.columns.renter')}</th>
-                <th>{t('areas.columns.phone')}</th>
-                <th>{t('areas.columns.rent')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((area) => (
-                <tr key={area.id} onClick={() => void navigate(`/areas/${area.id}`)}>
-                  <td>
-                    <Link
-                      to={`/areas/${area.id}`}
-                      className={styles.name}
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      {area.name}
-                    </Link>
-                  </td>
-                  <td>
-                    <span className={styles.category}>
-                      <CategoryDot color={area.categoryColor} />
-                      {area.categoryName}
-                    </span>
-                  </td>
-                  <td>
-                    {area.renterName ?? <span className={styles.muted}>{t('areas.noRenter')}</span>}
-                  </td>
-                  <td className={styles.number}>
-                    {area.renterPhone && <PhoneText phone={area.renterPhone} />}
-                  </td>
-                  <td className={styles.number}>
-                    <RentText price={area.currentPrice} currency={area.currency} />
-                  </td>
+          <div className={styles.tableFrame}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>{t('areas.columns.name')}</th>
+                  <th>{t('areas.columns.renter')}</th>
+                  <th>{t('areas.columns.rent')}</th>
+                  <th>{t('areas.columns.thisYear')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {sorted.map((area) => (
+                  <tr key={area.id} onClick={() => void navigate(`/areas/${area.id}`)}>
+                    <td>
+                      <Link
+                        to={`/areas/${area.id}`}
+                        className={styles.name}
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        {area.name}
+                      </Link>
+                      <span className={`${styles.second} ${styles.category}`}>
+                        <CategoryDot color={area.categoryColor} />
+                        {area.categoryName}
+                      </span>
+                    </td>
+                    <td>
+                      {area.renterName ?? (
+                        <span className={styles.muted}>{t('areas.noRenter')}</span>
+                      )}
+                      {area.renterPhone && (
+                        <span className={`${styles.second} ${styles.number}`}>
+                          <PhoneText phone={area.renterPhone} />
+                        </span>
+                      )}
+                    </td>
+                    <td className={styles.number}>
+                      <RentText price={area.currentPrice} currency={area.currency} />
+                    </td>
+                    <td>
+                      <div className={styles.year}>
+                        <MonthBoxes
+                          boxes={area.months}
+                          year={year}
+                          currency={area.currency}
+                          compact
+                        />
+                        <YearSummaryText summary={area.summary} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </>

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import type { AreaDetails } from '@shared/areas';
 import { formatDate, formatYearMonth, yearMonthOf } from '@shared/dates';
+import { formatPlain } from '@shared/formatNumber';
 import { priceForMonth } from '@shared/prices';
 import { callIpc, useIpcQuery } from '../../app/ipc';
 import { flash, useFlashNotice } from '../../app/flash';
@@ -11,6 +12,7 @@ import { BigButton } from '../../components/BigButton';
 import { CategoryDot } from '../../components/CategoryDot';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { LinkButton } from '../../components/LinkButton';
+import { MonthBoxes } from '../../components/MonthBoxes';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { PhoneText } from '../../components/PhoneText';
@@ -54,7 +56,9 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
-  const price = priceForMonth(area.prices, yearMonthOf(new Date()));
+  const today = yearMonthOf(new Date());
+  const price = priceForMonth(area.prices, today);
+  const months = useIpcQuery('areas:year', { id: area.id, year: today.year });
   const renter = area.renters.find((entry) => entry.endedOn === null) ?? null;
   const date = (value: string) => formatDate(value, settings.digitStyle);
 
@@ -63,6 +67,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
     setProblem(null);
     setNotice(message);
     onChanged();
+    months.refresh();
   };
 
   const remove = async () => {
@@ -157,6 +162,20 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
             {t('area.changeRenter')}
           </BigButton>
         </div>
+
+        {months.state.status === 'error' && <Notice tone="error">{t('errors.unexpected')}</Notice>}
+        {months.state.status === 'ready' && months.state.data && (
+          <section className={styles.card}>
+            <h2 className={styles.heading}>
+              {t('months.title', { year: formatPlain(today.year, settings.digitStyle) })}
+            </h2>
+            <MonthBoxes
+              boxes={months.state.data.boxes}
+              year={today.year}
+              currency={area.currency}
+            />
+          </section>
+        )}
 
         <div className={styles.histories}>
           <details className={styles.card} open>
