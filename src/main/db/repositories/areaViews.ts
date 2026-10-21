@@ -89,7 +89,6 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
       return areaYear(prices.forArea(id), paid.inAreaYear(id, year), year, today, month);
     },
 
-    /** Every area in use with this year's figures and its standing today, for Home. */
     /** Every area in use with its whole price and payment history, for the reminders. */
     reminderAreas(): ReminderArea[] {
       const pricesByArea = prices.forActiveAreas();
@@ -107,6 +106,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
         }));
     },
 
+    /** Every area in use with this year's figures and its standing today, for Home. */
     overviews(today: YearMonth): (AttentionItem & AreaOverview)[] {
       const pricesByArea = prices.forActiveAreas();
       const historyByArea = paid.historyForActiveAreas();

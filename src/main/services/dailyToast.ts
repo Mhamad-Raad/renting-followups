@@ -12,6 +12,8 @@ const CHECK_EVERY_MS = 60 * 60 * 1000;
 
 let timer: NodeJS.Timeout | null = null;
 let lastShownOn: DateString | null = null;
+// Held until clicked or closed: an unreferenced notification can be collected, losing its click.
+let shown: Notification | null = null;
 
 export interface DailyToastOptions {
   /** How many reminders there are right now (the same list as the popup). */
@@ -30,7 +32,15 @@ export function startDailyToast({ countReminders, texts, onClick }: DailyToastOp
     const count = countReminders();
     if (count === 0) return;
     const notification = new Notification(texts(count));
-    notification.once('click', onClick);
+    const release = () => {
+      if (shown === notification) shown = null;
+    };
+    notification.once('click', () => {
+      release();
+      onClick();
+    });
+    notification.once('close', release);
+    shown = notification;
     notification.show();
     lastShownOn = today;
   }, CHECK_EVERY_MS);
@@ -40,4 +50,5 @@ export function startDailyToast({ countReminders, texts, onClick }: DailyToastOp
 export function stopDailyToast(): void {
   if (timer) clearInterval(timer);
   timer = null;
+  shown = null;
 }
