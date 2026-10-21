@@ -35,7 +35,12 @@ function ReportView({ initialFilters }: { initialFilters: ReportFilters | undefi
   const [filters, setFilters] = useState<ReportFilters>(initialFilters ?? DEFAULT_REPORT_FILTERS);
   const [excludedIds, setExcludedIds] = useState<readonly number[]>([]);
   const categories = useIpcQuery('categories:list');
-  const report = useIpcQuery('reports:build', { year, ...filters, excludedIds: [...excludedIds] });
+  const report = useIpcQuery('reports:build', {
+    year,
+    ...filters,
+    excludedIds: [...excludedIds],
+    onlyIds: null,
+  });
 
   // Saved only when the owner changes a filter, so opening the page never overwrites them.
   const changeFilters = (change: Partial<ReportFilters>) => {

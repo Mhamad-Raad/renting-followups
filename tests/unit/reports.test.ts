@@ -54,6 +54,7 @@ const build = (query: Partial<ReportQuery> = {}) =>
       currency: null,
       status: 'all',
       excludedIds: [],
+      onlyIds: null,
       ...query,
     },
     TODAY,
@@ -118,6 +119,12 @@ describe('reports', () => {
     expect(report.rows.map((row) => row.name)).toEqual(['Shop 2']);
     expect(report.candidates.map((c) => c.name).sort()).toEqual(['Shop 1', 'Shop 2']);
     expect(report.totals[0]?.areas).toBe(1);
+  });
+
+  it('can be limited to chosen areas, for Print selected and Print this area', () => {
+    area('Shop 1', shops);
+    const two = area('Shop 2', shops);
+    expect(names({ onlyIds: [two] })).toEqual(['Shop 2']);
   });
 
   it('leaves out deleted areas', () => {

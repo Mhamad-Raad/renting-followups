@@ -61,11 +61,12 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
     build(query: ReportQuery, today: YearMonth): Report {
       const areas = selectAreas.all({ categoryId: query.categoryId, currency: query.currency });
       const excluded = new Set(query.excludedIds);
+      const only = query.onlyIds && new Set(query.onlyIds);
       const pricesByArea = prices.forActiveAreas();
       const paidByArea = paid.inYear(query.year);
       const rows: ReportRow[] = [];
       for (const area of areas) {
-        if (excluded.has(area.id)) continue;
+        if (excluded.has(area.id) || (only && !only.has(area.id))) continue;
         const year = areaYear(
           pricesByArea.get(area.id) ?? [],
           paidByArea.get(area.id) ?? NO_PAYMENTS,
