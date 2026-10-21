@@ -400,6 +400,29 @@
     "fileReceipt": "Receipt {{number}}",
     "fileReport": "Rent report {{year}}",
     "pdfFiles": "PDF files",
-    "excelFiles": "Excel files"
+    "excelFiles": "Excel files",
+    "actions": {
+      "print": "Print",
+      "pdf": "Export to PDF",
+      "excel": "Export to Excel",
+      "printReceipt": "Print receipt",
+      "saveAndPrint": "Save and print receipt",
+      "printSelected": "Print selected",
+      "exportSelected": "Export selected",
+      "printReport": "Print report",
+      "select": "Select {{name}}",
+      "selectAll": "Select all shown",
+      "printArea": "Print this area"
+    },
+    "results": {
+      "printed": "Sent to the printer.",
+      "savedPdf": "Saved as a PDF file.",
+      "savedExcel": "Saved as an Excel file.",
+      "busy": "Another print is still being prepared. Please wait a moment and try again.",
+      "failed": "Printing did not work. Please check the printer and try again.",
+      "past_record": "A past record has no receipt number, so it cannot be printed as a receipt.",
+      "not_found": "This receipt could not be found. It may have been cancelled."
+    },
+    "selectedCount": "Selected: {{number}}"
   }
 }

@@ -400,6 +400,29 @@
     "fileReceipt": "وصل {{number}}",
     "fileReport": "تقرير الإيجارات {{year}}",
     "pdfFiles": "ملفات PDF",
-    "excelFiles": "ملفات Excel"
+    "excelFiles": "ملفات Excel",
+    "actions": {
+      "print": "طباعة",
+      "pdf": "تصدير إلى PDF",
+      "excel": "تصدير إلى Excel",
+      "printReceipt": "طباعة الوصل",
+      "saveAndPrint": "حفظ وطباعة الوصل",
+      "printSelected": "طباعة المحدد",
+      "exportSelected": "تصدير المحدد",
+      "printReport": "طباعة التقرير",
+      "select": "تحديد {{name}}",
+      "selectAll": "تحديد كل المعروض",
+      "printArea": "طباعة هذا العقار"
+    },
+    "results": {
+      "printed": "أُرسل إلى الطابعة.",
+      "savedPdf": "حُفظ كملف PDF.",
+      "savedExcel": "حُفظ كملف Excel.",
+      "busy": "طباعة أخرى ما زالت قيد التحضير. يرجى الانتظار قليلاً والمحاولة مرة أخرى.",
+      "failed": "لم تنجح الطباعة. يرجى التحقق من الطابعة والمحاولة مرة أخرى.",
+      "past_record": "السجل السابق ليس له رقم وصل، لذا لا يمكن طباعته كوصل.",
+      "not_found": "لم يُعثر على هذا الوصل. ربما أُلغي."
+    },
+    "selectedCount": "المحدد: {{number}}"
   }
 }

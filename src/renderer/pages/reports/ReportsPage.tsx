@@ -6,6 +6,7 @@ import { callIpc, useIpcQuery } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
+import { ReportOutputButtons } from '../../print/ReportOutputButtons';
 import { AreaPicker } from './AreaPicker';
 import { ReportFiltersBar } from './ReportFiltersBar';
 import { ReportTable } from './ReportTable';
@@ -35,12 +36,11 @@ function ReportView({ initialFilters }: { initialFilters: ReportFilters | undefi
   const [filters, setFilters] = useState<ReportFilters>(initialFilters ?? DEFAULT_REPORT_FILTERS);
   const [excludedIds, setExcludedIds] = useState<readonly number[]>([]);
   const categories = useIpcQuery('categories:list');
-  const report = useIpcQuery('reports:build', {
-    year,
-    ...filters,
-    excludedIds: [...excludedIds],
-    onlyIds: null,
-  });
+  const query = useMemo(
+    () => ({ year, ...filters, excludedIds: [...excludedIds], onlyIds: null }),
+    [year, filters, excludedIds],
+  );
+  const report = useIpcQuery('reports:build', query);
 
   // Saved only when the owner changes a filter, so opening the page never overwrites them.
   const changeFilters = (change: Partial<ReportFilters>) => {
@@ -78,6 +78,7 @@ function ReportView({ initialFilters }: { initialFilters: ReportFilters | undefi
       {report.state.status === 'ready' && (
         <>
           <AreaPicker candidates={candidates} excludedIds={excludedIds} onChange={setExcludedIds} />
+          {rows.length > 0 && <ReportOutputButtons query={query} />}
           <ReportTable
             rows={rows}
             totals={report.state.data.totals}
