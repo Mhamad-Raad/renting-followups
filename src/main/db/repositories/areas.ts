@@ -18,7 +18,14 @@ import type { YearMonth } from '@shared/dates';
 import type { AreaYear, StatusChange } from '@shared/months';
 import { normalizePhone, normalizeText } from '@shared/normalizeText';
 import { priceForMonth, withPriceFrom } from '@shared/prices';
-import { areaYear, NO_PAYMENTS, statusChanges } from '../../services/monthStatus';
+import {
+  areaStanding,
+  areaYear,
+  NO_PAYMENTS,
+  statusChanges,
+  type AreaOverview,
+} from '../../services/monthStatus';
+import type { AttentionItem } from '@shared/home';
 import type { PaymentRepository } from './payments';
 import type { Db } from '../connection';
 import type { AuditRepository } from './audit';
@@ -153,6 +160,30 @@ export function createAreaRepository(
     year(id: number, year: number, today: YearMonth, month: number | null = null): AreaYear | null {
       if (!findActive(id)) return null;
       return areaYear(prices.forArea(id), payments.paidInAreaYear(id, year), year, today, month);
+    },
+
+    /** Every area in use with this year's figures and its standing today, for Home. */
+    overviews(today: YearMonth): (AttentionItem & AreaOverview)[] {
+      const pricesByArea = prices.forActiveAreas();
+      const historyByArea = payments.historyForActiveAreas();
+      const paidThisYear = payments.paidInYear(today.year);
+      return selectList
+        .all({ categoryId: null, namePattern: containsPattern(''), phonePattern: null })
+        .map((row) => {
+          const history = pricesByArea.get(row.id) ?? [];
+          const paid = paidThisYear.get(row.id) ?? NO_PAYMENTS;
+          return {
+            id: row.id,
+            name: row.name,
+            categoryName: row.category_name,
+            categoryColor: row.category_color,
+            currency: row.currency,
+            renterName: row.renter_name,
+            renterPhone: row.renter_phone,
+            figures: areaYear(history, paid, today.year, today).figures,
+            standing: areaStanding(history, historyByArea.get(row.id) ?? new Map(), today),
+          };
+        });
     },
 
     get(id: number): AreaDetails | null {

@@ -1,4 +1,6 @@
+import { CURRENCIES, type Currency } from '@shared/currency';
 import { compareYearMonth, fromMonthIndex, monthIndex, type YearMonth } from '@shared/dates';
+import type { CurrencyTotals } from '@shared/home';
 import type {
   AreaStanding,
   AreaYear,
@@ -177,4 +179,36 @@ export function statusChanges(
     if (was !== will) changes.push({ ...month, before: was, after: will });
   }
   return changes;
+}
+
+/** An area as Home needs it: its currency, this year's figures and its standing today. */
+export interface AreaOverview {
+  currency: Currency;
+  figures: YearFigures;
+  standing: AreaStanding;
+}
+
+/** Home's cards: received, still owed and late areas, one set per currency in use. */
+export function totalsByCurrency(areas: readonly AreaOverview[]): CurrencyTotals[] {
+  return CURRENCIES.flatMap((currency) => {
+    const inCurrency = areas.filter((area) => area.currency === currency);
+    if (inCurrency.length === 0) return [];
+    return [
+      {
+        currency,
+        received: inCurrency.reduce((sum, area) => sum + area.figures.received, 0),
+        remaining: inCurrency.reduce((sum, area) => sum + area.figures.remaining, 0),
+        lateAreas: inCurrency.filter((area) => area.standing.lateMonths > 0).length,
+      },
+    ];
+  });
+}
+
+/** "Needs attention now": areas late in any year or due this month, most late months first. */
+export function needsAttention<T extends { standing: AreaStanding }>(areas: readonly T[]): T[] {
+  return areas
+    .filter(({ standing }) => standing.lateMonths > 0 || standing.dueNow)
+    .sort(
+      (a, b) => b.standing.lateMonths - a.standing.lateMonths || b.standing.owed - a.standing.owed,
+    );
 }

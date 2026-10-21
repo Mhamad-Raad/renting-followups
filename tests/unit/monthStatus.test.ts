@@ -7,9 +7,11 @@ import {
   areaYear,
   monthBoxes,
   monthStatus,
+  needsAttention,
   NO_PAYMENTS,
   type PaidHistory,
   statusChanges,
+  totalsByCurrency,
   yearFigures,
   yearSummary,
 } from '../../src/main/services/monthStatus';
@@ -435,5 +437,51 @@ describe('statusChanges', () => {
     const paid = history([[{ year: 2026, month: 4 }, 300_000]]);
     const after = withPriceFrom(before, { year: 2026, month: 4 }, 280_000);
     expect(statusChanges(before, after, paid, { year: 2026, month: 4 }, TODAY)).toEqual([]);
+  });
+});
+
+describe('Home totals and attention list', () => {
+  const overview = (
+    currency: 'IQD' | 'USD',
+    received: number,
+    remaining: number,
+    lateMonths: number,
+    dueNow = false,
+    owed = remaining,
+  ) => ({
+    currency,
+    figures: { rent: RENT, expected: 0, received, remaining },
+    standing: { owed, lateMonths, dueNow },
+  });
+
+  it('adds up each currency on its own and counts late areas', () => {
+    const areas = [
+      overview('USD', 500, 100, 1),
+      overview('IQD', 1000, 0, 0),
+      overview('IQD', 2000, 300, 2),
+    ];
+    expect(totalsByCurrency(areas)).toEqual([
+      { currency: 'IQD', received: 3000, remaining: 300, lateAreas: 1 },
+      { currency: 'USD', received: 500, remaining: 100, lateAreas: 1 },
+    ]);
+  });
+
+  it('leaves out a currency with no areas', () => {
+    expect(totalsByCurrency([overview('IQD', 1, 0, 0)]).map((t) => t.currency)).toEqual(['IQD']);
+    expect(totalsByCurrency([])).toEqual([]);
+  });
+
+  it('lists late and due areas, most late months first, then most owed', () => {
+    const paid = overview('IQD', 0, 0, 0);
+    const due = overview('IQD', 0, 10, 0, true);
+    const late1 = overview('IQD', 0, 10, 1, false, 50);
+    const late1More = overview('IQD', 0, 10, 1, false, 90);
+    const late3 = overview('IQD', 0, 10, 3);
+    expect(needsAttention([paid, due, late1, late3, late1More])).toEqual([
+      late3,
+      late1More,
+      late1,
+      due,
+    ]);
   });
 });

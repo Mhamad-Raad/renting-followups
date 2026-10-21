@@ -248,6 +248,19 @@ describe('editing and cancelling receipts', () => {
     expect(repos.areas.priceChangeImpact({ ...change, areaId: 999 }, TODAY.month)).toBeNull();
   });
 
+  it('gives Home each area\u2019s figures for this year and its standing across years', () => {
+    payOk({ amount: 2 * RENT });
+    const [area] = repos.areas.overviews(TODAY.month);
+    expect(area).toMatchObject({
+      id: areaId,
+      name: 'Shop 1',
+      currency: 'IQD',
+      renterName: 'Karwan Ahmed',
+      figures: { rent: RENT, received: 2 * RENT, remaining: 3 * RENT },
+      standing: { owed: 3 * RENT, lateMonths: 2, dueNow: true },
+    });
+  });
+
   it('knows the latest date money was received', () => {
     expect(repos.payments.latestPaidOn()).toBeNull();
     payOk({ paidOn: '2026-03-02' });

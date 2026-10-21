@@ -31,6 +31,7 @@ import type {
   IdInput,
 } from './categories';
 import type { YearMonth } from './dates';
+import type { HomeSummary } from './home';
 import type { AreaYear, StatusChange } from './months';
 import type {
   AllocationResult,
@@ -89,6 +90,7 @@ export interface IpcContract {
   'payments:update': { input: PaymentUpdate; output: PaymentUpdateResult };
   'payments:void': { input: IdInput; output: PaymentVoidResult };
   'clock:check': { input: undefined; output: { looksWrong: boolean } };
+  'home:summary': { input: undefined; output: HomeSummary };
 }
 export type IpcChannel = keyof IpcContract;
 export type IpcInput<C extends IpcChannel> = IpcContract[C]['input'];
@@ -133,6 +135,7 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'payments:update': false,
   'payments:void': false,
   'clock:check': false,
+  'home:summary': false,
 };
 export const IPC_CHANNELS = Object.keys(OPEN_WHILE_LOCKED) as IpcChannel[];
 
