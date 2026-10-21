@@ -76,7 +76,8 @@
 }
 
 /* The month chosen in the filter: a clear outline, so it stands out without changing its colour. */
-.box[data-selected] {
+.box[data-selected],
+.cell[data-selected] {
   outline: 3px solid var(--color-accent);
   outline-offset: 2px;
 }
@@ -135,4 +136,10 @@
     opacity: 0;
     transform: translateY(var(--slide-distance));
   }
+}
+
+/* The tiny strip cells sit close together: a thinner outline that does not cover the neighbours. */
+.cell[data-selected] {
+  outline-width: 2px;
+  outline-offset: 1px;
 }

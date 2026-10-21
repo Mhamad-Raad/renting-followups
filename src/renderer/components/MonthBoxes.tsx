@@ -75,6 +75,7 @@ export const MonthBoxes = memo(function MonthBoxes({
             key={box.month}
             className={styles.cell}
             data-status={box.status}
+            data-selected={box.month === selected || undefined}
             title={label(box)}
             aria-label={label(box)}
           >

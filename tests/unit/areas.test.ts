@@ -127,9 +127,11 @@ describe('editing areas', () => {
     expect(details?.renters).toHaveLength(1);
     expect(details?.renters[0]?.fullName).toBe('كاروان أحمد');
     // Found by the corrected name typed with Kurdish letters, and by the new phone digits.
-    expect(repos.areas.list({ search: 'کاروان', categoryId: null }, TODAY)).toHaveLength(1);
-    expect(repos.areas.list({ search: '07501112222', categoryId: null }, TODAY)).toHaveLength(1);
-    expect(repos.areas.list({ search: 'دوكاني', categoryId: null }, TODAY)).toHaveLength(1);
+    expect(repos.areaViews.list({ search: 'کاروان', categoryId: null }, TODAY)).toHaveLength(1);
+    expect(repos.areaViews.list({ search: '07501112222', categoryId: null }, TODAY)).toHaveLength(
+      1,
+    );
+    expect(repos.areaViews.list({ search: 'دوكاني', categoryId: null }, TODAY)).toHaveLength(1);
     expect(auditFor(id).at(-1)?.action).toBe('update');
   });
 });
@@ -138,7 +140,7 @@ describe('prices', () => {
   it('changes the price from a month onward and keeps earlier months', () => {
     const id = createArea();
     expect(
-      repos.areas.changePrice(
+      repos.priceChanges.changePrice(
         {
           areaId: id,
           from: { year: 2026, month: 6 },
@@ -164,11 +166,11 @@ describe('prices', () => {
 
   it('replaces the price when changed twice from the same month', () => {
     const id = createArea();
-    repos.areas.changePrice(
+    repos.priceChanges.changePrice(
       { areaId: id, from: { year: 2026, month: 6 }, monthlyPrice: 300_000 },
       TODAY,
     );
-    repos.areas.changePrice(
+    repos.priceChanges.changePrice(
       { areaId: id, from: { year: 2026, month: 6 }, monthlyPrice: 280_000 },
       TODAY,
     );
@@ -177,13 +179,16 @@ describe('prices', () => {
 
   it('marks vacant with 0 and sets rent again later', () => {
     const id = createArea();
-    repos.areas.changePrice({ areaId: id, from: { year: 2026, month: 9 }, monthlyPrice: 0 }, TODAY);
-    expect(repos.areas.list({ search: '', categoryId: null }, TODAY)[0]?.currentPrice).toBe(0);
-    repos.areas.changePrice(
+    repos.priceChanges.changePrice(
+      { areaId: id, from: { year: 2026, month: 9 }, monthlyPrice: 0 },
+      TODAY,
+    );
+    expect(repos.areaViews.list({ search: '', categoryId: null }, TODAY)[0]?.currentPrice).toBe(0);
+    repos.priceChanges.changePrice(
       { areaId: id, from: { year: 2026, month: 10 }, monthlyPrice: 260_000 },
       TODAY,
     );
-    expect(repos.areas.list({ search: '', categoryId: null }, TODAY)[0]?.currentPrice).toBe(
+    expect(repos.areaViews.list({ search: '', categoryId: null }, TODAY)[0]?.currentPrice).toBe(
       260_000,
     );
   });
@@ -191,7 +196,7 @@ describe('prices', () => {
   it('refuses a change before the rent started', () => {
     const id = createArea();
     expect(
-      repos.areas.changePrice(
+      repos.priceChanges.changePrice(
         { areaId: id, from: { year: 2025, month: 12 }, monthlyPrice: 1 },
         TODAY,
       ),
@@ -200,7 +205,9 @@ describe('prices', () => {
 
   it('shows no current price before the rent starts', () => {
     createArea({ rentStartsFrom: { year: 2027, month: 1 } });
-    expect(repos.areas.list({ search: '', categoryId: null }, TODAY)[0]?.currentPrice).toBeNull();
+    expect(
+      repos.areaViews.list({ search: '', categoryId: null }, TODAY)[0]?.currentPrice,
+    ).toBeNull();
   });
 });
 
@@ -209,7 +216,7 @@ describe('month boxes', () => {
 
   it("lists each area with this year's month boxes and summary", () => {
     createArea({ rentStartsFrom: { year: 2026, month: 3 } });
-    const [area] = repos.areas.list({ search: '', categoryId: null }, TODAY);
+    const [area] = repos.areaViews.list({ search: '', categoryId: null }, TODAY);
     expect(statusesOf(area?.months)).toEqual([
       'not_applicable',
       'not_applicable',
@@ -223,8 +230,11 @@ describe('month boxes', () => {
 
   it('follows the price history, including vacant months', () => {
     const id = createArea();
-    repos.areas.changePrice({ areaId: id, from: { year: 2026, month: 6 }, monthlyPrice: 0 }, TODAY);
-    const [area] = repos.areas.list({ search: '', categoryId: null }, TODAY);
+    repos.priceChanges.changePrice(
+      { areaId: id, from: { year: 2026, month: 6 }, monthlyPrice: 0 },
+      TODAY,
+    );
+    const [area] = repos.areaViews.list({ search: '', categoryId: null }, TODAY);
     expect(statusesOf(area?.months)?.slice(4, 7)).toEqual([
       'late',
       'not_applicable',
@@ -234,7 +244,7 @@ describe('month boxes', () => {
 
   it('gives any year of an area, and nothing for a missing or deleted area', () => {
     const id = createArea();
-    const next = repos.areas.year(id, 2027, TODAY);
+    const next = repos.areaViews.year(id, 2027, TODAY);
     expect(next?.year).toBe(2027);
     expect(next?.summary).toBe('nothing_due');
     expect(next?.figures).toEqual({
@@ -243,9 +253,9 @@ describe('month boxes', () => {
       received: 0,
       remaining: 0,
     });
-    expect(repos.areas.year(999, 2026, TODAY)).toBeNull();
+    expect(repos.areaViews.year(999, 2026, TODAY)).toBeNull();
     repos.areas.softDelete(id);
-    expect(repos.areas.year(id, 2026, TODAY)).toBeNull();
+    expect(repos.areaViews.year(id, 2026, TODAY)).toBeNull();
   });
 });
 
@@ -257,7 +267,7 @@ describe('price rows for all areas', () => {
       `INSERT INTO area_prices (area_id, monthly_price, effective_from_year, effective_from_month)
        VALUES (?, 100, 2026, 2)`,
     ).run(id);
-    const rows = repos.areas.overviews(TODAY);
+    const rows = repos.areaViews.overviews(TODAY);
     expect(rows[0]?.standing.lateMonths).toBe(8);
   });
 });
@@ -278,8 +288,8 @@ describe('renters', () => {
       ['Sara Ali', '2026-07-01', null],
       ['Karwan Ahmed', '2026-01-01', '2026-07-01'],
     ]);
-    expect(repos.areas.list({ search: 'karwan', categoryId: null }, TODAY)).toEqual([]);
-    expect(repos.areas.list({ search: 'sara', categoryId: null }, TODAY)).toHaveLength(1);
+    expect(repos.areaViews.list({ search: 'karwan', categoryId: null }, TODAY)).toEqual([]);
+    expect(repos.areaViews.list({ search: 'sara', categoryId: null }, TODAY)).toHaveLength(1);
   });
 
   it('records a renter leaving without a new one', () => {
@@ -287,7 +297,7 @@ describe('renters', () => {
     expect(repos.areas.changeRenter({ kind: 'left', areaId: id, endedOn: '2026-08-31' })).toEqual({
       ok: true,
     });
-    expect(repos.areas.list({ search: '', categoryId: null }, TODAY)[0]?.renterName).toBeNull();
+    expect(repos.areaViews.list({ search: '', categoryId: null }, TODAY)[0]?.renterName).toBeNull();
     expect(repos.areas.changeRenter({ kind: 'left', areaId: id, endedOn: '2026-09-01' })).toEqual({
       ok: false,
       reason: 'no_current_renter',
@@ -320,7 +330,7 @@ describe('searching and filtering', () => {
     });
     createArea({ name: 'Shop 2', renter: null });
     const search = (text: string) =>
-      repos.areas.list({ search: text, categoryId: null }, TODAY).map((area) => area.name);
+      repos.areaViews.list({ search: text, categoryId: null }, TODAY).map((area) => area.name);
     expect(search('خانوو')).toEqual(['خانووی هەولێر']);
     expect(search('هه‌ولێر')).toEqual(['خانووی هەولێر']);
     expect(search('علي كريم'.replace('كريم', 'كەريم'))).toEqual(['خانووی هەولێر']);
@@ -333,10 +343,10 @@ describe('searching and filtering', () => {
   it('treats % and _ in a search as plain characters', () => {
     createArea({ name: '100% Shop' });
     createArea({ name: 'Other' });
-    expect(repos.areas.list({ search: '%', categoryId: null }, TODAY).map((a) => a.name)).toEqual([
-      '100% Shop',
-    ]);
-    expect(repos.areas.list({ search: '_', categoryId: null }, TODAY)).toEqual([]);
+    expect(
+      repos.areaViews.list({ search: '%', categoryId: null }, TODAY).map((a) => a.name),
+    ).toEqual(['100% Shop']);
+    expect(repos.areaViews.list({ search: '_', categoryId: null }, TODAY)).toEqual([]);
   });
 
   it('filters by category', () => {
@@ -345,7 +355,7 @@ describe('searching and filtering', () => {
     if (!houses.ok) throw new Error('category failed');
     repos.areas.create(areaInput(houses.id, { name: 'House 1' }));
     expect(
-      repos.areas.list({ search: '', categoryId: houses.id }, TODAY).map((area) => area.name),
+      repos.areaViews.list({ search: '', categoryId: houses.id }, TODAY).map((area) => area.name),
     ).toEqual(['House 1']);
   });
 
@@ -356,7 +366,7 @@ describe('searching and filtering', () => {
         renter: { fullName: `Renter ${index}`, phone: `0750${index}`, startedOn: '2026-01-01' },
       });
       if (index % 3 === 0) {
-        repos.areas.changePrice(
+        repos.priceChanges.changePrice(
           {
             areaId: index,
             from: { year: 2026, month: 6 },
@@ -367,9 +377,9 @@ describe('searching and filtering', () => {
       }
     }
     const started = performance.now();
-    expect(repos.areas.list({ search: '', categoryId: null }, TODAY)).toHaveLength(200);
+    expect(repos.areaViews.list({ search: '', categoryId: null }, TODAY)).toHaveLength(200);
     expect(
-      repos.areas.list({ search: 'renter 15', categoryId: null }, TODAY).length,
+      repos.areaViews.list({ search: 'renter 15', categoryId: null }, TODAY).length,
     ).toBeGreaterThan(0);
     expect(performance.now() - started).toBeLessThan(100);
   });
@@ -379,7 +389,7 @@ describe('deleting and restoring', () => {
   it('moves an area to Deleted items and brings it back', () => {
     const id = createArea();
     expect(repos.areas.softDelete(id)).toEqual({ ok: true });
-    expect(repos.areas.list({ search: '', categoryId: null }, TODAY)).toEqual([]);
+    expect(repos.areaViews.list({ search: '', categoryId: null }, TODAY)).toEqual([]);
     expect(repos.areas.get(id)).toBeNull();
     expect(repos.areas.listDeleted().map((area) => area.name)).toEqual(['Shop 1']);
 

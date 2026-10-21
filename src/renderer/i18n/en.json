@@ -354,5 +354,32 @@
     "dueNow": "This month is due",
     "chooseArea": "Choose the area that paid, then press \"Record payment\".",
     "remainingHint": "Still owed counts rent up to this month."
+  },
+  "reports": {
+    "filters": "Report filters",
+    "status": "Status",
+    "statuses": {
+      "all": "All",
+      "paid": "Paid",
+      "partial": "Due or partly paid",
+      "late": "Late"
+    },
+    "picker": {
+      "title": "Areas to include: {{chosen}} of {{total}}",
+      "all": "Select all",
+      "none": "Select none"
+    },
+    "columns": {
+      "area": "Area",
+      "renter": "Renter",
+      "rent": "Monthly rent",
+      "received": "Received",
+      "remaining": "Still owed",
+      "money": "Money"
+    },
+    "total": "Total {{currency}} · Areas: {{number}}",
+    "empty": "No areas match these filters.",
+    "footer": "\"Received\" counts money by the rent month it paid, not the day it arrived: rent for month {{december}} paid in month {{november}} counts toward that month {{december}}. \"Still owed\" counts rent up to this month.",
+    "caption": "Report: one row per area, then the totals per currency"
   }
 }

@@ -310,3 +310,14 @@ Vitest's persistent module cache is turned off: it keys files by their own conte
 - A receipt for later months (for example paid in advance for month 8) stays with those months rather than being pulled back to fill earlier gaps.
 - If the money would have nowhere to go (vacant from then on, or beyond the 24-month limit), the change is refused in plain words: cancel or edit those receipts first.
 - The warning lists every month that gains or loses money or changes colour ("Month 4/2026: Paid 250,000 → Late 200,000"), worked out by the same code that saves. The re-share is written in the same transaction as the new price, and the activity log names the re-shared receipts.
+
+## Iteration 7: Reports
+
+- The report is built in the main process in one pass: one query for the areas (with category, current renter and notes), one for all price rows, one for the year's payments. Figures, the status filter and the totals per currency all come from `monthStatus.ts`.
+- **Status filter:** Late = at least one late month; Partial ("Due or partly paid") = at least one orange month and none late; Paid = no late or due month and at least one paid month (so a year with no rent yet is not called Paid). With a month chosen, that month's own status decides, and the figures and totals are for that month.
+- **Totals** per currency (IQD first), each with its number of areas; currencies are never added together. The "price" total is the sum of the rent shown in each row.
+- **Remembered filters:** month, category, currency and status, in the `report_filters_last_used` setting; the year always starts at the current one.
+- **Area picker:** folded away by default; it lists the areas matching the category and currency filters. It records the areas left out, so new areas are included until unticked. Not remembered between visits.
+- **Screen layout:** to fit a normal window without sideways scrolling, the category and notes sit under the area name, the phone under the renter, rent / received / still owed are labelled lines in one "Money" column, and the status word sits under the month strip. Printing and Excel (iteration 8) use separate columns on landscape paper.
+- **Print, Export PDF and Export Excel** buttons arrive with iteration 8.
+- The areas repository was split into `areas.ts` (create, edit, renters, delete, restore), `areaViews.ts` (list, year, Home overview) and `priceChanges.ts` (price change and its warning), each under 250 lines.

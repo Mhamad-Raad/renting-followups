@@ -17,10 +17,10 @@ const toAttentionItem = (area: AttentionItem): AttentionItem => ({
   standing: area.standing,
 });
 
-export function registerHomeIpc({ areas }: Repositories): void {
+export function registerHomeIpc({ areaViews }: Repositories): void {
   handle('home:summary', z.undefined(), (): HomeSummary => {
     const today = currentYearMonth();
-    const overviews = areas.overviews(today);
+    const overviews = areaViews.overviews(today);
     return {
       year: today.year,
       totals: totalsByCurrency(overviews),
