@@ -303,3 +303,10 @@ Vitest's persistent module cache is turned off: it keys files by their own conte
 - Needs attention is ordered by most late months, then most owed.
 - Home's **Record payment** shortcut opens Areas with "Choose the area that paid"; the button on each attention row opens that area with the payment form already open (`?pay=1`).
 - **Print report** on Home arrives with printing in iteration 8.
+
+### Price changes share paid money out again (owner's decision after the review)
+
+- When the rent changes from a month, the money of every receipt that paid that month or later is shared out again with the new rent: oldest receipt first, each filling oldest month first from the later of the change month and the month it originally started at. A higher rent fills fewer months; a lower rent moves the extra on. Receipts keep their number and total; only their months change. Months before the change and cancelled receipts are untouched.
+- A receipt for later months (for example paid in advance for month 8) stays with those months rather than being pulled back to fill earlier gaps.
+- If the money would have nowhere to go (vacant from then on, or beyond the 24-month limit), the change is refused in plain words: cancel or edit those receipts first.
+- The warning lists every month that gains or loses money or changes colour ("Month 4/2026: Paid 250,000 → Late 200,000"), worked out by the same code that saves. The re-share is written in the same transaction as the new price, and the activity log names the re-shared receipts.

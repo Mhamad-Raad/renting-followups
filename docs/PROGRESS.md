@@ -2,7 +2,7 @@
 
 ## Current iteration
 
-**Iteration 6: Area page and Home**, on branch `iter-06-area-page`. Built, reviewed, then fully reviewed again on the owner's request (`docs/reviews/review-2026-10-21.md`), fixes pushed; waiting for the owner to say "continue".
+**Iteration 6: Area page and Home**, on branch `iter-06-area-page`. Built, reviewed, then fully reviewed again on the owner's request (`docs/reviews/review-2026-10-21.md`), fixes pushed; then, on the owner's decision, price changes share paid money out again; waiting for the owner to say "continue".
 
 ## Done
 
@@ -20,8 +20,6 @@
 - Then iteration 7 (reports): yearly report table for all areas with filters (category, status, currency), totals per currency, the "Received" explanation in the footer.
 
 ## Open questions
-
-- After a price drop, money paid above the new rent is reported but not moved to later months. Should it be moved? (Needs the owner's decision; it is a money rule.)
 
 - Should search also match Sorani-only letters (ێ ڕ ڵ ۆ پ چ ژ گ ڤ) typed as their Arabic-keyboard look-alikes?
 
