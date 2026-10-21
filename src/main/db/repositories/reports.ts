@@ -18,7 +18,7 @@ import {
 import type { Db } from '../connection';
 import type { PaidRepository } from './paid';
 import type { PriceRepository } from './prices';
-import { NOW_SQL } from './sql';
+import { createKeyValueStore } from './settings';
 
 interface ReportRecord {
   id: number;
@@ -54,13 +54,7 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
        AND (@categoryId IS NULL OR a.category_id = @categoryId)
        AND (@currency IS NULL OR a.currency = @currency)`,
   );
-  const selectFilters = db.prepare<[string], { value: string }>(
-    'SELECT value FROM settings WHERE key = ?',
-  );
-  const saveFilters = db.prepare<[string, string]>(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = ${NOW_SQL}`,
-  );
+  const store = createKeyValueStore(db);
 
   return {
     /** Every query is one pass over the areas, their prices and the year's payments (no query per area). */
@@ -107,7 +101,7 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
 
     /** The last-used filters (all but the year); the defaults if none or unreadable. */
     lastFilters(): ReportFilters {
-      const stored = selectFilters.get(FILTERS_KEY)?.value;
+      const stored = store.read(FILTERS_KEY);
       if (!stored) return DEFAULT_REPORT_FILTERS;
       try {
         const parsed = reportFiltersSchema.safeParse(JSON.parse(stored));
@@ -118,7 +112,7 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
     },
 
     rememberFilters(filters: ReportFilters): void {
-      saveFilters.run(FILTERS_KEY, JSON.stringify(filters));
+      store.write(FILTERS_KEY, JSON.stringify(filters));
     },
   };
 }

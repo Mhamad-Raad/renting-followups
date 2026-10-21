@@ -6,10 +6,13 @@ import {
 } from '@shared/settings';
 import type { Db } from '../connection';
 
-/** Reads and writes rows of the key/value settings table. */
-function createKeyValueStore(db: Db) {
+/** Reads and writes rows of the key/value settings table: the one place with this SQL. */
+export function createKeyValueStore(db: Db) {
   const selectAll = db.prepare<[], { key: string; value: string }>(
     'SELECT key, value FROM settings',
+  );
+  const selectOne = db.prepare<[string], { value: string }>(
+    'SELECT value FROM settings WHERE key = ?',
   );
   const upsert = db.prepare<[string, string]>(
     `INSERT INTO settings (key, value) VALUES (?, ?)
@@ -22,6 +25,10 @@ function createKeyValueStore(db: Db) {
   });
   return {
     readAll: () => new Map(selectAll.all().map((row) => [row.key, row.value])),
+    read: (key: string): string | null => selectOne.get(key)?.value ?? null,
+    write: (key: string, value: string): void => {
+      upsert.run(key, value);
+    },
     writeMany,
   };
 }

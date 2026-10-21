@@ -25,6 +25,7 @@ import type { AuditRepository } from './audit';
 import type { PaidRepository } from './paid';
 import type { PriceRepository } from './prices';
 import type { RenterRepository } from './renters';
+import { createKeyValueStore } from './settings';
 import { NOW_SQL } from './sql';
 
 interface ReceiptRecord {
@@ -78,16 +79,10 @@ export function createPaymentRepository(db: Db, { audit, paid, prices, renters }
   const selectAllocationsForReceipt = db.prepare<[number], Allocation>(
     'SELECT year, month, amount FROM payment_allocations WHERE receipt_id = ? ORDER BY year, month',
   );
-  const selectLastNumber = db.prepare<[string], { value: string }>(
-    'SELECT value FROM settings WHERE key = ?',
-  );
   const selectHighestNumber = db.prepare<[], { highest: number | null }>(
     'SELECT MAX(receipt_number) AS highest FROM receipts',
   );
-  const saveLastNumber = db.prepare<[string, string]>(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = ${NOW_SQL}`,
-  );
+  const store = createKeyValueStore(db);
   const insertReceipt = db.prepare<
     [number | null, number, number, string | null, string | null, Currency, number, string, string]
   >(
@@ -124,10 +119,10 @@ export function createPaymentRepository(db: Db, { audit, paid, prices, renters }
 
   // Numbers only ever go up: the stored counter survives even if a receipt row were lost.
   const nextReceiptNumber = () => {
-    const stored = Number(selectLastNumber.get(LAST_NUMBER_KEY)?.value ?? 0);
+    const stored = Number(store.read(LAST_NUMBER_KEY) ?? 0);
     const highest = selectHighestNumber.get()?.highest ?? 0;
     const next = Math.max(Number.isSafeInteger(stored) ? stored : 0, highest) + 1;
-    saveLastNumber.run(LAST_NUMBER_KEY, String(next));
+    store.write(LAST_NUMBER_KEY, String(next));
     return next;
   };
 
