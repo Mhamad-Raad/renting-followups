@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import en from '../../src/renderer/i18n/en.json' with { type: 'json' };
-import { createDataDir, launchUnlocked, removeDataDir } from './launch';
+import { createDataDir, launchUnlocked, removeDataDir, reloadApp } from './launch';
 
 const RENT = 250_000;
 
@@ -26,7 +26,7 @@ async function openNewArea(page: Page) {
     },
     { start: { year: today.getFullYear(), month: today.getMonth() + 1 }, rent: RENT },
   );
-  await page.reload();
+  await reloadApp(page);
   await page.getByRole('link', { name: en.nav.areas }).click();
   await page.getByRole('link', { name: 'Shop 9' }).click();
   return { year: today.getFullYear(), month: today.getMonth() + 1 };

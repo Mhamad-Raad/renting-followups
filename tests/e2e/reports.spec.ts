@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import en from '../../src/renderer/i18n/en.json' with { type: 'json' };
-import { createDataDir, launchUnlocked, removeDataDir } from './launch';
+import { createDataDir, launchUnlocked, removeDataDir, reloadApp } from './launch';
 
 /** Two shops in dinars (one paid up to this month, one never paid) and an office in dollars. */
 async function seed(page: Page) {
@@ -47,7 +47,7 @@ async function seed(page: Page) {
     },
     { month, year },
   );
-  await page.reload();
+  await reloadApp(page);
   await page.getByRole('link', { name: en.nav.reports }).click();
 }
 

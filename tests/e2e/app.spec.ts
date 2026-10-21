@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { createDataDir, launchUnlocked, removeDataDir } from './launch';
+import { createDataDir, launchUnlocked, removeDataDir, reloadApp } from './launch';
 
 async function rootAttributes(page: Page) {
   return page.evaluate(() => {
@@ -101,7 +101,7 @@ test('makes no network requests and logs no errors', async () => {
     if (message.type() === 'error') consoleErrors.push(message.text());
   });
   try {
-    await page.reload();
+    await reloadApp(page);
     const links = page.getByRole('navigation').getByRole('link');
     for (let index = 0; index < 5; index += 1) await links.nth(index).click();
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();

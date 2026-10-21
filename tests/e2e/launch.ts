@@ -54,7 +54,23 @@ export async function launchUnlocked(dataDir: string): Promise<LaunchedApp> {
       TEST_PASSWORD,
     );
   }
+  await reloadApp(page);
+  return launched;
+}
+
+/**
+ * Reloads the page and, when there are reminders, closes the popup the app
+ * shows on opening, so a test can carry on. Whether a popup comes is read
+ * from the same reminders the app uses, so this never waits on a guess.
+ */
+export async function reloadApp(page: Page): Promise<void> {
   await page.reload();
   await page.getByRole('navigation').waitFor();
-  return launched;
+  const reminders = await page.evaluate(() => window.api.invoke('notifications:list'));
+  if (reminders.ok && reminders.data.length > 0) {
+    const popup = page.getByRole('dialog');
+    await popup.waitFor();
+    await page.keyboard.press('Escape');
+    await popup.waitFor({ state: 'hidden' });
+  }
 }

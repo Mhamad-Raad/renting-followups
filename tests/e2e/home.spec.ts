@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import en from '../../src/renderer/i18n/en.json' with { type: 'json' };
-import { createDataDir, launchUnlocked, removeDataDir } from './launch';
+import { createDataDir, launchUnlocked, removeDataDir, reloadApp } from './launch';
 
 const RENT = 100_000;
 
@@ -57,7 +57,7 @@ test('Home shows this year per currency and the areas that need attention', asyn
     // Shop B has paid everything up to this month, so it does not need attention.
     const month = new Date().getMonth() + 1;
     await createArea(page, 'Shop B', 12 + month);
-    await page.reload();
+    await reloadApp(page);
 
     await expect(page.getByRole('heading', { name: en.home.attention })).toBeVisible();
     const rows = page.getByRole('list', { name: en.home.attention }).getByRole('listitem');
@@ -82,7 +82,7 @@ test('Home with no areas invites adding the first one', async () => {
   const { app, page } = await launchUnlocked(dataDir);
   try {
     await page.evaluate(() => window.api.invoke('settings:update', { language: 'en' }));
-    await page.reload();
+    await reloadApp(page);
     await expect(page.getByRole('link', { name: en.areas.empty.button })).toBeVisible();
   } finally {
     await app.close();
@@ -96,7 +96,7 @@ test('the area page filters by year and month, and warns before a price change',
   try {
     const lastYear = new Date().getFullYear() - 1;
     await createArea(page, 'Shop C', 2);
-    await page.reload();
+    await reloadApp(page);
     await page.getByRole('link', { name: en.nav.areas }).click();
     await page.getByRole('link', { name: 'Shop C' }).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Shop C');
