@@ -34,6 +34,7 @@ import type {
 import type { YearMonth } from './dates';
 import type { HomeSummary } from './home';
 import type { AreaYear } from './months';
+import type { Reminder } from './notifications';
 import type {
   AllocationResult,
   AreaPaymentsQuery,
@@ -109,6 +110,7 @@ export interface IpcContract {
   'print:receipt': { input: PrintReceiptInput; output: PrintResult };
   'print:report': { input: PrintReportInput; output: PrintResult };
   'export:reportExcel': { input: ExportReportInput; output: PrintResult };
+  'notifications:list': { input: undefined; output: Reminder[] };
 }
 export type IpcChannel = keyof IpcContract;
 export type IpcInput<C extends IpcChannel> = IpcContract[C]['input'];
@@ -162,6 +164,7 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'print:receipt': false,
   'print:report': false,
   'export:reportExcel': false,
+  'notifications:list': false,
 };
 export const IPC_CHANNELS = Object.keys(OPEN_WHILE_LOCKED) as IpcChannel[];
 
