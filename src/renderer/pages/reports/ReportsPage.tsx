@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatPlain } from '@shared/formatNumber';
-import type { ReportFilters } from '@shared/reports';
+import { DEFAULT_REPORT_FILTERS, type ReportFilters } from '@shared/reports';
 import { callIpc, useIpcQuery } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
 import { Notice } from '../../components/Notice';
@@ -32,16 +32,17 @@ function ReportView({ initialFilters }: { initialFilters: ReportFilters | undefi
   const { settings } = useSettings();
   // The year always starts at the current one; the other filters are remembered.
   const [year, setYear] = useState(() => new Date().getFullYear());
-  const [filters, setFilters] = useState<ReportFilters>(
-    initialFilters ?? { month: null, categoryId: null, currency: null, status: 'all' },
-  );
+  const [filters, setFilters] = useState<ReportFilters>(initialFilters ?? DEFAULT_REPORT_FILTERS);
   const [excludedIds, setExcludedIds] = useState<readonly number[]>([]);
   const categories = useIpcQuery('categories:list');
   const report = useIpcQuery('reports:build', { year, ...filters, excludedIds: [...excludedIds] });
 
-  useEffect(() => {
-    void callIpc('reports:rememberFilters', filters);
-  }, [filters]);
+  // Saved only when the owner changes a filter, so opening the page never overwrites them.
+  const changeFilters = (change: Partial<ReportFilters>) => {
+    const next = { ...filters, ...change };
+    setFilters(next);
+    void callIpc('reports:rememberFilters', next);
+  };
 
   const collator = useMemo(() => new Intl.Collator(settings.language), [settings.language]);
   const rows = useMemo(
@@ -66,7 +67,7 @@ function ReportView({ initialFilters }: { initialFilters: ReportFilters | undefi
         filters={filters}
         categories={categories.state.status === 'ready' ? categories.state.data : []}
         onYear={setYear}
-        onFilters={(change) => setFilters((current) => ({ ...current, ...change }))}
+        onFilters={changeFilters}
       />
       {report.state.status === 'error' && <Notice tone="error">{t('errors.unexpected')}</Notice>}
       {report.state.status === 'ready' && (
