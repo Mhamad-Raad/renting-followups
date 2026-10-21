@@ -7,6 +7,28 @@ import type {
   SetupInput,
   UnlockInput,
 } from './auth';
+import type {
+  AreaCreate,
+  AreaDetails,
+  AreaListItem,
+  AreaListQuery,
+  AreaSaveResult,
+  AreaUpdate,
+  DeletedItems,
+  PriceChange,
+  PriceChangeResult,
+  RenterChange,
+  RenterChangeResult,
+  RestoreResult,
+} from './areas';
+import type {
+  Category,
+  CategoryDeleteResult,
+  CategoryInput,
+  CategorySaveResult,
+  CategoryUpdate,
+  IdInput,
+} from './categories';
 import type { Settings, SettingsUpdate } from './settings';
 
 /** A renderer crash report: error type and stack frames, never the message. */
@@ -29,6 +51,20 @@ export interface IpcContract {
   'auth:recover': { input: RecoverInput; output: SecretCheckResult };
   'auth:changePassword': { input: ChangePasswordInput; output: SecretCheckResult };
   'auth:changeRecoveryPhrase': { input: ChangeRecoveryPhraseInput; output: SecretCheckResult };
+  'categories:list': { input: undefined; output: Category[] };
+  'categories:create': { input: CategoryInput; output: CategorySaveResult };
+  'categories:update': { input: CategoryUpdate; output: CategorySaveResult };
+  'categories:delete': { input: IdInput; output: CategoryDeleteResult };
+  'categories:restore': { input: IdInput; output: RestoreResult };
+  'areas:list': { input: AreaListQuery; output: AreaListItem[] };
+  'areas:get': { input: IdInput; output: AreaDetails | null };
+  'areas:create': { input: AreaCreate; output: AreaSaveResult };
+  'areas:update': { input: AreaUpdate; output: AreaSaveResult };
+  'areas:changePrice': { input: PriceChange; output: PriceChangeResult };
+  'areas:changeRenter': { input: RenterChange; output: RenterChangeResult };
+  'areas:delete': { input: IdInput; output: { ok: true } | { ok: false; reason: 'not_found' } };
+  'areas:restore': { input: IdInput; output: RestoreResult };
+  'deleted:list': { input: undefined; output: DeletedItems };
 }
 export type IpcChannel = keyof IpcContract;
 export type IpcInput<C extends IpcChannel> = IpcContract[C]['input'];
@@ -50,6 +86,20 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'auth:recover': true,
   'auth:changePassword': false,
   'auth:changeRecoveryPhrase': false,
+  'categories:list': false,
+  'categories:create': false,
+  'categories:update': false,
+  'categories:delete': false,
+  'categories:restore': false,
+  'areas:list': false,
+  'areas:get': false,
+  'areas:create': false,
+  'areas:update': false,
+  'areas:changePrice': false,
+  'areas:changeRenter': false,
+  'areas:delete': false,
+  'areas:restore': false,
+  'deleted:list': false,
 };
 export const IPC_CHANNELS = Object.keys(OPEN_WHILE_LOCKED) as IpcChannel[];
 

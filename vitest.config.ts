@@ -6,5 +6,8 @@ export default defineConfig({
   test: {
     include: ['tests/unit/**/*.test.ts'],
     environment: 'node',
+    // The persistent cache keys a file by its own content, so the migration list
+    // (built from the folder's .sql files) would miss newly added migrations.
+    fsModuleCache: false,
   },
 });

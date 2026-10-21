@@ -6,6 +6,7 @@ import { FONT_SIZES, LANGUAGES, type SettingsUpdate } from '@shared/settings';
 import { useSettings } from '../app/SettingsContext';
 import { ChoiceGroup } from '../components/ChoiceGroup';
 import { Notice } from '../components/Notice';
+import { LinkButton } from '../components/LinkButton';
 import { PageHeader } from '../components/PageHeader';
 import { LANGUAGE_NAMES } from '../i18n';
 import { SecuritySection } from './SecuritySection';
@@ -73,6 +74,13 @@ export function SettingsPage() {
       </section>
 
       <SecuritySection />
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>{t('settings.data')}</h2>
+        <div className={styles.buttonRow}>
+          <LinkButton to="/settings/deleted">{t('deletedItems.open')}</LinkButton>
+        </div>
+      </section>
     </>
   );
 }

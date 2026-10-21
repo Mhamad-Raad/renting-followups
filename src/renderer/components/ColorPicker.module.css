@@ -1,0 +1,57 @@
+.group {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.legend {
+  margin-block-end: var(--space-3);
+  padding: 0;
+  font-weight: 600;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.swatch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  border-radius: var(--radius-md);
+  color: #ffffff;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease);
+}
+
+.swatch:hover {
+  transform: scale(1.06);
+}
+
+.none {
+  border: 2px dashed var(--color-border);
+  color: var(--color-text);
+}
+
+.swatch input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.swatch:has(input:focus-visible) {
+  box-shadow: var(--focus-ring);
+}
+
+.tick {
+  width: 1.6rem;
+  height: 1.6rem;
+  stroke-width: 3;
+}

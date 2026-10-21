@@ -49,3 +49,7 @@
 .danger:hover:not(:disabled) {
   background: var(--color-danger-hover);
 }
+
+.link {
+  text-decoration: none;
+}

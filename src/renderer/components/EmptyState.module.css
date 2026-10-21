@@ -1,0 +1,20 @@
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-7) var(--space-6);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.title {
+  font-size: var(--text-xl);
+}
+
+.body {
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+}

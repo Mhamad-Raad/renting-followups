@@ -3,7 +3,7 @@ import { PageHeader } from '../components/PageHeader';
 import styles from './PlaceholderPage.module.css';
 
 interface PlaceholderPageProps {
-  page: 'home' | 'areas' | 'reports' | 'notifications';
+  page: 'home' | 'reports' | 'notifications';
 }
 
 /** Stands in for screens that are built in later iterations. */

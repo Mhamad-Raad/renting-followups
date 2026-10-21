@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeText } from '@shared/normalizeText';
+import { normalizePhone, normalizeText } from '@shared/normalizeText';
 
 describe('normalizeText', () => {
   it.each([
@@ -42,5 +42,13 @@ describe('normalizeText', () => {
 
   it('matches Arabic presentation forms to their base letters', () => {
     expect(normalizeText('ﻣﺤﻤﺪ')).toBe(normalizeText('محمد'));
+  });
+});
+
+describe('normalizePhone', () => {
+  it('keeps only the digits, in Western form', () => {
+    expect(normalizePhone('٠٧٥٠ 123-45 67')).toBe('07501234567');
+    expect(normalizePhone('+964 (750) 123')).toBe('964750123');
+    expect(normalizePhone('')).toBe('');
   });
 });

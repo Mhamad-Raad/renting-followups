@@ -6,7 +6,8 @@
 
 .main {
   min-width: 0;
-  padding: var(--space-6) var(--space-7);
+  /* Narrower side margins in small windows leave room for the content at large text sizes. */
+  padding: var(--space-6) clamp(var(--space-4), 3vw, var(--space-7));
 }
 
 .page {

@@ -44,10 +44,13 @@ export function useIpcQuery<C extends IpcChannel>(channel: C, ...args: InvokeArg
     };
   }, [channel, argsKey, reloadCount]);
 
+  /** Loads again from scratch, showing the loading state (for "Try again" after an error). */
   const reload = useCallback(() => {
     setState({ status: 'loading' });
     setReloadCount((count) => count + 1);
   }, []);
+  /** Loads again while the current data stays on screen (after a change was saved). */
+  const refresh = useCallback(() => setReloadCount((count) => count + 1), []);
   /** Replaces the loaded data, for example with the result of a save, or derives it from the current data. */
   const setData = useCallback(
     (next: IpcOutput<C> | ((current: IpcOutput<C>) => IpcOutput<C>)) =>
@@ -60,5 +63,5 @@ export function useIpcQuery<C extends IpcChannel>(channel: C, ...args: InvokeArg
     [],
   );
 
-  return { state, reload, setData };
+  return { state, reload, refresh, setData };
 }

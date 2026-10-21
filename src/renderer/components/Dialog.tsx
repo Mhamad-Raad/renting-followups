@@ -20,7 +20,11 @@ export function Dialog({ open, title, onClose, children }: DialogProps) {
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
+    if (open && !dialog.open) {
+      dialog.showModal();
+      // Opening a dialog focuses its first control; prefer the field that asked for focus.
+      dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus();
+    }
     if (!open && dialog.open) dialog.close();
   }, [open]);
 

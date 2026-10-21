@@ -121,6 +121,28 @@ describe('migrate', () => {
   });
 });
 
+describe('real schema upgrades keep existing data', () => {
+  it('2: categories and areas are added without touching saved settings', () => {
+    const db = memoryDb();
+    migrate(db, MIGRATIONS.slice(0, 1));
+    db.prepare("INSERT INTO settings (key, value) VALUES ('language', 'en')").run();
+    db.prepare("INSERT INTO settings (key, value) VALUES ('password_hash', 'scrypt1:abc')").run();
+
+    migrate(db, MIGRATIONS.slice(0, 2));
+    expect(db.prepare('SELECT key, value FROM settings ORDER BY key').all()).toEqual([
+      { key: 'language', value: 'en' },
+      { key: 'password_hash', value: 'scrypt1:abc' },
+    ]);
+    const tables = db
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
+      .all()
+      .map((row) => (row as { name: string }).name);
+    expect(tables).toEqual(
+      expect.arrayContaining(['areas', 'area_prices', 'audit_log', 'categories', 'renters']),
+    );
+  });
+});
+
 describe('writeSafetySnapshot', () => {
   it('writes a complete copy that opens on its own', () => {
     const dir = tempDir();

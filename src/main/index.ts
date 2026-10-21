@@ -4,7 +4,7 @@ import type { ThemeMode } from '@shared/settings';
 import { closeDatabase, openDatabase } from './db/connection';
 import { migrate } from './db/migrate';
 import { MIGRATIONS } from './db/migrations';
-import { createCredentialsRepository, createSettingsRepository } from './db/repositories/settings';
+import { createRepositories } from './db/repositories';
 import { registerIpcHandlers } from './ipc';
 import { hardenSession, hardenWindow } from './security';
 import { createAuthService } from './services/auth';
@@ -53,10 +53,10 @@ function startServices(): { themeMode: ThemeMode } {
   });
   logger.info('app.started', { schemaFrom: from, schemaTo: to, packaged: app.isPackaged });
 
-  const settings = createSettingsRepository(db);
-  const auth = createAuthService(createCredentialsRepository(db));
-  registerIpcHandlers({ settings, auth });
-  return { themeMode: settings.getAll().themeMode };
+  const repos = createRepositories(db);
+  const auth = createAuthService(repos.credentials);
+  registerIpcHandlers({ repos, auth });
+  return { themeMode: repos.settings.getAll().themeMode };
 }
 
 /** Development only: records memory use so leaks show up as a rising line in the log. */

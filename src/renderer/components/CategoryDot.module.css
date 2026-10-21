@@ -1,0 +1,11 @@
+.dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+}
+
+.none {
+  border: 2px solid var(--color-border);
+}

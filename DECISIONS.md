@@ -180,3 +180,57 @@ Only outcomes are logged (`auth.unlock ok=false`), never the typed text; invalid
 ### Friendlier password boxes
 
 Every password box has a **Show/Hide** button and warns when Caps Lock is on. After a wrong password the box is cleared and the cursor returns to it.
+
+## Iteration 3: Categories and areas
+
+### Extra columns beyond the data model
+
+- `categories.name_normalized`: category names are compared like search (case and letter variants), so "خانووەکان" and "خانووەكان" cannot exist twice, and the Excel import (iteration 12) can match categories by name.
+- `renters.phone_digits`: only the digits of the phone in Western form, so searching "07501234567" finds "٠٧٥٠ ١٢٣ ٤٥٦٧".
+
+Both are written only by the repositories, from the same functions as the search query (`normalizeText`, `normalizePhone`), so they cannot drift.
+
+### Rules enforced by the database itself
+
+The currency cannot change (a trigger refuses it, even by direct SQL); names are unique per category among areas in use; one price row per area and month; at most one current renter per area; months 1–12, years 2000–2100, prices never negative.
+
+### Duplicate area names are refused, not merged
+
+"Area names are unique within a category (warn, do not crash)": saving a duplicate shows a plain message and nothing is saved. The same name in another category is allowed. A deleted area frees its name.
+
+### Deleting
+
+- A category can only be deleted when it has no areas in use ("Move or delete them first"), so no area is ever left without a category.
+- Restoring an area whose category was deleted restores the category too. Restore is refused, with nothing changed, when the name is now used by another item.
+- Deletion times are stored in UTC; Deleted items shows the local day.
+
+### Prices
+
+- "Change price" from a month that already has a price row replaces that row (one price per month).
+- A change before the first price row ("Rent starts from") is refused: it would silently make months applicable that were not.
+- "Mark as vacant" adds a 0 row; "Set rent again" adds a new price. Only the price history decides a month's price, through one function, `priceForMonth` (`src/shared/prices.ts`), used everywhere.
+- "Rent starts from" cannot be edited after creation yet. The warning for paid months arrives in iteration 6.
+
+### Renters
+
+- Change renter asks first: **New renter** (closes the current one on the day the new one starts) or **The renter left** (closes it without a new one). Dates before the current renter started are refused.
+- Edit area corrects the current renter's name or phone (a spelling mistake) without creating a new history row.
+
+### Screens
+
+- Add area and Edit area are full pages, not dialogs: a long form is easier to read, and one dialog never opens another. A new category can be created right inside the area form.
+- The area page in this iteration shows details, current rent, Change price, Mark as vacant / Set rent again, Change renter, Delete, and the price and renter history. Year filter, figures, month boxes and receipts come in iterations 4–6.
+- The "Import from Excel" button and the selection checkboxes (Print/Export selected) are added in iterations 12 and 8, when they work.
+- Categories keep their creation order; there is no reordering yet.
+- After a save, the screen refreshes quietly (the old data stays visible) so success messages are not lost and the page never blinks.
+- Phone numbers are shown in the chosen digit style, like all other numbers.
+
+### Search
+
+Search runs in the main process (SQL `LIKE` on the normalized columns, with `%` and `_` treated as plain characters) after a 150 ms pause in typing. Results are sorted on screen with `Intl.Collator` for the active language. 200 areas list and search in well under a second (measured: under 100 ms in the database, the whole screen in under 1 s).
+
+**Open question for the owner:** the spec's letter equivalences (ي/ی, ك/ک, ه/ە, ة) are applied. Sorani-only letters (ێ ڕ ڵ ۆ پ چ ژ گ ڤ) are still treated as different letters, so someone typing on an Arabic keyboard cannot find "هەولێر" by typing "هەولیر".
+
+### Test setup
+
+Vitest's persistent module cache is turned off: it keys files by their own content, so the migration list (built from the folder's `.sql` files) did not see a newly added migration file.
