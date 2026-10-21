@@ -53,8 +53,7 @@ function ReportPaper({ query }: { query: ReportQuery }) {
   usePrintReady(loaded ? report.state.status === 'ready' : null);
   if (report.state.status !== 'ready') return null;
 
-  const collator = new Intl.Collator(settings.language);
-  const rows = [...report.state.data.rows].sort((a, b) => collator.compare(a.name, b.name));
+  const { rows } = report.state.data;
   const categoryName =
     categories.state.status === 'ready'
       ? (categories.state.data.find((category) => category.id === query.categoryId)?.name ?? null)

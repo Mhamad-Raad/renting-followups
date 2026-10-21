@@ -49,21 +49,8 @@ function ReportView({ initialFilters }: { initialFilters: ReportFilters | undefi
     void callIpc('reports:rememberFilters', next);
   };
 
-  const collator = useMemo(() => new Intl.Collator(settings.language), [settings.language]);
-  const rows = useMemo(
-    () =>
-      report.state.status === 'ready'
-        ? [...report.state.data.rows].sort((a, b) => collator.compare(a.name, b.name))
-        : [],
-    [report.state, collator],
-  );
-  const candidates = useMemo(
-    () =>
-      report.state.status === 'ready'
-        ? [...report.state.data.candidates].sort((a, b) => collator.compare(a.name, b.name))
-        : [],
-    [report.state, collator],
-  );
+  const rows = report.state.status === 'ready' ? report.state.data.rows : [];
+  const candidates = report.state.status === 'ready' ? report.state.data.candidates : [];
 
   return (
     <div className={styles.stack}>

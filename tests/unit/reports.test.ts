@@ -58,6 +58,7 @@ const build = (query: Partial<ReportQuery> = {}) =>
       ...query,
     },
     TODAY,
+    'en',
   );
 const names = (query: Partial<ReportQuery> = {}) =>
   build(query)
@@ -125,6 +126,14 @@ describe('reports', () => {
     area('Shop 1', shops);
     const two = area('Shop 2', shops);
     expect(names({ onlyIds: [two] })).toEqual(['Shop 2']);
+  });
+
+  it('lists areas by name, in the same order for the screen, print and Excel', () => {
+    area('Shop B', shops);
+    area('Shop A', shops);
+    area('Shop C', shops);
+    expect(build().rows.map((row) => row.name)).toEqual(['Shop A', 'Shop B', 'Shop C']);
+    expect(build().candidates.map((row) => row.name)).toEqual(['Shop A', 'Shop B', 'Shop C']);
   });
 
   it('leaves out deleted areas', () => {

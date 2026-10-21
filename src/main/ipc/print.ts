@@ -90,12 +90,16 @@ export function registerPrintIpc({ categories, payments, reports, settings }: Re
       query.categoryId === null
         ? null
         : (categories.list().find((category) => category.id === query.categoryId)?.name ?? null);
-    const workbook = buildReportWorkbook(reports.build(query, currentYearMonth()), query, {
-      language,
-      digitStyle,
-      categoryName,
-      printedOn: businessToday().date,
-    });
+    const workbook = buildReportWorkbook(
+      reports.build(query, currentYearMonth(), language),
+      query,
+      {
+        language,
+        digitStyle,
+        categoryName,
+        printedOn: businessToday().date,
+      },
+    );
     await saveFile(path, new Uint8Array(await workbook.xlsx.writeBuffer()));
     return { ok: true, done: 'saved' };
   });
