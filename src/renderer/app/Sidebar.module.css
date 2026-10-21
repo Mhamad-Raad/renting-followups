@@ -57,3 +57,30 @@
 .active:hover {
   background: var(--color-accent-soft);
 }
+
+/* The number of reminders beside Notifications: one soft pulse when it changes, never looping. */
+.badge {
+  min-width: 1.6rem;
+  margin-inline-start: auto;
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--status-late-bg);
+  color: var(--status-late);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.6rem;
+  text-align: center;
+  animation: badge-pulse 600ms var(--ease) 1;
+}
+
+@keyframes badge-pulse {
+  40% {
+    transform: scale(1.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge {
+    animation: none;
+  }
+}

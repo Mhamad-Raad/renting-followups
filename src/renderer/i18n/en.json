@@ -25,8 +25,7 @@
     },
     "settings": {
       "title": "Settings"
-    },
-    "comingSoon": "This screen will be ready in a later step."
+    }
   },
   "settings": {
     "language": "Language",
@@ -423,5 +422,19 @@
       "not_found": "This receipt could not be found. It may have been cancelled."
     },
     "selectedCount": "Selected: {{number}}"
+  },
+  "notifications": {
+    "count": "Reminders: {{number}}",
+    "late": "Late rent",
+    "monthEnd": "This month ends soon",
+    "lateMonths": "Late months: {{months}}",
+    "daysLeft": "Month {{month}} is not fully paid and ends in {{days}} days",
+    "lastDay": "Month {{month}} is not fully paid and ends today",
+    "owes": "Still owes",
+    "none": "Nothing needs attention. All rent is paid up to this month.",
+    "popupTitle": "Things that need attention",
+    "goTo": "Go to Notifications",
+    "more": "… and {{number}} more",
+    "toastBody": "{{number}} reminders need attention. Open the app to see them."
   }
 }
