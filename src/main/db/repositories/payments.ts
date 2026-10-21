@@ -60,7 +60,9 @@ export function createPaymentRepository(db: Db, { audit, prices, renters }: Depe
      WHERE id = ? AND area_id IN (SELECT id FROM areas WHERE deleted_at IS NULL)`,
   );
   const selectReceiptsForArea = db.prepare<[number], ReceiptRecord>(
-    `SELECT ${RECEIPT_COLUMNS} FROM receipts WHERE area_id = ? ORDER BY paid_on DESC, id DESC`,
+    `SELECT ${RECEIPT_COLUMNS} FROM receipts
+     WHERE area_id = ? AND area_id IN (SELECT id FROM areas WHERE deleted_at IS NULL)
+     ORDER BY paid_on DESC, id DESC`,
   );
   const selectAllocationsForArea = db.prepare<[number], AllocationRecord>(
     `SELECT receipt_id, year, month, amount FROM payment_allocations
@@ -168,6 +170,7 @@ export function createPaymentRepository(db: Db, { audit, prices, renters }: Depe
 
     /** The month the payment form suggests: the oldest one not fully paid. */
     suggestedStart(areaId: number, today: YearMonth): YearMonth | null {
+      if (!selectAreaCurrency.get(areaId)) return null;
       return oldestOpenMonth(prices.forArea(areaId), paidHistory(areaId), today);
     },
 

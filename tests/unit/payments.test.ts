@@ -261,6 +261,15 @@ describe('editing and cancelling receipts', () => {
     });
   });
 
+  it('shows nothing of a deleted area until it is restored', () => {
+    payOk();
+    repos.areas.softDelete(areaId);
+    expect(receipts()).toEqual([]);
+    expect(repos.payments.suggestedStart(areaId, TODAY.month)).toBeNull();
+    repos.areas.restore(areaId);
+    expect(receipts()).toHaveLength(1);
+  });
+
   it('knows the latest date money was received', () => {
     expect(repos.payments.latestPaidOn()).toBeNull();
     payOk({ paidOn: '2026-03-02' });
