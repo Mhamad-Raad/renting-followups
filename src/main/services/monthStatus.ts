@@ -1,6 +1,7 @@
 import { CURRENCIES, type Currency } from '@shared/currency';
 import { compareYearMonth, fromMonthIndex, monthIndex, type YearMonth } from '@shared/dates';
 import type { CurrencyTotals } from '@shared/home';
+import type { ReportStatus, ReportTotal } from '@shared/reports';
 import type {
   AreaStanding,
   AreaYear,
@@ -199,20 +200,60 @@ export interface AreaOverview {
   standing: AreaStanding;
 }
 
+/** Groups items by currency, IQD first, leaving out currencies with no items. */
+function byCurrency<T extends { currency: Currency }>(items: readonly T[]): [Currency, T[]][] {
+  return CURRENCIES.flatMap((currency) => {
+    const inCurrency = items.filter((item) => item.currency === currency);
+    return inCurrency.length === 0 ? [] : [[currency, inCurrency] as [Currency, T[]]];
+  });
+}
+
+const sum = <T>(items: readonly T[], value: (item: T) => number) =>
+  items.reduce((total, item) => total + value(item), 0);
+
 /** Home's cards: received, still owed and late areas, one set per currency in use. */
 export function totalsByCurrency(areas: readonly AreaOverview[]): CurrencyTotals[] {
-  return CURRENCIES.flatMap((currency) => {
-    const inCurrency = areas.filter((area) => area.currency === currency);
-    if (inCurrency.length === 0) return [];
-    return [
-      {
-        currency,
-        received: inCurrency.reduce((sum, area) => sum + area.figures.received, 0),
-        remaining: inCurrency.reduce((sum, area) => sum + area.figures.remaining, 0),
-        lateAreas: inCurrency.filter((area) => area.standing.lateMonths > 0).length,
-      },
-    ];
-  });
+  return byCurrency(areas).map(([currency, inCurrency]) => ({
+    currency,
+    received: sum(inCurrency, (area) => area.figures.received),
+    remaining: sum(inCurrency, (area) => area.figures.remaining),
+    lateAreas: inCurrency.filter((area) => area.standing.lateMonths > 0).length,
+  }));
+}
+
+/** The report's total rows: rent, received and still owed, one row per currency in use. */
+export function reportTotals(
+  rows: readonly { currency: Currency; figures: YearFigures }[],
+): ReportTotal[] {
+  return byCurrency(rows).map(([currency, inCurrency]) => ({
+    currency,
+    rent: sum(inCurrency, (row) => row.figures.rent ?? 0),
+    received: sum(inCurrency, (row) => row.figures.received),
+    remaining: sum(inCurrency, (row) => row.figures.remaining),
+    areas: inCurrency.length,
+  }));
+}
+
+/**
+ * The report's status filter (ARCHITECTURE.md section 6). For a year: Late =
+ * at least one late month; Partial = at least one orange month (due or partly
+ * paid) and none late; Paid = every applicable month up to and including this
+ * month is paid, with at least one such month. For one chosen month, that
+ * month's own status decides.
+ */
+export function matchesReportStatus(
+  boxes: readonly MonthBox[],
+  status: ReportStatus,
+  month: number | null,
+): boolean {
+  if (status === 'all') return true;
+  const chosen = month === null ? boxes : boxes.filter((box) => box.month === month);
+  const has = (...statuses: MonthStatus[]) => chosen.some((box) => statuses.includes(box.status));
+  if (status === 'late') return has('late');
+  if (status === 'partial') return has('due', 'partial') && !has('late');
+  // Months up to now that are not fully paid are late or due, so "no late, no due" means
+  // every applicable month up to now is paid.
+  return has('paid') && !has('late', 'due');
 }
 
 /**

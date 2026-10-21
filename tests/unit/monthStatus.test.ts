@@ -5,11 +5,13 @@ import { withPriceFrom, type PriceRow } from '@shared/prices';
 import {
   areaStanding,
   areaYear,
+  matchesReportStatus,
   monthBoxes,
   monthStatus,
   needsAttention,
   NO_PAYMENTS,
   type PaidHistory,
+  reportTotals,
   statusChanges,
   totalsByCurrency,
   yearFigures,
@@ -519,5 +521,54 @@ describe('Home totals and attention list', () => {
       late1,
       due,
     ]);
+  });
+});
+
+describe('report status filter', () => {
+  const boxes = (...list: MonthStatus[]): MonthBox[] =>
+    list.map((status, index) => ({ month: index + 1, expected: RENT, paid: 0, status }));
+
+  it.each<[MonthStatus[], 'paid' | 'partial' | 'late', boolean]>([
+    [['paid', 'late', 'due'], 'late', true],
+    [['paid', 'paid', 'due'], 'late', false],
+    [['paid', 'due', 'upcoming'], 'partial', true],
+    [['paid', 'paid', 'partial'], 'partial', true],
+    [['late', 'due'], 'partial', false],
+    [['paid', 'paid', 'upcoming'], 'paid', true],
+    [['paid', 'paid', 'partial'], 'paid', true],
+    [['paid', 'due'], 'paid', false],
+    [['not_applicable', 'upcoming'], 'paid', false],
+  ])('%j matches %s: %s', (list, status, expected) => {
+    expect(matchesReportStatus(boxes(...list), status, null)).toBe(expected);
+  });
+
+  it('with a month chosen, only that month decides', () => {
+    const year = boxes('late', 'paid', 'due');
+    expect(matchesReportStatus(year, 'paid', 2)).toBe(true);
+    expect(matchesReportStatus(year, 'late', 2)).toBe(false);
+    expect(matchesReportStatus(year, 'partial', 3)).toBe(true);
+    expect(matchesReportStatus(year, 'all', 3)).toBe(true);
+  });
+});
+
+describe('reportTotals', () => {
+  const row = (
+    currency: 'IQD' | 'USD',
+    rent: number | null,
+    received: number,
+    remaining: number,
+  ) => ({
+    currency,
+    figures: { rent, expected: 0, received, remaining },
+  });
+
+  it('adds up rent, received and still owed per currency, never across them', () => {
+    expect(
+      reportTotals([row('USD', 500, 100, 50), row('IQD', 1000, 900, 0), row('IQD', null, 0, 0)]),
+    ).toEqual([
+      { currency: 'IQD', rent: 1000, received: 900, remaining: 0, areas: 2 },
+      { currency: 'USD', rent: 500, received: 100, remaining: 50, areas: 1 },
+    ]);
+    expect(reportTotals([])).toEqual([]);
   });
 });

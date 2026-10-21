@@ -46,6 +46,7 @@ import type {
   PaymentVoidResult,
   Receipt,
 } from './payments';
+import type { Report, ReportFilters, ReportQuery } from './reports';
 import type { Settings, SettingsUpdate } from './settings';
 
 /** A renderer crash report: error type and stack frames, never the message. */
@@ -92,6 +93,9 @@ export interface IpcContract {
   'payments:void': { input: IdInput; output: PaymentVoidResult };
   'clock:check': { input: undefined; output: { looksWrong: boolean } };
   'home:summary': { input: undefined; output: HomeSummary };
+  'reports:build': { input: ReportQuery; output: Report };
+  'reports:lastFilters': { input: undefined; output: ReportFilters };
+  'reports:rememberFilters': { input: ReportFilters; output: null };
 }
 export type IpcChannel = keyof IpcContract;
 export type IpcInput<C extends IpcChannel> = IpcContract[C]['input'];
@@ -137,6 +141,9 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'payments:void': false,
   'clock:check': false,
   'home:summary': false,
+  'reports:build': false,
+  'reports:lastFilters': false,
+  'reports:rememberFilters': false,
 };
 export const IPC_CHANNELS = Object.keys(OPEN_WHILE_LOCKED) as IpcChannel[];
 

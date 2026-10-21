@@ -5,6 +5,7 @@ import { createCategoryRepository } from './categories';
 import { createPaidRepository } from './paid';
 import { createPaymentRepository } from './payments';
 import { createPriceRepository } from './prices';
+import { createReportRepository } from './reports';
 import { createRenterRepository } from './renters';
 import { createCredentialsRepository, createSettingsRepository } from './settings';
 
@@ -23,6 +24,7 @@ export function createRepositories(db: Db) {
     areas: createAreaRepository(db, { audit, categories, paid, payments, prices, renters }),
     paid,
     payments,
+    reports: createReportRepository(db, { paid, prices }),
   };
 }
 
