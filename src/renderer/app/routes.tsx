@@ -7,6 +7,7 @@ import { CategoriesPage } from '../pages/areas/CategoriesPage';
 import { DeletedItemsPage } from '../pages/DeletedItemsPage';
 import { HomePage } from '../pages/home/HomePage';
 import { PlaceholderPage } from '../pages/PlaceholderPage';
+import { ReportsPage } from '../pages/reports/ReportsPage';
 import { SettingsPage } from '../pages/SettingsPage';
 
 interface NavItem {
@@ -24,7 +25,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     path: '/reports',
     key: 'reports',
     icon: 'reports',
-    element: <PlaceholderPage page="reports" />,
+    element: <ReportsPage />,
   },
   {
     path: '/notifications',

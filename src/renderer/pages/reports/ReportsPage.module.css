@@ -1,0 +1,154 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.picker {
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.pickerTitle {
+  min-height: var(--control-height);
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pickerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-block: var(--space-2) var(--space-3);
+}
+
+.pickerList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0 var(--space-4);
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+/* Only with very large text in a small window does the table scroll; the page itself never does. */
+.tableFrame {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: var(--space-3);
+  text-align: start;
+  vertical-align: top;
+  border-block-end: 1px solid var(--color-border);
+}
+
+.table thead th {
+  background: var(--color-surface-muted);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.table tfoot th,
+.table tfoot td {
+  background: var(--color-surface-muted);
+  font-weight: 700;
+  border-block-end: none;
+}
+
+.name {
+  display: block;
+  font-weight: 700;
+}
+
+.second {
+  display: flex;
+  margin-block-start: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.category {
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.number {
+  white-space: nowrap;
+}
+
+/* Notes can be long: two lines on screen, the full text when pointed at and in print. */
+.notes {
+  max-width: 16rem;
+  margin-block-start: var(--space-1);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.footer {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+/* Rent, received and still owed as label and amount pairs. */
+.money {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: start;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+}
+
+.money dt {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.money dd {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.money dd[data-owed] {
+  color: var(--status-late);
+  font-weight: 700;
+}
+
+.year {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
