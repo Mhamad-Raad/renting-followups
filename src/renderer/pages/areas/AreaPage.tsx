@@ -67,8 +67,12 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
 
   const today = yearMonthOf(new Date());
   const price = priceForMonth(area.prices, today);
-  const months = useIpcQuery('areas:year', { id: area.id, year: today.year });
-  const receipts = useIpcQuery('payments:forArea', { areaId: area.id });
+  const months = useIpcQuery('areas:year', { id: area.id, year: today.year, month: null });
+  const receipts = useIpcQuery('payments:forArea', {
+    areaId: area.id,
+    year: today.year,
+    month: null,
+  });
 
   const done = (message: string) => {
     setDialog(null);

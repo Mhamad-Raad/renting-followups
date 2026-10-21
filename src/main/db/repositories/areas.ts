@@ -15,10 +15,10 @@ import {
 import type { CategoryColor } from '@shared/categories';
 import type { Currency } from '@shared/currency';
 import type { YearMonth } from '@shared/dates';
-import type { AreaYear } from '@shared/months';
+import type { AreaYear, StatusChange } from '@shared/months';
 import { normalizePhone, normalizeText } from '@shared/normalizeText';
-import { priceForMonth } from '@shared/prices';
-import { areaYear, NO_PAYMENTS } from '../../services/monthStatus';
+import { priceForMonth, withPriceFrom } from '@shared/prices';
+import { areaYear, NO_PAYMENTS, statusChanges } from '../../services/monthStatus';
 import type { PaymentRepository } from './payments';
 import type { Db } from '../connection';
 import type { AuditRepository } from './audit';
@@ -149,10 +149,10 @@ export function createAreaRepository(
         });
     },
 
-    /** One year of an area: its 12 month boxes, figures and summary word. */
-    year(id: number, year: number, today: YearMonth): AreaYear | null {
+    /** One year of an area: its 12 month boxes, summary word, and figures for the year or one month. */
+    year(id: number, year: number, today: YearMonth, month: number | null = null): AreaYear | null {
       if (!findActive(id)) return null;
-      return areaYear(prices.forArea(id), payments.paidInAreaYear(id, year), year, today);
+      return areaYear(prices.forArea(id), payments.paidInAreaYear(id, year), year, today, month);
     },
 
     get(id: number): AreaDetails | null {
@@ -240,6 +240,17 @@ export function createAreaRepository(
       });
       return { ok: true, id: input.id };
     }),
+
+    /** The paid months a price change would alter; null when the area does not exist. */
+    priceChangeImpact(
+      { areaId, from, monthlyPrice }: PriceChange,
+      today: YearMonth,
+    ): StatusChange[] | null {
+      if (!findActive(areaId)) return null;
+      const history = prices.forArea(areaId);
+      const after = withPriceFrom(history, from, monthlyPrice);
+      return statusChanges(history, after, payments.history(areaId), from, today);
+    },
 
     /** A new price from a month onward. Earlier months keep their price; 0 means vacant. */
     changePrice: db.transaction(

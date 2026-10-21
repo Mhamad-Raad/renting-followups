@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { monthIndex, type YearMonth } from '@shared/dates';
 import type { PriceRow } from '@shared/prices';
-import { allocate, oldestOpenMonth, type PaidHistory } from '../../src/main/services/allocation';
+import { allocate, oldestOpenMonth } from '../../src/main/services/allocation';
+import type { PaidHistory } from '../../src/main/services/monthStatus';
 
 const TODAY = { year: 2026, month: 5 };
 const RENT = 250_000;

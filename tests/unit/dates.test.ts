@@ -9,7 +9,7 @@ import {
   parseDateString,
   toDateString,
 } from '@shared/dates';
-import { priceForMonth, sortPrices, type PriceRow } from '@shared/prices';
+import { priceForMonth, sortPrices, withPriceFrom, type PriceRow } from '@shared/prices';
 
 describe('dates', () => {
   it('orders months across year boundaries', () => {
@@ -71,5 +71,26 @@ describe('priceForMonth', () => {
 
   it('sorts price rows oldest first', () => {
     expect(sortPrices(prices).map((row) => row.monthlyPrice)).toEqual([250_000, 300_000, 0]);
+  });
+});
+
+describe('withPriceFrom', () => {
+  const prices: PriceRow[] = [
+    { year: 2026, month: 1, monthlyPrice: 100 },
+    { year: 2026, month: 6, monthlyPrice: 200 },
+  ];
+
+  it('adds a new row in order, like saving a price change', () => {
+    expect(withPriceFrom(prices, { year: 2026, month: 3 }, 150).map((r) => r.monthlyPrice)).toEqual(
+      [100, 150, 200],
+    );
+  });
+
+  it('replaces a row for the same month and leaves the original untouched', () => {
+    expect(withPriceFrom(prices, { year: 2026, month: 6 }, 0)).toEqual([
+      { year: 2026, month: 1, monthlyPrice: 100 },
+      { year: 2026, month: 6, monthlyPrice: 0 },
+    ]);
+    expect(prices[1]?.monthlyPrice).toBe(200);
   });
 });

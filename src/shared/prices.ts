@@ -24,3 +24,16 @@ export function priceForMonth(prices: readonly PriceRow[], month: YearMonth): nu
 export function sortPrices<T extends YearMonth>(prices: readonly T[]): T[] {
   return [...prices].sort(compareYearMonth);
 }
+
+/**
+ * The price history after setting `monthlyPrice` from `from` onward: a row for
+ * the same month is replaced (one price per month), like saving does.
+ */
+export function withPriceFrom(
+  prices: readonly PriceRow[],
+  from: YearMonth,
+  monthlyPrice: number,
+): PriceRow[] {
+  const others = prices.filter((row) => compareYearMonth(row, from) !== 0);
+  return sortPrices([...others, { year: from.year, month: from.month, monthlyPrice }]);
+}

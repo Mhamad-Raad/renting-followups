@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { CURRENCIES, type Currency } from './currency';
 import {
   dateStringSchema,
+  monthSchema,
   yearMonthSchema,
   yearSchema,
   type DateString,
@@ -78,7 +79,9 @@ export const areaListQuerySchema = z
   .strict();
 export type AreaListQuery = z.infer<typeof areaListQuerySchema>;
 
-export const areaYearQuerySchema = z.object({ id, year: yearSchema }).strict();
+export const areaYearQuerySchema = z
+  .object({ id, year: yearSchema, month: monthSchema.nullable() })
+  .strict();
 export type AreaYearQuery = z.infer<typeof areaYearQuerySchema>;
 
 export interface Renter {

@@ -1,5 +1,13 @@
-import { compareYearMonth, type YearMonth } from '@shared/dates';
-import type { AreaYear, MonthBox, MonthStatus, YearFigures, YearSummary } from '@shared/months';
+import { compareYearMonth, fromMonthIndex, monthIndex, type YearMonth } from '@shared/dates';
+import type {
+  AreaStanding,
+  AreaYear,
+  MonthBox,
+  MonthStatus,
+  StatusChange,
+  YearFigures,
+  YearSummary,
+} from '@shared/months';
 import { priceForMonth, type PriceRow } from '@shared/prices';
 
 /**
@@ -13,6 +21,9 @@ import { priceForMonth, type PriceRow } from '@shared/prices';
 export type PaidByMonth = ReadonlyMap<number, number>;
 
 export const NO_PAYMENTS: PaidByMonth = new Map();
+
+/** Paid amounts of an area across all years, keyed by `monthIndex`. Missing months count as 0. */
+export type PaidHistory = ReadonlyMap<number, number>;
 
 /**
  * The status of one month. `expected` is the month's rent: null before the
@@ -54,20 +65,34 @@ export function monthBoxes(
 }
 
 /**
- * Expected, received and still owed for the year. Months that are not
- * applicable count for nothing, and a month never counts as more received than
- * its rent, so the amount still owed is never below 0.
+ * Rent, expected, received and still owed for the given boxes (a year, or one
+ * month of it). Months that are not applicable count for nothing, and a month
+ * never counts as more received than its rent. Still owed counts only months
+ * that have already come (late or due), never months still to come.
+ * `rentMonth` is the month whose rent is shown.
  */
-export function yearFigures(boxes: readonly MonthBox[]): YearFigures {
+export function yearFigures(boxes: readonly MonthBox[], rentMonth: number): YearFigures {
   let expected = 0;
   let received = 0;
+  let remaining = 0;
   for (const box of boxes) {
     // Null or 0: before the rent started, or vacant.
     if (!box.expected) continue;
     expected += box.expected;
     received += Math.min(box.paid, box.expected);
+    if (box.status === 'late' || box.status === 'due') remaining += box.expected - box.paid;
   }
-  return { expected, received, remaining: expected - received };
+  const rent = boxes.find((box) => box.month === rentMonth)?.expected ?? null;
+  return { rent, expected, received, remaining };
+}
+
+/**
+ * The month whose rent stands for the whole year: this month in the current
+ * year, December of a past year, January of a future one.
+ */
+function rentMonthOf(year: number, today: YearMonth): number {
+  if (year === today.year) return today.month;
+  return year < today.year ? 12 : 1;
 }
 
 /** One word for the year, from the most urgent month (see `YearSummary`). */
@@ -80,13 +105,76 @@ export function yearSummary(boxes: readonly MonthBox[]): YearSummary {
   return 'nothing_due';
 }
 
-/** Everything about one area's year: its boxes, figures and summary word. */
+/**
+ * Everything about one area's year: its boxes, summary word, and the figures
+ * for the whole year or, when `month` is given, for that month only.
+ */
 export function areaYear(
   prices: readonly PriceRow[],
   paid: PaidByMonth,
   year: number,
   today: YearMonth,
+  month: number | null = null,
 ): AreaYear {
   const boxes = monthBoxes(prices, paid, year, today);
-  return { year, boxes, figures: yearFigures(boxes), summary: yearSummary(boxes) };
+  const figures =
+    month === null
+      ? yearFigures(boxes, rentMonthOf(year, today))
+      : yearFigures(
+          boxes.filter((box) => box.month === month),
+          month,
+        );
+  return { year, month, boxes, figures, summary: yearSummary(boxes) };
+}
+
+/**
+ * How an area stands today across every year since its rent started
+ * (`prices` oldest first): what it still owes, how many past months are late,
+ * and whether this month is due. Uses `monthStatus` for every month.
+ */
+export function areaStanding(
+  prices: readonly PriceRow[],
+  paid: PaidHistory,
+  today: YearMonth,
+): AreaStanding {
+  const standing: AreaStanding = { owed: 0, lateMonths: 0, dueNow: false };
+  const start = prices[0];
+  if (!start) return standing;
+  for (let index = monthIndex(start); index <= monthIndex(today); index += 1) {
+    const month = fromMonthIndex(index);
+    const expected = priceForMonth(prices, month);
+    const paidAmount = paid.get(index) ?? 0;
+    const status = monthStatus(expected, paidAmount, month, today);
+    if (status !== 'late' && status !== 'due') continue;
+    standing.owed += (expected ?? 0) - paidAmount;
+    if (status === 'late') standing.lateMonths += 1;
+    else standing.dueNow = true;
+  }
+  return standing;
+}
+
+/**
+ * The months with money on them, from `from` onward, whose status would
+ * change if the price history went from `before` to `after`. Used to warn
+ * before a price change so the past is never rewritten silently.
+ */
+export function statusChanges(
+  before: readonly PriceRow[],
+  after: readonly PriceRow[],
+  paid: PaidHistory,
+  from: YearMonth,
+  today: YearMonth,
+): StatusChange[] {
+  const changes: StatusChange[] = [];
+  const indexes = [...paid.keys()]
+    .filter((index) => index >= monthIndex(from))
+    .sort((a, b) => a - b);
+  for (const index of indexes) {
+    const month = fromMonthIndex(index);
+    const amount = paid.get(index) ?? 0;
+    const was = monthStatus(priceForMonth(before, month), amount, month, today);
+    const will = monthStatus(priceForMonth(after, month), amount, month, today);
+    if (was !== will) changes.push({ ...month, before: was, after: will });
+  }
+  return changes;
 }

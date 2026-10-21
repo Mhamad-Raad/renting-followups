@@ -217,7 +217,12 @@ describe('month boxes', () => {
     const next = repos.areas.year(id, 2027, TODAY);
     expect(next?.year).toBe(2027);
     expect(next?.summary).toBe('nothing_due');
-    expect(next?.figures).toEqual({ expected: 12 * 250_000, received: 0, remaining: 12 * 250_000 });
+    expect(next?.figures).toEqual({
+      rent: 250_000,
+      expected: 12 * 250_000,
+      received: 0,
+      remaining: 0,
+    });
     expect(repos.areas.year(999, 2026, TODAY)).toBeNull();
     repos.areas.softDelete(id);
     expect(repos.areas.year(id, 2026, TODAY)).toBeNull();

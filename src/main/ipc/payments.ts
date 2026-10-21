@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { idInputSchema } from '@shared/categories';
 import {
   areaPaymentsQuerySchema,
+  areaReceiptsQuerySchema,
   paymentCreateSchema,
   paymentPreviewSchema,
   paymentUpdateSchema,
@@ -11,7 +12,7 @@ import { businessToday } from '../services/clock';
 import { handle } from './handle';
 
 export function registerPaymentIpc({ payments }: Repositories): void {
-  handle('payments:forArea', areaPaymentsQuerySchema, ({ areaId }) => payments.forArea(areaId));
+  handle('payments:forArea', areaReceiptsQuerySchema, (query) => payments.forArea(query));
   handle('payments:suggestedStart', areaPaymentsQuerySchema, ({ areaId }) =>
     payments.suggestedStart(areaId, businessToday().month),
   );

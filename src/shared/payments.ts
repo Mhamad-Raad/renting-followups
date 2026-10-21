@@ -1,6 +1,13 @@
 import { z } from 'zod';
 import type { Currency } from './currency';
-import { dateStringSchema, yearMonthSchema, type DateString, type YearMonth } from './dates';
+import {
+  dateStringSchema,
+  monthSchema,
+  yearMonthSchema,
+  yearSchema,
+  type DateString,
+  type YearMonth,
+} from './dates';
 import { toDigitStyle, type DigitStyle } from './digits';
 
 export const PAYMENT_NOTE_MAX = 500;
@@ -43,6 +50,12 @@ export type PaymentUpdate = z.infer<typeof paymentUpdateSchema>;
 
 export const areaPaymentsQuerySchema = z.object({ areaId: id }).strict();
 export type AreaPaymentsQuery = z.infer<typeof areaPaymentsQuerySchema>;
+
+/** The receipts that paid any month of a year, or of one month of it. */
+export const areaReceiptsQuerySchema = z
+  .object({ areaId: id, year: yearSchema, month: monthSchema.nullable() })
+  .strict();
+export type AreaReceiptsQuery = z.infer<typeof areaReceiptsQuerySchema>;
 
 /** The part of a payment that goes to one month. */
 export interface Allocation extends YearMonth {

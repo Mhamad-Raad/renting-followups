@@ -1,14 +1,12 @@
 import { fromMonthIndex, monthIndex, type YearMonth } from '@shared/dates';
 import { HORIZON_MONTHS, type AllocationResult, type PlannedMonth } from '@shared/payments';
 import { priceForMonth, type PriceRow } from '@shared/prices';
+import type { PaidHistory } from './monthStatus';
 
 /**
  * How a payment is split across months (ARCHITECTURE.md section 7.1). Pure:
  * `today` and everything already paid are passed in.
  */
-
-/** Amounts already paid for an area, keyed by `monthIndex`. Missing months count as 0. */
-export type PaidHistory = ReadonlyMap<number, number>;
 
 /** The months a payment may fill, oldest first: from `from` up to 24 months past today. */
 function* openMonths(

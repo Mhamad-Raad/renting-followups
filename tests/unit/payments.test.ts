@@ -43,6 +43,9 @@ function payOk(overrides: Partial<PaymentCreate> = {}) {
   return result;
 }
 
+const receipts = (year = 2026, month: number | null = null) =>
+  repos.payments.forArea({ areaId, year, month });
+
 const statuses = () => repos.areas.year(areaId, 2026, TODAY.month)?.boxes.map((box) => box.status);
 
 describe('recording payments', () => {
@@ -91,16 +94,14 @@ describe('recording payments', () => {
       phone: '',
       startedOn: '2026-05-12',
     });
-    expect(repos.payments.forArea(areaId).find((r) => r.id === id)?.renterName).toBe(
-      'Karwan Ahmed',
-    );
+    expect(receipts().find((r) => r.id === id)?.renterName).toBe('Karwan Ahmed');
   });
 
   it('a past record gets no receipt number and does not use one up', () => {
     const past = payOk({ isBackfill: true, paidOn: '2026-02-01' });
     expect(past.receiptNumber).toBeNull();
     expect(payOk().receiptNumber).toBe(1);
-    expect(repos.payments.forArea(areaId).find((r) => r.id === past.id)).toMatchObject({
+    expect(receipts().find((r) => r.id === past.id)).toMatchObject({
       isBackfill: true,
       receiptNumber: null,
     });
@@ -117,7 +118,7 @@ describe('recording payments', () => {
 
   it('a refused payment leaves nothing behind and uses no number', () => {
     pay({ amount: 100 * RENT });
-    expect(repos.payments.forArea(areaId)).toEqual([]);
+    expect(receipts()).toEqual([]);
     expect(payOk().receiptNumber).toBe(1);
   });
 
@@ -142,7 +143,7 @@ describe('recording payments', () => {
         { month: 2, amount: 10 },
       ],
     });
-    expect(repos.payments.forArea(areaId)).toEqual([]);
+    expect(receipts()).toEqual([]);
     expect(repos.payments.preview(999, 1, TODAY.month, TODAY.month, null)).toBeNull();
   });
 });
@@ -156,7 +157,7 @@ describe('editing and cancelling receipts', () => {
         TODAY,
       ),
     ).toEqual({ ok: true });
-    const [receipt] = repos.payments.forArea(areaId);
+    const [receipt] = receipts();
     expect(receipt).toMatchObject({
       receiptNumber: 1,
       totalAmount: RENT,
@@ -176,7 +177,7 @@ describe('editing and cancelling receipts', () => {
   it('cancelling keeps the receipt listed, stops it counting and never reuses its number', () => {
     const { id } = payOk({ amount: RENT });
     expect(repos.payments.void(id)).toEqual({ ok: true });
-    expect(repos.payments.forArea(areaId)[0]).toMatchObject({ id, voided: true, receiptNumber: 1 });
+    expect(receipts()[0]).toMatchObject({ id, voided: true, receiptNumber: 1 });
     expect(statuses()?.[0]).toBe('late');
     expect(payOk().receiptNumber).toBe(2);
   });
@@ -214,6 +215,37 @@ describe('editing and cancelling receipts', () => {
       .all(id)
       .map((row) => (row as { action: string }).action);
     expect(actions).toEqual(['create', 'update', 'void']);
+  });
+
+  it('lists the receipts of a year or of one month, cancelled ones included', () => {
+    const march = payOk({ amount: RENT, from: { year: 2026, month: 3 } });
+    const yearEnd = payOk({ amount: 2 * RENT, from: { year: 2026, month: 12 } });
+    repos.payments.void(march.id);
+    expect(receipts().map((r) => r.id)).toEqual([yearEnd.id, march.id]);
+    expect(receipts(2026, 3).map((r) => r.id)).toEqual([march.id]);
+    expect(receipts(2027).map((r) => r.id)).toEqual([yearEnd.id]);
+    expect(receipts(2026, 4)).toEqual([]);
+  });
+
+  it('gives each month\u2019s paid amount across all years, for one area or all', () => {
+    payOk({ amount: RENT + 10, from: { year: 2026, month: 12 } });
+    const history = repos.payments.history(areaId);
+    expect([...history.values()]).toEqual([RENT, 10]);
+    expect(repos.payments.historyForActiveAreas().get(areaId)).toEqual(history);
+    repos.areas.softDelete(areaId);
+    expect(repos.payments.historyForActiveAreas().size).toBe(0);
+  });
+
+  it('warns which paid months a price change would alter', () => {
+    payOk({ amount: 2 * RENT, from: { year: 2026, month: 3 } });
+    const change = { areaId, from: { year: 2026, month: 4 }, monthlyPrice: 300_000 };
+    expect(repos.areas.priceChangeImpact(change, TODAY.month)).toEqual([
+      { year: 2026, month: 4, before: 'paid', after: 'late' },
+    ]);
+    expect(
+      repos.areas.priceChangeImpact({ ...change, from: { year: 2026, month: 5 } }, TODAY.month),
+    ).toEqual([]);
+    expect(repos.areas.priceChangeImpact({ ...change, areaId: 999 }, TODAY.month)).toBeNull();
   });
 
   it('knows the latest date money was received', () => {

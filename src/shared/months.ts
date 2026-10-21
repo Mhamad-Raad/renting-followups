@@ -21,10 +21,14 @@ export interface MonthBox {
   status: MonthStatus;
 }
 
-/** The figures of one area for one year, in the area's currency (minor units). */
+/** The figures of one area for one year (or one month of it), in the area's currency (minor units). */
 export interface YearFigures {
+  /** The monthly rent shown with the figures; 0 = vacant, null = rent not started. */
+  rent: number | null;
+  /** Total rent for the period. */
   expected: number;
   received: number;
+  /** Still owed: unpaid rent of months that have already come (late or due), never future months. */
   remaining: number;
 }
 
@@ -37,8 +41,28 @@ export type YearSummary = 'late' | 'due' | 'partial' | 'paid' | 'nothing_due';
 
 export interface AreaYear {
   year: number;
+  /** The month the figures are for, or null for the whole year. */
+  month: number | null;
   /** Always 12 boxes, month 1 first. */
   boxes: MonthBox[];
   figures: YearFigures;
   summary: YearSummary;
+}
+
+/** Where an area stands today across every year since its rent started, for Home. */
+export interface AreaStanding {
+  /** Unpaid rent of every month up to and including this one. */
+  owed: number;
+  /** Past months not fully paid, in any year. */
+  lateMonths: number;
+  /** This month is not fully paid yet. */
+  dueNow: boolean;
+}
+
+/** A paid month whose status a price change would alter, for the warning before saving. */
+export interface StatusChange {
+  year: number;
+  month: number;
+  before: MonthStatus;
+  after: MonthStatus;
 }

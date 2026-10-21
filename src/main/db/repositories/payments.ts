@@ -7,11 +7,12 @@ import type {
   PaymentCreateResult,
   PaymentUpdate,
   PaymentUpdateResult,
+  AreaReceiptsQuery,
   PaymentVoidResult,
   Receipt,
 } from '@shared/payments';
-import { allocate, oldestOpenMonth, type PaidHistory } from '../../services/allocation';
-import type { PaidByMonth } from '../../services/monthStatus';
+import { allocate, oldestOpenMonth } from '../../services/allocation';
+import type { PaidByMonth, PaidHistory } from '../../services/monthStatus';
 import type { Db } from '../connection';
 import type { AuditRepository } from './audit';
 import type { PriceRepository } from './prices';
@@ -79,6 +80,15 @@ export function createPaymentRepository(db: Db, { audit, prices, renters }: Depe
      FROM payment_allocations a JOIN receipts r ON r.id = a.receipt_id
      WHERE a.year = ? AND ${COUNTING}
      GROUP BY a.area_id, a.month`,
+  );
+  const selectPaidForActiveAreas = db.prepare<
+    [],
+    { area_id: number; year: number; month: number; amount: number }
+  >(
+    `SELECT a.area_id, a.year, a.month, SUM(a.amount) AS amount
+     FROM payment_allocations a JOIN receipts r ON r.id = a.receipt_id
+     WHERE ${COUNTING} AND a.area_id IN (SELECT id FROM areas WHERE deleted_at IS NULL)
+     GROUP BY a.area_id, a.year, a.month`,
   );
   const selectLatestPaidOn = db.prepare<[], { latest: string | null }>(
     `SELECT MAX(paid_on) AS latest FROM receipts r WHERE ${COUNTING}`,
@@ -237,26 +247,49 @@ export function createPaymentRepository(db: Db, { audit, prices, renters }: Depe
       return { ok: true };
     }),
 
-    /** Every receipt of an area, newest first, with the months each one paid. */
-    forArea(areaId: number): Receipt[] {
+    /**
+     * The receipts of an area that paid any month of `year` (or only of
+     * `month`), newest first, with the months each one paid. Cancelled ones
+     * are included: they still name the months they had paid.
+     */
+    forArea({ areaId, year, month }: AreaReceiptsQuery): Receipt[] {
       const byReceipt = new Map<number, Allocation[]>();
       for (const row of selectAllocationsForArea.all(areaId)) {
         const list = byReceipt.get(row.receipt_id) ?? [];
         list.push({ year: row.year, month: row.month, amount: row.amount });
         byReceipt.set(row.receipt_id, list);
       }
-      return selectReceiptsForArea.all(areaId).map((row) => ({
-        id: row.id,
-        receiptNumber: row.receipt_number,
-        isBackfill: row.is_backfill === 1,
-        renterName: row.renter_name_snapshot,
-        currency: row.currency,
-        totalAmount: row.total_amount,
-        paidOn: row.paid_on,
-        note: row.note,
-        voided: row.voided_at !== null,
-        allocations: byReceipt.get(row.id) ?? [],
-      }));
+      const inPeriod = (paid: Allocation) =>
+        paid.year === year && (month === null || paid.month === month);
+      return selectReceiptsForArea
+        .all(areaId)
+        .filter((row) => byReceipt.get(row.id)?.some(inPeriod))
+        .map((row) => ({
+          id: row.id,
+          receiptNumber: row.receipt_number,
+          isBackfill: row.is_backfill === 1,
+          renterName: row.renter_name_snapshot,
+          currency: row.currency,
+          totalAmount: row.total_amount,
+          paidOn: row.paid_on,
+          note: row.note,
+          voided: row.voided_at !== null,
+          allocations: byReceipt.get(row.id) ?? [],
+        }));
+    },
+
+    /** What every month of the area has been paid, across all years. */
+    history: (areaId: number): PaidHistory => paidHistory(areaId),
+
+    /** The same for every area in use, in one query. */
+    historyForActiveAreas(): Map<number, PaidHistory> {
+      const byArea = new Map<number, Map<number, number>>();
+      for (const row of selectPaidForActiveAreas.all()) {
+        const months = byArea.get(row.area_id) ?? new Map<number, number>();
+        months.set(monthIndex(row), row.amount);
+        byArea.set(row.area_id, months);
+      }
+      return byArea;
     },
 
     /** What each month of one area's year has been paid. */
