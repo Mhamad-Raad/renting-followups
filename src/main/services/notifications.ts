@@ -1,5 +1,5 @@
 import type { Currency } from '@shared/currency';
-import { daysInMonth, parseDateString, type BusinessToday } from '@shared/dates';
+import { daysInMonth, parseDateString, toDateString, type BusinessToday } from '@shared/dates';
 import {
   ALWAYS_REMIND_LAST_DAYS,
   type LateRent,
@@ -37,7 +37,9 @@ export function buildReminders(
   compareNames: (a: string, b: string) => number,
 ): Reminder[] {
   const day = parseDateString(today.date)?.day ?? 1;
-  const daysLeft = daysInMonth(today.month.year, today.month.month) - day + 1;
+  const lastDay = daysInMonth(today.month.year, today.month.month);
+  const daysLeft = lastDay - day + 1;
+  const endsOn = toDateString(today.month.year, today.month.month, lastDay);
   const remindNow = daysLeft <= Math.max(remindDays, ALWAYS_REMIND_LAST_DAYS);
   const late: LateRent[] = [];
   const monthEnd: MonthEndReminder[] = [];
@@ -68,6 +70,7 @@ export function buildReminders(
         month: today.month,
         owed: current.owed,
         daysLeft,
+        endsOn,
       });
     }
   }

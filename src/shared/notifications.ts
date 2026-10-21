@@ -1,5 +1,5 @@
 import type { Currency } from './currency';
-import type { YearMonth } from './dates';
+import type { DateString, YearMonth } from './dates';
 
 /** How many days before the end of the month the reminder starts (setting `remind_days_before_month_end`). */
 export const DEFAULT_REMIND_DAYS = 7;
@@ -29,6 +29,8 @@ export interface MonthEndReminder extends AreaRef {
   owed: number;
   /** Days left in the month, counting today (1 on the last day). */
   daysLeft: number;
+  /** The month's last day, which the reminder names. */
+  endsOn: DateString;
 }
 
 /**

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
-import { formatMonthRuns, formatYearMonth } from '@shared/dates';
+import { formatDate, formatMonthRuns, formatYearMonth } from '@shared/dates';
 import { formatPlain } from '@shared/formatNumber';
 import type { Reminder } from '@shared/notifications';
 import { useSettings } from '../../app/SettingsContext';
@@ -41,7 +41,7 @@ export function ReminderDescription({ reminder }: { reminder: Reminder }) {
       <span className={styles.detail}>
         {reminder.daysLeft === 1
           ? t('notifications.lastDay', { month })
-          : t('notifications.daysLeft', { month, days: formatPlain(reminder.daysLeft, digits) })}
+          : t('notifications.endsOn', { month, date: formatDate(reminder.endsOn, digits) })}
       </span>
     </>
   );

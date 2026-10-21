@@ -427,13 +427,13 @@
     "count": "Reminders: {{number}}",
     "late": "Late rent",
     "monthEnd": "This month ends soon",
-    "daysLeft": "Month {{month}} is not fully paid and ends in {{days}} days",
     "lastDay": "Month {{month}} is not fully paid and ends today",
     "owes": "Still owes",
     "none": "Nothing needs attention. All rent is paid up to this month.",
     "popupTitle": "Things that need attention",
     "goTo": "Go to Notifications",
     "more": "… and {{number}} more",
-    "toastBody": "{{number}} reminders need attention. Open the app to see them."
+    "toastBody": "Reminders that need attention: {{number}}. Open the app to see them.",
+    "endsOn": "Month {{month}} is not fully paid. It ends on {{date}}."
   }
 }
