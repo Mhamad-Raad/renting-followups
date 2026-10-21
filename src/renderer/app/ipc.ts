@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { InvokeArgs, IpcChannel, IpcErrorCode, IpcOutput, IpcResult } from '@shared/ipc';
+import {
+  CHANGES_DATA,
+  type InvokeArgs,
+  type IpcChannel,
+  type IpcErrorCode,
+  type IpcOutput,
+  type IpcResult,
+} from '@shared/ipc';
+import { announceDataChanged } from './dataChanged';
 
 /** Calls the main process. Never throws: a broken bridge becomes an 'unexpected' error. */
 export async function callIpc<C extends IpcChannel>(
@@ -7,7 +15,9 @@ export async function callIpc<C extends IpcChannel>(
   ...args: InvokeArgs<C>
 ): Promise<IpcResult<IpcOutput<C>>> {
   try {
-    return await window.api.invoke(channel, ...args);
+    const result = await window.api.invoke(channel, ...args);
+    if (result.ok && CHANGES_DATA[channel]) announceDataChanged();
+    return result;
   } catch {
     return { ok: false, error: 'unexpected' };
   }
