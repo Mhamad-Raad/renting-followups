@@ -6,11 +6,14 @@ import { migrate } from './db/migrate';
 import { MIGRATIONS } from './db/migrations';
 import { createRepositories } from './db/repositories';
 import { registerIpcHandlers } from './ipc';
+import { currentReminders } from './ipc/notifications';
 import { hardenSession, hardenWindow } from './security';
 import { createAuthService } from './services/auth';
 import { writeSafetySnapshot } from './services/backup';
+import { startDailyToast, stopDailyToast } from './services/dailyToast';
 import { describeError, initLogger, logger } from './services/logger';
 import { startupFailureMessage } from './services/messages';
+import { translate } from './services/translate';
 import { appWebPreferences, loadRenderer, RENDERER_DIRECTORY } from './windows';
 
 const APP_NAME = 'Rent Tracker';
@@ -56,6 +59,19 @@ function startServices(): { themeMode: ThemeMode } {
   const repos = createRepositories(db);
   const auth = createAuthService(repos.credentials);
   registerIpcHandlers({ repos, auth });
+  if (!isGhost) {
+    startDailyToast({
+      countReminders: () => currentReminders(repos).length,
+      texts: (count) => {
+        const { language } = repos.settings.getAll();
+        return {
+          title: translate(language, 'app.name'),
+          body: translate(language, 'notifications.toastBody', { number: String(count) }),
+        };
+      },
+      onClick: focusMainWindow,
+    });
+  }
   return { themeMode: repos.settings.getAll().themeMode };
 }
 
@@ -153,5 +169,6 @@ app.on('window-all-closed', () => {
 app.on('will-quit', () => {
   if (memoryLogTimer) clearInterval(memoryLogTimer);
   memoryLogTimer = null;
+  stopDailyToast();
   closeDatabase();
 });
