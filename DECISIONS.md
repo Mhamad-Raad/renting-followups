@@ -321,3 +321,9 @@ Vitest's persistent module cache is turned off: it keys files by their own conte
 - **Screen layout:** to fit a normal window without sideways scrolling, the category and notes sit under the area name, the phone under the renter, rent / received / still owed are labelled lines in one "Money" column, and the status word sits under the month strip. Printing and Excel (iteration 8) use separate columns on landscape paper.
 - **Print, Export PDF and Export Excel** buttons arrive with iteration 8.
 - The areas repository was split into `areas.ts` (create, edit, renters, delete, restore), `areaViews.ts` (list, year, Home overview) and `priceChanges.ts` (price change and its warning), each under 250 lines.
+
+## Iteration 8: Printing and exports
+
+### Dependency: exceljs 4.4.0
+
+Named in ARCHITECTURE.md for Excel export; pure JavaScript, runs in the main process, writes `.xlsx` with right-to-left sheets and cell colours. `npm audit` reports a moderate issue in its `uuid` dependency (a missing bounds check in `v3`/`v5`/`v6` when a buffer is passed). exceljs only calls `uuid.v4()` without a buffer (`lib/xlsx/xform/sheet/cf-ext/cf-rule-ext-xform.js`), so the flaw cannot be reached. Re-check when exceljs updates.
