@@ -9,6 +9,8 @@ interface ConfirmDialogProps {
   title: string;
   children: ReactNode;
   confirmLabel: string;
+  /** The button that changes nothing; "Cancel" unless that would be confusing. */
+  cancelLabel?: string;
   /** Use 'danger' for deletes and cancellations. */
   tone?: 'normal' | 'danger';
   onConfirm: () => void;
@@ -21,6 +23,7 @@ export function ConfirmDialog({
   title,
   children,
   confirmLabel,
+  cancelLabel,
   tone = 'normal',
   onConfirm,
   onCancel,
@@ -33,7 +36,7 @@ export function ConfirmDialog({
         <BigButton variant={tone === 'danger' ? 'danger' : 'primary'} onClick={onConfirm} autoFocus>
           {confirmLabel}
         </BigButton>
-        <BigButton onClick={onCancel}>{t('common.cancel')}</BigButton>
+        <BigButton onClick={onCancel}>{cancelLabel ?? t('common.cancel')}</BigButton>
       </DialogActions>
     </Dialog>
   );

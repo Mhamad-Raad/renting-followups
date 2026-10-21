@@ -30,7 +30,19 @@ import type {
   CategoryUpdate,
   IdInput,
 } from './categories';
+import type { YearMonth } from './dates';
 import type { AreaYear } from './months';
+import type {
+  AllocationResult,
+  AreaPaymentsQuery,
+  PaymentCreate,
+  PaymentCreateResult,
+  PaymentPreviewQuery,
+  PaymentUpdate,
+  PaymentUpdateResult,
+  PaymentVoidResult,
+  Receipt,
+} from './payments';
 import type { Settings, SettingsUpdate } from './settings';
 
 /** A renderer crash report: error type and stack frames, never the message. */
@@ -68,6 +80,13 @@ export interface IpcContract {
   'areas:delete': { input: IdInput; output: { ok: true } | { ok: false; reason: 'not_found' } };
   'areas:restore': { input: IdInput; output: RestoreResult };
   'deleted:list': { input: undefined; output: DeletedItems };
+  'payments:forArea': { input: AreaPaymentsQuery; output: Receipt[] };
+  'payments:suggestedStart': { input: AreaPaymentsQuery; output: YearMonth | null };
+  'payments:preview': { input: PaymentPreviewQuery; output: AllocationResult | null };
+  'payments:create': { input: PaymentCreate; output: PaymentCreateResult };
+  'payments:update': { input: PaymentUpdate; output: PaymentUpdateResult };
+  'payments:void': { input: IdInput; output: PaymentVoidResult };
+  'clock:check': { input: undefined; output: { looksWrong: boolean } };
 }
 export type IpcChannel = keyof IpcContract;
 export type IpcInput<C extends IpcChannel> = IpcContract[C]['input'];
@@ -104,6 +123,13 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'areas:delete': false,
   'areas:restore': false,
   'deleted:list': false,
+  'payments:forArea': false,
+  'payments:suggestedStart': false,
+  'payments:preview': false,
+  'payments:create': false,
+  'payments:update': false,
+  'payments:void': false,
+  'clock:check': false,
 };
 export const IPC_CHANNELS = Object.keys(OPEN_WHILE_LOCKED) as IpcChannel[];
 

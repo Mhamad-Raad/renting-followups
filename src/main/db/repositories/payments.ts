@@ -1,0 +1,289 @@
+import type { Currency } from '@shared/currency';
+import { monthIndex, type BusinessToday, type DateString, type YearMonth } from '@shared/dates';
+import type {
+  Allocation,
+  AllocationResult,
+  PaymentCreate,
+  PaymentCreateResult,
+  PaymentUpdate,
+  PaymentUpdateResult,
+  PaymentVoidResult,
+  Receipt,
+} from '@shared/payments';
+import { allocate, oldestOpenMonth, type PaidHistory } from '../../services/allocation';
+import type { PaidByMonth } from '../../services/monthStatus';
+import type { Db } from '../connection';
+import type { AuditRepository } from './audit';
+import type { PriceRepository } from './prices';
+import type { RenterRepository } from './renters';
+import { NOW_SQL } from './sql';
+
+interface ReceiptRecord {
+  id: number;
+  receipt_number: number | null;
+  is_backfill: 0 | 1;
+  area_id: number;
+  renter_name_snapshot: string | null;
+  currency: Currency;
+  total_amount: number;
+  paid_on: string;
+  note: string;
+  voided_at: string | null;
+}
+
+interface AllocationRecord {
+  receipt_id: number;
+  year: number;
+  month: number;
+  amount: number;
+}
+
+interface Dependencies {
+  audit: AuditRepository;
+  prices: PriceRepository;
+  renters: RenterRepository;
+}
+
+const RECEIPT_COLUMNS = `id, receipt_number, is_backfill, area_id, renter_name_snapshot, currency,
+  total_amount, paid_on, note, voided_at`;
+// Only receipts that still count: cancelled ones are kept but never add to what was paid.
+const COUNTING = 'r.voided_at IS NULL';
+const LAST_NUMBER_KEY = 'last_receipt_number';
+
+export function createPaymentRepository(db: Db, { audit, prices, renters }: Dependencies) {
+  const selectAreaCurrency = db.prepare<[number], { currency: Currency }>(
+    'SELECT currency FROM areas WHERE id = ? AND deleted_at IS NULL',
+  );
+  const selectReceipt = db.prepare<[number], ReceiptRecord>(
+    `SELECT ${RECEIPT_COLUMNS} FROM receipts r
+     WHERE id = ? AND area_id IN (SELECT id FROM areas WHERE deleted_at IS NULL)`,
+  );
+  const selectReceiptsForArea = db.prepare<[number], ReceiptRecord>(
+    `SELECT ${RECEIPT_COLUMNS} FROM receipts WHERE area_id = ? ORDER BY paid_on DESC, id DESC`,
+  );
+  const selectAllocationsForArea = db.prepare<[number], AllocationRecord>(
+    `SELECT receipt_id, year, month, amount FROM payment_allocations
+     WHERE area_id = ? ORDER BY year, month`,
+  );
+  const selectAllocationsForReceipt = db.prepare<[number], Allocation>(
+    'SELECT year, month, amount FROM payment_allocations WHERE receipt_id = ? ORDER BY year, month',
+  );
+  const selectPaidForArea = db.prepare<[number, number], Allocation>(
+    `SELECT a.year, a.month, SUM(a.amount) AS amount
+     FROM payment_allocations a JOIN receipts r ON r.id = a.receipt_id
+     WHERE a.area_id = ? AND ${COUNTING} AND a.receipt_id <> ?
+     GROUP BY a.year, a.month`,
+  );
+  const selectPaidInYear = db.prepare<[number], { area_id: number; month: number; amount: number }>(
+    `SELECT a.area_id, a.month, SUM(a.amount) AS amount
+     FROM payment_allocations a JOIN receipts r ON r.id = a.receipt_id
+     WHERE a.year = ? AND ${COUNTING}
+     GROUP BY a.area_id, a.month`,
+  );
+  const selectLatestPaidOn = db.prepare<[], { latest: string | null }>(
+    `SELECT MAX(paid_on) AS latest FROM receipts r WHERE ${COUNTING}`,
+  );
+  const selectLastNumber = db.prepare<[string], { value: string }>(
+    'SELECT value FROM settings WHERE key = ?',
+  );
+  const selectHighestNumber = db.prepare<[], { highest: number | null }>(
+    'SELECT MAX(receipt_number) AS highest FROM receipts',
+  );
+  const saveLastNumber = db.prepare<[string, string]>(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = ${NOW_SQL}`,
+  );
+  const insertReceipt = db.prepare<
+    [number | null, number, number, string | null, string | null, Currency, number, string, string]
+  >(
+    `INSERT INTO receipts (receipt_number, is_backfill, area_id, renter_name_snapshot,
+       renter_phone_snapshot, currency, total_amount, paid_on, note)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
+  const updateReceipt = db.prepare<[number, string, string, number]>(
+    'UPDATE receipts SET total_amount = ?, paid_on = ?, note = ? WHERE id = ?',
+  );
+  const markVoided = db.prepare<[number]>(
+    `UPDATE receipts SET voided_at = ${NOW_SQL} WHERE id = ?`,
+  );
+  const insertAllocation = db.prepare<[number, number, number, number, number]>(
+    `INSERT INTO payment_allocations (receipt_id, area_id, year, month, amount)
+     VALUES (?, ?, ?, ?, ?)`,
+  );
+  const deleteAllocations = db.prepare<[number]>(
+    'DELETE FROM payment_allocations WHERE receipt_id = ?',
+  );
+
+  /** What other receipts already paid for each month of the area. */
+  const paidHistory = (areaId: number, exceptReceiptId = 0): PaidHistory =>
+    new Map(
+      selectPaidForArea
+        .all(areaId, exceptReceiptId)
+        .map((row) => [monthIndex(row), row.amount] as const),
+    );
+
+  const plan = (areaId: number, amount: number, from: YearMonth, today: YearMonth, except = 0) =>
+    allocate(amount, from, prices.forArea(areaId), paidHistory(areaId, except), today);
+
+  // Numbers only ever go up: the stored counter survives even if a receipt row were lost.
+  const nextReceiptNumber = () => {
+    const stored = Number(selectLastNumber.get(LAST_NUMBER_KEY)?.value ?? 0);
+    const highest = selectHighestNumber.get()?.highest ?? 0;
+    const next = Math.max(Number.isSafeInteger(stored) ? stored : 0, highest) + 1;
+    saveLastNumber.run(LAST_NUMBER_KEY, String(next));
+    return next;
+  };
+
+  const writeAllocations = (receiptId: number, areaId: number, months: readonly Allocation[]) => {
+    for (const { year, month, amount } of months) {
+      insertAllocation.run(receiptId, areaId, year, month, amount);
+    }
+  };
+
+  const monthsOf = (months: readonly Allocation[]) =>
+    months.map(({ year, month, amount }) => ({ year, month, amount }));
+
+  return {
+    /** The months a payment would fill, before saving. Null when the area does not exist. */
+    preview(
+      areaId: number,
+      amount: number,
+      from: YearMonth,
+      today: YearMonth,
+      receiptId: number | null,
+    ): AllocationResult | null {
+      if (!selectAreaCurrency.get(areaId)) return null;
+      return plan(areaId, amount, from, today, receiptId ?? 0);
+    },
+
+    /** The month the payment form suggests: the oldest one not fully paid. */
+    suggestedStart(areaId: number, today: YearMonth): YearMonth | null {
+      return oldestOpenMonth(prices.forArea(areaId), paidHistory(areaId), today);
+    },
+
+    /** Saves a payment, its receipt number (unless it is a past record) and its months, all at once. */
+    create: db.transaction((input: PaymentCreate, today: BusinessToday): PaymentCreateResult => {
+      const area = selectAreaCurrency.get(input.areaId);
+      if (!area) return { ok: false, reason: 'not_found' };
+      if (input.paidOn > today.date) return { ok: false, reason: 'future_date' };
+      const planned = plan(input.areaId, input.amount, input.from, today.month);
+      if (!planned.ok) return planned;
+      const receiptNumber = input.isBackfill ? null : nextReceiptNumber();
+      const renter = renters.current(input.areaId);
+      const id = Number(
+        insertReceipt.run(
+          receiptNumber,
+          input.isBackfill ? 1 : 0,
+          input.areaId,
+          renter?.fullName ?? null,
+          renter?.phone ?? null,
+          area.currency,
+          input.amount,
+          input.paidOn,
+          input.note,
+        ).lastInsertRowid,
+      );
+      writeAllocations(id, input.areaId, planned.months);
+      audit.record('create', 'receipt', id, {
+        areaId: input.areaId,
+        receiptNumber,
+        isBackfill: input.isBackfill,
+        amount: input.amount,
+        paidOn: input.paidOn,
+        months: monthsOf(planned.months),
+      });
+      return { ok: true, id, receiptNumber };
+    }),
+
+    /** Corrects a receipt. It keeps its number; its months are worked out again. */
+    update: db.transaction((input: PaymentUpdate, today: BusinessToday): PaymentUpdateResult => {
+      const before = selectReceipt.get(input.id);
+      if (!before) return { ok: false, reason: 'not_found' };
+      if (before.voided_at !== null) return { ok: false, reason: 'cancelled' };
+      if (input.paidOn > today.date) return { ok: false, reason: 'future_date' };
+      const planned = plan(before.area_id, input.amount, input.from, today.month, input.id);
+      if (!planned.ok) return planned;
+      const previousMonths = selectAllocationsForReceipt.all(input.id);
+      deleteAllocations.run(input.id);
+      writeAllocations(input.id, before.area_id, planned.months);
+      updateReceipt.run(input.amount, input.paidOn, input.note, input.id);
+      audit.record('update', 'receipt', input.id, {
+        before: {
+          amount: before.total_amount,
+          paidOn: before.paid_on,
+          note: before.note,
+          months: previousMonths,
+        },
+        after: {
+          amount: input.amount,
+          paidOn: input.paidOn,
+          note: input.note,
+          months: monthsOf(planned.months),
+        },
+      });
+      return { ok: true };
+    }),
+
+    /** Cancels a receipt: it stays listed, crossed out, and stops counting. Its number is never reused. */
+    void: db.transaction((id: number): PaymentVoidResult => {
+      const receipt = selectReceipt.get(id);
+      if (!receipt) return { ok: false, reason: 'not_found' };
+      if (receipt.voided_at !== null) return { ok: false, reason: 'cancelled' };
+      markVoided.run(id);
+      audit.record('void', 'receipt', id, {
+        receiptNumber: receipt.receipt_number,
+        amount: receipt.total_amount,
+      });
+      return { ok: true };
+    }),
+
+    /** Every receipt of an area, newest first, with the months each one paid. */
+    forArea(areaId: number): Receipt[] {
+      const byReceipt = new Map<number, Allocation[]>();
+      for (const row of selectAllocationsForArea.all(areaId)) {
+        const list = byReceipt.get(row.receipt_id) ?? [];
+        list.push({ year: row.year, month: row.month, amount: row.amount });
+        byReceipt.set(row.receipt_id, list);
+      }
+      return selectReceiptsForArea.all(areaId).map((row) => ({
+        id: row.id,
+        receiptNumber: row.receipt_number,
+        isBackfill: row.is_backfill === 1,
+        renterName: row.renter_name_snapshot,
+        currency: row.currency,
+        totalAmount: row.total_amount,
+        paidOn: row.paid_on,
+        note: row.note,
+        voided: row.voided_at !== null,
+        allocations: byReceipt.get(row.id) ?? [],
+      }));
+    },
+
+    /** What each month of one area's year has been paid. */
+    paidInAreaYear(areaId: number, year: number): PaidByMonth {
+      const paid = new Map<number, number>();
+      for (const row of selectPaidForArea.all(areaId, 0)) {
+        if (row.year === year) paid.set(row.month, row.amount);
+      }
+      return paid;
+    },
+
+    /** What each month of a year has been paid, for every area, in one query. */
+    paidInYear(year: number): Map<number, Map<number, number>> {
+      const byArea = new Map<number, Map<number, number>>();
+      for (const row of selectPaidInYear.all(year)) {
+        const months = byArea.get(row.area_id) ?? new Map<number, number>();
+        months.set(row.month, row.amount);
+        byArea.set(row.area_id, months);
+      }
+      return byArea;
+    },
+
+    /** The latest date money was received, for the "computer date looks wrong" check. */
+    latestPaidOn(): DateString | null {
+      return selectLatestPaidOn.get()?.latest ?? null;
+    },
+  };
+}
+
+export type PaymentRepository = ReturnType<typeof createPaymentRepository>;

@@ -27,3 +27,9 @@
     transform: none;
   }
 }
+
+.warning {
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  margin-block-end: var(--space-4);
+}

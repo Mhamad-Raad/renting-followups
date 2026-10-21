@@ -7,8 +7,9 @@ export const AUDIT_ACTIONS = [
   'change_price',
   'change_renter',
   'end_renter',
+  'void',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
-export const AUDIT_ENTITIES = ['category', 'area'] as const;
+export const AUDIT_ENTITIES = ['category', 'area', 'receipt'] as const;
 export type AuditEntity = (typeof AUDIT_ENTITIES)[number];

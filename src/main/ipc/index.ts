@@ -5,6 +5,7 @@ import { registerAuthIpc } from './auth';
 import { registerCategoryIpc } from './categories';
 import { setUnlockCheck } from './handle';
 import { registerLogIpc } from './log';
+import { registerPaymentIpc } from './payments';
 import { registerSettingsIpc } from './settings';
 
 export interface IpcDependencies {
@@ -24,4 +25,5 @@ export function registerIpcHandlers({ repos, auth }: IpcDependencies): void {
   registerAuthIpc(auth);
   registerCategoryIpc(repos);
   registerAreaIpc(repos);
+  registerPaymentIpc(repos);
 }

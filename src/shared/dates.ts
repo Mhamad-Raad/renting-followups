@@ -21,6 +21,11 @@ export function monthIndex({ year, month }: YearMonth): number {
   return year * 12 + (month - 1);
 }
 
+/** The month a `monthIndex` stands for. */
+export function fromMonthIndex(index: number): YearMonth {
+  return { year: Math.floor(index / 12), month: (index % 12) + 1 };
+}
+
 export function compareYearMonth(a: YearMonth, b: YearMonth): number {
   return monthIndex(a) - monthIndex(b);
 }
@@ -54,6 +59,12 @@ export const dateStringSchema = z.string().refine((value) => parseDateString(val
 /** The month of a JavaScript Date in local time. Callers pass the clock in; this never reads it. */
 export function yearMonthOf(date: Date): YearMonth {
   return { year: date.getFullYear(), month: date.getMonth() + 1 };
+}
+
+/** Today for business rules: the date (to refuse future dates) and its month (for colours and limits). */
+export interface BusinessToday {
+  date: DateString;
+  month: YearMonth;
 }
 
 /** The date of a JavaScript Date in local time. Callers pass the clock in; this never reads it. */
