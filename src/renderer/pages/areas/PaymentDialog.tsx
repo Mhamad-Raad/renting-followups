@@ -201,15 +201,18 @@ function AllocationPreview({ area, amount, from, receiptId }: AllocationPreviewP
   );
   const query = useDebouncedValue(input, PREVIEW_DELAY_MS);
   const preview = useIpcQuery('payments:preview', query);
-  return <PreviewText state={preview.state} area={area} />;
+  // While typing, the shown months belong to an earlier amount: dim them until they catch up.
+  return <PreviewText state={preview.state} area={area} stale={query !== input} />;
 }
 
 function PreviewText({
   state,
   area,
+  stale,
 }: {
   state: QueryState<AllocationResult | null>;
   area: AreaDetails;
+  stale: boolean;
 }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
@@ -221,7 +224,7 @@ function PreviewText({
   const money = (value: number) =>
     formatAmount(value, FRACTION_DIGITS[area.currency], settings.digitStyle);
   return (
-    <div className={styles.preview} aria-live="polite">
+    <div className={styles.preview} data-stale={stale || undefined} aria-live="polite">
       <h3 className={styles.previewTitle}>{t('paymentDialog.preview')}</h3>
       <ul>
         {state.data.months.map((planned) => {

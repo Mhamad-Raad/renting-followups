@@ -113,6 +113,11 @@
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
   background: var(--color-surface-muted);
+  transition: opacity var(--duration-fast) var(--ease);
+}
+
+.preview[data-stale] {
+  opacity: 0.5;
 }
 
 .preview ul {
