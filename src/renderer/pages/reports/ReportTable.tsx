@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatPlain } from '@shared/formatNumber';
 import type { ReportRow, ReportTotal } from '@shared/reports';
@@ -94,8 +94,8 @@ function MoneyLines({
   );
 }
 
-/** Memoized: changing a filter re-renders only rows whose data changed. */
-const ReportTableRow = memo(function ReportTableRow({
+// Not memoized: every report arrives as new objects, and 200 rows draw in well under a second.
+function ReportTableRow({
   row,
   year,
   month,
@@ -156,4 +156,4 @@ const ReportTableRow = memo(function ReportTableRow({
       </td>
     </tr>
   );
-});
+}
