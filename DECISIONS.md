@@ -259,3 +259,29 @@ Vitest's persistent module cache is turned off: it keys files by their own conte
 
 - Until payments exist (iteration 5) nothing is paid, so every past month with rent shows as **Late**.
 - The "computer date looks wrong" warning needs the latest payment date, so it is added with payments in iteration 5.
+
+## Iteration 5: Payments
+
+### Decided by the owner
+
+- **Editing a receipt changes everything:** amount, starting month, date received and note. The months are worked out again, the receipt keeps its number, and the before/after is written to the activity log.
+- **Receipt numbers start at 0001.**
+
+### Rules as built
+
+- The receipt counter is the `last_receipt_number` setting, raised inside the same transaction as the receipt; the next number is one above both the counter and the highest number ever saved, so a number is never reused. The database refuses to change a receipt's number.
+- **Undo** cancels the receipt (like Cancel receipt): it stays listed, crossed out, and its number is not reused. This keeps every number accounted for. Undo is offered next to the "Payment saved" message until another change is made on the screen or the screen is left.
+- A cancelled receipt cannot be edited or cancelled again.
+- **Date received** cannot be after today (refused in plain words). This keeps the "computer date looks wrong" check meaningful: it shows when the latest date money was received is later than today's date on the computer. The backup date joins this check in iteration 11.
+- **Record past payment** uses the same form and the same month filling as Record payment; it simply gets no receipt number and shows as "Past record".
+- The form starts at the oldest month that is not fully paid since the rent started, or this month when everything is paid. While a receipt is being edited, its own months count as open again.
+- The preview is worked out by the main process (`allocation.ts`), the same code that saves, so what is shown is exactly what is saved.
+- Renter name and phone are copied onto the receipt when it is saved.
+
+### Screens
+
+- Record payment is the primary button in the area page header; Record past payment is the first button in the row below.
+- The area page lists all receipts of the area for now; iteration 6 limits the list to the chosen year.
+- **Save and print receipt** and **Print receipt** are added in iteration 8, when printing works, rather than as buttons that do nothing.
+- The Cancel receipt question answers with "Cancel receipt" and "Keep it", so "Cancel" never means two things.
+- The area page was split into `AreaFacts`, `AreaHistory` and `ReceiptList` to stay readable.

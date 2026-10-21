@@ -71,3 +71,19 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] _manual_ The table fits a 1100×700 window at normal text size; with extra-large text only the table scrolls sideways.
 - [ ] _manual_ In Sorani and Arabic month 1 is on the right; in dark mode the colours stay clearly different.
 - [ ] _manual_ The boxes fade in quickly when the area page opens, and not at all with reduced motion turned on in Windows.
+
+## Iteration 5: Payments
+
+Automated (`npm run test:e2e`) unless marked _manual_.
+
+- [ ] Record payment: the amount box has the cursor; typing 300,000 for a 250,000 rent previews "full" for one month and "partial, 50,000 of 250,000" for the next.
+- [ ] Save shows "Payment saved. Receipt No. 0001" and the month turns green; the receipt appears under Payments.
+- [ ] Undo crosses the receipt out ("Cancelled") and the month goes back to orange; the next payment gets No. 0002.
+- [ ] Edit a receipt: change the amount and the month colours follow; the number stays the same.
+- [ ] Cancel receipt asks first ("Cancel receipt" / "Keep it"), then crosses it out and stops it counting.
+- [ ] Record past payment explains it gets no number, and shows as "Past record".
+- [ ] An amount above two years of rent shows a warning in the preview and cannot be saved.
+- [ ] _manual_ A date received after today is refused in plain words.
+- [ ] _manual_ With the computer clock set before the last date money was received, the app opens with "The computer date looks wrong".
+- [ ] _manual_ Amounts typed with Arabic-Indic digits (٢٥٠٠٠٠) are accepted; USD accepts cents.
+- [ ] _manual_ In Sorani and Arabic the payment form and the preview read right to left.
