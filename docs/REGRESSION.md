@@ -60,3 +60,14 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] _manual_ Categories: add with a colour, rename, recolour; the chip on Areas shows the colour; a category with areas cannot be deleted.
 - [ ] _manual_ The currency cannot be changed on Edit area.
 - [ ] _manual_ In Sorani and Arabic the table, form and dialogs read right to left; in dark mode everything stays readable.
+
+## Iteration 4: Month status engine
+
+Automated (`npm run test:e2e`) unless marked _manual_.
+
+- [ ] Areas list: each row shows a 12-box strip for this year and a status word under it.
+- [ ] An area whose rent starts this month: earlier months say "Not started" (hatched), this month "Due" (orange), later months "Upcoming" (grey).
+- [ ] The area page shows 12 boxes for this year with month number and word; Mark as vacant turns this month to "Vacant" at once.
+- [ ] _manual_ The table fits a 1100×700 window at normal text size; with extra-large text only the table scrolls sideways.
+- [ ] _manual_ In Sorani and Arabic month 1 is on the right; in dark mode the colours stay clearly different.
+- [ ] _manual_ The boxes fade in quickly when the area page opens, and not at all with reduced motion turned on in Windows.
