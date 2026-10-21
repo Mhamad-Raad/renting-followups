@@ -6,7 +6,7 @@ import { AreasPage } from '../pages/areas/AreasPage';
 import { CategoriesPage } from '../pages/areas/CategoriesPage';
 import { DeletedItemsPage } from '../pages/DeletedItemsPage';
 import { HomePage } from '../pages/home/HomePage';
-import { PlaceholderPage } from '../pages/PlaceholderPage';
+import { NotificationsPage } from '../pages/notifications/NotificationsPage';
 import { ReportsPage } from '../pages/reports/ReportsPage';
 import { SettingsPage } from '../pages/SettingsPage';
 
@@ -31,7 +31,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     path: '/notifications',
     key: 'notifications',
     icon: 'notifications',
-    element: <PlaceholderPage page="notifications" />,
+    element: <NotificationsPage />,
   },
   { path: '/settings', key: 'settings', icon: 'settings', element: <SettingsPage /> },
 ];

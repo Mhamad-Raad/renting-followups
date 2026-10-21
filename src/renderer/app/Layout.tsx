@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { Notice } from '../components/Notice';
+import { StartupReminders } from '../pages/notifications/StartupReminders';
 import { CrashScreen } from './CrashScreen';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useIpcQuery } from './ipc';
@@ -21,6 +22,7 @@ export function Layout() {
   return (
     <div className={styles.shell}>
       <Sidebar />
+      <StartupReminders />
       <main className={styles.main}>
         {clock.state.status === 'ready' && clock.state.data.looksWrong && (
           <div className={styles.warning}>
