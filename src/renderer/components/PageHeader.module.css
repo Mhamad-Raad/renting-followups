@@ -1,5 +1,7 @@
 .header {
   display: flex;
+  /* With large text the buttons move under the title instead of squeezing their words. */
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
@@ -13,5 +15,7 @@
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-3);
+  white-space: nowrap;
 }
