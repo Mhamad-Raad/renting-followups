@@ -103,3 +103,15 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] _manual_ Still owed does not count months after this one; a prepaid future month counts as Received.
 - [ ] _manual_ Changing year or month updates without blinking; the boxes change colour softly.
 - [ ] _manual_ Large amounts fit in the figure cards at 1100×700 and with extra-large text.
+
+## Iteration 7: Reports
+
+Automated (`npm run test:e2e`) unless marked _manual_.
+
+- [ ] Reports lists every area with rent, received, still owed, the month strip and status, and one total row per currency.
+- [ ] Status Late / Paid / Due or partly paid and Currency narrow the list; the totals follow.
+- [ ] The area picker leaves areas out; Select none shows "No areas match"; Select all brings them back.
+- [ ] Filters except the year are remembered after a restart.
+- [ ] _manual_ Choosing a month shows that month's figures, outlines it in every strip and shows its status word.
+- [ ] _manual_ 200 areas open in well under a second; changing filters does not blink.
+- [ ] _manual_ In Sorani and Arabic the table reads right to left; the footer numbers follow the digit style.

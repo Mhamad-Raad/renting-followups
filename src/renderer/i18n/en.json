@@ -365,7 +365,7 @@
       "late": "Late"
     },
     "picker": {
-      "title": "Areas in the report: {{chosen}} of {{total}}",
+      "title": "Areas to include: {{chosen}} of {{total}}",
       "all": "Select all",
       "none": "Select none"
     },

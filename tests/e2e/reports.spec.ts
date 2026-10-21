@@ -91,7 +91,7 @@ test('filters except the year are remembered; the area picker leaves areas out',
     await page.getByLabel(en.area.category).selectOption({ label: 'Shops' });
     await expect(rows(page)).toHaveCount(2);
 
-    await page.getByText(/Areas in the report/).click();
+    await page.getByText(/Areas to include/).click();
     await page.getByRole('checkbox', { name: 'Shop late' }).uncheck();
     await expect(rows(page)).toHaveCount(1);
     await page.getByRole('button', { name: en.reports.picker.none }).click();
