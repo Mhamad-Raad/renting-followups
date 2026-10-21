@@ -1,40 +1,20 @@
-import {
-  isBeforeRentStart,
-  type AreaCreate,
-  type AreaDetails,
-  type AreaListItem,
-  type AreaListQuery,
-  type AreaSaveResult,
-  type AreaUpdate,
-  type PriceChange,
-  type PriceChangeImpact,
-  type PriceChangeResult,
-  type RenterChange,
-  type RenterChangeResult,
-  type RestoreResult,
+import type {
+  AreaCreate,
+  AreaDetails,
+  AreaSaveResult,
+  AreaUpdate,
+  RenterChange,
+  RenterChangeResult,
+  RestoreResult,
 } from '@shared/areas';
-import type { CategoryColor } from '@shared/categories';
 import type { Currency } from '@shared/currency';
-import type { YearMonth } from '@shared/dates';
-import type { AreaYear } from '@shared/months';
-import { normalizePhone, normalizeText } from '@shared/normalizeText';
-import { priceForMonth, withPriceFrom } from '@shared/prices';
-import {
-  areaStanding,
-  areaYear,
-  NO_PAYMENTS,
-  statusChanges,
-  type AreaOverview,
-} from '../../services/monthStatus';
-import type { AttentionItem } from '@shared/home';
-import type { PaidRepository } from './paid';
-import type { PaymentRepository } from './payments';
+import { normalizeText } from '@shared/normalizeText';
 import type { Db } from '../connection';
 import type { AuditRepository } from './audit';
 import type { CategoryRepository } from './categories';
 import type { PriceRepository } from './prices';
 import type { RenterRepository } from './renters';
-import { containsPattern, NOW_SQL } from './sql';
+import { NOW_SQL } from './sql';
 
 interface AreaRecord {
   id: number;
@@ -47,46 +27,14 @@ interface AreaRecord {
   deleted_at: string | null;
 }
 
-interface AreaListRecord {
-  id: number;
-  name: string;
-  currency: Currency;
-  category_id: number;
-  category_name: string;
-  category_color: CategoryColor | null;
-  renter_name: string | null;
-  renter_phone: string | null;
-}
-
 interface Dependencies {
   audit: AuditRepository;
   categories: CategoryRepository;
-  paid: PaidRepository;
-  payments: PaymentRepository;
   prices: PriceRepository;
   renters: RenterRepository;
 }
 
-export function createAreaRepository(
-  db: Db,
-  { audit, categories, paid, payments, prices, renters }: Dependencies,
-) {
-  const selectList = db.prepare<
-    { categoryId: number | null; namePattern: string; phonePattern: string | null },
-    AreaListRecord
-  >(
-    `SELECT a.id, a.name, a.currency, a.category_id,
-       c.name AS category_name, c.color AS category_color,
-       r.full_name AS renter_name, r.phone AS renter_phone
-     FROM areas a
-     JOIN categories c ON c.id = a.category_id
-     LEFT JOIN renters r ON r.area_id = a.id AND r.ended_on IS NULL
-     WHERE a.deleted_at IS NULL
-       AND (@categoryId IS NULL OR a.category_id = @categoryId)
-       AND (a.name_normalized LIKE @namePattern ESCAPE '\\'
-         OR r.full_name_normalized LIKE @namePattern ESCAPE '\\'
-         OR (@phonePattern IS NOT NULL AND r.phone_digits LIKE @phonePattern ESCAPE '\\'))`,
-  );
+export function createAreaRepository(db: Db, { audit, categories, prices, renters }: Dependencies) {
   const selectById = db.prepare<[number], AreaRecord>(
     `SELECT id, category_id, name, currency, address, contract_start, notes, deleted_at
      FROM areas WHERE id = ?`,
@@ -127,67 +75,8 @@ export function createAreaRepository(
   const emptyToNull = (text: string) => (text === '' ? null : text);
 
   return {
-    /** Areas in use, optionally in one category and matching a search on area name, renter name or phone. */
-    list({ search, categoryId }: AreaListQuery, today: YearMonth): AreaListItem[] {
-      const query = normalizeText(search);
-      const digits = normalizePhone(search);
-      const pricesByArea = prices.forActiveAreas();
-      const paidByArea = paid.inYear(today.year);
-      return selectList
-        .all({
-          categoryId,
-          namePattern: containsPattern(query),
-          phonePattern: digits === '' ? null : containsPattern(digits),
-        })
-        .map((row) => {
-          const history = pricesByArea.get(row.id) ?? [];
-          const paid = paidByArea.get(row.id) ?? NO_PAYMENTS;
-          const { boxes, summary } = areaYear(history, paid, today.year, today);
-          return {
-            id: row.id,
-            name: row.name,
-            categoryId: row.category_id,
-            categoryName: row.category_name,
-            categoryColor: row.category_color,
-            currency: row.currency,
-            renterName: row.renter_name,
-            renterPhone: row.renter_phone,
-            currentPrice: priceForMonth(history, today),
-            months: boxes,
-            summary,
-          };
-        });
-    },
-
-    /** One year of an area: its 12 month boxes, summary word, and figures for the year or one month. */
-    year(id: number, year: number, today: YearMonth, month: number | null = null): AreaYear | null {
-      if (!findActive(id)) return null;
-      return areaYear(prices.forArea(id), paid.inAreaYear(id, year), year, today, month);
-    },
-
-    /** Every area in use with this year's figures and its standing today, for Home. */
-    overviews(today: YearMonth): (AttentionItem & AreaOverview)[] {
-      const pricesByArea = prices.forActiveAreas();
-      const historyByArea = paid.historyForActiveAreas();
-      const paidThisYear = paid.inYear(today.year);
-      return selectList
-        .all({ categoryId: null, namePattern: containsPattern(''), phonePattern: null })
-        .map((row) => {
-          const history = pricesByArea.get(row.id) ?? [];
-          const paid = paidThisYear.get(row.id) ?? NO_PAYMENTS;
-          return {
-            id: row.id,
-            name: row.name,
-            categoryName: row.category_name,
-            categoryColor: row.category_color,
-            currency: row.currency,
-            renterName: row.renter_name,
-            renterPhone: row.renter_phone,
-            figures: areaYear(history, paid, today.year, today).figures,
-            standing: areaStanding(history, historyByArea.get(row.id) ?? new Map(), today),
-          };
-        });
-    },
+    /** True for an area that exists and is not deleted. */
+    isActive: (id: number) => findActive(id) !== null,
 
     get(id: number): AreaDetails | null {
       const area = findActive(id);
@@ -274,49 +163,6 @@ export function createAreaRepository(
       });
       return { ok: true, id: input.id };
     }),
-
-    /**
-     * What a price change would do to money already paid: the receipts from
-     * that month onward are shared out again with the new rent. Lists every
-     * month that gains or loses money or changes colour, or says the money
-     * would have nowhere to go. Null when the area does not exist.
-     */
-    priceChangeImpact(change: PriceChange, today: YearMonth): PriceChangeImpact | null {
-      if (!findActive(change.areaId)) return null;
-      const before = prices.forArea(change.areaId);
-      const after = withPriceFrom(before, change.from, change.monthlyPrice);
-      const { now, plan } = payments.planReshare(change.areaId, change.from, after, today);
-      if (!plan.ok) return plan;
-      return {
-        ok: true,
-        changes: statusChanges(before, after, now, plan.paid, change.from, today),
-      };
-    },
-
-    /**
-     * A new price from a month onward. Earlier months keep their price; 0 means
-     * vacant. Money already paid from that month onward is shared out again
-     * with the new rent, in the same transaction.
-     */
-    changePrice: db.transaction(
-      ({ areaId, from, monthlyPrice }: PriceChange, today: YearMonth): PriceChangeResult => {
-        if (!findActive(areaId)) return { ok: false, reason: 'not_found' };
-        const history = prices.forArea(areaId);
-        if (isBeforeRentStart(history, from)) return { ok: false, reason: 'before_rent_start' };
-        const after = withPriceFrom(history, from, monthlyPrice);
-        const { plan } = payments.planReshare(areaId, from, after, today);
-        if (!plan.ok) return plan;
-        prices.set(areaId, from, monthlyPrice);
-        payments.applyReshare(areaId, from, plan.byReceipt);
-        audit.record('change_price', 'area', areaId, {
-          from,
-          previousPrice: priceForMonth(history, from),
-          monthlyPrice,
-          resharedReceipts: [...plan.byReceipt.keys()],
-        });
-        return { ok: true };
-      },
-    ),
 
     /** A new renter closes the current one on the day the new one starts; "left" just closes it. */
     changeRenter: db.transaction((change: RenterChange): RenterChangeResult => {

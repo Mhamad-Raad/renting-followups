@@ -46,7 +46,8 @@ function payOk(overrides: Partial<PaymentCreate> = {}) {
 const receipts = (year = 2026, month: number | null = null) =>
   repos.payments.forArea({ areaId, year, month });
 
-const statuses = () => repos.areas.year(areaId, 2026, TODAY.month)?.boxes.map((box) => box.status);
+const statuses = () =>
+  repos.areaViews.year(areaId, 2026, TODAY.month)?.boxes.map((box) => box.status);
 
 describe('recording payments', () => {
   it('numbers receipts 1, 2, 3 in order', () => {
@@ -58,7 +59,7 @@ describe('recording payments', () => {
   it('pays several months at once and the month colours follow', () => {
     payOk({ amount: 2 * RENT + 100_000 });
     expect(statuses()?.slice(0, 6)).toEqual(['paid', 'paid', 'late', 'late', 'due', 'upcoming']);
-    const year = repos.areas.year(areaId, 2026, TODAY.month);
+    const year = repos.areaViews.year(areaId, 2026, TODAY.month);
     expect(year?.boxes[2]).toMatchObject({ paid: 100_000, status: 'late' });
     expect(year?.figures.received).toBe(2 * RENT + 100_000);
   });
@@ -77,7 +78,7 @@ describe('recording payments', () => {
 
   it('shows on the Areas list with this year’s colours', () => {
     payOk({ amount: 5 * RENT });
-    const [area] = repos.areas.list({ search: '', categoryId: null }, TODAY.month);
+    const [area] = repos.areaViews.list({ search: '', categoryId: null }, TODAY.month);
     expect(area?.summary).toBe('paid');
     expect(area?.months.slice(0, 6).map((box) => box.status)).toEqual([
       ...Array<string>(5).fill('paid'),
@@ -154,7 +155,10 @@ describe('price changes share paid money out again', () => {
       .find((receipt) => receipt.id === id)
       ?.allocations.map((m) => [m.month, m.amount]);
   const changePrice = (month: number, monthlyPrice: number) =>
-    repos.areas.changePrice({ areaId, from: { year: 2026, month }, monthlyPrice }, TODAY.month);
+    repos.priceChanges.changePrice(
+      { areaId, from: { year: 2026, month }, monthlyPrice },
+      TODAY.month,
+    );
 
   it('a higher rent: the same money fills fewer months', () => {
     const { id } = payOk({ amount: 3 * RENT, from: { year: 2026, month: 3 } });
@@ -203,7 +207,7 @@ describe('price changes share paid money out again', () => {
     const { id } = payOk({ amount: RENT, from: { year: 2026, month: 6 } });
     expect(changePrice(6, 0)).toEqual({ ok: false, reason: 'no_room' });
     expect(
-      repos.areas.priceChangeImpact(
+      repos.priceChanges.priceChangeImpact(
         { areaId, from: { year: 2026, month: 6 }, monthlyPrice: 0 },
         TODAY.month,
       ),
@@ -312,22 +316,27 @@ describe('editing and cancelling receipts', () => {
   it('previews which months a price change would alter, without saving', () => {
     payOk({ amount: 2 * RENT, from: { year: 2026, month: 3 } });
     const change = { areaId, from: { year: 2026, month: 4 }, monthlyPrice: 300_000 };
-    expect(repos.areas.priceChangeImpact(change, TODAY.month)).toEqual({
+    expect(repos.priceChanges.priceChangeImpact(change, TODAY.month)).toEqual({
       ok: true,
       changes: [
         { year: 2026, month: 4, before: 'paid', after: 'late', paidBefore: RENT, paidAfter: RENT },
       ],
     });
     expect(
-      repos.areas.priceChangeImpact({ ...change, from: { year: 2026, month: 5 } }, TODAY.month),
+      repos.priceChanges.priceChangeImpact(
+        { ...change, from: { year: 2026, month: 5 } },
+        TODAY.month,
+      ),
     ).toEqual({ ok: true, changes: [] });
-    expect(repos.areas.priceChangeImpact({ ...change, areaId: 999 }, TODAY.month)).toBeNull();
+    expect(
+      repos.priceChanges.priceChangeImpact({ ...change, areaId: 999 }, TODAY.month),
+    ).toBeNull();
     expect(receipts()[0]?.allocations.map((m) => m.month)).toEqual([3, 4]);
   });
 
   it('gives Home each area\u2019s figures for this year and its standing across years', () => {
     payOk({ amount: 2 * RENT });
-    const [area] = repos.areas.overviews(TODAY.month);
+    const [area] = repos.areaViews.overviews(TODAY.month);
     expect(area).toMatchObject({
       id: areaId,
       name: 'Shop 1',
