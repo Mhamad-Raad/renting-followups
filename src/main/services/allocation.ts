@@ -46,7 +46,7 @@ export function allocate(
     left -= share;
     if (left === 0) return { ok: true, months };
   }
-  return { ok: false, reason: 'too_much' };
+  return { ok: false, reason: months.length === 0 ? 'nothing_open' : 'too_much' };
 }
 
 /**

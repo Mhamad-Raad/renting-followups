@@ -319,7 +319,8 @@
     "cancelled": "This receipt was cancelled and can no longer be changed.",
     "saved": "Payment saved. Receipt No. {{number}}",
     "pastSaved": "Past payment saved.",
-    "updated": "Receipt saved."
+    "updated": "Receipt saved.",
+    "nothing_open": "There is no rent to fill from this month: it is vacant, or more than two years ahead. Please choose another month."
   },
   "receipts": {
     "title": "Payments",

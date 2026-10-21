@@ -220,7 +220,8 @@ function PreviewText({
   if (state.status === 'error' || state.data === null) {
     return <Notice tone="error">{t('errors.unexpected')}</Notice>;
   }
-  if (!state.data.ok) return <Notice tone="warning">{t('paymentDialog.too_much')}</Notice>;
+  if (!state.data.ok)
+    return <Notice tone="warning">{t(`paymentDialog.${state.data.reason}`)}</Notice>;
   const money = (value: number) =>
     formatAmount(value, FRACTION_DIGITS[area.currency], settings.digitStyle);
   return (

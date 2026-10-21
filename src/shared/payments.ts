@@ -73,7 +73,9 @@ export interface PlannedMonth extends Allocation {
 export type AllocationResult =
   | { ok: true; months: PlannedMonth[] }
   /** More than everything owed up to the horizon: almost certainly a typing mistake. */
-  | { ok: false; reason: 'too_much' };
+  | { ok: false; reason: 'too_much' }
+  /** No month from the chosen one up to the horizon has rent to fill (vacant, or too far ahead). */
+  | { ok: false; reason: 'nothing_open' };
 
 export interface Receipt {
   id: number;
@@ -90,7 +92,7 @@ export interface Receipt {
   allocations: Allocation[];
 }
 
-type Problem = 'not_found' | 'too_much' | 'future_date';
+type Problem = 'not_found' | 'too_much' | 'nothing_open' | 'future_date';
 
 export type PaymentCreateResult =
   { ok: true; id: number; receiptNumber: number | null } | { ok: false; reason: Problem };

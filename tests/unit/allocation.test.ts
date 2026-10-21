@@ -89,10 +89,13 @@ describe('allocate', () => {
     });
   });
 
-  it('refuses a start beyond the horizon, or an area with nothing owed', () => {
-    expect(allocate(1, { year: 2028, month: 6 }, FROM_JANUARY, NOTHING_PAID, TODAY).ok).toBe(false);
+  it('says there is nothing to fill for a start beyond the horizon or a vacant area', () => {
+    const nothing = { ok: false, reason: 'nothing_open' };
+    expect(allocate(1, { year: 2028, month: 6 }, FROM_JANUARY, NOTHING_PAID, TODAY)).toEqual(
+      nothing,
+    );
     const vacant: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: 0 }];
-    expect(allocate(1, TODAY, vacant, NOTHING_PAID, TODAY).ok).toBe(false);
+    expect(allocate(1, TODAY, vacant, NOTHING_PAID, TODAY)).toEqual(nothing);
   });
 
   it('never splits an amount into a fraction: the parts always add up exactly', () => {
