@@ -5,6 +5,7 @@ import { AreaPage } from '../pages/areas/AreaPage';
 import { AreasPage } from '../pages/areas/AreasPage';
 import { CategoriesPage } from '../pages/areas/CategoriesPage';
 import { DeletedItemsPage } from '../pages/DeletedItemsPage';
+import { HomePage } from '../pages/home/HomePage';
 import { PlaceholderPage } from '../pages/PlaceholderPage';
 import { SettingsPage } from '../pages/SettingsPage';
 
@@ -17,7 +18,7 @@ interface NavItem {
 
 /** The sidebar items and their screens, in menu order. One list drives both. */
 export const NAV_ITEMS: readonly NavItem[] = [
-  { path: '/', key: 'home', icon: 'home', element: <PlaceholderPage page="home" /> },
+  { path: '/', key: 'home', icon: 'home', element: <HomePage /> },
   { path: '/areas', key: 'areas', icon: 'areas', element: <AreasPage /> },
   {
     path: '/reports',
