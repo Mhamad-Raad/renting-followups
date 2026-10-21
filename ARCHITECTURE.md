@@ -182,7 +182,7 @@ Rules:
 **Yearly figures for one area and one year:**
 - `expected_year` = sum of expected for applicable months.
 - `received_year` = sum of paid, capped per month at expected for the "still owed" calculation.
-- `remaining_year` = `expected_year - received_year`, never below 0.
+- `remaining_year` (**Still owed**) = the rent not yet paid for applicable months **up to and including the current month** (the late and due months); months still to come are not counted. Never below 0. For a past year this is every month; for a future year it is 0. *(Owner's decision, iteration 6.)*
 
 **What "received" means:** all yearly figures (area page, reports, Home cards) are based on **the rent month a payment was allocated to**, not the date cash arrived. Example: rent for month 12 paid in November counts toward the year of that month 12. Show one plain sentence explaining this in the footer of the Reports page. Use the same definition everywhere.
 
@@ -191,7 +191,7 @@ Rules:
 - *Partial* = at least one orange month and no red month.
 - *Paid* = every applicable month up to and including the current month is green.
 
-**Changing a price:** the form asks "From which month?" and defaults to the **current month**. If the chosen month (or any later month) already has payments, show a plain warning listing which months will change status (for example, a fully paid month becoming partial) and require confirmation. Never silently rewrite the past.
+**Changing a price:** the form asks "From which month?" and defaults to the **current month**. Money already paid for the chosen month or later is **shared out again with the new rent**, oldest receipt first, each receipt filling oldest month first from the later of the change month and the month it originally started at (the same rules as section 7.1). A higher rent fills fewer months; a lower rent moves the extra on to the next months. Each receipt keeps its number and total; only the months it covers change. Months before the change and cancelled receipts are not touched. Before saving, show a plain warning listing every month that gains or loses money or changes status (for example "Month 4: Paid 250,000 → Late 200,000") and require confirmation. If the money would have no month to go to (for example the area stays vacant), refuse and ask to cancel or edit those receipts first. Never silently rewrite the past. *(Owner's decision, iteration 6 review.)*
 
 **Totals in any report** are always shown **separately per currency**: one total row for IQD, one for USD. **No conversion, ever.**
 
@@ -236,7 +236,7 @@ Large password field and one **Open** button. A "Forgot password?" link goes to 
 
 ### 8.2 Home
 - Big summary cards for the current year: **Received**, **Still owed**, **Late areas count**, separate per currency.
-- A list "Needs attention now" (late and due areas) with a **Record Payment** button on each row.
+- A list "Needs attention now" (late and due areas) with a **Record Payment** button on each row. It includes areas that still owe from **earlier years**, so a new year never hides a debt; the Late areas count uses the same rule. *(Owner's decision, iteration 6.)*
 - Big shortcut buttons: **Add area**, **Record payment**, **Print report**.
 
 ### 8.3 Areas list

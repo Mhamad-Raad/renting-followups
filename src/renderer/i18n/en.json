@@ -208,7 +208,16 @@
     "deleteTitle": "Delete this area?",
     "deleteBody": "It moves to Deleted items in Settings and can be restored at any time.",
     "recordPayment": "Record payment",
-    "recordPastPayment": "Record past payment"
+    "recordPastPayment": "Record past payment",
+    "allMonths": "All",
+    "figures": {
+      "rent": "Rent price",
+      "expected": "Total for the year",
+      "expectedMonth": "Total for the month",
+      "received": "Received",
+      "remaining": "Still owed",
+      "remainingHint": "Still owed counts rent up to this month. \"Received\" counts money by the rent month it paid, not the day it arrived."
+    }
   },
   "priceDialog": {
     "changeTitle": "Change price",
@@ -220,7 +229,11 @@
     "vacantHint": "From this month the area has no rent and is never late.",
     "before_rent_start": "This month is before the rent started ({{month}}). Please choose a later month.",
     "priceSaved": "New price saved.",
-    "vacantSaved": "The area is marked as vacant."
+    "vacantSaved": "The area is marked as vacant.",
+    "warning": "Saving shares the money already paid out again with the new rent:",
+    "statusChange": "Month {{month}}: {{before}} {{paidBefore}} → {{after}} {{paidAfter}}",
+    "saveAnyway": "Save anyway",
+    "no_room": "The money already paid from this month would have no month to go to (for example, the area stays vacant). Please cancel or edit those receipts first."
   },
   "renterDialog": {
     "title": "Change renter",
@@ -306,11 +319,12 @@
     "cancelled": "This receipt was cancelled and can no longer be changed.",
     "saved": "Payment saved. Receipt No. {{number}}",
     "pastSaved": "Past payment saved.",
-    "updated": "Receipt saved."
+    "updated": "Receipt saved.",
+    "nothing_open": "There is no rent to fill from this month: it is vacant, or more than two years ahead. Please choose another month."
   },
   "receipts": {
     "title": "Payments",
-    "none": "No payments yet.",
+    "none": "No payments for this period.",
     "number": "Receipt No. {{number}}",
     "pastRecord": "Past record",
     "months": "Months: {{months}}",
@@ -327,5 +341,18 @@
   },
   "clock": {
     "wrong": "The computer date looks wrong. Late rent colours may be incorrect."
+  },
+  "home": {
+    "cardsTitle": "This year ({{year}})",
+    "received": "Received",
+    "remaining": "Still owed",
+    "lateAreas": "Late areas",
+    "attention": "Needs attention now",
+    "attentionNone": "Nothing needs attention. All rent is paid up to this month.",
+    "owes": "Still owes",
+    "lateMonths": "Late months: {{number}}",
+    "dueNow": "This month is due",
+    "chooseArea": "Choose the area that paid, then press \"Record payment\".",
+    "remainingHint": "Still owed counts rent up to this month."
   }
 }

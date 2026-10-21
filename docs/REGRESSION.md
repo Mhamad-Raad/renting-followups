@@ -87,3 +87,19 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] _manual_ With the computer clock set before the last date money was received, the app opens with "The computer date looks wrong".
 - [ ] _manual_ Amounts typed with Arabic-Indic digits (٢٥٠٠٠٠) are accepted; USD accepts cents.
 - [ ] _manual_ In Sorani and Arabic the payment form and the preview read right to left.
+
+## Iteration 6: Area page and Home
+
+Automated (`npm run test:e2e`) unless marked _manual_.
+
+- [ ] Home with no areas shows "Add your first area".
+- [ ] Home shows Received, Still owed and Late areas for this year, one row per currency.
+- [ ] Needs attention lists areas late in any year (with the number of late months) or due this month; fully paid areas are not listed.
+- [ ] Record payment on an attention row opens that area with the payment form ready.
+- [ ] Area page: choosing another year shows its boxes, figures and receipts; choosing a month shows "Total for the month" and outlines that month.
+- [ ] A price change over paid months lists them ("Month 2/2025: Paid 100,000 → Late 100,000") and needs "Save anyway"; afterwards the month shows its new colour.
+- [ ] _manual_ A lower rent moves the extra money on to the next months; a higher rent fills fewer months; the receipt keeps its number and total.
+- [ ] _manual_ Marking vacant months that are paid, with no rent later, is refused with "would have no month to go to".
+- [ ] _manual_ Still owed does not count months after this one; a prepaid future month counts as Received.
+- [ ] _manual_ Changing year or month updates without blinking; the boxes change colour softly.
+- [ ] _manual_ Large amounts fit in the figure cards at 1100×700 and with extra-large text.

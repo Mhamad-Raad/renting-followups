@@ -17,6 +17,7 @@ import type {
   AreaYearQuery,
   DeletedItems,
   PriceChange,
+  PriceChangeImpact,
   PriceChangeResult,
   RenterChange,
   RenterChangeResult,
@@ -31,10 +32,12 @@ import type {
   IdInput,
 } from './categories';
 import type { YearMonth } from './dates';
+import type { HomeSummary } from './home';
 import type { AreaYear } from './months';
 import type {
   AllocationResult,
   AreaPaymentsQuery,
+  AreaReceiptsQuery,
   PaymentCreate,
   PaymentCreateResult,
   PaymentPreviewQuery,
@@ -75,18 +78,20 @@ export interface IpcContract {
   'areas:year': { input: AreaYearQuery; output: AreaYear | null };
   'areas:create': { input: AreaCreate; output: AreaSaveResult };
   'areas:update': { input: AreaUpdate; output: AreaSaveResult };
+  'areas:priceChangeImpact': { input: PriceChange; output: PriceChangeImpact | null };
   'areas:changePrice': { input: PriceChange; output: PriceChangeResult };
   'areas:changeRenter': { input: RenterChange; output: RenterChangeResult };
   'areas:delete': { input: IdInput; output: { ok: true } | { ok: false; reason: 'not_found' } };
   'areas:restore': { input: IdInput; output: RestoreResult };
   'deleted:list': { input: undefined; output: DeletedItems };
-  'payments:forArea': { input: AreaPaymentsQuery; output: Receipt[] };
+  'payments:forArea': { input: AreaReceiptsQuery; output: Receipt[] };
   'payments:suggestedStart': { input: AreaPaymentsQuery; output: YearMonth | null };
   'payments:preview': { input: PaymentPreviewQuery; output: AllocationResult | null };
   'payments:create': { input: PaymentCreate; output: PaymentCreateResult };
   'payments:update': { input: PaymentUpdate; output: PaymentUpdateResult };
   'payments:void': { input: IdInput; output: PaymentVoidResult };
   'clock:check': { input: undefined; output: { looksWrong: boolean } };
+  'home:summary': { input: undefined; output: HomeSummary };
 }
 export type IpcChannel = keyof IpcContract;
 export type IpcInput<C extends IpcChannel> = IpcContract[C]['input'];
@@ -118,6 +123,7 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'areas:year': false,
   'areas:create': false,
   'areas:update': false,
+  'areas:priceChangeImpact': false,
   'areas:changePrice': false,
   'areas:changeRenter': false,
   'areas:delete': false,
@@ -130,6 +136,7 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'payments:update': false,
   'payments:void': false,
   'clock:check': false,
+  'home:summary': false,
 };
 export const IPC_CHANNELS = Object.keys(OPEN_WHILE_LOCKED) as IpcChannel[];
 

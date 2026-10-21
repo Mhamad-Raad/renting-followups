@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { idInputSchema } from '@shared/categories';
 import {
   areaPaymentsQuerySchema,
+  areaReceiptsQuerySchema,
   paymentCreateSchema,
   paymentPreviewSchema,
   paymentUpdateSchema,
@@ -10,8 +11,8 @@ import type { Repositories } from '../db/repositories';
 import { businessToday } from '../services/clock';
 import { handle } from './handle';
 
-export function registerPaymentIpc({ payments }: Repositories): void {
-  handle('payments:forArea', areaPaymentsQuerySchema, ({ areaId }) => payments.forArea(areaId));
+export function registerPaymentIpc({ paid, payments }: Repositories): void {
+  handle('payments:forArea', areaReceiptsQuerySchema, (query) => payments.forArea(query));
   handle('payments:suggestedStart', areaPaymentsQuerySchema, ({ areaId }) =>
     payments.suggestedStart(areaId, businessToday().month),
   );
@@ -27,7 +28,7 @@ export function registerPaymentIpc({ payments }: Repositories): void {
   handle('payments:void', idInputSchema, ({ id }) => payments.void(id));
   // The computer date looks wrong when money was received "after" today.
   handle('clock:check', z.undefined(), () => {
-    const latest = payments.latestPaidOn();
+    const latest = paid.latestPaidOn();
     return { looksWrong: latest !== null && latest > businessToday().date };
   });
 }

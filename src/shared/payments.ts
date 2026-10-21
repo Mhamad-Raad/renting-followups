@@ -1,6 +1,13 @@
 import { z } from 'zod';
 import type { Currency } from './currency';
-import { dateStringSchema, yearMonthSchema, type DateString, type YearMonth } from './dates';
+import {
+  dateStringSchema,
+  monthSchema,
+  yearMonthSchema,
+  yearSchema,
+  type DateString,
+  type YearMonth,
+} from './dates';
 import { toDigitStyle, type DigitStyle } from './digits';
 
 export const PAYMENT_NOTE_MAX = 500;
@@ -44,6 +51,12 @@ export type PaymentUpdate = z.infer<typeof paymentUpdateSchema>;
 export const areaPaymentsQuerySchema = z.object({ areaId: id }).strict();
 export type AreaPaymentsQuery = z.infer<typeof areaPaymentsQuerySchema>;
 
+/** The receipts that paid any month of a year, or of one month of it. */
+export const areaReceiptsQuerySchema = z
+  .object({ areaId: id, year: yearSchema, month: monthSchema.nullable() })
+  .strict();
+export type AreaReceiptsQuery = z.infer<typeof areaReceiptsQuerySchema>;
+
 /** The part of a payment that goes to one month. */
 export interface Allocation extends YearMonth {
   amount: number;
@@ -60,7 +73,9 @@ export interface PlannedMonth extends Allocation {
 export type AllocationResult =
   | { ok: true; months: PlannedMonth[] }
   /** More than everything owed up to the horizon: almost certainly a typing mistake. */
-  | { ok: false; reason: 'too_much' };
+  | { ok: false; reason: 'too_much' }
+  /** No month from the chosen one up to the horizon has rent to fill (vacant, or too far ahead). */
+  | { ok: false; reason: 'nothing_open' };
 
 export interface Receipt {
   id: number;
@@ -77,7 +92,7 @@ export interface Receipt {
   allocations: Allocation[];
 }
 
-type Problem = 'not_found' | 'too_much' | 'future_date';
+type Problem = 'not_found' | 'too_much' | 'nothing_open' | 'future_date';
 
 export type PaymentCreateResult =
   { ok: true; id: number; receiptNumber: number | null } | { ok: false; reason: Problem };

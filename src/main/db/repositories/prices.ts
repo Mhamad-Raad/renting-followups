@@ -38,7 +38,7 @@ export function createPriceRepository(db: Db) {
       return sortPrices(selectForArea.all(areaId).map(toPriceRow));
     },
 
-    /** Every area in use with its price rows, in one query (no query per area). */
+    /** Every area in use with its price rows, oldest first, in one query (no query per area). */
     forActiveAreas(): Map<number, PriceRow[]> {
       const byArea = new Map<number, PriceRow[]>();
       for (const row of selectForActiveAreas.all()) {
@@ -46,6 +46,8 @@ export function createPriceRepository(db: Db) {
         rows.push(toPriceRow(row));
         byArea.set(row.area_id, rows);
       }
+      // Callers take the first row as "rent starts from", so the order must never depend on the database.
+      for (const [areaId, rows] of byArea) byArea.set(areaId, sortPrices(rows));
       return byArea;
     },
 

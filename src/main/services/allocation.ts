@@ -1,14 +1,17 @@
 import { fromMonthIndex, monthIndex, type YearMonth } from '@shared/dates';
-import { HORIZON_MONTHS, type AllocationResult, type PlannedMonth } from '@shared/payments';
+import {
+  HORIZON_MONTHS,
+  type Allocation,
+  type AllocationResult,
+  type PlannedMonth,
+} from '@shared/payments';
 import { priceForMonth, type PriceRow } from '@shared/prices';
+import type { PaidHistory } from './monthStatus';
 
 /**
  * How a payment is split across months (ARCHITECTURE.md section 7.1). Pure:
  * `today` and everything already paid are passed in.
  */
-
-/** Amounts already paid for an area, keyed by `monthIndex`. Missing months count as 0. */
-export type PaidHistory = ReadonlyMap<number, number>;
 
 /** The months a payment may fill, oldest first: from `from` up to 24 months past today. */
 function* openMonths(
@@ -48,7 +51,7 @@ export function allocate(
     left -= share;
     if (left === 0) return { ok: true, months };
   }
-  return { ok: false, reason: 'too_much' };
+  return { ok: false, reason: months.length === 0 ? 'nothing_open' : 'too_much' };
 }
 
 /**
@@ -67,4 +70,50 @@ export function oldestOpenMonth(
     return { year: open.year, month: open.month };
   }
   return null;
+}
+
+/** One receipt's money from the change month onward, to be shared out again. */
+export interface ReshareReceipt {
+  id: number;
+  /** Where its money starts filling: the change month, or later if the receipt started later. */
+  start: YearMonth;
+  amount: number;
+}
+
+export type ReshareResult =
+  | {
+      ok: true;
+      /** The new months of each receipt (from its start onward). */
+      byReceipt: Map<number, Allocation[]>;
+      /** What every month is paid afterwards. */
+      paid: PaidHistory;
+    }
+  /** Some money would have no month to go to (for example vacant from then on). */
+  | { ok: false; reason: 'no_room' };
+
+/**
+ * After a price change, shares the money of the affected receipts out again
+ * with the new prices, oldest receipt first, each filling oldest month first
+ * from its start. `kept` is what stays where it is (months before the change,
+ * and receipts that only paid earlier months).
+ */
+export function reshare(
+  receipts: readonly ReshareReceipt[],
+  kept: PaidHistory,
+  prices: readonly PriceRow[],
+  today: YearMonth,
+): ReshareResult {
+  const paid = new Map(kept);
+  const byReceipt = new Map<number, Allocation[]>();
+  for (const receipt of receipts) {
+    const result = allocate(receipt.amount, receipt.start, prices, paid, today);
+    if (!result.ok) return { ok: false, reason: 'no_room' };
+    const months = result.months.map(({ year, month, amount }) => ({ year, month, amount }));
+    for (const month of months) {
+      const index = monthIndex(month);
+      paid.set(index, (paid.get(index) ?? 0) + month.amount);
+    }
+    byReceipt.set(receipt.id, months);
+  }
+  return { ok: true, byReceipt, paid };
 }

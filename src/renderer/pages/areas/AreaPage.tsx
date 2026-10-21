@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import type { AreaDetails } from '@shared/areas';
 import { yearMonthOf } from '@shared/dates';
-import { formatPlain } from '@shared/formatNumber';
 import { formatReceiptNumber, type Receipt } from '@shared/payments';
 import { priceForMonth } from '@shared/prices';
 import { callIpc, useIpcQuery } from '../../app/ipc';
@@ -12,17 +11,18 @@ import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { LinkButton } from '../../components/LinkButton';
-import { MonthBoxes } from '../../components/MonthBoxes';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { AreaFacts } from './AreaFacts';
 import { AreaHistory } from './AreaHistory';
+import { AreaPeriod } from './AreaPeriod';
 import styles from './AreaPage.module.css';
+import { RECORD_PAYMENT_PARAM } from './links';
 import { parseAreaId } from './parseAreaId';
 import { PaymentDialog, type PaymentMode, type PaymentSaved } from './PaymentDialog';
 import { PriceDialog, type PriceMode } from './PriceDialog';
-import { ReceiptList } from './ReceiptList';
 import { RenterDialog } from './RenterDialog';
+import { useAreaPeriod } from './useAreaPeriod';
 
 type OpenDialog =
   | { kind: 'price'; mode: PriceMode }
@@ -60,15 +60,21 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
   const navigate = useNavigate();
   const flashed = useFlashNotice();
   const [notice, setNotice] = useState<string | null>(flashed);
-  const [dialog, setDialog] = useState<OpenDialog>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Opened from Home's "Record payment": start with the payment form open.
+  const [dialog, setDialog] = useState<OpenDialog>(() =>
+    searchParams.has(RECORD_PAYMENT_PARAM) ? { kind: 'payment', mode: { kind: 'new' } } : null,
+  );
+  useEffect(() => {
+    if (searchParams.has(RECORD_PAYMENT_PARAM)) void setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
   const [problem, setProblem] = useState<string | null>(null);
   // The payment saved last on this screen; it can be undone for as long as the screen is open.
   const [undoable, setUndoable] = useState<PaymentSaved['undo'] | null>(null);
 
   const today = yearMonthOf(new Date());
   const price = priceForMonth(area.prices, today);
-  const months = useIpcQuery('areas:year', { id: area.id, year: today.year });
-  const receipts = useIpcQuery('payments:forArea', { areaId: area.id });
+  const period = useAreaPeriod(area.id, today.year);
 
   const done = (message: string) => {
     setDialog(null);
@@ -76,8 +82,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
     setNotice(message);
     setUndoable(null);
     onChanged();
-    months.refresh();
-    receipts.refresh();
+    period.refresh();
   };
 
   const paymentSaved = ({ message, undo }: PaymentSaved) => {
@@ -167,33 +172,13 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
           </BigButton>
         </div>
 
-        {months.state.status === 'error' && <Notice tone="error">{t('errors.unexpected')}</Notice>}
-        {months.state.status === 'ready' && months.state.data && (
-          <section className={styles.card}>
-            <h2 className={styles.heading}>
-              {t('months.title', { year: formatPlain(today.year, settings.digitStyle) })}
-            </h2>
-            <MonthBoxes
-              boxes={months.state.data.boxes}
-              year={today.year}
-              currency={area.currency}
-            />
-          </section>
-        )}
-
-        <section className={styles.card}>
-          <h2 className={styles.heading}>{t('receipts.title')}</h2>
-          {receipts.state.status === 'error' && (
-            <Notice tone="error">{t('errors.unexpected')}</Notice>
-          )}
-          {receipts.state.status === 'ready' && (
-            <ReceiptList
-              receipts={receipts.state.data}
-              onEdit={(receipt) => setDialog({ kind: 'payment', mode: { kind: 'edit', receipt } })}
-              onCancel={(receipt) => setDialog({ kind: 'cancelReceipt', receipt })}
-            />
-          )}
-        </section>
+        <AreaPeriod
+          area={area}
+          period={period}
+          currentYear={today.year}
+          onEdit={(receipt) => setDialog({ kind: 'payment', mode: { kind: 'edit', receipt } })}
+          onCancel={(receipt) => setDialog({ kind: 'cancelReceipt', receipt })}
+        />
 
         <AreaHistory area={area} />
 
