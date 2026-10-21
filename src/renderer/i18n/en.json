@@ -206,7 +206,9 @@
     "renterSinceDate": "Since {{from}}",
     "back": "All areas",
     "deleteTitle": "Delete this area?",
-    "deleteBody": "It moves to Deleted items in Settings and can be restored at any time."
+    "deleteBody": "It moves to Deleted items in Settings and can be restored at any time.",
+    "recordPayment": "Record payment",
+    "recordPastPayment": "Record past payment"
   },
   "priceDialog": {
     "changeTitle": "Change price",
@@ -283,5 +285,47 @@
       "paid": "Paid",
       "nothing_due": "Nothing due"
     }
+  },
+  "paymentDialog": {
+    "newTitle": "Record payment",
+    "pastTitle": "Record past payment",
+    "editTitle": "Edit receipt No. {{number}}",
+    "editPastTitle": "Edit past record",
+    "amount": "Amount received",
+    "from": "From which month?",
+    "fromHint": "The money fills this month first, then the next ones.",
+    "paidOn": "Date received",
+    "note": "Note",
+    "pastHint": "For money received before you started using the app. It gets no receipt number.",
+    "preview": "How the money is shared out",
+    "previewFull": "Month {{month}}: full",
+    "previewPartial": "Month {{month}}: partial, {{paid}} of {{expected}}",
+    "amountRequired": "Please enter the amount received.",
+    "too_much": "This amount is more than two years of rent. Please check the number.",
+    "future_date": "The date received cannot be after today.",
+    "cancelled": "This receipt was cancelled and can no longer be changed.",
+    "saved": "Payment saved. Receipt No. {{number}}",
+    "pastSaved": "Past payment saved.",
+    "updated": "Receipt saved."
+  },
+  "receipts": {
+    "title": "Payments",
+    "none": "No payments yet.",
+    "number": "Receipt No. {{number}}",
+    "pastRecord": "Past record",
+    "months": "Months: {{months}}",
+    "cancelledLabel": "Cancelled",
+    "cancel": "Cancel receipt",
+    "cancelTitle": "Cancel this receipt?",
+    "cancelBody": "It stays in the list, crossed out, and no longer counts as paid. Its number is never used again.",
+    "keep": "Keep it",
+    "cancelDone": "The receipt was cancelled.",
+    "undo": "Undo",
+    "undone": "The payment was undone. Receipt No. {{number}} is kept as cancelled.",
+    "pastUndone": "The past payment was undone.",
+    "separator": ", "
+  },
+  "clock": {
+    "wrong": "The computer date looks wrong. Late rent colours may be incorrect."
   }
 }

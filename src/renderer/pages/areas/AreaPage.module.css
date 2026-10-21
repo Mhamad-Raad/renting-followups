@@ -102,3 +102,33 @@
   flex-direction: column;
   gap: var(--space-5);
 }
+
+.hint {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+/* The live "how the money is shared out" list in the payment form. */
+.preview {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.preview ul {
+  margin: var(--space-2) 0 0;
+  padding-inline-start: var(--space-5);
+}
+
+.previewTitle {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+/* The saved message with its Undo button beside it. */
+.saved {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+}
