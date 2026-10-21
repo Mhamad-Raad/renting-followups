@@ -66,7 +66,13 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
     const change = { areaId: area.id, from, monthlyPrice: needsPrice ? (price ?? 0) : 0 };
     if (changes === null) {
       const impact = await callIpc('areas:priceChangeImpact', change);
-      if (impact.ok && impact.data && impact.data.length > 0) {
+      // Never save without the check: if it fails, say so and change nothing.
+      if (!impact.ok || impact.data === null) {
+        setBusy(false);
+        setProblem(t(impact.ok ? 'areaForm.problems.not_found' : 'errors.unexpected'));
+        return;
+      }
+      if (impact.data.length > 0) {
         setBusy(false);
         setChanges(impact.data);
         return;
