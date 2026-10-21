@@ -75,6 +75,12 @@
   animation-delay: calc(var(--index, 0) * var(--stagger-step));
 }
 
+/* The month chosen in the filter: a clear outline, so it stands out without changing its colour. */
+.box[data-selected] {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 .number {
   font-size: var(--text-lg);
   font-weight: 700;

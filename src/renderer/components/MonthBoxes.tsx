@@ -1,4 +1,4 @@
-import { memo, type CSSProperties } from 'react';
+import { memo, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FRACTION_DIGITS, type Currency } from '@shared/currency';
 import { formatAmount, formatPlain } from '@shared/formatNumber';
@@ -8,8 +8,8 @@ import styles from './MonthBoxes.module.css';
 
 type MonthWord = Exclude<MonthStatus, 'not_applicable'> | 'vacant' | 'notStarted';
 
-/** The word under a box. A month that is not applicable says why: vacant, or rent not started. */
-function monthWord({ status, expected }: MonthBox): MonthWord {
+/** The word for a month. One that is not applicable says why: vacant (rent 0), or rent not started. */
+export function monthWord({ status, expected }: Pick<MonthBox, 'status' | 'expected'>): MonthWord {
   if (status !== 'not_applicable') return status;
   return expected === 0 ? 'vacant' : 'notStarted';
 }
@@ -40,6 +40,8 @@ interface MonthBoxesProps {
   currency: Currency;
   /** A thin strip of symbols for lists, instead of large boxes with amounts. */
   compact?: boolean;
+  /** The month chosen in the filter, outlined. */
+  selected?: number | null;
 }
 
 /**
@@ -51,6 +53,7 @@ export const MonthBoxes = memo(function MonthBoxes({
   year,
   currency,
   compact = false,
+  selected = null,
 }: MonthBoxesProps) {
   const { t } = useTranslation();
   const { settings } = useSettings();
@@ -93,6 +96,8 @@ export const MonthBoxes = memo(function MonthBoxes({
             key={box.month}
             className={styles.box}
             data-status={box.status}
+            data-selected={box.month === selected || undefined}
+            aria-current={box.month === selected || undefined}
             aria-label={label(box)}
             style={{ '--index': index } as CSSProperties}
           >
@@ -114,12 +119,17 @@ export const MonthBoxes = memo(function MonthBoxes({
   );
 });
 
+/** A short label in a month status colour, such as "Late" or "Late months: 3". */
+export function StatusPill({ status, children }: { status: MonthStatus; children: ReactNode }) {
+  return (
+    <span className={styles.summary} data-status={status}>
+      {children}
+    </span>
+  );
+}
+
 /** One word for a whole year (Late, Due, Paid…), in the matching colour. */
 export function YearSummaryText({ summary }: { summary: YearSummary }) {
   const { t } = useTranslation();
-  return (
-    <span className={styles.summary} data-status={SUMMARY_COLOR[summary]}>
-      {t(`months.summary.${summary}`)}
-    </span>
-  );
+  return <StatusPill status={SUMMARY_COLOR[summary]}>{t(`months.summary.${summary}`)}</StatusPill>;
 }

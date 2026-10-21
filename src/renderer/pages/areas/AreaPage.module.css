@@ -132,3 +132,29 @@
   align-items: center;
   gap: var(--space-3) var(--space-5);
 }
+
+.filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.filter > * {
+  min-width: 9rem;
+}
+
+.footnote {
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.warningTitle {
+  margin: 0;
+}
+
+.warningList {
+  margin: var(--space-2) 0 0;
+  padding-inline-start: var(--space-5);
+  font-weight: 400;
+}
