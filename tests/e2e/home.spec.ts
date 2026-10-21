@@ -64,7 +64,8 @@ test('Home shows this year per currency and the areas that need attention', asyn
     await expect(rows).toHaveCount(1);
     await expect(rows.first()).toContainText('Shop A');
     await expect(rows.first()).toContainText(`Late months: ${11 + month - 1}`);
-    await expect(page.getByText(`${en.home.lateAreas} · IQD`)).toBeVisible();
+    await expect(page.getByRole('heading', { name: en.currency.IQD, level: 3 })).toBeVisible();
+    await expect(page.getByText(en.home.lateAreas)).toBeVisible();
 
     // Record payment on the row opens that area with the payment form ready.
     await rows.first().getByRole('button', { name: en.area.recordPayment }).click();

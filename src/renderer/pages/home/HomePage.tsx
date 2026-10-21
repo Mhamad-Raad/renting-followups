@@ -105,24 +105,27 @@ function CurrencyCards({ total }: { total: CurrencyTotals }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   return (
-    <FigureCards
-      figures={[
-        {
-          label: t('home.received'),
-          value: <MoneyText amount={total.received} currency={total.currency} />,
-        },
-        {
-          label: t('home.remaining'),
-          value: <MoneyText amount={total.remaining} currency={total.currency} />,
-          tone: total.remaining > 0 ? 'warning' : 'normal',
-        },
-        {
-          label: `${t('home.lateAreas')} · ${t(`currency.${total.currency}`)}`,
-          value: formatPlain(total.lateAreas, settings.digitStyle),
-          tone: total.lateAreas > 0 ? 'warning' : 'normal',
-        },
-      ]}
-    />
+    <div className={styles.currency}>
+      <h3 className={styles.currencyName}>{t(`currency.${total.currency}`)}</h3>
+      <FigureCards
+        figures={[
+          {
+            label: t('home.received'),
+            value: <MoneyText amount={total.received} currency={total.currency} />,
+          },
+          {
+            label: t('home.remaining'),
+            value: <MoneyText amount={total.remaining} currency={total.currency} />,
+            tone: total.remaining > 0 ? 'warning' : 'normal',
+          },
+          {
+            label: t('home.lateAreas'),
+            value: formatPlain(total.lateAreas, settings.digitStyle),
+            tone: total.lateAreas > 0 ? 'warning' : 'normal',
+          },
+        ]}
+      />
+    </div>
   );
 }
 
