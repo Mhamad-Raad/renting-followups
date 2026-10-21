@@ -58,17 +58,26 @@
   background: var(--color-accent-soft);
 }
 
-/* The number of reminders beside Notifications: one soft pulse when it changes, never looping. */
+/* The icon holds the reminder count on its corner, like a bell with a number. */
+.icon {
+  position: relative;
+  display: inline-flex;
+}
+
+/* The number of reminders on the bell: one soft pulse when it changes, never looping. */
 .badge {
-  min-width: 1.6rem;
-  margin-inline-start: auto;
-  padding: 0 var(--space-2);
+  position: absolute;
+  inset-block-start: -0.7rem;
+  inset-inline-end: -0.9rem;
+  min-width: 1.4rem;
+  padding: 0 0.3rem;
+  border: 2px solid var(--color-surface);
   border-radius: 999px;
   background: var(--status-late-bg);
   color: var(--status-late);
-  font-size: var(--text-sm);
+  font-size: 0.75rem;
   font-weight: 700;
-  line-height: 1.6rem;
+  line-height: 1.2rem;
   text-align: center;
   animation: badge-pulse 600ms var(--ease) 1;
 }
