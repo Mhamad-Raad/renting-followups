@@ -238,7 +238,8 @@ export function reportTotals(
  * The report's status filter (ARCHITECTURE.md section 6). For a year: Late =
  * at least one late month; Partial = at least one orange month (due or partly
  * paid) and none late; Paid = every applicable month up to and including this
- * month is paid, with at least one such month. For one chosen month, that
+ * month is paid (no late or due month) and at least one month is paid, so a
+ * year with no rent yet is not called Paid. For one chosen month, that
  * month's own status decides.
  */
 export function matchesReportStatus(

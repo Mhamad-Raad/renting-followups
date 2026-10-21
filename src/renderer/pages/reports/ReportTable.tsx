@@ -26,12 +26,15 @@ export function ReportTable({ rows, totals, year, month }: ReportTableProps) {
   return (
     <div className={styles.tableFrame}>
       <table className={styles.table}>
+        <caption className={styles.caption}>{t('reports.caption')}</caption>
         <thead>
           <tr>
-            <th>{t('reports.columns.area')}</th>
-            <th>{t('reports.columns.renter')}</th>
-            <th>{t('reports.columns.money')}</th>
-            <th>{t('months.title', { year: formatPlain(year, settings.digitStyle) })}</th>
+            <th scope="col">{t('reports.columns.area')}</th>
+            <th scope="col">{t('reports.columns.renter')}</th>
+            <th scope="col">{t('reports.columns.money')}</th>
+            <th scope="col">
+              {t('months.title', { year: formatPlain(year, settings.digitStyle) })}
+            </th>
           </tr>
         </thead>
         <tbody>

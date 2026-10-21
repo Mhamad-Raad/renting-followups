@@ -52,7 +52,7 @@ async function seed(page: Page) {
 }
 
 const rows = (page: Page) => page.locator('tbody tr');
-/** "Total IQD (2 areas)" for a currency and a number of areas. */
+/** "Total IQD · Areas: 2" for a currency and a number of areas. */
 const total = (currency: string, areas: number) =>
   en.reports.total.replace('{{currency}}', currency).replace('{{number}}', String(areas));
 
