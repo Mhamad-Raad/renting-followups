@@ -13,6 +13,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { LinkButton } from '../../components/LinkButton';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
+import { usePrint } from '../../print/usePrint';
 import { AreaFacts } from './AreaFacts';
 import { AreaHistory } from './AreaHistory';
 import { AreaPeriod } from './AreaPeriod';
@@ -85,9 +86,14 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
     period.refresh();
   };
 
-  const paymentSaved = ({ message, undo }: PaymentSaved) => {
+  const printing = usePrint();
+  const printReceipt = (id: number) =>
+    void printing.run({ kind: 'receipt', id, output: 'printer' });
+
+  const paymentSaved = ({ message, undo, print }: PaymentSaved) => {
     done(message);
     setUndoable(undo ?? null);
+    if (print && undo) printReceipt(undo.id);
   };
 
   // Undo and Cancel receipt both cancel the receipt: it stays listed, and its number is never reused.
@@ -143,11 +149,17 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
           <Notice tone="success">
             <div className={styles.saved}>
               <span>{notice}</span>
+              {undoable && undoable.receiptNumber !== null && (
+                <BigButton disabled={printing.busy} onClick={() => printReceipt(undoable.id)}>
+                  {t('print.actions.printReceipt')}
+                </BigButton>
+              )}
               {undoable && <BigButton onClick={undo}>{t('receipts.undo')}</BigButton>}
             </div>
           </Notice>
         )}
         {problem && <Notice tone="error">{problem}</Notice>}
+        {printing.message && <Notice tone={printing.message.tone}>{printing.message.text}</Notice>}
 
         <AreaFacts area={area} price={price} />
 
@@ -178,6 +190,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
           currentYear={today.year}
           onEdit={(receipt) => setDialog({ kind: 'payment', mode: { kind: 'edit', receipt } })}
           onCancel={(receipt) => setDialog({ kind: 'cancelReceipt', receipt })}
+          onPrint={(receipt) => printReceipt(receipt.id)}
         />
 
         <AreaHistory area={area} />
