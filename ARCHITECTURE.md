@@ -191,7 +191,7 @@ Rules:
 - *Partial* = at least one orange month and no red month.
 - *Paid* = every applicable month up to and including the current month is green.
 
-**Changing a price:** the form asks "From which month?" and defaults to the **current month**. If the chosen month (or any later month) already has payments, show a plain warning listing which months will change status (for example, a fully paid month becoming partial) and require confirmation. Never silently rewrite the past.
+**Changing a price:** the form asks "From which month?" and defaults to the **current month**. Money already paid for the chosen month or later is **shared out again with the new rent**, oldest receipt first, each receipt filling oldest month first from the later of the change month and the month it originally started at (the same rules as section 7.1). A higher rent fills fewer months; a lower rent moves the extra on to the next months. Each receipt keeps its number and total; only the months it covers change. Months before the change and cancelled receipts are not touched. Before saving, show a plain warning listing every month that gains or loses money or changes status (for example "Month 4: Paid 250,000 → Late 200,000") and require confirmation. If the money would have no month to go to (for example the area stays vacant), refuse and ask to cancel or edit those receipts first. Never silently rewrite the past. *(Owner's decision, iteration 6 review.)*
 
 **Totals in any report** are always shown **separately per currency**: one total row for IQD, one for USD. **No conversion, ever.**
 
