@@ -54,7 +54,7 @@ test('record a payment, see the preview and colours, then undo it', async () => 
     ).toBeVisible();
     await expect(dialog.getByText('partial, 50,000 of 250,000')).toBeVisible();
 
-    await dialog.getByRole('button', { name: en.common.save }).click();
+    await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
     await expect(page.getByText('Payment saved. Receipt No. 0001')).toBeVisible();
     const boxes = page.getByRole('list', { name: new RegExp(`${year}`) });
     await expect(boxes.getByLabel(boxLabel(month, en.months.status.paid))).toBeVisible();
@@ -68,7 +68,10 @@ test('record a payment, see the preview and colours, then undo it', async () => 
     // The next payment gets a new number: 0001 is never reused.
     await page.getByRole('button', { name: en.area.recordPayment }).click();
     await page.getByRole('dialog').getByLabel(en.paymentDialog.amount).fill('250000');
-    await page.getByRole('dialog').getByRole('button', { name: en.common.save }).click();
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: en.common.save, exact: true })
+      .click();
     await expect(page.getByText('Payment saved. Receipt No. 0002')).toBeVisible();
   } finally {
     await app.close();
@@ -86,13 +89,13 @@ test('edit and cancel a receipt, record a past payment, and refuse too much', as
 
     await page.getByRole('button', { name: en.area.recordPayment }).click();
     await dialog.getByLabel(en.paymentDialog.amount).fill('100000');
-    await dialog.getByRole('button', { name: en.common.save }).click();
+    await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
     await expect(page.getByText('Payment saved. Receipt No. 0001')).toBeVisible();
 
     await page.getByRole('button', { name: en.common.edit, exact: true }).last().click();
     await expect(dialog.getByRole('heading', { level: 2 })).toHaveText('Edit receipt No. 0001');
     await dialog.getByLabel(en.paymentDialog.amount).fill('250000');
-    await dialog.getByRole('button', { name: en.common.save }).click();
+    await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
     await expect(page.getByText(en.paymentDialog.updated)).toBeVisible();
     await expect(boxes.getByLabel(boxLabel(month, en.months.status.paid))).toBeVisible();
 
@@ -104,7 +107,7 @@ test('edit and cancel a receipt, record a past payment, and refuse too much', as
     await page.getByRole('button', { name: en.area.recordPastPayment }).click();
     await expect(dialog.getByText(en.paymentDialog.pastHint)).toBeVisible();
     await dialog.getByLabel(en.paymentDialog.amount).fill('250000');
-    await dialog.getByRole('button', { name: en.common.save }).click();
+    await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
     await expect(page.getByText(en.paymentDialog.pastSaved)).toBeVisible();
     await expect(page.getByText(en.receipts.pastRecord)).toBeVisible();
     await expect(boxes.getByLabel(boxLabel(month, en.months.status.paid))).toBeVisible();
@@ -112,7 +115,7 @@ test('edit and cancel a receipt, record a past payment, and refuse too much', as
     await page.getByRole('button', { name: en.area.recordPayment }).click();
     await dialog.getByLabel(en.paymentDialog.amount).fill('999999999');
     await expect(dialog.getByText(en.paymentDialog.too_much)).toBeVisible();
-    await dialog.getByRole('button', { name: en.common.save }).click();
+    await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
     await expect(dialog.getByRole('alert')).toHaveText(en.paymentDialog.too_much);
     await dialog.getByRole('button', { name: en.common.cancel }).click();
     await expect(page.getByText(en.receipts.number.replace('{{number}}', '0002'))).toHaveCount(0);

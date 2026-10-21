@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
 import ExcelJS from 'exceljs';
+import en from '../../src/renderer/i18n/en.json' with { type: 'json' };
 import type { ReportQuery } from '../../src/shared/reports';
 import { createDataDir, launchUnlocked, removeDataDir } from './launch';
 
@@ -155,6 +156,62 @@ test('cancelling the Save dialog changes nothing; past records cannot print as r
       return window.api.invoke('print:receipt', { id: created.data.id, output: 'pdf' });
     });
     expect(past).toEqual({ ok: true, data: { ok: false, reason: 'past_record' } });
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
+/** Stands in for the Windows print dialog: every print "succeeds" at once. */
+async function fakePrinter(app: ElectronApplication) {
+  await app.evaluate(({ webContents }) => {
+    const prototype = Object.getPrototypeOf(webContents.getAllWebContents()[0]) as {
+      print: (options: unknown, callback: (success: boolean, reason: string) => void) => void;
+    };
+    prototype.print = (_options, callback) => callback(true, '');
+  });
+}
+
+test('the buttons on screen print and export, with a plain message each time', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    await seed(page);
+    await page.evaluate(() => window.api.invoke('settings:update', { language: 'en' }));
+    await page.reload();
+    await fakePrinter(app);
+
+    // Area page: Save and print receipt, then the receipt's own Print button says it is sent.
+    await page.getByRole('link', { name: en.nav.areas, exact: true }).click();
+    await page.getByRole('link', { name: 'دوکانی ١' }).click();
+    await page.getByRole('button', { name: en.area.recordPayment }).click();
+    await page.getByRole('dialog').getByLabel(en.paymentDialog.amount).fill('250000');
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: en.print.actions.saveAndPrint })
+      .click();
+    await expect(page.getByText(en.print.results.printed)).toBeVisible();
+
+    const pdf = join(dataDir, 'area.pdf');
+    await chooseSavePath(app, pdf);
+    await page.getByRole('button', { name: en.print.actions.pdf }).click();
+    await expect(page.getByText(en.print.results.savedPdf)).toBeVisible();
+    expect(existsSync(pdf)).toBe(true);
+
+    // Areas list: tick one area, then Export to Excel.
+    await page.getByRole('link', { name: en.nav.areas, exact: true }).click();
+    await page.getByRole('checkbox', { name: 'Select دوکانی ١' }).check();
+    const xlsx = join(dataDir, 'selected.xlsx');
+    await chooseSavePath(app, xlsx);
+    await page.getByRole('button', { name: en.print.actions.excel }).click();
+    await expect(page.getByText(en.print.results.savedExcel)).toBeVisible();
+    expect(existsSync(xlsx)).toBe(true);
+
+    // Home: Print report.
+    await page.getByRole('link', { name: en.nav.home, exact: true }).click();
+    await page.getByRole('button', { name: en.print.actions.printReport }).click();
+    await expect(page.getByText(en.print.results.printed)).toBeVisible();
+    expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)).toBe(1);
   } finally {
     await app.close();
     removeDataDir(dataDir);
