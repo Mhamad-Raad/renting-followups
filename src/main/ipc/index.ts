@@ -7,6 +7,7 @@ import { setUnlockCheck } from './handle';
 import { registerHomeIpc } from './home';
 import { registerLogIpc } from './log';
 import { registerPaymentIpc } from './payments';
+import { registerPrintIpc } from './print';
 import { registerReportIpc } from './reports';
 import { registerSettingsIpc } from './settings';
 
@@ -30,4 +31,5 @@ export function registerIpcHandlers({ repos, auth }: IpcDependencies): void {
   registerPaymentIpc(repos);
   registerHomeIpc(repos);
   registerReportIpc(repos);
+  registerPrintIpc(repos);
 }

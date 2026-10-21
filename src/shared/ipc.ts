@@ -46,6 +46,14 @@ import type {
   PaymentVoidResult,
   Receipt,
 } from './payments';
+import type {
+  ExportReportInput,
+  PrintReady,
+  PrintReceiptInput,
+  PrintReportInput,
+  PrintResult,
+  ReceiptPrintData,
+} from './printing';
 import type { Report, ReportFilters, ReportQuery } from './reports';
 import type { Settings, SettingsUpdate } from './settings';
 
@@ -96,6 +104,11 @@ export interface IpcContract {
   'reports:build': { input: ReportQuery; output: Report };
   'reports:lastFilters': { input: undefined; output: ReportFilters };
   'reports:rememberFilters': { input: ReportFilters; output: null };
+  'print:ready': { input: PrintReady; output: null };
+  'print:receiptData': { input: IdInput; output: ReceiptPrintData | null };
+  'print:receipt': { input: PrintReceiptInput; output: PrintResult };
+  'print:report': { input: PrintReportInput; output: PrintResult };
+  'export:reportExcel': { input: ExportReportInput; output: PrintResult };
 }
 export type IpcChannel = keyof IpcContract;
 export type IpcInput<C extends IpcChannel> = IpcContract[C]['input'];
@@ -144,6 +157,11 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'reports:build': false,
   'reports:lastFilters': false,
   'reports:rememberFilters': false,
+  'print:ready': false,
+  'print:receiptData': false,
+  'print:receipt': false,
+  'print:report': false,
+  'export:reportExcel': false,
 };
 export const IPC_CHANNELS = Object.keys(OPEN_WHILE_LOCKED) as IpcChannel[];
 
