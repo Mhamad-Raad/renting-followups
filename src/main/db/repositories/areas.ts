@@ -15,8 +15,10 @@ import {
 import type { CategoryColor } from '@shared/categories';
 import type { Currency } from '@shared/currency';
 import type { YearMonth } from '@shared/dates';
+import type { AreaYear } from '@shared/months';
 import { normalizePhone, normalizeText } from '@shared/normalizeText';
 import { priceForMonth } from '@shared/prices';
+import { areaYear, NO_PAYMENTS } from '../../services/monthStatus';
 import type { Db } from '../connection';
 import type { AuditRepository } from './audit';
 import type { CategoryRepository } from './categories';
@@ -121,17 +123,30 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
           namePattern: containsPattern(query),
           phonePattern: digits === '' ? null : containsPattern(digits),
         })
-        .map((row) => ({
-          id: row.id,
-          name: row.name,
-          categoryId: row.category_id,
-          categoryName: row.category_name,
-          categoryColor: row.category_color,
-          currency: row.currency,
-          renterName: row.renter_name,
-          renterPhone: row.renter_phone,
-          currentPrice: priceForMonth(pricesByArea.get(row.id) ?? [], today),
-        }));
+        .map((row) => {
+          const history = pricesByArea.get(row.id) ?? [];
+          // Payments arrive in iteration 5; until then nothing is paid.
+          const { boxes, summary } = areaYear(history, NO_PAYMENTS, today.year, today);
+          return {
+            id: row.id,
+            name: row.name,
+            categoryId: row.category_id,
+            categoryName: row.category_name,
+            categoryColor: row.category_color,
+            currency: row.currency,
+            renterName: row.renter_name,
+            renterPhone: row.renter_phone,
+            currentPrice: priceForMonth(history, today),
+            months: boxes,
+            summary,
+          };
+        });
+    },
+
+    /** One year of an area: its 12 month boxes, figures and summary word. */
+    year(id: number, year: number, today: YearMonth): AreaYear | null {
+      if (!findActive(id)) return null;
+      return areaYear(prices.forArea(id), NO_PAYMENTS, year, today);
     },
 
     get(id: number): AreaDetails | null {

@@ -184,6 +184,46 @@ describe('prices', () => {
   });
 });
 
+describe('month boxes', () => {
+  const statusesOf = (boxes: { status: string }[] | undefined) => boxes?.map((box) => box.status);
+
+  it("lists each area with this year's month boxes and summary", () => {
+    createArea({ rentStartsFrom: { year: 2026, month: 3 } });
+    const [area] = repos.areas.list({ search: '', categoryId: null }, TODAY);
+    expect(statusesOf(area?.months)).toEqual([
+      'not_applicable',
+      'not_applicable',
+      ...Array<string>(7).fill('late'),
+      'due',
+      'upcoming',
+      'upcoming',
+    ]);
+    expect(area?.summary).toBe('late');
+  });
+
+  it('follows the price history, including vacant months', () => {
+    const id = createArea();
+    repos.areas.changePrice({ areaId: id, from: { year: 2026, month: 6 }, monthlyPrice: 0 });
+    const [area] = repos.areas.list({ search: '', categoryId: null }, TODAY);
+    expect(statusesOf(area?.months)?.slice(4, 7)).toEqual([
+      'late',
+      'not_applicable',
+      'not_applicable',
+    ]);
+  });
+
+  it('gives any year of an area, and nothing for a missing or deleted area', () => {
+    const id = createArea();
+    const next = repos.areas.year(id, 2027, TODAY);
+    expect(next?.year).toBe(2027);
+    expect(next?.summary).toBe('nothing_due');
+    expect(next?.figures).toEqual({ expected: 12 * 250_000, received: 0, remaining: 12 * 250_000 });
+    expect(repos.areas.year(999, 2026, TODAY)).toBeNull();
+    repos.areas.softDelete(id);
+    expect(repos.areas.year(id, 2026, TODAY)).toBeNull();
+  });
+});
+
 describe('renters', () => {
   it('a new renter closes the current one and both stay in the history', () => {
     const id = createArea();

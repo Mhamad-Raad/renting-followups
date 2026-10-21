@@ -1,7 +1,14 @@
 import { z } from 'zod';
 import { CURRENCIES, type Currency } from './currency';
-import { dateStringSchema, yearMonthSchema, type DateString, type YearMonth } from './dates';
+import {
+  dateStringSchema,
+  yearMonthSchema,
+  yearSchema,
+  type DateString,
+  type YearMonth,
+} from './dates';
 import type { CategoryColor } from './categories';
+import type { MonthBox, YearSummary } from './months';
 import { priceForMonth, type PriceRow } from './prices';
 
 export const AREA_NAME_MAX = 120;
@@ -71,6 +78,9 @@ export const areaListQuerySchema = z
   .strict();
 export type AreaListQuery = z.infer<typeof areaListQuerySchema>;
 
+export const areaYearQuerySchema = z.object({ id, year: yearSchema }).strict();
+export type AreaYearQuery = z.infer<typeof areaYearQuerySchema>;
+
 export interface Renter {
   id: number;
   fullName: string;
@@ -90,6 +100,9 @@ export interface AreaListItem {
   renterPhone: string | null;
   /** This month's price; 0 = vacant, null = rent has not started yet. */
   currentPrice: number | null;
+  /** The 12 months of the current year. */
+  months: MonthBox[];
+  summary: YearSummary;
 }
 
 export interface AreaDetails {
