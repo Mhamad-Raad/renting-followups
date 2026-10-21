@@ -17,7 +17,15 @@ export function setUnlockCheck(check: () => boolean): void {
   isUnlocked = check;
 }
 
-type Handler<C extends IpcChannel> = (input: IpcInput<C>) => IpcOutput<C> | Promise<IpcOutput<C>>;
+/** Which page sent the call, for channels that answer one window (such as a print page saying it is ready). */
+export interface IpcSender {
+  webContentsId: number;
+}
+
+type Handler<C extends IpcChannel> = (
+  input: IpcInput<C>,
+  sender: IpcSender,
+) => IpcOutput<C> | Promise<IpcOutput<C>>;
 
 /**
  * Registers the one handler for a channel. The renderer is never trusted: the
@@ -46,7 +54,7 @@ export function handle<C extends IpcChannel>(
       return { ok: false, error: 'invalid_input' };
     }
     try {
-      return { ok: true, data: await handler(parsed.data) };
+      return { ok: true, data: await handler(parsed.data, { webContentsId: event.sender.id }) };
     } catch (error) {
       logger.error('ipc.failed', { channel, ...describeError(error) });
       return { ok: false, error: 'unexpected' };

@@ -1,6 +1,7 @@
 import type { CategoryColor } from '@shared/categories';
 import type { Currency } from '@shared/currency';
 import type { YearMonth } from '@shared/dates';
+import type { Language } from '@shared/settings';
 import {
   DEFAULT_REPORT_FILTERS,
   reportFiltersSchema,
@@ -58,14 +59,15 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
 
   return {
     /** Every query is one pass over the areas, their prices and the year's payments (no query per area). */
-    build(query: ReportQuery, today: YearMonth): Report {
+    build(query: ReportQuery, today: YearMonth, language: Language): Report {
       const areas = selectAreas.all({ categoryId: query.categoryId, currency: query.currency });
       const excluded = new Set(query.excludedIds);
+      const only = query.onlyIds && new Set(query.onlyIds);
       const pricesByArea = prices.forActiveAreas();
       const paidByArea = paid.inYear(query.year);
       const rows: ReportRow[] = [];
       for (const area of areas) {
-        if (excluded.has(area.id)) continue;
+        if (excluded.has(area.id) || (only && !only.has(area.id))) continue;
         const year = areaYear(
           pricesByArea.get(area.id) ?? [],
           paidByArea.get(area.id) ?? NO_PAYMENTS,
@@ -92,9 +94,12 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
               : (year.boxes.find((box) => box.month === query.month)?.status ?? null),
         });
       }
+      // Sorted here, once, so the screen, the printed report and Excel list areas in the same order.
+      const collator = new Intl.Collator(language);
+      const byName = (a: { name: string }, b: { name: string }) => collator.compare(a.name, b.name);
       return {
-        candidates: areas.map((area) => ({ id: area.id, name: area.name })),
-        rows,
+        candidates: areas.map((area) => ({ id: area.id, name: area.name })).sort(byName),
+        rows: rows.sort(byName),
         totals: reportTotals(rows),
       };
     },

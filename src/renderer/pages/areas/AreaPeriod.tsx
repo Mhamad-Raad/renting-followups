@@ -8,6 +8,7 @@ import { MoneyText } from '../../components/MoneyText';
 import { MonthBoxes } from '../../components/MonthBoxes';
 import { Notice } from '../../components/Notice';
 import styles from './AreaPage.module.css';
+import { ReportOutputButtons } from '../../print/ReportOutputButtons';
 import { areaYears, PeriodFilter } from './PeriodFilter';
 import { ReceiptList } from './ReceiptList';
 import { RentText } from './RentText';
@@ -19,10 +20,20 @@ interface AreaPeriodProps {
   currentYear: number;
   onEdit: (receipt: Receipt) => void;
   onCancel: (receipt: Receipt) => void;
+  onPrint: (receipt: Receipt) => void;
+  printing: boolean;
 }
 
 /** The chosen year (or month): the filter, the four figures, the 12 boxes and the receipts. */
-export function AreaPeriod({ area, period, currentYear, onEdit, onCancel }: AreaPeriodProps) {
+export function AreaPeriod({
+  area,
+  period,
+  currentYear,
+  onEdit,
+  onCancel,
+  onPrint,
+  printing,
+}: AreaPeriodProps) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const { year, month, months, receipts } = period;
@@ -76,13 +87,32 @@ export function AreaPeriod({ area, period, currentYear, onEdit, onCancel }: Area
         </>
       )}
 
+      <ReportOutputButtons
+        printLabel={t('print.actions.printArea')}
+        query={{
+          year,
+          month,
+          categoryId: null,
+          currency: null,
+          status: 'all',
+          excludedIds: [],
+          onlyIds: [area.id],
+        }}
+      />
+
       <section className={styles.card}>
         <h2 className={styles.heading}>{t('receipts.title')}</h2>
         {receipts.state.status === 'error' && (
           <Notice tone="error">{t('errors.unexpected')}</Notice>
         )}
         {receipts.state.status === 'ready' && (
-          <ReceiptList receipts={receipts.state.data} onEdit={onEdit} onCancel={onCancel} />
+          <ReceiptList
+            receipts={receipts.state.data}
+            onEdit={onEdit}
+            onCancel={onCancel}
+            onPrint={onPrint}
+            printing={printing}
+          />
         )}
       </section>
     </>

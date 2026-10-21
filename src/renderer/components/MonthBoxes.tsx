@@ -19,7 +19,8 @@ const SYMBOLS: Record<MonthWord, string> = {
   paid: '✓',
   due: '•',
   partial: '½',
-  late: '!',
+  // The symbols ARCHITECTURE.md section 14 asks for, so a black-and-white print still reads.
+  late: '✗',
   upcoming: '',
   vacant: '–',
   notStarted: '–',

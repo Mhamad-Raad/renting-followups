@@ -321,3 +321,32 @@ Vitest's persistent module cache is turned off: it keys files by their own conte
 - **Screen layout:** to fit a normal window without sideways scrolling, the category and notes sit under the area name, the phone under the renter, rent / received / still owed are labelled lines in one "Money" column, and the status word sits under the month strip. Printing and Excel (iteration 8) use separate columns on landscape paper.
 - **Print, Export PDF and Export Excel** buttons arrive with iteration 8.
 - The areas repository was split into `areas.ts` (create, edit, renters, delete, restore), `areaViews.ts` (list, year, Home overview) and `priceChanges.ts` (price change and its warning), each under 250 lines.
+
+## Iteration 8: Printing and exports
+
+### Dependency: exceljs 4.4.0
+
+Named in ARCHITECTURE.md for Excel export; pure JavaScript, runs in the main process, writes `.xlsx` with right-to-left sheets and cell colours. `npm audit` reports a moderate issue in its `uuid` dependency (a missing bounds check in `v3`/`v5`/`v6` when a buffer is passed). exceljs only calls `uuid.v4()` without a buffer (`lib/xlsx/xform/sheet/cf-ext/cf-rule-ext-xform.js`), so the flaw cannot be reached. Re-check when exceljs updates.
+
+### How printing works
+
+- Print pages are ordinary app pages (`#/print/receipt/:id`, `#/print/report?q=…`, in `src/renderer/print/`) without the sidebar. The main process (`services/pdf.ts`) opens one in a hidden window with the same locked-down settings as the main window, waits until the page says it has drawn everything (`print:ready`, after fonts load; 30-second limit), then shows the Windows print dialog or saves a PDF, and destroys the window on every path. One print at a time; a second is answered "Another print is still being prepared". No temporary files: the PDF and Excel data are written straight to the place the owner chose.
+- Paper is always light and at normal text size, whatever the screen uses. Page size, orientation and page numbers ("Page 1 / 4", in the chosen digits) come from the page's own `@page` CSS, so print and PDF look the same.
+- The report query in a print page's address is checked again with the same schema as every IPC input.
+- **Print count:** a receipt counts as printed after a finished print or PDF; a cancelled dialog does not count. Every print after the first is stamped "Copy". Past records and cancelled receipts are never printed as receipts.
+- **Same fields everywhere:** the printed report and Excel use the separate columns of the spec (area, category, renter, phone, monthly rent, received, still owed, the 12 months, notes) and the totals per currency; the filter heading is built by one shared function (`reportText.ts`).
+- **Excel:** amounts are numbers (so they add up in Excel) with the currency in the cell format; month cells hold the paid amount with the light-theme status colour as fill (a test keeps the colours equal to `themes.css`); the sheet is right to left for Sorani and Arabic. Excel shows the numbers in Western digits, as Excel does.
+- The main process reads the screen's translation files (`services/translate.ts`) for Excel headings and suggested file names; suggested names are made safe for Windows.
+- Until the Settings screen (iteration 10) adds a print title and logo, printed pages show the app name.
+- The late symbol is now ✗ everywhere (screen strip and print), as section 14 asks for black-and-white printing.
+
+### Where the buttons are
+
+- Reports: Print, Export to PDF, Export to Excel for the report as filtered.
+- Area page: Print this area / Export to PDF / Export to Excel for the chosen year (and month); Print on each numbered receipt; Print receipt next to Undo after saving; Save and print receipt in the payment form.
+- Areas list: tick boxes (and tick all shown); Print selected / Export to PDF / Export to Excel appear once something is ticked, for this year.
+- Home: Print report prints this year's report for every area.
+
+### Fixed along the way
+
+- With Arabic-Indic digits, phone numbers showed their digit groups in reverse order (the bidirectional algorithm treats spaces between Arabic-Indic digits as right-to-left). Separators now carry invisible left-to-right marks (`phoneForDisplay`).

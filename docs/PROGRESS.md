@@ -2,7 +2,7 @@
 
 ## Current iteration
 
-**Iteration 7: Reports**, on branch `iter-07-reports`. Built, fully reviewed (self-review plus an independent review), pushed; waiting for the owner to say "continue".
+**Iteration 8: Printing and exports**, on branch `iter-08-printing`. Built, fully reviewed (self-review plus an independent review), pushed; waiting for the owner to say "continue".
 
 ## Done
 
@@ -13,14 +13,18 @@
 - Iteration 4 (merged, tag `iter-04`): `monthStatus.ts` (status table, yearly figures, summary word), month strip and status word on the Areas list, this year's 12 boxes on the area page. 253 unit tests and 21 end-to-end tests pass.
 - Iteration 5 (merged, tag `iter-05`): receipts and allocations, Record payment / Record past payment with live preview, Payments list with Edit and Cancel receipt, Undo, "computer date looks wrong" warning. 286 unit tests and 23 end-to-end tests pass.
 - Iteration 6 (merged, tag `iter-06`): area page Year/Month filter with the four figures and the period's receipts, the price-change warning over paid months, Home cards per currency and the Needs attention list. Owner decided: Still owed counts months up to now; old debts stay on Home; a price change shares paid money out again. 323 unit tests and 26 end-to-end tests pass.
-- Iteration 7: Reports page with remembered filters, area picker, the month strip, totals per currency; areas repository split in three. 341 unit tests and 28 end-to-end tests pass.
+- Iteration 7 (merged, tag `iter-07`): Reports page with remembered filters, area picker, the month strip, totals per currency; areas repository split in three. 341 unit tests and 28 end-to-end tests pass.
+- Iteration 8: receipt and report printing (Windows print dialog or PDF) through hidden windows, Excel export, print buttons on Reports, the area page, the Areas list (tick boxes) and Home; phone digit order fixed for Arabic-Indic digits. 354 unit tests and 33 end-to-end tests (one window-size test fails on this Mac only, also on the approved iter-07 build).
 
 ## Next
 
-- On "continue": merge `iter-07-reports` into `main` with `--no-ff`, tag `iter-07`, push.
-- Then iteration 8 (printing and exports): A4 print of reports (landscape, separate columns) and receipts (portrait, "Copy" on reprints), Export PDF and Excel with the same fields and totals, Save and print receipt, Print report on Home.
+- On "continue": merge `iter-08-printing` into `main` with `--no-ff`, tag `iter-08`, push.
+- Then iteration 9 (notifications): late and due reminders, days before month end, the bell with a count.
 
 ## Open questions
+
+- Should saving a receipt as PDF count as its print (so a later paper print says "Copy")? Currently yes.
+- The "window starts maximized" end-to-end test fails on this Mac since 2026-10-21 (also on iter-07); check whether the display or Dock changed.
 
 - Should search also match Sorani-only letters (ێ ڕ ڵ ۆ پ چ ژ گ ڤ) typed as their Arabic-keyboard look-alikes?
 

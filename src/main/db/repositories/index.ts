@@ -1,4 +1,5 @@
 import type { Db } from '../connection';
+import { createAllocationRepository } from './allocations';
 import { createAreaRepository } from './areas';
 import { createAreaViewRepository } from './areaViews';
 import { createAuditRepository } from './audit';
@@ -18,7 +19,8 @@ export function createRepositories(db: Db) {
   const prices = createPriceRepository(db);
   const renters = createRenterRepository(db);
   const paid = createPaidRepository(db);
-  const payments = createPaymentRepository(db, { audit, paid, prices, renters });
+  const allocations = createAllocationRepository(db);
+  const payments = createPaymentRepository(db, { allocations, audit, paid, prices, renters });
   const areas = createAreaRepository(db, { audit, categories, prices, renters });
   return {
     settings: createSettingsRepository(db),
@@ -26,7 +28,7 @@ export function createRepositories(db: Db) {
     categories,
     areas,
     areaViews: createAreaViewRepository(db, { areas, paid, prices }),
-    priceChanges: createPriceChangeRepository(db, { areas, audit, payments, prices }),
+    priceChanges: createPriceChangeRepository(db, { allocations, areas, audit, prices }),
     paid,
     payments,
     reports: createReportRepository(db, { paid, prices }),

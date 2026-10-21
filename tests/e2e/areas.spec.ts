@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { phoneForDisplay } from '../../src/shared/digits';
 import en from '../../src/renderer/i18n/en.json' with { type: 'json' };
 import { createDataDir, launchUnlocked, removeDataDir, type LaunchedApp } from './launch';
 
@@ -180,9 +181,9 @@ test('phone numbers follow the chosen digit style', async () => {
     await createAreasThroughIpc(page, ['Shop 1']);
     await page.evaluate(() => window.api.invoke('settings:update', { digitStyle: 'arabic' }));
     await page.reload();
-    await expect(page.getByRole('row').nth(1)).toContainText('٠٧٥٠ ٠');
+    await expect(page.getByRole('row').nth(1)).toContainText(phoneForDisplay('0750 0', 'arabic'));
     await page.getByRole('link', { name: 'Shop 1' }).click();
-    await expect(page.getByText('٠٧٥٠ ٠').first()).toBeVisible();
+    await expect(page.getByText(phoneForDisplay('0750 0', 'arabic')).first()).toBeVisible();
   } finally {
     await app.close();
     removeDataDir(dataDir);
@@ -238,6 +239,25 @@ test('the list and the area page show this year in month colours', async () => {
     await page.getByRole('button', { name: en.area.markVacant }).click();
     await page.getByRole('dialog').getByRole('button', { name: en.common.save }).click();
     await expect(boxes.getByLabel(boxLabel(month, en.months.status.vacant))).toBeVisible();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
+test('ticked areas hidden by a search are not printed or counted', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    await createAreasThroughIpc(page, ['Shop 1', 'Shop 2']);
+    await page.reload();
+    await page.getByRole('checkbox', { name: 'Select Shop 1' }).check();
+    await expect(page.getByText(en.print.selectedCount.replace('{{number}}', '1'))).toBeVisible();
+    await page.getByLabel(en.areas.search).fill('Shop 2');
+    await expect(page.getByRole('row')).toHaveCount(2);
+    await expect(page.getByRole('button', { name: en.print.actions.printSelected })).toHaveCount(0);
+    await page.getByLabel(en.areas.search).fill('');
+    await expect(page.getByRole('button', { name: en.print.actions.printSelected })).toBeVisible();
   } finally {
     await app.close();
     removeDataDir(dataDir);

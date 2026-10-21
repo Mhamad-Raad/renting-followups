@@ -23,7 +23,7 @@ import { TextField } from '../../components/TextField';
 import styles from './AreaFormPage.module.css';
 import { RenterFields, type RenterInput } from './RenterFields';
 import { RentFields, type NewRent } from './RentFields';
-import { parseAreaId } from './parseAreaId';
+import { parseRouteId } from '../../app/parseRouteId';
 
 const NEW_CATEGORY = 'new';
 
@@ -33,7 +33,7 @@ type Problem =
 /** Add area (`/areas/new`) or Edit area (`/areas/:id/edit`). */
 export function AreaFormPage() {
   const { id } = useParams();
-  const areaId = id === undefined ? null : parseAreaId(id);
+  const areaId = id === undefined ? null : parseRouteId(id);
   if (areaId === null) return <AreaForm area={null} />;
   return <EditAreaLoader areaId={areaId} />;
 }

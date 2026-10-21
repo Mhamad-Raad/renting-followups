@@ -28,3 +28,21 @@ export function toDigitStyle(text: string, style: DigitStyle): string {
     String.fromCharCode(ARABIC_INDIC_ZERO + digit.charCodeAt(0) - WESTERN_ZERO),
   );
 }
+
+const LEFT_TO_RIGHT_MARK = '‎';
+
+/**
+ * A phone number for display in the chosen digit style. With Arabic-Indic
+ * digits the bidirectional algorithm treats the spaces and dashes between
+ * digit groups as right-to-left, which swaps the groups even inside a
+ * left-to-right box ("١٢٣٤ ٠٧٥٠" instead of "٠٧٥٠ ١٢٣٤"). An invisible
+ * left-to-right mark on both sides of every separator keeps the groups in order.
+ */
+export function phoneForDisplay(phone: string, style: DigitStyle): string {
+  const digits = toDigitStyle(toWesternDigits(phone), style);
+  if (style === 'western') return digits;
+  return digits.replace(
+    /[^٠-٩]+/g,
+    (separator) => `${LEFT_TO_RIGHT_MARK}${separator}${LEFT_TO_RIGHT_MARK}`,
+  );
+}

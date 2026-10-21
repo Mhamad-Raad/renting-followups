@@ -1,0 +1,137 @@
+/* Printed pages: black on white, compact, the page's own direction (RTL or LTR). */
+.paper {
+  color: #000;
+  background: #fff;
+  font-size: 10pt;
+  line-height: 1.4;
+}
+
+.header {
+  margin-block-end: 6mm;
+  text-align: center;
+}
+
+.owner {
+  margin: 0;
+  font-size: 11pt;
+  font-weight: 700;
+}
+
+.title {
+  margin: 1mm 0 2mm;
+  font-size: 18pt;
+}
+
+.detail {
+  margin: 1mm 0;
+  color: #333;
+  font-size: 9pt;
+}
+
+/* Report table: the header row repeats on every page; rows are never split across pages. */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8.5pt;
+}
+
+.table thead {
+  display: table-header-group;
+}
+
+/* The totals belong at the end only, not repeated at the bottom of every page. */
+.table tfoot {
+  display: table-row-group;
+}
+
+.table tr {
+  break-inside: avoid;
+}
+
+.table th,
+.table td {
+  padding: 1.5mm 1.5mm;
+  border: 0.3mm solid #999;
+  text-align: start;
+  vertical-align: top;
+}
+
+.table thead th,
+.table tfoot th,
+.table tfoot td {
+  background: #eee;
+  font-weight: 700;
+}
+
+.strong {
+  font-weight: 700;
+}
+
+.number {
+  white-space: nowrap;
+}
+
+.status {
+  display: block;
+  margin-block-start: 0.5mm;
+  font-weight: 700;
+}
+
+.notes {
+  max-width: 45mm;
+  overflow-wrap: anywhere;
+}
+
+/* Receipt: large, plain label and value pairs. */
+.receipt {
+  display: grid;
+  gap: 4mm;
+  margin: 10mm 0;
+  font-size: 13pt;
+}
+
+.receipt > div {
+  display: grid;
+  grid-template-columns: 45mm 1fr;
+  gap: 4mm;
+  padding-block-end: 2mm;
+  border-block-end: 0.3mm solid #ccc;
+}
+
+.receipt dt {
+  color: #444;
+}
+
+.receipt dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.amount dd {
+  font-size: 18pt;
+}
+
+/* "Copy" on every print after the first, so a reprint is never mistaken for the original. */
+.copy {
+  width: max-content;
+  margin: 0 auto;
+  padding: 1mm 6mm;
+  border: 0.8mm solid #000;
+  font-size: 16pt;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  transform: rotate(-4deg);
+}
+
+.signature {
+  display: flex;
+  justify-content: flex-end;
+  margin-block: 24mm 6mm;
+}
+
+.signature span {
+  min-width: 70mm;
+  padding-block-start: 2mm;
+  border-block-start: 0.3mm solid #000;
+  text-align: center;
+}

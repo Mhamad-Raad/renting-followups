@@ -115,3 +115,16 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] _manual_ Choosing a month shows that month's figures, outlines it in every strip and shows its status word.
 - [ ] _manual_ 200 areas open in well under a second; changing filters does not blink.
 - [ ] _manual_ In Sorani and Arabic the table reads right to left; the footer numbers follow the digit style.
+
+## Iteration 8: Printing and exports
+
+Automated (`npm run test:e2e`) unless marked _manual_.
+
+- [ ] A receipt saves as PDF; it then counts as printed, and the next print shows "Copy".
+- [ ] Cancelling the Save dialog changes nothing; a past record cannot print as a receipt.
+- [ ] The report saves as PDF and as Excel; the Excel sheet reads right to left in Sorani.
+- [ ] Save and print receipt, the area page's Export to PDF, the Areas list's ticked Export to Excel and Home's Print report each end with a plain message; every hidden window closes.
+- [ ] _manual_ On Windows, Print opens the Windows print dialog; choosing a printer prints; Cancel shows no message.
+- [ ] _manual_ The printed report is A4 landscape with the header row on every page, page numbers, ✓ ½ ✗ – symbols and the totals only at the end.
+- [ ] _manual_ The receipt is one A4 page with title, number, date, area, renter, phone, months, amount, note and a signature line; Sorani and Arabic read right to left.
+- [ ] _manual_ With Arabic-Indic digits, phone numbers read in the right order on screen, in print and in PDF.

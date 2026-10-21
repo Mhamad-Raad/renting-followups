@@ -11,6 +11,7 @@ import { createAuthService } from './services/auth';
 import { writeSafetySnapshot } from './services/backup';
 import { describeError, initLogger, logger } from './services/logger';
 import { startupFailureMessage } from './services/messages';
+import { appWebPreferences, loadRenderer, RENDERER_DIRECTORY } from './windows';
 
 const APP_NAME = 'Rent Tracker';
 const MIN_WIDTH = 1100;
@@ -18,7 +19,6 @@ const MIN_HEIGHT = 700;
 const isDev = !app.isPackaged;
 // Automated tests run the app invisibly so they never take over the developer's screen.
 const isGhost = isDev && process.env['RENT_TRACKER_GHOST'] === '1';
-const rendererDirectory = join(import.meta.dirname, '../renderer');
 const DATABASE_FILE = 'rent-tracker.db';
 const MEMORY_LOG_INTERVAL_MS = 30_000;
 // Matches the page background of each theme, so the window never flashes white.
@@ -77,14 +77,7 @@ function createMainWindow(themeMode: ThemeMode): void {
     show: false,
     focusable: !isGhost,
     skipTaskbar: isGhost,
-    webPreferences: {
-      preload: join(import.meta.dirname, '../preload/index.cjs'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-      spellcheck: false,
-      devTools: isDev,
-    },
+    webPreferences: appWebPreferences(),
   });
   hardenWindow(window);
   mainWindow = window;
@@ -110,12 +103,7 @@ function createMainWindow(themeMode: ThemeMode): void {
     window.show();
   });
 
-  const devServerUrl = process.env['ELECTRON_RENDERER_URL'];
-  if (isDev && devServerUrl) {
-    void window.loadURL(devServerUrl);
-  } else {
-    void window.loadFile(join(rendererDirectory, 'index.html'));
-  }
+  void loadRenderer(window);
 }
 
 /** A second launch only brings the open window to the front: two copies must never share one database. */
@@ -130,7 +118,7 @@ function startApp(): void {
   // Windows gets no menu bar: the app's own sidebar is the only navigation.
   if (process.platform === 'win32') Menu.setApplicationMenu(null);
   if (isGhost) app.dock?.hide();
-  hardenSession(rendererDirectory);
+  hardenSession(RENDERER_DIRECTORY);
   let themeMode: ThemeMode;
   try {
     ({ themeMode } = startServices());

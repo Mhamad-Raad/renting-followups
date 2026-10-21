@@ -32,6 +32,8 @@ export const reportQuerySchema = reportFiltersSchema
     year: yearSchema,
     /** Areas unticked in the area picker. New areas are included until unticked. */
     excludedIds: z.array(id).max(10_000),
+    /** Only these areas (Print selected, Print this area); null for every area. */
+    onlyIds: z.array(id).min(1).max(10_000).nullable(),
   })
   .strict();
 export type ReportQuery = z.infer<typeof reportQuerySchema>;

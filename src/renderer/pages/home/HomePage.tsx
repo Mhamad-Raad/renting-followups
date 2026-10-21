@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { formatPlain } from '@shared/formatNumber';
 import type { AttentionItem, CurrencyTotals } from '@shared/home';
+import { DEFAULT_REPORT_FILTERS } from '@shared/reports';
 import { flash } from '../../app/flash';
 import { useIpcQuery } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
@@ -15,6 +16,7 @@ import { StatusPill } from '../../components/MonthBoxes';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { PhoneText } from '../../components/PhoneText';
+import { usePrint } from '../../print/usePrint';
 import { areaLink, recordPaymentLink } from '../areas/links';
 import styles from './HomePage.module.css';
 
@@ -24,12 +26,28 @@ export function HomePage() {
   const { settings } = useSettings();
   const navigate = useNavigate();
   const summary = useIpcQuery('home:summary');
+  const printing = usePrint();
+  // Print report: this year's report for every area, as the Reports page shows it by default.
+  const printReport = () =>
+    void printing.run({
+      kind: 'report',
+      output: 'printer',
+      query: {
+        year: new Date().getFullYear(),
+        ...DEFAULT_REPORT_FILTERS,
+        excludedIds: [],
+        onlyIds: null,
+      },
+    });
 
   const header = (
     <PageHeader
       title={t('pages.home.title')}
       actions={
         <>
+          <BigButton icon="reports" disabled={printing.busy} onClick={printReport}>
+            {t('print.actions.printReport')}
+          </BigButton>
           <BigButton
             onClick={() => void navigate('/areas', { state: flash(t('home.chooseArea')) })}
           >
@@ -74,6 +92,7 @@ export function HomePage() {
     <>
       {header}
       <div className={styles.stack}>
+        {printing.message && <Notice tone={printing.message.tone}>{printing.message.text}</Notice>}
         <section className={styles.section}>
           <h2 className={styles.heading}>
             {t('home.cardsTitle', { year: formatPlain(year, settings.digitStyle) })}
