@@ -47,7 +47,9 @@ test('the popup on opening and the Notifications page show the same reminders', 
     await expect(late.getByRole('listitem')).toHaveCount(1);
     await expect(late).toContainText('Shop late');
     await expect(page.getByText('Shop vacant')).toHaveCount(0);
-    await expect(page.getByLabel(en.notifications.count.replace('{{number}}', '1'))).toBeVisible();
+    await expect(page.getByRole('navigation')).toContainText(
+      en.notifications.count.replace('{{number}}', '1'),
+    );
   } finally {
     await app.close();
     removeDataDir(dataDir);
@@ -61,8 +63,10 @@ test('paying everything owed clears the bell at once', async () => {
     await seed(page);
     await page.reload();
     await page.getByRole('dialog').getByRole('button', { name: en.common.ok }).click();
-    const bell = page.getByLabel(en.notifications.count.replace('{{number}}', '1'));
-    await expect(bell).toBeVisible();
+    const bell = page
+      .getByRole('navigation')
+      .getByText(en.notifications.count.replace('{{number}}', '1'));
+    await expect(bell).toHaveCount(1);
 
     // Record payment from the Notifications page opens the area with the form ready.
     await page.getByRole('link', { name: new RegExp(`^${en.nav.notifications}`) }).click();

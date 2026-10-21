@@ -30,18 +30,18 @@ export function Sidebar() {
                 <Icon name={item.icon} />
                 {item.key === 'notifications' && count > 0 && (
                   // Keyed by the count, so the soft pulse plays once each time it changes.
-                  <span
-                    key={count}
-                    className={styles.badge}
-                    aria-label={t('notifications.count', {
-                      number: formatPlain(count, settings.digitStyle),
-                    })}
-                  >
+                  <span key={count} className={styles.badge} aria-hidden="true">
                     {formatPlain(count, settings.digitStyle)}
                   </span>
                 )}
               </span>
               <span>{t(`nav.${item.key}`)}</span>
+              {item.key === 'notifications' && count > 0 && (
+                // Read out after the page name: "Notifications, Reminders: 3".
+                <span className={styles.hidden}>
+                  {t('notifications.count', { number: formatPlain(count, settings.digitStyle) })}
+                </span>
+              )}
             </NavLink>
           </li>
         ))}
