@@ -229,6 +229,19 @@ describe('month boxes', () => {
   });
 });
 
+describe('price rows for all areas', () => {
+  it('come oldest first even when added out of order', () => {
+    const id = createArea({ rentStartsFrom: { year: 2026, month: 5 } });
+    // A row added later but for an earlier month (as an import could do).
+    db.prepare(
+      `INSERT INTO area_prices (area_id, monthly_price, effective_from_year, effective_from_month)
+       VALUES (?, 100, 2026, 2)`,
+    ).run(id);
+    const rows = repos.areas.overviews(TODAY);
+    expect(rows[0]?.standing.lateMonths).toBe(8);
+  });
+});
+
 describe('renters', () => {
   it('a new renter closes the current one and both stay in the history', () => {
     const id = createArea();
