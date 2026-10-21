@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { phoneForDisplay } from '../../src/shared/digits';
 import en from '../../src/renderer/i18n/en.json' with { type: 'json' };
 import { createDataDir, launchUnlocked, removeDataDir, type LaunchedApp } from './launch';
 
@@ -180,9 +181,9 @@ test('phone numbers follow the chosen digit style', async () => {
     await createAreasThroughIpc(page, ['Shop 1']);
     await page.evaluate(() => window.api.invoke('settings:update', { digitStyle: 'arabic' }));
     await page.reload();
-    await expect(page.getByRole('row').nth(1)).toContainText('٠٧٥٠ ٠');
+    await expect(page.getByRole('row').nth(1)).toContainText(phoneForDisplay('0750 0', 'arabic'));
     await page.getByRole('link', { name: 'Shop 1' }).click();
-    await expect(page.getByText('٠٧٥٠ ٠').first()).toBeVisible();
+    await expect(page.getByText(phoneForDisplay('0750 0', 'arabic')).first()).toBeVisible();
   } finally {
     await app.close();
     removeDataDir(dataDir);
