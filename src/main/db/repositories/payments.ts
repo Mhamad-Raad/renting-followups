@@ -1,5 +1,5 @@
 import type { Currency } from '@shared/currency';
-import { monthIndex, type BusinessToday, type DateString, type YearMonth } from '@shared/dates';
+import type { BusinessToday, YearMonth } from '@shared/dates';
 import type {
   Allocation,
   AllocationResult,
@@ -12,9 +12,9 @@ import type {
   Receipt,
 } from '@shared/payments';
 import { allocate, oldestOpenMonth } from '../../services/allocation';
-import type { PaidByMonth, PaidHistory } from '../../services/monthStatus';
 import type { Db } from '../connection';
 import type { AuditRepository } from './audit';
+import type { PaidRepository } from './paid';
 import type { PriceRepository } from './prices';
 import type { RenterRepository } from './renters';
 import { NOW_SQL } from './sql';
@@ -41,17 +41,16 @@ interface AllocationRecord {
 
 interface Dependencies {
   audit: AuditRepository;
+  paid: PaidRepository;
   prices: PriceRepository;
   renters: RenterRepository;
 }
 
 const RECEIPT_COLUMNS = `id, receipt_number, is_backfill, area_id, renter_name_snapshot, currency,
   total_amount, paid_on, note, voided_at`;
-// Only receipts that still count: cancelled ones are kept but never add to what was paid.
-const COUNTING = 'r.voided_at IS NULL';
 const LAST_NUMBER_KEY = 'last_receipt_number';
 
-export function createPaymentRepository(db: Db, { audit, prices, renters }: Dependencies) {
+export function createPaymentRepository(db: Db, { audit, paid, prices, renters }: Dependencies) {
   const selectAreaCurrency = db.prepare<[number], { currency: Currency }>(
     'SELECT currency FROM areas WHERE id = ? AND deleted_at IS NULL',
   );
@@ -70,30 +69,6 @@ export function createPaymentRepository(db: Db, { audit, prices, renters }: Depe
   );
   const selectAllocationsForReceipt = db.prepare<[number], Allocation>(
     'SELECT year, month, amount FROM payment_allocations WHERE receipt_id = ? ORDER BY year, month',
-  );
-  const selectPaidForArea = db.prepare<[number, number], Allocation>(
-    `SELECT a.year, a.month, SUM(a.amount) AS amount
-     FROM payment_allocations a JOIN receipts r ON r.id = a.receipt_id
-     WHERE a.area_id = ? AND ${COUNTING} AND a.receipt_id <> ?
-     GROUP BY a.year, a.month`,
-  );
-  const selectPaidInYear = db.prepare<[number], { area_id: number; month: number; amount: number }>(
-    `SELECT a.area_id, a.month, SUM(a.amount) AS amount
-     FROM payment_allocations a JOIN receipts r ON r.id = a.receipt_id
-     WHERE a.year = ? AND ${COUNTING}
-     GROUP BY a.area_id, a.month`,
-  );
-  const selectPaidForActiveAreas = db.prepare<
-    [],
-    { area_id: number; year: number; month: number; amount: number }
-  >(
-    `SELECT a.area_id, a.year, a.month, SUM(a.amount) AS amount
-     FROM payment_allocations a JOIN receipts r ON r.id = a.receipt_id
-     WHERE ${COUNTING} AND a.area_id IN (SELECT id FROM areas WHERE deleted_at IS NULL)
-     GROUP BY a.area_id, a.year, a.month`,
-  );
-  const selectLatestPaidOn = db.prepare<[], { latest: string | null }>(
-    `SELECT MAX(paid_on) AS latest FROM receipts r WHERE ${COUNTING}`,
   );
   const selectLastNumber = db.prepare<[string], { value: string }>(
     'SELECT value FROM settings WHERE key = ?',
@@ -126,16 +101,8 @@ export function createPaymentRepository(db: Db, { audit, prices, renters }: Depe
     'DELETE FROM payment_allocations WHERE receipt_id = ?',
   );
 
-  /** What other receipts already paid for each month of the area. */
-  const paidHistory = (areaId: number, exceptReceiptId = 0): PaidHistory =>
-    new Map(
-      selectPaidForArea
-        .all(areaId, exceptReceiptId)
-        .map((row) => [monthIndex(row), row.amount] as const),
-    );
-
   const plan = (areaId: number, amount: number, from: YearMonth, today: YearMonth, except = 0) =>
-    allocate(amount, from, prices.forArea(areaId), paidHistory(areaId, except), today);
+    allocate(amount, from, prices.forArea(areaId), paid.history(areaId, except), today);
 
   // Numbers only ever go up: the stored counter survives even if a receipt row were lost.
   const nextReceiptNumber = () => {
@@ -171,7 +138,7 @@ export function createPaymentRepository(db: Db, { audit, prices, renters }: Depe
     /** The month the payment form suggests: the oldest one not fully paid. */
     suggestedStart(areaId: number, today: YearMonth): YearMonth | null {
       if (!selectAreaCurrency.get(areaId)) return null;
-      return oldestOpenMonth(prices.forArea(areaId), paidHistory(areaId), today);
+      return oldestOpenMonth(prices.forArea(areaId), paid.history(areaId), today);
     },
 
     /** Saves a payment, its receipt number (unless it is a past record) and its months, all at once. */
@@ -279,45 +246,6 @@ export function createPaymentRepository(db: Db, { audit, prices, renters }: Depe
           voided: row.voided_at !== null,
           allocations: byReceipt.get(row.id) ?? [],
         }));
-    },
-
-    /** What every month of the area has been paid, across all years. */
-    history: (areaId: number): PaidHistory => paidHistory(areaId),
-
-    /** The same for every area in use, in one query. */
-    historyForActiveAreas(): Map<number, PaidHistory> {
-      const byArea = new Map<number, Map<number, number>>();
-      for (const row of selectPaidForActiveAreas.all()) {
-        const months = byArea.get(row.area_id) ?? new Map<number, number>();
-        months.set(monthIndex(row), row.amount);
-        byArea.set(row.area_id, months);
-      }
-      return byArea;
-    },
-
-    /** What each month of one area's year has been paid. */
-    paidInAreaYear(areaId: number, year: number): PaidByMonth {
-      const paid = new Map<number, number>();
-      for (const row of selectPaidForArea.all(areaId, 0)) {
-        if (row.year === year) paid.set(row.month, row.amount);
-      }
-      return paid;
-    },
-
-    /** What each month of a year has been paid, for every area, in one query. */
-    paidInYear(year: number): Map<number, Map<number, number>> {
-      const byArea = new Map<number, Map<number, number>>();
-      for (const row of selectPaidInYear.all(year)) {
-        const months = byArea.get(row.area_id) ?? new Map<number, number>();
-        months.set(row.month, row.amount);
-        byArea.set(row.area_id, months);
-      }
-      return byArea;
-    },
-
-    /** The latest date money was received, for the "computer date looks wrong" check. */
-    latestPaidOn(): DateString | null {
-      return selectLatestPaidOn.get()?.latest ?? null;
     },
   };
 }

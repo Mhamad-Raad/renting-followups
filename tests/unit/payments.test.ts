@@ -229,11 +229,11 @@ describe('editing and cancelling receipts', () => {
 
   it('gives each month\u2019s paid amount across all years, for one area or all', () => {
     payOk({ amount: RENT + 10, from: { year: 2026, month: 12 } });
-    const history = repos.payments.history(areaId);
+    const history = repos.paid.history(areaId);
     expect([...history.values()]).toEqual([RENT, 10]);
-    expect(repos.payments.historyForActiveAreas().get(areaId)).toEqual(history);
+    expect(repos.paid.historyForActiveAreas().get(areaId)).toEqual(history);
     repos.areas.softDelete(areaId);
-    expect(repos.payments.historyForActiveAreas().size).toBe(0);
+    expect(repos.paid.historyForActiveAreas().size).toBe(0);
   });
 
   it('warns which paid months a price change would alter', () => {
@@ -271,9 +271,9 @@ describe('editing and cancelling receipts', () => {
   });
 
   it('knows the latest date money was received', () => {
-    expect(repos.payments.latestPaidOn()).toBeNull();
+    expect(repos.paid.latestPaidOn()).toBeNull();
     payOk({ paidOn: '2026-03-02' });
     payOk({ paidOn: '2026-04-20' });
-    expect(repos.payments.latestPaidOn()).toBe('2026-04-20');
+    expect(repos.paid.latestPaidOn()).toBe('2026-04-20');
   });
 });

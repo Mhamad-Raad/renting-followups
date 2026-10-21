@@ -26,7 +26,7 @@ import {
   type AreaOverview,
 } from '../../services/monthStatus';
 import type { AttentionItem } from '@shared/home';
-import type { PaymentRepository } from './payments';
+import type { PaidRepository } from './paid';
 import type { Db } from '../connection';
 import type { AuditRepository } from './audit';
 import type { CategoryRepository } from './categories';
@@ -59,14 +59,14 @@ interface AreaListRecord {
 interface Dependencies {
   audit: AuditRepository;
   categories: CategoryRepository;
-  payments: PaymentRepository;
+  paid: PaidRepository;
   prices: PriceRepository;
   renters: RenterRepository;
 }
 
 export function createAreaRepository(
   db: Db,
-  { audit, categories, payments, prices, renters }: Dependencies,
+  { audit, categories, paid, prices, renters }: Dependencies,
 ) {
   const selectList = db.prepare<
     { categoryId: number | null; namePattern: string; phonePattern: string | null },
@@ -129,7 +129,7 @@ export function createAreaRepository(
       const query = normalizeText(search);
       const digits = normalizePhone(search);
       const pricesByArea = prices.forActiveAreas();
-      const paidByArea = payments.paidInYear(today.year);
+      const paidByArea = paid.inYear(today.year);
       return selectList
         .all({
           categoryId,
@@ -159,14 +159,14 @@ export function createAreaRepository(
     /** One year of an area: its 12 month boxes, summary word, and figures for the year or one month. */
     year(id: number, year: number, today: YearMonth, month: number | null = null): AreaYear | null {
       if (!findActive(id)) return null;
-      return areaYear(prices.forArea(id), payments.paidInAreaYear(id, year), year, today, month);
+      return areaYear(prices.forArea(id), paid.inAreaYear(id, year), year, today, month);
     },
 
     /** Every area in use with this year's figures and its standing today, for Home. */
     overviews(today: YearMonth): (AttentionItem & AreaOverview)[] {
       const pricesByArea = prices.forActiveAreas();
-      const historyByArea = payments.historyForActiveAreas();
-      const paidThisYear = payments.paidInYear(today.year);
+      const historyByArea = paid.historyForActiveAreas();
+      const paidThisYear = paid.inYear(today.year);
       return selectList
         .all({ categoryId: null, namePattern: containsPattern(''), phonePattern: null })
         .map((row) => {
@@ -280,7 +280,7 @@ export function createAreaRepository(
       if (!findActive(areaId)) return null;
       const history = prices.forArea(areaId);
       const after = withPriceFrom(history, from, monthlyPrice);
-      return statusChanges(history, after, payments.history(areaId), from, today);
+      return statusChanges(history, after, paid.history(areaId), from, today);
     },
 
     /** A new price from a month onward. Earlier months keep their price; 0 means vacant. */
