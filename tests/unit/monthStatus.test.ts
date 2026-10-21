@@ -4,6 +4,7 @@ import type { MonthBox, MonthStatus } from '@shared/months';
 import { withPriceFrom, type PriceRow } from '@shared/prices';
 import {
   areaStanding,
+  unpaidMonths,
   areaYear,
   matchesReportStatus,
   monthBoxes,
@@ -570,5 +571,33 @@ describe('reportTotals', () => {
       { currency: 'USD', rent: 500, received: 100, remaining: 50, areas: 1 },
     ]);
     expect(reportTotals([])).toEqual([]);
+  });
+});
+
+describe('unpaidMonths', () => {
+  const history = (entries: [YearMonth, number][]): PaidHistory =>
+    new Map(entries.map(([month, amount]) => [monthIndex(month), amount]));
+
+  it('lists late and due months oldest first with what each still owes', () => {
+    const prices: PriceRow[] = [{ year: 2025, month: 12, monthlyPrice: RENT }];
+    const paid = history([
+      [{ year: 2026, month: 1 }, RENT],
+      [{ year: 2026, month: 2 }, 100_000],
+    ]);
+    expect(unpaidMonths(prices, paid, { year: 2026, month: 3 })).toEqual([
+      { year: 2025, month: 12, status: 'late', owed: RENT },
+      { year: 2026, month: 2, status: 'late', owed: RENT - 100_000 },
+      { year: 2026, month: 3, status: 'due', owed: RENT },
+    ]);
+  });
+
+  it('never lists vacant months, months before the rent started or future months', () => {
+    const prices: PriceRow[] = [
+      { year: 2026, month: 2, monthlyPrice: RENT },
+      { year: 2026, month: 3, monthlyPrice: 0 },
+    ];
+    expect(unpaidMonths(prices, new Map(), { year: 2026, month: 5 })).toEqual([
+      { year: 2026, month: 2, status: 'late', owed: RENT },
+    ]);
   });
 });

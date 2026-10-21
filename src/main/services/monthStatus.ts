@@ -130,30 +130,53 @@ export function areaYear(
   return { year, month, boxes, figures, summary: yearSummary(boxes) };
 }
 
+/** A month that has come and is not fully paid: late (passed) or due (this month). */
+export interface UnpaidMonth extends YearMonth {
+  status: 'late' | 'due';
+  /** The rent not yet paid for it. */
+  owed: number;
+}
+
 /**
- * How an area stands today across every year since its rent started
- * (`prices` oldest first): what it still owes, how many past months are late,
- * and whether this month is due. Uses `monthStatus` for every month.
+ * Every month from when the rent started (`prices` oldest first) up to and
+ * including this one that is not fully paid, oldest first. Vacant months and
+ * months before the rent started never appear. Uses `monthStatus` for each.
+ */
+export function unpaidMonths(
+  prices: readonly PriceRow[],
+  paid: PaidHistory,
+  today: YearMonth,
+): UnpaidMonth[] {
+  const start = prices[0];
+  if (!start) return [];
+  const months: UnpaidMonth[] = [];
+  for (let index = monthIndex(start); index <= monthIndex(today); index += 1) {
+    const month = fromMonthIndex(index);
+    const expected = priceForMonth(prices, month);
+    const paidAmount = paid.get(index) ?? 0;
+    const status = monthStatus(expected, paidAmount, month, today);
+    if (status === 'late' || status === 'due') {
+      months.push({ ...month, status, owed: (expected ?? 0) - paidAmount });
+    }
+  }
+  return months;
+}
+
+/**
+ * How an area stands today across every year since its rent started: what it
+ * still owes, how many past months are late, and whether this month is due.
  */
 export function areaStanding(
   prices: readonly PriceRow[],
   paid: PaidHistory,
   today: YearMonth,
 ): AreaStanding {
-  const standing: AreaStanding = { owed: 0, lateMonths: 0, dueNow: false };
-  const start = prices[0];
-  if (!start) return standing;
-  for (let index = monthIndex(start); index <= monthIndex(today); index += 1) {
-    const month = fromMonthIndex(index);
-    const expected = priceForMonth(prices, month);
-    const paidAmount = paid.get(index) ?? 0;
-    const status = monthStatus(expected, paidAmount, month, today);
-    if (status !== 'late' && status !== 'due') continue;
-    standing.owed += (expected ?? 0) - paidAmount;
-    if (status === 'late') standing.lateMonths += 1;
-    else standing.dueNow = true;
-  }
-  return standing;
+  const months = unpaidMonths(prices, paid, today);
+  return {
+    owed: months.reduce((sum, month) => sum + month.owed, 0),
+    lateMonths: months.filter((month) => month.status === 'late').length,
+    dueNow: months.some((month) => month.status === 'due'),
+  };
 }
 
 /**
