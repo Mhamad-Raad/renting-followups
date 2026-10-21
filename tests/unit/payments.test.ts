@@ -148,6 +148,79 @@ describe('recording payments', () => {
   });
 });
 
+describe('price changes share paid money out again', () => {
+  const months = (id: number) =>
+    receipts()
+      .find((receipt) => receipt.id === id)
+      ?.allocations.map((m) => [m.month, m.amount]);
+  const changePrice = (month: number, monthlyPrice: number) =>
+    repos.areas.changePrice({ areaId, from: { year: 2026, month }, monthlyPrice }, TODAY.month);
+
+  it('a higher rent: the same money fills fewer months', () => {
+    const { id } = payOk({ amount: 3 * RENT, from: { year: 2026, month: 3 } });
+    expect(changePrice(3, 300_000)).toEqual({ ok: true });
+    expect(months(id)).toEqual([
+      [3, 300_000],
+      [4, 300_000],
+      [5, 150_000],
+    ]);
+    expect(statuses()?.slice(2, 5)).toEqual(['paid', 'paid', 'due']);
+  });
+
+  it('a lower rent: the extra moves on to the next months', () => {
+    const { id, receiptNumber } = payOk({ amount: 3 * RENT, from: { year: 2026, month: 3 } });
+    expect(changePrice(3, 200_000)).toEqual({ ok: true });
+    expect(months(id)).toEqual([
+      [3, 200_000],
+      [4, 200_000],
+      [5, 200_000],
+      [6, 150_000],
+    ]);
+    expect(receipts()[0]).toMatchObject({ receiptNumber, totalAmount: 3 * RENT });
+  });
+
+  it('months before the change keep their money; later receipts keep their own start', () => {
+    const early = payOk({ amount: 4 * RENT, from: { year: 2026, month: 1 } });
+    const later = payOk({ amount: RENT, from: { year: 2026, month: 8 } });
+    expect(changePrice(3, 300_000)).toEqual({ ok: true });
+    expect(months(early.id)).toEqual([
+      [1, RENT],
+      [2, RENT],
+      [3, 300_000],
+      [4, 200_000],
+    ]);
+    expect(months(later.id)).toEqual([[8, RENT]]);
+  });
+
+  it('cancelled receipts are left alone', () => {
+    const { id } = payOk({ amount: RENT, from: { year: 2026, month: 3 } });
+    repos.payments.void(id);
+    expect(changePrice(3, 300_000)).toEqual({ ok: true });
+    expect(months(id)).toEqual([[3, RENT]]);
+  });
+
+  it('refuses when the money would have nowhere to go, and changes nothing', () => {
+    const { id } = payOk({ amount: RENT, from: { year: 2026, month: 6 } });
+    expect(changePrice(6, 0)).toEqual({ ok: false, reason: 'no_room' });
+    expect(
+      repos.areas.priceChangeImpact(
+        { areaId, from: { year: 2026, month: 6 }, monthlyPrice: 0 },
+        TODAY.month,
+      ),
+    ).toEqual({ ok: false, reason: 'no_room' });
+    expect(repos.areas.get(areaId)?.prices).toHaveLength(1);
+    expect(months(id)).toEqual([[6, RENT]]);
+  });
+
+  it('marking vacant moves the money to the next month with rent', () => {
+    const { id } = payOk({ amount: RENT, from: { year: 2026, month: 6 } });
+    // Rent from month 8 is set on its own first, so months 6 and 7 become the vacant gap.
+    changePrice(8, RENT);
+    expect(changePrice(6, 0)).toEqual({ ok: true });
+    expect(months(id)).toEqual([[8, RENT]]);
+  });
+});
+
 describe('editing and cancelling receipts', () => {
   it('editing works the months out again and keeps the receipt number', () => {
     const { id } = payOk({ amount: 2 * RENT });
@@ -236,16 +309,20 @@ describe('editing and cancelling receipts', () => {
     expect(repos.paid.historyForActiveAreas().size).toBe(0);
   });
 
-  it('warns which paid months a price change would alter', () => {
+  it('previews which months a price change would alter, without saving', () => {
     payOk({ amount: 2 * RENT, from: { year: 2026, month: 3 } });
     const change = { areaId, from: { year: 2026, month: 4 }, monthlyPrice: 300_000 };
-    expect(repos.areas.priceChangeImpact(change, TODAY.month)).toEqual([
-      { year: 2026, month: 4, before: 'paid', after: 'late', uncounted: 0 },
-    ]);
+    expect(repos.areas.priceChangeImpact(change, TODAY.month)).toEqual({
+      ok: true,
+      changes: [
+        { year: 2026, month: 4, before: 'paid', after: 'late', paidBefore: RENT, paidAfter: RENT },
+      ],
+    });
     expect(
       repos.areas.priceChangeImpact({ ...change, from: { year: 2026, month: 5 } }, TODAY.month),
-    ).toEqual([]);
+    ).toEqual({ ok: true, changes: [] });
     expect(repos.areas.priceChangeImpact({ ...change, areaId: 999 }, TODAY.month)).toBeNull();
+    expect(receipts()[0]?.allocations.map((m) => m.month)).toEqual([3, 4]);
   });
 
   it('gives Home each area\u2019s figures for this year and its standing across years', () => {

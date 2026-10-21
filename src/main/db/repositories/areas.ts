@@ -7,6 +7,7 @@ import {
   type AreaSaveResult,
   type AreaUpdate,
   type PriceChange,
+  type PriceChangeImpact,
   type PriceChangeResult,
   type RenterChange,
   type RenterChangeResult,
@@ -15,7 +16,7 @@ import {
 import type { CategoryColor } from '@shared/categories';
 import type { Currency } from '@shared/currency';
 import type { YearMonth } from '@shared/dates';
-import type { AreaYear, StatusChange } from '@shared/months';
+import type { AreaYear } from '@shared/months';
 import { normalizePhone, normalizeText } from '@shared/normalizeText';
 import { priceForMonth, withPriceFrom } from '@shared/prices';
 import {
@@ -27,6 +28,7 @@ import {
 } from '../../services/monthStatus';
 import type { AttentionItem } from '@shared/home';
 import type { PaidRepository } from './paid';
+import type { PaymentRepository } from './payments';
 import type { Db } from '../connection';
 import type { AuditRepository } from './audit';
 import type { CategoryRepository } from './categories';
@@ -60,13 +62,14 @@ interface Dependencies {
   audit: AuditRepository;
   categories: CategoryRepository;
   paid: PaidRepository;
+  payments: PaymentRepository;
   prices: PriceRepository;
   renters: RenterRepository;
 }
 
 export function createAreaRepository(
   db: Db,
-  { audit, categories, paid, prices, renters }: Dependencies,
+  { audit, categories, paid, payments, prices, renters }: Dependencies,
 ) {
   const selectList = db.prepare<
     { categoryId: number | null; namePattern: string; phonePattern: string | null },
@@ -272,28 +275,44 @@ export function createAreaRepository(
       return { ok: true, id: input.id };
     }),
 
-    /** The paid months a price change would alter; null when the area does not exist. */
-    priceChangeImpact(
-      { areaId, from, monthlyPrice }: PriceChange,
-      today: YearMonth,
-    ): StatusChange[] | null {
-      if (!findActive(areaId)) return null;
-      const history = prices.forArea(areaId);
-      const after = withPriceFrom(history, from, monthlyPrice);
-      return statusChanges(history, after, paid.history(areaId), from, today);
+    /**
+     * What a price change would do to money already paid: the receipts from
+     * that month onward are shared out again with the new rent. Lists every
+     * month that gains or loses money or changes colour, or says the money
+     * would have nowhere to go. Null when the area does not exist.
+     */
+    priceChangeImpact(change: PriceChange, today: YearMonth): PriceChangeImpact | null {
+      if (!findActive(change.areaId)) return null;
+      const before = prices.forArea(change.areaId);
+      const after = withPriceFrom(before, change.from, change.monthlyPrice);
+      const { now, plan } = payments.planReshare(change.areaId, change.from, after, today);
+      if (!plan.ok) return plan;
+      return {
+        ok: true,
+        changes: statusChanges(before, after, now, plan.paid, change.from, today),
+      };
     },
 
-    /** A new price from a month onward. Earlier months keep their price; 0 means vacant. */
+    /**
+     * A new price from a month onward. Earlier months keep their price; 0 means
+     * vacant. Money already paid from that month onward is shared out again
+     * with the new rent, in the same transaction.
+     */
     changePrice: db.transaction(
-      ({ areaId, from, monthlyPrice }: PriceChange): PriceChangeResult => {
+      ({ areaId, from, monthlyPrice }: PriceChange, today: YearMonth): PriceChangeResult => {
         if (!findActive(areaId)) return { ok: false, reason: 'not_found' };
         const history = prices.forArea(areaId);
         if (isBeforeRentStart(history, from)) return { ok: false, reason: 'before_rent_start' };
+        const after = withPriceFrom(history, from, monthlyPrice);
+        const { plan } = payments.planReshare(areaId, from, after, today);
+        if (!plan.ok) return plan;
         prices.set(areaId, from, monthlyPrice);
+        payments.applyReshare(areaId, from, plan.byReceipt);
         audit.record('change_price', 'area', areaId, {
           from,
           previousPrice: priceForMonth(history, from),
           monthlyPrice,
+          resharedReceipts: [...plan.byReceipt.keys()],
         });
         return { ok: true };
       },

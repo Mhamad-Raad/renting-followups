@@ -60,14 +60,15 @@ export interface AreaStanding {
 }
 
 /**
- * A paid month a price change would alter, for the warning before saving:
- * its status changes, or part of the money on it would stop counting.
+ * A month whose money or status a price change would alter, for the warning
+ * before saving: the money of the receipts is shared out again with the new
+ * rent, so a month can gain or lose money and change colour.
  */
 export interface StatusChange {
   year: number;
   month: number;
   before: MonthStatus;
   after: MonthStatus;
-  /** Money on the month that would no longer count as received (above the new rent). */
-  uncounted: number;
+  paidBefore: number;
+  paidAfter: number;
 }

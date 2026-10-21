@@ -230,10 +230,10 @@
     "before_rent_start": "This month is before the rent started ({{month}}). Please choose a later month.",
     "priceSaved": "New price saved.",
     "vacantSaved": "The area is marked as vacant.",
-    "warning": "These paid months will change:",
-    "statusChange": "Month {{month}}: {{before}} → {{after}}",
+    "warning": "Saving shares the money already paid out again with the new rent:",
+    "statusChange": "Month {{month}}: {{before}} {{paidBefore}} → {{after}} {{paidAfter}}",
     "saveAnyway": "Save anyway",
-    "uncounted": "Month {{month}}: {{amount}} paid above the new rent will no longer count as received"
+    "no_room": "The money already paid from this month would have no month to go to (for example, the area stays vacant). Please cancel or edit those receipts first."
   },
   "renterDialog": {
     "title": "Change renter",

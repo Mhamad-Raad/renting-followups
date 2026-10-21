@@ -1,5 +1,5 @@
 import type { Currency } from '@shared/currency';
-import type { BusinessToday, YearMonth } from '@shared/dates';
+import { monthIndex, type BusinessToday, type YearMonth } from '@shared/dates';
 import type {
   Allocation,
   AllocationResult,
@@ -11,7 +11,15 @@ import type {
   PaymentVoidResult,
   Receipt,
 } from '@shared/payments';
-import { allocate, oldestOpenMonth } from '../../services/allocation';
+import {
+  allocate,
+  oldestOpenMonth,
+  reshare,
+  type ReshareReceipt,
+  type ReshareResult,
+} from '../../services/allocation';
+import type { PaidHistory } from '../../services/monthStatus';
+import type { PriceRow } from '@shared/prices';
 import type { Db } from '../connection';
 import type { AuditRepository } from './audit';
 import type { PaidRepository } from './paid';
@@ -97,6 +105,16 @@ export function createPaymentRepository(db: Db, { audit, paid, prices, renters }
     `INSERT INTO payment_allocations (receipt_id, area_id, year, month, amount)
      VALUES (?, ?, ?, ?, ?)`,
   );
+  const selectCountingAllocations = db.prepare<[number], AllocationRecord>(
+    `SELECT a.receipt_id, a.year, a.month, a.amount
+     FROM payment_allocations a JOIN receipts r ON r.id = a.receipt_id
+     WHERE a.area_id = ? AND r.voided_at IS NULL
+     ORDER BY r.paid_on, r.id, a.year, a.month`,
+  );
+  const deleteAllocationsFrom = db.prepare<[number, number]>(
+    `DELETE FROM payment_allocations
+     WHERE receipt_id = ? AND year * 12 + (month - 1) >= ?`,
+  );
   const deleteAllocations = db.prepare<[number]>(
     'DELETE FROM payment_allocations WHERE receipt_id = ?',
   );
@@ -123,6 +141,53 @@ export function createPaymentRepository(db: Db, { audit, paid, prices, renters }
     months.map(({ year, month, amount }) => ({ year, month, amount }));
 
   return {
+    /**
+     * How the money already paid from `from` onward would be shared out again
+     * with `newPrices` (oldest receipt first), plus what is paid now, for the
+     * warning and for saving. Cancelled receipts are left alone.
+     */
+    planReshare(
+      areaId: number,
+      from: YearMonth,
+      newPrices: readonly PriceRow[],
+      today: YearMonth,
+    ): { now: PaidHistory; plan: ReshareResult } {
+      const fromIndex = monthIndex(from);
+      const now = new Map<number, number>();
+      const kept = new Map<number, number>();
+      const receipts = new Map<number, ReshareReceipt>();
+      for (const row of selectCountingAllocations.all(areaId)) {
+        const index = monthIndex(row);
+        now.set(index, (now.get(index) ?? 0) + row.amount);
+        const receipt = receipts.get(row.receipt_id);
+        if (index < fromIndex) {
+          kept.set(index, (kept.get(index) ?? 0) + row.amount);
+          // A receipt that started before the change restarts at the change month.
+          if (!receipt)
+            receipts.set(row.receipt_id, { id: row.receipt_id, start: from, amount: 0 });
+        } else if (receipt) {
+          receipt.amount += row.amount;
+        } else {
+          receipts.set(row.receipt_id, {
+            id: row.receipt_id,
+            start: { year: row.year, month: row.month },
+            amount: row.amount,
+          });
+        }
+      }
+      // Rows come oldest receipt first, so the map keeps that order.
+      const affected = [...receipts.values()].filter((receipt) => receipt.amount > 0);
+      return { now, plan: reshare(affected, kept, newPrices, today) };
+    },
+
+    /** Saves a re-share: each receipt's months from `from` onward are replaced. Call inside a transaction. */
+    applyReshare(areaId: number, from: YearMonth, byReceipt: ReadonlyMap<number, Allocation[]>) {
+      for (const [receiptId, months] of byReceipt) {
+        deleteAllocationsFrom.run(receiptId, monthIndex(from));
+        writeAllocations(receiptId, areaId, months);
+      }
+    },
+
     /** The months a payment would fill, before saving. Null when the area does not exist. */
     preview(
       areaId: number,

@@ -156,33 +156,38 @@ export function areaStanding(
 }
 
 /**
- * The months with money on them, from `from` onward, that a change of the
- * price history from `before` to `after` would alter: their status changes,
- * or money on them stops counting because the new rent is lower than what was
- * paid. Used to warn before a price change so the past is never rewritten silently.
+ * The months from `from` onward whose money or status would change when the
+ * price history goes from `before` to `after` and the paid amounts go from
+ * `paidBefore` to `paidAfter` (the money shared out again). Used to warn before
+ * a price change so the past is never rewritten silently.
  */
 export function statusChanges(
   before: readonly PriceRow[],
   after: readonly PriceRow[],
-  paid: PaidHistory,
+  paidBefore: PaidHistory,
+  paidAfter: PaidHistory,
   from: YearMonth,
   today: YearMonth,
 ): StatusChange[] {
-  const changes: StatusChange[] = [];
-  const counted = (expected: number | null, amount: number) => Math.min(amount, expected ?? 0);
-  const indexes = [...paid.keys()]
+  const indexes = [...new Set([...paidBefore.keys(), ...paidAfter.keys()])]
     .filter((index) => index >= monthIndex(from))
     .sort((a, b) => a - b);
+  const changes: StatusChange[] = [];
   for (const index of indexes) {
     const month = fromMonthIndex(index);
-    const amount = paid.get(index) ?? 0;
-    const oldRent = priceForMonth(before, month);
-    const newRent = priceForMonth(after, month);
-    const was = monthStatus(oldRent, amount, month, today);
-    const will = monthStatus(newRent, amount, month, today);
-    const uncounted = Math.max(0, counted(oldRent, amount) - counted(newRent, amount));
-    if (was !== will || uncounted > 0)
-      changes.push({ ...month, before: was, after: will, uncounted });
+    const was = paidBefore.get(index) ?? 0;
+    const will = paidAfter.get(index) ?? 0;
+    const statusBefore = monthStatus(priceForMonth(before, month), was, month, today);
+    const statusAfter = monthStatus(priceForMonth(after, month), will, month, today);
+    if (statusBefore !== statusAfter || was !== will) {
+      changes.push({
+        ...month,
+        before: statusBefore,
+        after: statusAfter,
+        paidBefore: was,
+        paidAfter: will,
+      });
+    }
   }
   return changes;
 }

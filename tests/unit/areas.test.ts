@@ -138,11 +138,14 @@ describe('prices', () => {
   it('changes the price from a month onward and keeps earlier months', () => {
     const id = createArea();
     expect(
-      repos.areas.changePrice({
-        areaId: id,
-        from: { year: 2026, month: 6 },
-        monthlyPrice: 300_000,
-      }),
+      repos.areas.changePrice(
+        {
+          areaId: id,
+          from: { year: 2026, month: 6 },
+          monthlyPrice: 300_000,
+        },
+        TODAY,
+      ),
     ).toEqual({ ok: true });
     expect(repos.areas.get(id)?.prices).toEqual([
       { year: 2026, month: 1, monthlyPrice: 250_000 },
@@ -150,22 +153,36 @@ describe('prices', () => {
     ]);
     expect(auditFor(id).at(-1)).toEqual({
       action: 'change_price',
-      details: { from: { year: 2026, month: 6 }, previousPrice: 250_000, monthlyPrice: 300_000 },
+      details: {
+        from: { year: 2026, month: 6 },
+        previousPrice: 250_000,
+        monthlyPrice: 300_000,
+        resharedReceipts: [],
+      },
     });
   });
 
   it('replaces the price when changed twice from the same month', () => {
     const id = createArea();
-    repos.areas.changePrice({ areaId: id, from: { year: 2026, month: 6 }, monthlyPrice: 300_000 });
-    repos.areas.changePrice({ areaId: id, from: { year: 2026, month: 6 }, monthlyPrice: 280_000 });
+    repos.areas.changePrice(
+      { areaId: id, from: { year: 2026, month: 6 }, monthlyPrice: 300_000 },
+      TODAY,
+    );
+    repos.areas.changePrice(
+      { areaId: id, from: { year: 2026, month: 6 }, monthlyPrice: 280_000 },
+      TODAY,
+    );
     expect(repos.areas.get(id)?.prices.map((p) => p.monthlyPrice)).toEqual([250_000, 280_000]);
   });
 
   it('marks vacant with 0 and sets rent again later', () => {
     const id = createArea();
-    repos.areas.changePrice({ areaId: id, from: { year: 2026, month: 9 }, monthlyPrice: 0 });
+    repos.areas.changePrice({ areaId: id, from: { year: 2026, month: 9 }, monthlyPrice: 0 }, TODAY);
     expect(repos.areas.list({ search: '', categoryId: null }, TODAY)[0]?.currentPrice).toBe(0);
-    repos.areas.changePrice({ areaId: id, from: { year: 2026, month: 10 }, monthlyPrice: 260_000 });
+    repos.areas.changePrice(
+      { areaId: id, from: { year: 2026, month: 10 }, monthlyPrice: 260_000 },
+      TODAY,
+    );
     expect(repos.areas.list({ search: '', categoryId: null }, TODAY)[0]?.currentPrice).toBe(
       260_000,
     );
@@ -174,7 +191,10 @@ describe('prices', () => {
   it('refuses a change before the rent started', () => {
     const id = createArea();
     expect(
-      repos.areas.changePrice({ areaId: id, from: { year: 2025, month: 12 }, monthlyPrice: 1 }),
+      repos.areas.changePrice(
+        { areaId: id, from: { year: 2025, month: 12 }, monthlyPrice: 1 },
+        TODAY,
+      ),
     ).toEqual({ ok: false, reason: 'before_rent_start' });
   });
 
@@ -203,7 +223,7 @@ describe('month boxes', () => {
 
   it('follows the price history, including vacant months', () => {
     const id = createArea();
-    repos.areas.changePrice({ areaId: id, from: { year: 2026, month: 6 }, monthlyPrice: 0 });
+    repos.areas.changePrice({ areaId: id, from: { year: 2026, month: 6 }, monthlyPrice: 0 }, TODAY);
     const [area] = repos.areas.list({ search: '', categoryId: null }, TODAY);
     expect(statusesOf(area?.months)?.slice(4, 7)).toEqual([
       'late',
@@ -336,11 +356,14 @@ describe('searching and filtering', () => {
         renter: { fullName: `Renter ${index}`, phone: `0750${index}`, startedOn: '2026-01-01' },
       });
       if (index % 3 === 0) {
-        repos.areas.changePrice({
-          areaId: index,
-          from: { year: 2026, month: 6 },
-          monthlyPrice: 300_000,
-        });
+        repos.areas.changePrice(
+          {
+            areaId: index,
+            from: { year: 2026, month: 6 },
+            monthlyPrice: 300_000,
+          },
+          TODAY,
+        );
       }
     }
     const started = performance.now();

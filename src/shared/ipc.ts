@@ -17,6 +17,7 @@ import type {
   AreaYearQuery,
   DeletedItems,
   PriceChange,
+  PriceChangeImpact,
   PriceChangeResult,
   RenterChange,
   RenterChangeResult,
@@ -32,7 +33,7 @@ import type {
 } from './categories';
 import type { YearMonth } from './dates';
 import type { HomeSummary } from './home';
-import type { AreaYear, StatusChange } from './months';
+import type { AreaYear } from './months';
 import type {
   AllocationResult,
   AreaPaymentsQuery,
@@ -77,7 +78,7 @@ export interface IpcContract {
   'areas:year': { input: AreaYearQuery; output: AreaYear | null };
   'areas:create': { input: AreaCreate; output: AreaSaveResult };
   'areas:update': { input: AreaUpdate; output: AreaSaveResult };
-  'areas:priceChangeImpact': { input: PriceChange; output: StatusChange[] | null };
+  'areas:priceChangeImpact': { input: PriceChange; output: PriceChangeImpact | null };
   'areas:changePrice': { input: PriceChange; output: PriceChangeResult };
   'areas:changeRenter': { input: RenterChange; output: RenterChangeResult };
   'areas:delete': { input: IdInput; output: { ok: true } | { ok: false; reason: 'not_found' } };

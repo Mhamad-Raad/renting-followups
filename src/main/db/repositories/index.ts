@@ -20,7 +20,7 @@ export function createRepositories(db: Db) {
     settings: createSettingsRepository(db),
     credentials: createCredentialsRepository(db),
     categories,
-    areas: createAreaRepository(db, { audit, categories, paid, prices, renters }),
+    areas: createAreaRepository(db, { audit, categories, paid, payments, prices, renters }),
     paid,
     payments,
   };

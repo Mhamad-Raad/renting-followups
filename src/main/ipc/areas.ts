@@ -23,7 +23,9 @@ export function registerAreaIpc({ areas, categories }: Repositories): void {
   handle('areas:priceChangeImpact', priceChangeSchema, (input) =>
     areas.priceChangeImpact(input, currentYearMonth()),
   );
-  handle('areas:changePrice', priceChangeSchema, (input) => areas.changePrice(input));
+  handle('areas:changePrice', priceChangeSchema, (input) =>
+    areas.changePrice(input, currentYearMonth()),
+  );
   handle('areas:changeRenter', renterChangeSchema, (input) => areas.changeRenter(input));
   handle('areas:delete', idInputSchema, ({ id }) => areas.softDelete(id));
   handle('areas:restore', idInputSchema, ({ id }) => areas.restore(id));

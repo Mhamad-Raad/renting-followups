@@ -74,9 +74,10 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
         setProblem(t(impact.ok ? 'areaForm.problems.not_found' : 'errors.unexpected'));
         return;
       }
-      if (impact.data.length > 0) {
+      if (!impact.data.ok || impact.data.changes.length > 0) {
         setBusy(false);
-        setChanges(impact.data);
+        if (impact.data.ok) setChanges(impact.data.changes);
+        else setProblem(t('priceDialog.no_room'));
         return;
       }
     }
@@ -85,12 +86,15 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
     if (!result.ok) {
       setProblem(t('errors.unexpected'));
     } else if (!result.data.ok) {
+      const { reason } = result.data;
       setProblem(
-        result.data.reason === 'before_rent_start' && rentStart
+        reason === 'before_rent_start' && rentStart
           ? t('priceDialog.before_rent_start', {
               month: formatYearMonth(rentStart, settings.digitStyle),
             })
-          : t('areaForm.problems.not_found'),
+          : reason === 'no_room'
+            ? t('priceDialog.no_room')
+            : t('areaForm.problems.not_found'),
       );
     } else {
       onDone(t(mode === 'vacant' ? 'priceDialog.vacantSaved' : 'priceDialog.priceSaved'));
@@ -128,8 +132,8 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
 }
 
 /**
- * The paid months a change would alter: a new status (for example Paid → Late),
- * or money that would stop counting because the new rent is lower.
+ * What saving would do to money already paid: each month that gains or loses
+ * money or changes colour, for example "Month 4/2026: Paid 250,000 → Late 200,000".
  */
 function ChangeWarning({ changes, area }: { changes: readonly StatusChange[]; area: AreaDetails }) {
   const { t } = useTranslation();
@@ -137,26 +141,22 @@ function ChangeWarning({ changes, area }: { changes: readonly StatusChange[]; ar
   // A price change can only make a paid month "not applicable" by marking it vacant (rent 0).
   const word = (status: StatusChange['before']) =>
     t(`months.status.${monthWord({ status, expected: 0 })}`);
-  const describe = (change: StatusChange) => {
-    const month = formatYearMonth(change, settings.digitStyle);
-    if (change.before !== change.after) {
-      return t('priceDialog.statusChange', {
-        month,
-        before: word(change.before),
-        after: word(change.after),
-      });
-    }
-    return t('priceDialog.uncounted', {
-      month,
-      amount: formatAmount(change.uncounted, FRACTION_DIGITS[area.currency], settings.digitStyle),
-    });
-  };
+  const money = (amount: number) =>
+    formatAmount(amount, FRACTION_DIGITS[area.currency], settings.digitStyle);
   return (
     <Notice tone="warning">
       <p className={styles.warningTitle}>{t('priceDialog.warning')}</p>
       <ul className={styles.warningList}>
         {changes.map((change) => (
-          <li key={`${change.year}-${change.month}`}>{describe(change)}</li>
+          <li key={`${change.year}-${change.month}`}>
+            {t('priceDialog.statusChange', {
+              month: formatYearMonth(change, settings.digitStyle),
+              before: word(change.before),
+              paidBefore: money(change.paidBefore),
+              after: word(change.after),
+              paidAfter: money(change.paidAfter),
+            })}
+          </li>
         ))}
       </ul>
     </Notice>

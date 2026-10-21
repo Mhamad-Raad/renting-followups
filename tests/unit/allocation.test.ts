@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { monthIndex, type YearMonth } from '@shared/dates';
 import type { PriceRow } from '@shared/prices';
-import { allocate, oldestOpenMonth } from '../../src/main/services/allocation';
+import { allocate, oldestOpenMonth, reshare } from '../../src/main/services/allocation';
 import type { PaidHistory } from '../../src/main/services/monthStatus';
 
 const TODAY = { year: 2026, month: 5 };
@@ -134,5 +134,89 @@ describe('oldestOpenMonth', () => {
       Array.from({ length: 29 }, (_, i) => [monthIndex({ year: 2026, month: 1 }) + i, RENT]),
     );
     expect(oldestOpenMonth(FROM_JANUARY, history, TODAY)).toBeNull();
+  });
+});
+
+describe('reshare', () => {
+  const at = (month: number, year = 2026) => ({ year, month });
+
+  it('a higher rent: the same money fills fewer months', () => {
+    const prices: PriceRow[] = [
+      { year: 2026, month: 1, monthlyPrice: RENT },
+      { year: 2026, month: 3, monthlyPrice: 300_000 },
+    ];
+    const result = reshare(
+      [{ id: 1, start: at(3), amount: 3 * RENT }],
+      NOTHING_PAID,
+      prices,
+      TODAY,
+    );
+    expect(result.ok && result.byReceipt.get(1)).toEqual([
+      { year: 2026, month: 3, amount: 300_000 },
+      { year: 2026, month: 4, amount: 300_000 },
+      { year: 2026, month: 5, amount: 150_000 },
+    ]);
+  });
+
+  it('a lower rent: the extra moves on to the next months', () => {
+    const prices: PriceRow[] = [
+      { year: 2026, month: 1, monthlyPrice: RENT },
+      { year: 2026, month: 3, monthlyPrice: 200_000 },
+    ];
+    const result = reshare(
+      [{ id: 1, start: at(3), amount: 3 * RENT }],
+      NOTHING_PAID,
+      prices,
+      TODAY,
+    );
+    expect(result.ok && result.byReceipt.get(1)?.map((m) => [m.month, m.amount])).toEqual([
+      [3, 200_000],
+      [4, 200_000],
+      [5, 200_000],
+      [6, 150_000],
+    ]);
+  });
+
+  it('keeps money that stays put, and shares receipts oldest first', () => {
+    const kept = paid([[at(3), 100_000]]);
+    const result = reshare(
+      [
+        { id: 1, start: at(3), amount: 200_000 },
+        { id: 2, start: at(3), amount: RENT },
+      ],
+      kept,
+      FROM_JANUARY,
+      TODAY,
+    );
+    expect(result.ok && result.byReceipt.get(1)).toEqual([
+      { year: 2026, month: 3, amount: 150_000 },
+      { year: 2026, month: 4, amount: 50_000 },
+    ]);
+    expect(result.ok && result.byReceipt.get(2)).toEqual([
+      { year: 2026, month: 4, amount: 200_000 },
+      { year: 2026, month: 5, amount: 50_000 },
+    ]);
+    expect(result.ok && result.paid.get(monthIndex(at(4)))).toBe(RENT);
+  });
+
+  it('a receipt for later months stays with those months', () => {
+    const result = reshare(
+      [{ id: 1, start: at(7), amount: RENT }],
+      NOTHING_PAID,
+      FROM_JANUARY,
+      TODAY,
+    );
+    expect(result.ok && result.byReceipt.get(1)?.[0]?.month).toBe(7);
+  });
+
+  it('refuses when the money would have nowhere to go', () => {
+    const vacant: PriceRow[] = [
+      { year: 2026, month: 1, monthlyPrice: RENT },
+      { year: 2026, month: 3, monthlyPrice: 0 },
+    ];
+    expect(reshare([{ id: 1, start: at(3), amount: RENT }], NOTHING_PAID, vacant, TODAY)).toEqual({
+      ok: false,
+      reason: 'no_room',
+    });
   });
 });

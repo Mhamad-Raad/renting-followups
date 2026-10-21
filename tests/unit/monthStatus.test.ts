@@ -406,45 +406,66 @@ describe('statusChanges', () => {
   const history = (entries: [YearMonth, number][]): PaidHistory =>
     new Map(entries.map(([month, amount]) => [monthIndex(month), amount]));
   const before: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: RENT }];
+  const at = (month: number) => ({ year: 2026, month });
 
-  it('lists paid months that a higher price turns from paid to late or partial', () => {
-    const paid = history([
-      [{ year: 2026, month: 3 }, RENT],
-      [{ year: 2026, month: 7 }, RENT],
+  it('lists months that gain or lose money or change colour', () => {
+    const after = withPriceFrom(before, at(3), 300_000);
+    const was = history([
+      [at(3), RENT],
+      [at(4), RENT],
     ]);
-    const after = withPriceFrom(before, { year: 2026, month: 3 }, 300_000);
-    expect(statusChanges(before, after, paid, { year: 2026, month: 3 }, TODAY)).toEqual([
-      { year: 2026, month: 3, before: 'paid', after: 'late', uncounted: 0 },
-      { year: 2026, month: 7, before: 'paid', after: 'partial', uncounted: 0 },
+    const will = history([
+      [at(3), 300_000],
+      [at(4), 200_000],
     ]);
-  });
-
-  it('ignores months before the change and months with nothing paid', () => {
-    const paid = history([[{ year: 2026, month: 2 }, RENT]]);
-    const after = withPriceFrom(before, { year: 2026, month: 3 }, 300_000);
-    expect(statusChanges(before, after, paid, { year: 2026, month: 3 }, TODAY)).toEqual([]);
-  });
-
-  it('warns when marking vacant a month that was paid', () => {
-    const paid = history([[{ year: 2026, month: 6 }, RENT]]);
-    const after = withPriceFrom(before, { year: 2026, month: 6 }, 0);
-    expect(statusChanges(before, after, paid, { year: 2026, month: 6 }, TODAY)).toEqual([
-      { year: 2026, month: 6, before: 'paid', after: 'not_applicable', uncounted: RENT },
+    expect(statusChanges(before, after, was, will, at(3), TODAY)).toEqual([
+      { year: 2026, month: 3, before: 'paid', after: 'paid', paidBefore: RENT, paidAfter: 300_000 },
+      { year: 2026, month: 4, before: 'paid', after: 'late', paidBefore: RENT, paidAfter: 200_000 },
     ]);
   });
 
-  it('says nothing when the paid months keep their status and all their money still counts', () => {
-    const paid = history([[{ year: 2026, month: 4 }, 300_000]]);
-    // Rent was 250,000 with 300,000 paid; a new rent of 280,000 counts more of it, not less.
-    const after = withPriceFrom(before, { year: 2026, month: 4 }, 280_000);
-    expect(statusChanges(before, after, paid, { year: 2026, month: 4 }, TODAY)).toEqual([]);
+  it('includes a month that only now receives money', () => {
+    const after = withPriceFrom(before, at(3), 200_000);
+    const was = history([[at(3), RENT]]);
+    const will = history([
+      [at(3), 200_000],
+      [at(4), 50_000],
+    ]);
+    expect(statusChanges(before, after, was, will, at(3), TODAY)[1]).toEqual({
+      year: 2026,
+      month: 4,
+      before: 'late',
+      after: 'late',
+      paidBefore: 0,
+      paidAfter: 50_000,
+    });
   });
 
-  it('warns when a lower rent would leave money on a paid month uncounted', () => {
-    const paid = history([[{ year: 2026, month: 4 }, RENT]]);
-    const after = withPriceFrom(before, { year: 2026, month: 4 }, 200_000);
-    expect(statusChanges(before, after, paid, { year: 2026, month: 4 }, TODAY)).toEqual([
-      { year: 2026, month: 4, before: 'paid', after: 'paid', uncounted: RENT - 200_000 },
+  it('ignores months before the change and months that do not change', () => {
+    const after = withPriceFrom(before, at(3), 300_000);
+    const same = history([
+      [at(2), RENT],
+      [at(3), 300_000],
+    ]);
+    const was = history([
+      [at(2), RENT],
+      [at(3), 300_000],
+    ]);
+    expect(statusChanges(before, after, was, same, at(3), TODAY)).toEqual([]);
+  });
+
+  it('a vacant month with its money moved away', () => {
+    const after = withPriceFrom(before, at(6), 0);
+    const was = history([[at(6), RENT]]);
+    expect(statusChanges(before, after, was, new Map(), at(6), TODAY)).toEqual([
+      {
+        year: 2026,
+        month: 6,
+        before: 'paid',
+        after: 'not_applicable',
+        paidBefore: RENT,
+        paidAfter: 0,
+      },
     ]);
   });
 });

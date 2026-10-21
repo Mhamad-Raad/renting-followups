@@ -9,7 +9,7 @@ import {
   type YearMonth,
 } from './dates';
 import type { CategoryColor } from './categories';
-import type { MonthBox, YearSummary } from './months';
+import type { MonthBox, StatusChange, YearSummary } from './months';
 import { priceForMonth, type PriceRow } from './prices';
 
 export const AREA_NAME_MAX = 120;
@@ -132,7 +132,13 @@ export type AreaSaveResult =
   | { ok: false; reason: 'duplicate_name' | 'not_found' | 'category_not_found' };
 
 export type PriceChangeResult =
-  { ok: true } | { ok: false; reason: 'not_found' | 'before_rent_start' };
+  { ok: true } | { ok: false; reason: 'not_found' | 'before_rent_start' | 'no_room' };
+
+/** What a price change would do to money already paid (see `areas:priceChangeImpact`). */
+export type PriceChangeImpact =
+  | { ok: true; changes: StatusChange[] }
+  /** Money already paid would have no month to go to (for example vacant from then on). */
+  | { ok: false; reason: 'no_room' };
 
 export type RenterChangeResult =
   { ok: true } | { ok: false; reason: 'not_found' | 'no_current_renter' | 'before_current_renter' };

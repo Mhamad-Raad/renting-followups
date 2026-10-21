@@ -120,9 +120,15 @@ test('the area page filters by year and month, and warns before a price change',
     await dialog.getByLabel(en.priceDialog.newRent).fill('150000');
     await dialog.getByRole('button', { name: en.common.save }).click();
     await expect(dialog.getByText(en.priceDialog.warning)).toBeVisible();
-    await expect(dialog.getByText(`Month 2/${lastYear}: Paid → Late`)).toBeVisible();
+    await expect(
+      dialog.getByText(`Month 2/${lastYear}: Paid 100,000 → Late 100,000`),
+    ).toBeVisible();
     await dialog.getByRole('button', { name: en.priceDialog.saveAnyway }).click();
     await expect(page.getByText(en.priceDialog.priceSaved)).toBeVisible();
+    const february = en.months.box
+      .replace('{{month}}', '2')
+      .replace('{{status}}', en.months.status.late);
+    await expect(page.getByLabel(february, { exact: true })).toBeVisible();
   } finally {
     await app.close();
     removeDataDir(dataDir);
