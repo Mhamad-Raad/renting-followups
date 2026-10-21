@@ -61,6 +61,12 @@ export function yearMonthOf(date: Date): YearMonth {
   return { year: date.getFullYear(), month: date.getMonth() + 1 };
 }
 
+/** Today for business rules: the date (to refuse future dates) and its month (for colours and limits). */
+export interface BusinessToday {
+  date: DateString;
+  month: YearMonth;
+}
+
 /** The date of a JavaScript Date in local time. Callers pass the clock in; this never reads it. */
 export function dateStringFromLocal(date: Date): DateString {
   return toDateString(date.getFullYear(), date.getMonth() + 1, date.getDate());

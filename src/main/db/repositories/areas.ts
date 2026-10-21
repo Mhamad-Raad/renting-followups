@@ -19,6 +19,7 @@ import type { AreaYear } from '@shared/months';
 import { normalizePhone, normalizeText } from '@shared/normalizeText';
 import { priceForMonth } from '@shared/prices';
 import { areaYear, NO_PAYMENTS } from '../../services/monthStatus';
+import type { PaymentRepository } from './payments';
 import type { Db } from '../connection';
 import type { AuditRepository } from './audit';
 import type { CategoryRepository } from './categories';
@@ -51,11 +52,15 @@ interface AreaListRecord {
 interface Dependencies {
   audit: AuditRepository;
   categories: CategoryRepository;
+  payments: PaymentRepository;
   prices: PriceRepository;
   renters: RenterRepository;
 }
 
-export function createAreaRepository(db: Db, { audit, categories, prices, renters }: Dependencies) {
+export function createAreaRepository(
+  db: Db,
+  { audit, categories, payments, prices, renters }: Dependencies,
+) {
   const selectList = db.prepare<
     { categoryId: number | null; namePattern: string; phonePattern: string | null },
     AreaListRecord
@@ -117,6 +122,7 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
       const query = normalizeText(search);
       const digits = normalizePhone(search);
       const pricesByArea = prices.forActiveAreas();
+      const paidByArea = payments.paidInYear(today.year);
       return selectList
         .all({
           categoryId,
@@ -125,8 +131,8 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
         })
         .map((row) => {
           const history = pricesByArea.get(row.id) ?? [];
-          // Payments arrive in iteration 5; until then nothing is paid.
-          const { boxes, summary } = areaYear(history, NO_PAYMENTS, today.year, today);
+          const paid = paidByArea.get(row.id) ?? NO_PAYMENTS;
+          const { boxes, summary } = areaYear(history, paid, today.year, today);
           return {
             id: row.id,
             name: row.name,
@@ -146,7 +152,7 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
     /** One year of an area: its 12 month boxes, figures and summary word. */
     year(id: number, year: number, today: YearMonth): AreaYear | null {
       if (!findActive(id)) return null;
-      return areaYear(prices.forArea(id), NO_PAYMENTS, year, today);
+      return areaYear(prices.forArea(id), payments.paidInAreaYear(id, year), year, today);
     },
 
     get(id: number): AreaDetails | null {

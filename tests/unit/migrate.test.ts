@@ -141,6 +141,34 @@ describe('real schema upgrades keep existing data', () => {
       expect.arrayContaining(['areas', 'area_prices', 'audit_log', 'categories', 'renters']),
     );
   });
+
+  it('3: receipts and allocations are added without touching areas or their history', () => {
+    const db = memoryDb();
+    migrate(db, MIGRATIONS.slice(0, 2));
+    db.prepare(
+      "INSERT INTO categories (id, name, name_normalized) VALUES (1, 'Shops', 'shops')",
+    ).run();
+    db.prepare(
+      `INSERT INTO areas (id, category_id, name, name_normalized, currency)
+       VALUES (1, 1, 'Shop 1', 'shop 1', 'USD')`,
+    ).run();
+    db.prepare(
+      `INSERT INTO area_prices (area_id, monthly_price, effective_from_year, effective_from_month)
+       VALUES (1, 50000, 2026, 1)`,
+    ).run();
+    const before = ['areas', 'area_prices', 'categories'].map((table) =>
+      db.prepare(`SELECT * FROM ${table}`).all(),
+    );
+
+    migrate(db, MIGRATIONS.slice(0, 3));
+    expect(
+      ['areas', 'area_prices', 'categories'].map((table) =>
+        db.prepare(`SELECT * FROM ${table}`).all(),
+      ),
+    ).toEqual(before);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM receipts').get()).toEqual({ n: 0 });
+    expect(db.prepare('SELECT COUNT(*) AS n FROM payment_allocations').get()).toEqual({ n: 0 });
+  });
 });
 
 describe('writeSafetySnapshot', () => {
