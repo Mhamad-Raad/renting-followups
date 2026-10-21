@@ -21,6 +21,11 @@ export function monthIndex({ year, month }: YearMonth): number {
   return year * 12 + (month - 1);
 }
 
+/** The month a `monthIndex` stands for. */
+export function fromMonthIndex(index: number): YearMonth {
+  return { year: Math.floor(index / 12), month: (index % 12) + 1 };
+}
+
 export function compareYearMonth(a: YearMonth, b: YearMonth): number {
   return monthIndex(a) - monthIndex(b);
 }
