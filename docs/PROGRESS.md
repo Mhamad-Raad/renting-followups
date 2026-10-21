@@ -2,7 +2,7 @@
 
 ## Current iteration
 
-**Iteration 6: Area page and Home**, on branch `iter-06-area-page`. Built, reviewed, then fully reviewed again on the owner's request (`docs/reviews/review-2026-10-21.md`), fixes pushed; then, on the owner's decision, price changes share paid money out again; waiting for the owner to say "continue".
+**Iteration 7: Reports**, on branch `iter-07-reports`. Built, fully reviewed (self-review plus an independent review), pushed; waiting for the owner to say "continue".
 
 ## Done
 
@@ -12,12 +12,13 @@
 - Iteration 3 (merged, tag `iter-03`): categories and areas with price and renter history, vacant / set rent again, soft delete with Deleted items and Restore, normalized search, activity-log writes. 215 unit tests and 20 end-to-end tests pass.
 - Iteration 4 (merged, tag `iter-04`): `monthStatus.ts` (status table, yearly figures, summary word), month strip and status word on the Areas list, this year's 12 boxes on the area page. 253 unit tests and 21 end-to-end tests pass.
 - Iteration 5 (merged, tag `iter-05`): receipts and allocations, Record payment / Record past payment with live preview, Payments list with Edit and Cancel receipt, Undo, "computer date looks wrong" warning. 286 unit tests and 23 end-to-end tests pass.
-- Iteration 6: area page Year/Month filter with the four figures and the period's receipts, the price-change warning over paid months, Home cards per currency and the Needs attention list. Owner decided: Still owed counts months up to now; old debts stay on Home. 309 unit tests and 26 end-to-end tests pass.
+- Iteration 6 (merged, tag `iter-06`): area page Year/Month filter with the four figures and the period's receipts, the price-change warning over paid months, Home cards per currency and the Needs attention list. Owner decided: Still owed counts months up to now; old debts stay on Home; a price change shares paid money out again. 323 unit tests and 26 end-to-end tests pass.
+- Iteration 7: Reports page with remembered filters, area picker, the month strip, totals per currency; areas repository split in three. 341 unit tests and 28 end-to-end tests pass.
 
 ## Next
 
-- On "continue": merge `iter-06-area-page` into `main` with `--no-ff`, tag `iter-06`, push.
-- Then iteration 7 (reports): yearly report table for all areas with filters (category, status, currency), totals per currency, the "Received" explanation in the footer.
+- On "continue": merge `iter-07-reports` into `main` with `--no-ff`, tag `iter-07`, push.
+- Then iteration 8 (printing and exports): A4 print of reports (landscape, separate columns) and receipts (portrait, "Copy" on reprints), Export PDF and Excel with the same fields and totals, Save and print receipt, Print report on Home.
 
 ## Open questions
 
