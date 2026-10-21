@@ -59,10 +59,15 @@ export interface AreaStanding {
   dueNow: boolean;
 }
 
-/** A paid month whose status a price change would alter, for the warning before saving. */
+/**
+ * A paid month a price change would alter, for the warning before saving:
+ * its status changes, or part of the money on it would stop counting.
+ */
 export interface StatusChange {
   year: number;
   month: number;
   before: MonthStatus;
   after: MonthStatus;
+  /** Money on the month that would no longer count as received (above the new rent). */
+  uncounted: number;
 }

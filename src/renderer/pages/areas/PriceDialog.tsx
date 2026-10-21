@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AreaDetails } from '@shared/areas';
+import { FRACTION_DIGITS } from '@shared/currency';
 import type { StatusChange } from '@shared/months';
 import { formatYearMonth, yearMonthOf } from '@shared/dates';
+import { formatAmount } from '@shared/formatNumber';
 import { callIpc } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
 import { AmountField } from '../../components/AmountField';
@@ -113,7 +115,7 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
           error={showProblems && price === null ? t('areaForm.problems.rentRequired') : null}
         />
       )}
-      {changes && changes.length > 0 && <ChangeWarning changes={changes} />}
+      {changes && changes.length > 0 && <ChangeWarning changes={changes} area={area} />}
       {problem && <Notice tone="error">{problem}</Notice>}
       <DialogActions>
         <BigButton type="submit" variant="primary" disabled={busy}>
@@ -125,25 +127,36 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
   );
 }
 
-/** The months that are paid and would change status, for example Paid → Partly paid. */
-function ChangeWarning({ changes }: { changes: readonly StatusChange[] }) {
+/**
+ * The paid months a change would alter: a new status (for example Paid → Late),
+ * or money that would stop counting because the new rent is lower.
+ */
+function ChangeWarning({ changes, area }: { changes: readonly StatusChange[]; area: AreaDetails }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   // A price change can only make a paid month "not applicable" by marking it vacant (rent 0).
   const word = (status: StatusChange['before']) =>
     t(`months.status.${monthWord({ status, expected: 0 })}`);
+  const describe = (change: StatusChange) => {
+    const month = formatYearMonth(change, settings.digitStyle);
+    if (change.before !== change.after) {
+      return t('priceDialog.statusChange', {
+        month,
+        before: word(change.before),
+        after: word(change.after),
+      });
+    }
+    return t('priceDialog.uncounted', {
+      month,
+      amount: formatAmount(change.uncounted, FRACTION_DIGITS[area.currency], settings.digitStyle),
+    });
+  };
   return (
     <Notice tone="warning">
       <p className={styles.warningTitle}>{t('priceDialog.warning')}</p>
       <ul className={styles.warningList}>
         {changes.map((change) => (
-          <li key={`${change.year}-${change.month}`}>
-            {t('priceDialog.statusChange', {
-              month: formatYearMonth(change, settings.digitStyle),
-              before: word(change.before),
-              after: word(change.after),
-            })}
-          </li>
+          <li key={`${change.year}-${change.month}`}>{describe(change)}</li>
         ))}
       </ul>
     </Notice>

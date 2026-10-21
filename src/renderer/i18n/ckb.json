@@ -232,7 +232,8 @@
     "vacantSaved": "شوێنەکە وەک بەتاڵ دیاری کرا.",
     "warning": "ئەم مانگە دراوانە دەگۆڕێن:",
     "statusChange": "مانگی {{month}}: {{before}} ← {{after}}",
-    "saveAnyway": "هەر پاشەکەوت بکە"
+    "saveAnyway": "هەر پاشەکەوت بکە",
+    "uncounted": "مانگی {{month}}: {{amount}} کە زیاترە لە کرێی نوێ، ئیتر وەک وەرگیراو ناژمێردرێت"
   },
   "renterDialog": {
     "title": "گۆڕینی کرێچی",

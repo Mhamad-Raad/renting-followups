@@ -240,7 +240,7 @@ describe('editing and cancelling receipts', () => {
     payOk({ amount: 2 * RENT, from: { year: 2026, month: 3 } });
     const change = { areaId, from: { year: 2026, month: 4 }, monthlyPrice: 300_000 };
     expect(repos.areas.priceChangeImpact(change, TODAY.month)).toEqual([
-      { year: 2026, month: 4, before: 'paid', after: 'late' },
+      { year: 2026, month: 4, before: 'paid', after: 'late', uncounted: 0 },
     ]);
     expect(
       repos.areas.priceChangeImpact({ ...change, from: { year: 2026, month: 5 } }, TODAY.month),

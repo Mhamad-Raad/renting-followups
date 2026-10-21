@@ -232,7 +232,8 @@
     "vacantSaved": "The area is marked as vacant.",
     "warning": "These paid months will change:",
     "statusChange": "Month {{month}}: {{before}} → {{after}}",
-    "saveAnyway": "Save anyway"
+    "saveAnyway": "Save anyway",
+    "uncounted": "Month {{month}}: {{amount}} paid above the new rent will no longer count as received"
   },
   "renterDialog": {
     "title": "Change renter",

@@ -156,9 +156,10 @@ export function areaStanding(
 }
 
 /**
- * The months with money on them, from `from` onward, whose status would
- * change if the price history went from `before` to `after`. Used to warn
- * before a price change so the past is never rewritten silently.
+ * The months with money on them, from `from` onward, that a change of the
+ * price history from `before` to `after` would alter: their status changes,
+ * or money on them stops counting because the new rent is lower than what was
+ * paid. Used to warn before a price change so the past is never rewritten silently.
  */
 export function statusChanges(
   before: readonly PriceRow[],
@@ -168,15 +169,20 @@ export function statusChanges(
   today: YearMonth,
 ): StatusChange[] {
   const changes: StatusChange[] = [];
+  const counted = (expected: number | null, amount: number) => Math.min(amount, expected ?? 0);
   const indexes = [...paid.keys()]
     .filter((index) => index >= monthIndex(from))
     .sort((a, b) => a - b);
   for (const index of indexes) {
     const month = fromMonthIndex(index);
     const amount = paid.get(index) ?? 0;
-    const was = monthStatus(priceForMonth(before, month), amount, month, today);
-    const will = monthStatus(priceForMonth(after, month), amount, month, today);
-    if (was !== will) changes.push({ ...month, before: was, after: will });
+    const oldRent = priceForMonth(before, month);
+    const newRent = priceForMonth(after, month);
+    const was = monthStatus(oldRent, amount, month, today);
+    const will = monthStatus(newRent, amount, month, today);
+    const uncounted = Math.max(0, counted(oldRent, amount) - counted(newRent, amount));
+    if (was !== will || uncounted > 0)
+      changes.push({ ...month, before: was, after: will, uncounted });
   }
   return changes;
 }

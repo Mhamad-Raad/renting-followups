@@ -232,7 +232,8 @@
     "vacantSaved": "تم تحديد العقار كشاغر.",
     "warning": "ستتغير هذه الأشهر المدفوعة:",
     "statusChange": "الشهر {{month}}: {{before}} ← {{after}}",
-    "saveAnyway": "احفظ على أي حال"
+    "saveAnyway": "احفظ على أي حال",
+    "uncounted": "الشهر {{month}}: {{amount}} المدفوع فوق الإيجار الجديد لن يُحسب مستلماً بعد الآن"
   },
   "renterDialog": {
     "title": "تغيير المستأجر",

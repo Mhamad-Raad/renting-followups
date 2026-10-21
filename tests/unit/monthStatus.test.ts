@@ -414,8 +414,8 @@ describe('statusChanges', () => {
     ]);
     const after = withPriceFrom(before, { year: 2026, month: 3 }, 300_000);
     expect(statusChanges(before, after, paid, { year: 2026, month: 3 }, TODAY)).toEqual([
-      { year: 2026, month: 3, before: 'paid', after: 'late' },
-      { year: 2026, month: 7, before: 'paid', after: 'partial' },
+      { year: 2026, month: 3, before: 'paid', after: 'late', uncounted: 0 },
+      { year: 2026, month: 7, before: 'paid', after: 'partial', uncounted: 0 },
     ]);
   });
 
@@ -429,14 +429,23 @@ describe('statusChanges', () => {
     const paid = history([[{ year: 2026, month: 6 }, RENT]]);
     const after = withPriceFrom(before, { year: 2026, month: 6 }, 0);
     expect(statusChanges(before, after, paid, { year: 2026, month: 6 }, TODAY)).toEqual([
-      { year: 2026, month: 6, before: 'paid', after: 'not_applicable' },
+      { year: 2026, month: 6, before: 'paid', after: 'not_applicable', uncounted: RENT },
     ]);
   });
 
-  it('says nothing when the paid months keep their status', () => {
+  it('says nothing when the paid months keep their status and all their money still counts', () => {
     const paid = history([[{ year: 2026, month: 4 }, 300_000]]);
+    // Rent was 250,000 with 300,000 paid; a new rent of 280,000 counts more of it, not less.
     const after = withPriceFrom(before, { year: 2026, month: 4 }, 280_000);
     expect(statusChanges(before, after, paid, { year: 2026, month: 4 }, TODAY)).toEqual([]);
+  });
+
+  it('warns when a lower rent would leave money on a paid month uncounted', () => {
+    const paid = history([[{ year: 2026, month: 4 }, RENT]]);
+    const after = withPriceFrom(before, { year: 2026, month: 4 }, 200_000);
+    expect(statusChanges(before, after, paid, { year: 2026, month: 4 }, TODAY)).toEqual([
+      { year: 2026, month: 4, before: 'paid', after: 'paid', uncounted: RENT - 200_000 },
+    ]);
   });
 });
 
