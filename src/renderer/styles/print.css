@@ -1,0 +1,19 @@
+/*
+ * Paper: A4, colours kept when printing (month boxes), white background.
+ * Each print page adds its own orientation and page-number rule.
+ */
+@page {
+  size: A4 portrait;
+  margin: 14mm 12mm;
+}
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    background: #fff;
+  }
+}

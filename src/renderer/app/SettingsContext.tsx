@@ -9,6 +9,7 @@ import {
 import type { IpcErrorCode } from '@shared/ipc';
 import { applySettingsUpdate, type Settings, type SettingsUpdate } from '@shared/settings';
 import { i18next, LANGUAGE_DIRECTION } from '../i18n';
+import { isPrintPage } from '../print/printPage';
 import { callIpc, useIpcQuery } from './ipc';
 
 export type UpdateSettings = (
@@ -27,8 +28,9 @@ function applyToDocument(settings: Settings): void {
   const root = document.documentElement;
   root.lang = settings.language;
   root.dir = LANGUAGE_DIRECTION[settings.language];
-  root.dataset['theme'] = settings.themeMode;
-  root.dataset['fontSize'] = settings.fontSize;
+  // Paper is always printed light and at normal size, whatever the screen uses.
+  root.dataset['theme'] = isPrintPage() ? 'light' : settings.themeMode;
+  root.dataset['fontSize'] = isPrintPage() ? 'normal' : settings.fontSize;
   void i18next.changeLanguage(settings.language);
   document.title = i18next.t('app.name');
 }

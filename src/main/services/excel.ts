@@ -65,7 +65,7 @@ export function buildReportWorkbook(
         (part) =>
           `${t(part.labelKey)}: ${'text' in part.value ? part.value.text : t(part.value.key)}`,
       )
-      .join('   '),
+      .join(' · '),
   ]);
   sheet.addRow([t('print.printedOn', { date: formatDate(printedOn, digitStyle) })]);
 

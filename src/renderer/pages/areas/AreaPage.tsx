@@ -18,7 +18,7 @@ import { AreaHistory } from './AreaHistory';
 import { AreaPeriod } from './AreaPeriod';
 import styles from './AreaPage.module.css';
 import { RECORD_PAYMENT_PARAM } from './links';
-import { parseAreaId } from './parseAreaId';
+import { parseRouteId } from '../../app/parseRouteId';
 import { PaymentDialog, type PaymentMode, type PaymentSaved } from './PaymentDialog';
 import { PriceDialog, type PriceMode } from './PriceDialog';
 import { RenterDialog } from './RenterDialog';
@@ -35,7 +35,7 @@ type OpenDialog =
 /** One area: its details, its price and renter history, and the actions that change them. */
 export function AreaPage() {
   const { t } = useTranslation();
-  const areaId = parseAreaId(useParams().id);
+  const areaId = parseRouteId(useParams().id);
   const area = useIpcQuery('areas:get', { id: areaId ?? 0 });
 
   if (area.state.status === 'loading') return null;

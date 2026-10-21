@@ -1,6 +1,7 @@
 import type { DigitStyle } from './digits';
 import { formatPlain } from './formatNumber';
-import type { ReportQuery } from './reports';
+import type { Currency } from './currency';
+import type { ReportQuery, ReportStatus } from './reports';
 
 /**
  * The filters a printed or exported report names in its heading, as
@@ -9,7 +10,15 @@ import type { ReportQuery } from './reports';
  */
 export interface ReportFilterPart {
   labelKey: 'common.year' | 'common.month' | 'area.category' | 'area.currency' | 'reports.status';
-  value: { text: string } | { key: string };
+  value:
+    | { text: string }
+    | {
+        key:
+          | 'area.allMonths'
+          | 'areas.all'
+          | `currency.${Currency}`
+          | `reports.statuses.${ReportStatus}`;
+      };
 }
 
 export function reportFilterParts(
