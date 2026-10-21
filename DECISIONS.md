@@ -285,3 +285,21 @@ Vitest's persistent module cache is turned off: it keys files by their own conte
 - **Save and print receipt** and **Print receipt** are added in iteration 8, when printing works, rather than as buttons that do nothing.
 - The Cancel receipt question answers with "Cancel receipt" and "Keep it", so "Cancel" never means two things.
 - The area page was split into `AreaFacts`, `AreaHistory` and `ReceiptList` to stay readable.
+
+## Iteration 6: Area page and Home
+
+### Decided by the owner (also written into ARCHITECTURE.md)
+
+- **Still owed** counts only rent of months that have already come (up to and including this month), never months still to come. A past year owes every unpaid month; a future year owes nothing yet.
+- **Needs attention now** includes areas that still owe from earlier years, so a new year never hides a debt. The Late areas count on Home uses the same rule.
+
+### Rules as built
+
+- The yearly figures, the figures of one chosen month, each area's standing across all years, the Home totals per currency and the attention order all come from `monthStatus.ts`; the screens only show them.
+- **Rent price** on the area page is the chosen month's rent; for the whole year it is this month's rent in the current year, December's for a past year and January's for a future year.
+- The year list runs from the year the rent started (or this year, if later) to two years ahead.
+- Receipts are listed for the chosen year (or month) when they paid any month of it; cancelled ones stay listed.
+- **Price-change warning:** before saving, the main process compares every paid month from the chosen month onward under the old and the new prices. If any would change status (for example Paid → Late, or Paid → Vacant), the dialog lists them and the button becomes **Save anyway**. Changing the month or the amount asks again.
+- Needs attention is ordered by most late months, then most owed.
+- Home's **Record payment** shortcut opens Areas with "Choose the area that paid"; the button on each attention row opens that area with the payment form already open (`?pay=1`).
+- **Print report** on Home arrives with printing in iteration 8.
