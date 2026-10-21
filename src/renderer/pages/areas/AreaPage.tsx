@@ -191,6 +191,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
           onEdit={(receipt) => setDialog({ kind: 'payment', mode: { kind: 'edit', receipt } })}
           onCancel={(receipt) => setDialog({ kind: 'cancelReceipt', receipt })}
           onPrint={(receipt) => printReceipt(receipt.id)}
+          printing={printing.busy}
         />
 
         <AreaHistory area={area} />

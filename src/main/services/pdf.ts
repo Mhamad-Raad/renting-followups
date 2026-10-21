@@ -25,6 +25,11 @@ export function printPageReady(webContentsId: number, ok: boolean): void {
   waitingPages.get(webContentsId)?.(ok);
 }
 
+/** True while a print page is open, so callers can say so before asking where to save. */
+export function isPrinting(): boolean {
+  return busy;
+}
+
 export type PageJob<T> = { ok: true; value: T } | { ok: false; reason: 'busy' | 'failed' };
 
 /** Opens `route` in a hidden window, runs `use` once the page is ready, then destroys the window. */

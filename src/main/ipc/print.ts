@@ -14,6 +14,7 @@ import { businessToday, currentYearMonth } from '../services/clock';
 import { buildReportWorkbook } from '../services/excel';
 import {
   askWhereToSave,
+  isPrinting,
   printPageReady,
   renderPdf,
   saveFile,
@@ -34,6 +35,7 @@ export function registerPrintIpc({ categories, payments, reports, settings }: Re
     landscape: boolean,
     fileName: string,
   ): Promise<PrintResult> => {
+    if (isPrinting()) return { ok: false, reason: 'busy' };
     let path: string | null = null;
     if (output === 'pdf') {
       path = await askWhereToSave(fileName, { name: t('print.pdfFiles'), extension: 'pdf' });

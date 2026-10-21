@@ -21,6 +21,7 @@ interface AreaPeriodProps {
   onEdit: (receipt: Receipt) => void;
   onCancel: (receipt: Receipt) => void;
   onPrint: (receipt: Receipt) => void;
+  printing: boolean;
 }
 
 /** The chosen year (or month): the filter, the four figures, the 12 boxes and the receipts. */
@@ -31,6 +32,7 @@ export function AreaPeriod({
   onEdit,
   onCancel,
   onPrint,
+  printing,
 }: AreaPeriodProps) {
   const { t } = useTranslation();
   const { settings } = useSettings();
@@ -109,6 +111,7 @@ export function AreaPeriod({
             onEdit={onEdit}
             onCancel={onCancel}
             onPrint={onPrint}
+            printing={printing}
           />
         )}
       </section>

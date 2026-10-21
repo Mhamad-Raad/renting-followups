@@ -408,7 +408,6 @@
       "printReceipt": "Print receipt",
       "saveAndPrint": "Save and print receipt",
       "printSelected": "Print selected",
-      "exportSelected": "Export selected",
       "printReport": "Print report",
       "select": "Select {{name}}",
       "selectAll": "Select all shown",
