@@ -210,11 +210,20 @@ export function totalsByCurrency(areas: readonly AreaOverview[]): CurrencyTotals
   });
 }
 
-/** "Needs attention now": areas late in any year or due this month, most late months first. */
-export function needsAttention<T extends { standing: AreaStanding }>(areas: readonly T[]): T[] {
+/**
+ * "Needs attention now": areas late in any year or due this month. Most late
+ * months first; then by currency (amounts in different currencies are never
+ * compared), then most owed.
+ */
+export function needsAttention<T extends { currency: Currency; standing: AreaStanding }>(
+  areas: readonly T[],
+): T[] {
   return areas
     .filter(({ standing }) => standing.lateMonths > 0 || standing.dueNow)
     .sort(
-      (a, b) => b.standing.lateMonths - a.standing.lateMonths || b.standing.owed - a.standing.owed,
+      (a, b) =>
+        b.standing.lateMonths - a.standing.lateMonths ||
+        CURRENCIES.indexOf(a.currency) - CURRENCIES.indexOf(b.currency) ||
+        b.standing.owed - a.standing.owed,
     );
 }

@@ -480,6 +480,12 @@ describe('Home totals and attention list', () => {
     expect(totalsByCurrency([])).toEqual([]);
   });
 
+  it('never compares amounts across currencies when ordering', () => {
+    const dollars = overview('USD', 0, 10, 1, false, 900_00);
+    const dinars = overview('IQD', 0, 10, 1, false, 50_000);
+    expect(needsAttention([dollars, dinars])).toEqual([dinars, dollars]);
+  });
+
   it('lists late and due areas, most late months first, then most owed', () => {
     const paid = overview('IQD', 0, 0, 0);
     const due = overview('IQD', 0, 10, 0, true);
