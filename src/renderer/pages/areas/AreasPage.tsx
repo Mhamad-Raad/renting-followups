@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { SEARCH_MAX, type AreaListItem } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
-import { useIpcQuery } from '../../app/ipc';
+import { useIpcQuery, type QueryState } from '../../app/ipc';
 import { useFlashNotice } from '../../app/flash';
 import { useSettings } from '../../app/SettingsContext';
 import { useDebouncedValue } from '../../app/useDebouncedValue';
@@ -22,6 +22,11 @@ import { RentText } from './RentText';
 
 const SEARCH_DELAY_MS = 150;
 
+/** The ids of the areas on screen right now. */
+function sortedIds(state: QueryState<AreaListItem[]>): number[] {
+  return state.status === 'ready' ? state.data.map((area) => area.id) : [];
+}
+
 /** The list of all areas: filter by category, search, and open one. */
 export function AreasPage() {
   const { t } = useTranslation();
@@ -38,6 +43,11 @@ export function AreasPage() {
 
   // The list shows the current year; the main process decides each month's status.
   const year = new Date().getFullYear();
+  // Only ticked areas that are still shown count, so a search never prints hidden areas.
+  const chosen = useMemo(
+    () => sortedIds(areas.state).filter((id) => selected.has(id)),
+    [areas.state, selected],
+  );
   const collator = useMemo(() => new Intl.Collator(settings.language), [settings.language]);
   const sorted = useMemo<AreaListItem[]>(
     () =>
@@ -119,10 +129,10 @@ export function AreasPage() {
         />
         <p className={styles.count} aria-live="polite">
           {t('areas.count', { number: formatPlain(sorted.length, settings.digitStyle) })}
-          {selected.size > 0 &&
-            ` · ${t('print.selectedCount', { number: formatPlain(selected.size, settings.digitStyle) })}`}
+          {chosen.length > 0 &&
+            ` · ${t('print.selectedCount', { number: formatPlain(chosen.length, settings.digitStyle) })}`}
         </p>
-        {selected.size > 0 && (
+        {chosen.length > 0 && (
           <ReportOutputButtons
             printLabel={t('print.actions.printSelected')}
             query={{
@@ -132,7 +142,7 @@ export function AreasPage() {
               currency: null,
               status: 'all',
               excludedIds: [],
-              onlyIds: [...selected],
+              onlyIds: chosen,
             }}
           />
         )}
@@ -149,7 +159,14 @@ export function AreasPage() {
                       label={t('print.actions.selectAll')}
                       checked={sorted.length > 0 && sorted.every((area) => selected.has(area.id))}
                       onChange={(checked) =>
-                        setSelected(checked ? new Set(sorted.map((area) => area.id)) : new Set())
+                        setSelected((current) => {
+                          const next = new Set(current);
+                          for (const area of sorted) {
+                            if (checked) next.add(area.id);
+                            else next.delete(area.id);
+                          }
+                          return next;
+                        })
                       }
                     />
                   </th>

@@ -244,3 +244,22 @@ test('the list and the area page show this year in month colours', async () => {
     removeDataDir(dataDir);
   }
 });
+
+test('ticked areas hidden by a search are not printed or counted', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    await createAreasThroughIpc(page, ['Shop 1', 'Shop 2']);
+    await page.reload();
+    await page.getByRole('checkbox', { name: 'Select Shop 1' }).check();
+    await expect(page.getByText(en.print.selectedCount.replace('{{number}}', '1'))).toBeVisible();
+    await page.getByLabel(en.areas.search).fill('Shop 2');
+    await expect(page.getByRole('row')).toHaveCount(2);
+    await expect(page.getByRole('button', { name: en.print.actions.printSelected })).toHaveCount(0);
+    await page.getByLabel(en.areas.search).fill('');
+    await expect(page.getByRole('button', { name: en.print.actions.printSelected })).toBeVisible();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
