@@ -61,6 +61,11 @@
   font-size: var(--text-sm);
 }
 
+.detail {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
 .owed {
   white-space: nowrap;
 }

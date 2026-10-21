@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
-import { formatDate, formatYearMonth } from '@shared/dates';
+import { formatDate, formatMonthRuns } from '@shared/dates';
 import { formatReceiptNumber } from '@shared/payments';
 import { useIpcQuery } from '../app/ipc';
 import { useSettings } from '../app/SettingsContext';
@@ -29,12 +29,7 @@ export function ReceiptPrint() {
     [t('print.area'), data.areaName],
     [t('print.renter'), receipt.renterName ?? t('areas.noRenter')],
     [t('print.phone'), data.renterPhone ? <PhoneText phone={data.renterPhone} /> : '—'],
-    [
-      t('print.months'),
-      receipt.allocations
-        .map((month) => formatYearMonth(month, digits))
-        .join(t('receipts.separator')),
-    ],
+    [t('print.months'), formatMonthRuns(receipt.allocations, digits, t('receipts.separator'))],
   ];
   return (
     <PrintFrame

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
-import { formatYearMonth } from '@shared/dates';
+import { formatMonthRuns, formatYearMonth } from '@shared/dates';
 import { formatPlain } from '@shared/formatNumber';
 import type { Reminder } from '@shared/notifications';
 import { useSettings } from '../../app/SettingsContext';
@@ -11,29 +11,39 @@ import { PhoneText } from '../../components/PhoneText';
 import { areaLink, recordPaymentLink } from '../areas/links';
 import styles from './Notifications.module.css';
 
-/** What a reminder says, in the same words on the popup and the Notifications page. */
+/**
+ * What a reminder says, in the same words on the popup and the Notifications
+ * page: a short coloured label, then the months or days left on a line that
+ * wraps, so a long list never makes the page wider than the window.
+ */
 export function ReminderDescription({ reminder }: { reminder: Reminder }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const digits = settings.digitStyle;
   if (reminder.kind === 'late') {
     return (
-      <StatusPill status="late">
-        {t('notifications.lateMonths', {
-          months: reminder.months
-            .map((month) => formatYearMonth(month, digits))
-            .join(t('receipts.separator')),
-        })}
-      </StatusPill>
+      <>
+        <StatusPill status="late">
+          {t('home.lateMonths', { number: formatPlain(reminder.months.length, digits) })}
+        </StatusPill>
+        <span className={styles.detail}>
+          {t('receipts.months', {
+            months: formatMonthRuns(reminder.months, digits, t('receipts.separator')),
+          })}
+        </span>
+      </>
     );
   }
   const month = formatYearMonth(reminder.month, digits);
   return (
-    <StatusPill status="due">
-      {reminder.daysLeft === 1
-        ? t('notifications.lastDay', { month })
-        : t('notifications.daysLeft', { month, days: formatPlain(reminder.daysLeft, digits) })}
-    </StatusPill>
+    <>
+      <StatusPill status="due">{t('months.status.due')}</StatusPill>
+      <span className={styles.detail}>
+        {reminder.daysLeft === 1
+          ? t('notifications.lastDay', { month })
+          : t('notifications.daysLeft', { month, days: formatPlain(reminder.daysLeft, digits) })}
+      </span>
+    </>
   );
 }
 

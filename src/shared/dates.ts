@@ -83,3 +83,36 @@ export function formatDate(value: DateString, style: DigitStyle): string {
 export function formatYearMonth({ year, month }: YearMonth, style: DigitStyle): string {
   return `${formatPlain(month, style)}/${formatPlain(year, style)}`;
 }
+
+/** A run of consecutive months, for showing "1/2025 – 9/2026" instead of every month. */
+export interface MonthRun {
+  from: YearMonth;
+  to: YearMonth;
+}
+
+/** Groups months (in any order, repeats allowed) into runs of consecutive months, oldest first. */
+export function monthRuns(months: readonly YearMonth[]): MonthRun[] {
+  const indexes = [...new Set(months.map(monthIndex))].sort((a, b) => a - b);
+  const runs: MonthRun[] = [];
+  for (const index of indexes) {
+    const last = runs.at(-1);
+    if (last && monthIndex(last.to) === index - 1) last.to = fromMonthIndex(index);
+    else runs.push({ from: fromMonthIndex(index), to: fromMonthIndex(index) });
+  }
+  return runs;
+}
+
+/** Months as short text: single months as 3/2026, runs as 1/2026 – 4/2026. */
+export function formatMonthRuns(
+  months: readonly YearMonth[],
+  style: DigitStyle,
+  separator: string,
+): string {
+  return monthRuns(months)
+    .map(({ from, to }) =>
+      compareYearMonth(from, to) === 0
+        ? formatYearMonth(from, style)
+        : `${formatYearMonth(from, style)} – ${formatYearMonth(to, style)}`,
+    )
+    .join(separator);
+}

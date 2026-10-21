@@ -427,7 +427,6 @@
     "count": "Reminders: {{number}}",
     "late": "Late rent",
     "monthEnd": "This month ends soon",
-    "lateMonths": "Late months: {{months}}",
     "daysLeft": "Month {{month}} is not fully paid and ends in {{days}} days",
     "lastDay": "Month {{month}} is not fully paid and ends today",
     "owes": "Still owes",
