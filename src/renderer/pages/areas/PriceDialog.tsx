@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AreaDetails } from '@shared/areas';
+import type { StatusChange } from '@shared/months';
 import { formatYearMonth, yearMonthOf } from '@shared/dates';
 import { callIpc } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
@@ -8,6 +9,7 @@ import { AmountField } from '../../components/AmountField';
 import { BigButton } from '../../components/BigButton';
 import { Dialog, DialogActions } from '../../components/Dialog';
 import { Form } from '../../components/Form';
+import { monthWord } from '../../components/MonthBoxes';
 import { MonthYearField } from '../../components/MonthYearField';
 import { Notice } from '../../components/Notice';
 import styles from './AreaPage.module.css';
@@ -45,18 +47,32 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
   const [showProblems, setShowProblems] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Paid months this change would alter; once shown, saving again means "save anyway".
+  const [changes, setChanges] = useState<StatusChange[] | null>(null);
   const needsPrice = mode !== 'vacant';
   const rentStart = area.prices[0];
+
+  const edit =
+    <T,>(set: (value: T) => void) =>
+    (value: T) => {
+      set(value);
+      setChanges(null);
+    };
 
   const submit = async () => {
     setShowProblems(true);
     if ((needsPrice && price === null) || busy) return;
     setBusy(true);
-    const result = await callIpc('areas:changePrice', {
-      areaId: area.id,
-      from,
-      monthlyPrice: needsPrice ? (price ?? 0) : 0,
-    });
+    const change = { areaId: area.id, from, monthlyPrice: needsPrice ? (price ?? 0) : 0 };
+    if (changes === null) {
+      const impact = await callIpc('areas:priceChangeImpact', change);
+      if (impact.ok && impact.data && impact.data.length > 0) {
+        setBusy(false);
+        setChanges(impact.data);
+        return;
+      }
+    }
+    const result = await callIpc('areas:changePrice', change);
     setBusy(false);
     if (!result.ok) {
       setProblem(t('errors.unexpected'));
@@ -78,7 +94,7 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
       <MonthYearField
         label={t('priceDialog.from')}
         value={from}
-        onChange={setFrom}
+        onChange={edit(setFrom)}
         hint={t(mode === 'vacant' ? 'priceDialog.vacantHint' : 'priceDialog.changeHint')}
       />
       {needsPrice && (
@@ -86,18 +102,44 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
           label={t('priceDialog.newRent')}
           currency={area.currency}
           value={price}
-          onChange={setPrice}
+          onChange={edit(setPrice)}
           autoFocus
           error={showProblems && price === null ? t('areaForm.problems.rentRequired') : null}
         />
       )}
+      {changes && changes.length > 0 && <ChangeWarning changes={changes} />}
       {problem && <Notice tone="error">{problem}</Notice>}
       <DialogActions>
         <BigButton type="submit" variant="primary" disabled={busy}>
-          {t('common.save')}
+          {changes ? t('priceDialog.saveAnyway') : t('common.save')}
         </BigButton>
         <BigButton onClick={onClose}>{t('common.cancel')}</BigButton>
       </DialogActions>
     </Form>
+  );
+}
+
+/** The months that are paid and would change status, for example Paid → Partly paid. */
+function ChangeWarning({ changes }: { changes: readonly StatusChange[] }) {
+  const { t } = useTranslation();
+  const { settings } = useSettings();
+  // A price change can only make a paid month "not applicable" by marking it vacant (rent 0).
+  const word = (status: StatusChange['before']) =>
+    t(`months.status.${monthWord({ status, expected: 0 })}`);
+  return (
+    <Notice tone="warning">
+      <p className={styles.warningTitle}>{t('priceDialog.warning')}</p>
+      <ul className={styles.warningList}>
+        {changes.map((change) => (
+          <li key={`${change.year}-${change.month}`}>
+            {t('priceDialog.statusChange', {
+              month: formatYearMonth(change, settings.digitStyle),
+              before: word(change.before),
+              after: word(change.after),
+            })}
+          </li>
+        ))}
+      </ul>
+    </Notice>
   );
 }
