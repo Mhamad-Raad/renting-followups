@@ -120,3 +120,9 @@
 .number {
   white-space: nowrap;
 }
+
+/* The tick box column: narrow, and the box itself is the click target. */
+.tick {
+  width: 1%;
+  padding-inline-end: 0;
+}
