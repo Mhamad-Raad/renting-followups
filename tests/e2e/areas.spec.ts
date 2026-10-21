@@ -188,3 +188,58 @@ test('phone numbers follow the chosen digit style', async () => {
     removeDataDir(dataDir);
   }
 });
+
+test('the list and the area page show this year in month colours', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    // Rent starts this month, so the earlier months are "not started" and this one is due.
+    const today = new Date();
+    const month = today.getMonth() + 1;
+    await page.evaluate(
+      async (start) => {
+        const created = await window.api.invoke('categories:create', {
+          name: 'Shops',
+          color: null,
+        });
+        if (!created.ok || !created.data.ok) throw new Error('category failed');
+        await window.api.invoke('areas:create', {
+          categoryId: created.data.id,
+          name: 'Shop 7',
+          currency: 'IQD',
+          monthlyPrice: 250_000,
+          rentStartsFrom: start,
+          renter: null,
+          address: '',
+          contractStart: null,
+          notes: '',
+        });
+      },
+      { year: today.getFullYear(), month },
+    );
+    await page.reload();
+
+    const boxLabel = (number: number, status: string) =>
+      en.months.box.replace('{{month}}', String(number)).replace('{{status}}', status);
+    const strip = page.getByRole('list', { name: new RegExp(String(today.getFullYear())) });
+    await expect(strip.getByRole('listitem')).toHaveCount(12);
+    await expect(strip.getByLabel(boxLabel(month, en.months.status.due))).toBeVisible();
+    await expect(page.getByRole('row').nth(1)).toContainText(en.months.summary.due);
+
+    await page.getByRole('link', { name: 'Shop 7' }).click();
+    const boxes = page.getByRole('list', { name: new RegExp(String(today.getFullYear())) });
+    await expect(boxes.getByRole('listitem')).toHaveCount(12);
+    await expect(boxes.getByLabel(boxLabel(month, en.months.status.due))).toBeVisible();
+    if (month > 1) {
+      await expect(boxes.getByLabel(boxLabel(1, en.months.status.notStarted))).toBeVisible();
+    }
+
+    // Marking it vacant from this month turns the month grey and "Vacant" at once.
+    await page.getByRole('button', { name: en.area.markVacant }).click();
+    await page.getByRole('dialog').getByRole('button', { name: en.common.save }).click();
+    await expect(boxes.getByLabel(boxLabel(month, en.months.status.vacant))).toBeVisible();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
