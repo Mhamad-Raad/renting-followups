@@ -4,6 +4,7 @@ import { formatPlain } from '@shared/formatNumber';
 import { formatReceiptNumber } from '@shared/payments';
 import { LOGO_MAX_MEGABYTES, PRINT_TITLE_MAX } from '@shared/settings';
 import { callIpc, useIpcQuery } from '../../app/ipc';
+import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -33,9 +34,15 @@ export function PrintingSection() {
   const [message, setMessage] = useState<Message | null>(null);
   const logoSrc = logo.state.status === 'ready' ? logo.state.data : null;
   const maxSize = formatPlain(LOGO_MAX_MEGABYTES, settings.digitStyle);
+  const mounted = useMountedRef();
+  const titleChanged = title.trim() !== settings.printTitle;
 
+  // Saved with the button, with Enter, and when leaving the box (also by going to another page),
+  // so a typed title is never lost.
   const saveTitle = async () => {
+    if (!titleChanged) return;
     const result = await updateSettings({ printTitle: title });
+    if (!mounted.current) return;
     if (result.ok) setTitle(title.trim());
     setMessage(
       result.ok
@@ -48,6 +55,7 @@ export function PrintingSection() {
     setBusy(true);
     setMessage(null);
     const result = await callIpc('settings:chooseLogo');
+    if (!mounted.current) return;
     setBusy(false);
     if (!result.ok) return setMessage({ tone: 'error', text: t('settings.logoFailed') });
     const outcome = result.data;
@@ -66,6 +74,7 @@ export function PrintingSection() {
   const removeLogo = async () => {
     setConfirmRemove(false);
     const result = await callIpc('settings:removeLogo');
+    if (!mounted.current) return;
     logo.refresh();
     setMessage(
       result.ok
@@ -84,10 +93,11 @@ export function PrintingSection() {
           hint={t('settings.printTitleHint')}
           value={title}
           onChange={setTitle}
+          onBlur={() => void saveTitle()}
           maxLength={PRINT_TITLE_MAX}
           dir="auto"
         />
-        <BigButton type="submit" disabled={title.trim() === settings.printTitle}>
+        <BigButton type="submit" disabled={!titleChanged}>
           {t('common.save')}
         </BigButton>
       </Form>

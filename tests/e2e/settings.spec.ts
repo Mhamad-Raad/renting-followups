@@ -263,3 +263,22 @@ test('Show older adds the next entries of a long activity log, with no repeats',
     removeDataDir(dataDir);
   }
 });
+
+test('a typed print title is kept when leaving the page without pressing Save', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    await openSettings(page);
+    await page.getByRole('textbox', { name: 'Title on printed pages' }).fill('Kawa Rentals');
+    await page.getByRole('navigation').getByRole('link', { name: 'Home' }).click();
+    await expect
+      .poll(async () => {
+        const settings = await page.evaluate(() => window.api.invoke('settings:get'));
+        return settings.ok && settings.data.printTitle;
+      })
+      .toBe('Kawa Rentals');
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
