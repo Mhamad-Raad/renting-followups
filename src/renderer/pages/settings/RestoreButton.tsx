@@ -73,7 +73,10 @@ export function RestoreButton({ primary = false }: { primary?: boolean }) {
         tone="danger"
         focusCancel
         onConfirm={() => void confirm()}
-        onCancel={() => setChecked(null)}
+        onCancel={() => {
+          setChecked(null);
+          void callIpc('restore:cancel');
+        }}
       >
         {checked && (
           <>

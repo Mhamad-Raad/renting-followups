@@ -18,7 +18,7 @@ import { businessToday } from '../services/clock';
 import { describeError, logger } from '../services/logger';
 import type { LogoStore } from '../services/logo';
 import { checkBackup } from '../services/backupCheck';
-import { confirmRestore, type RestorePaths } from '../services/restore';
+import { clearStep, confirmRestore, type RestorePaths } from '../services/restore';
 import { translate } from '../services/translate';
 import { handle } from './handle';
 
@@ -79,6 +79,12 @@ export function registerRestoreIpc(deps: RestoreDependencies): void {
     await backupRunning;
     deps.restart();
     return { ok: true };
+  });
+
+  handle('restore:cancel', z.undefined(), () => {
+    checked = null;
+    clearStep(deps.paths, 'pending');
+    return null;
   });
 }
 

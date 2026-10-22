@@ -129,6 +129,28 @@ test('backup then restore brings back exactly the backed-up data', async () => {
   }
 });
 
+test('saying no to a checked backup changes nothing and leaves no copy behind', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    await addArea(page, 'Shop 1');
+    await openSettingsInEnglish(page);
+    const folder = join(dataDir, 'backups');
+    mkdirSync(folder);
+    const backup = await backUpFromSettings(app, page, folder);
+    await answerOpenDialog(app, backup);
+    await page.getByRole('button', { name: en.backup.restore }).click();
+    const dialog = page.getByRole('dialog', { name: en.backup.confirmTitle });
+    await dialog.getByRole('button', { name: en.common.cancel }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect.poll(() => readdirSync(join(dataDir, 'restore'))).toEqual([]);
+    expect(await areaNames(page)).toEqual(['Shop 1']);
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
 test('a file that is not a backup is refused in plain words and nothing changes', async () => {
   const dataDir = createDataDir();
   const { app, page } = await launchUnlocked(dataDir);
