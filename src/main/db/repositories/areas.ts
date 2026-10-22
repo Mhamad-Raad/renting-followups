@@ -75,6 +75,9 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
   const emptyToNull = (text: string) => (text === '' ? null : text);
 
   return {
+    /** True when an area in use in the category already has this name (letter variants count as the same). */
+    nameTaken: (categoryId: number, name: string) => nameInUse(categoryId, name),
+
     /** True for an area that exists and is not deleted. */
     isActive: (id: number) => findActive(id) !== null,
 
