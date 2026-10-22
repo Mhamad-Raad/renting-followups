@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   MIN_PASSWORD_LENGTH,
@@ -9,6 +9,7 @@ import {
 import { formatPlain } from '@shared/formatNumber';
 import type { IpcErrorCode, IpcResult } from '@shared/ipc';
 import { useSettings } from './SettingsContext';
+import { useMountedRef } from './useMountedRef';
 
 type Problem = { kind: 'wrong'; attemptsLeft: number } | { kind: 'error'; code: IpcErrorCode };
 
@@ -40,14 +41,7 @@ export function useSecretCheck(secret: 'password' | 'phrase') {
   const [problem, setProblem] = useState<Problem | null>(null);
   const [waitUntil, setWaitUntil] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
-  const mounted = useRef(true);
-
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
+  const mounted = useMountedRef();
 
   useEffect(() => {
     if (waitUntil === null) return;
@@ -84,7 +78,7 @@ export function useSecretCheck(secret: 'password' | 'phrase') {
       }
       return false;
     },
-    [],
+    [mounted],
   );
 
   const format = (value: number) => formatPlain(value, settings.digitStyle);
