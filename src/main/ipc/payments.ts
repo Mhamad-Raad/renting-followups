@@ -11,7 +11,7 @@ import type { Repositories } from '../db/repositories';
 import { businessToday } from '../services/clock';
 import { handle } from './handle';
 
-export function registerPaymentIpc({ paid, payments }: Repositories): void {
+export function registerPaymentIpc({ backupSettings, paid, payments }: Repositories): void {
   handle('payments:forArea', areaReceiptsQuerySchema, (query) => payments.forArea(query));
   handle('payments:suggestedStart', areaPaymentsQuerySchema, ({ areaId }) =>
     payments.suggestedStart(areaId, businessToday().month),
@@ -26,9 +26,10 @@ export function registerPaymentIpc({ paid, payments }: Repositories): void {
     payments.update(input, businessToday()),
   );
   handle('payments:void', idInputSchema, ({ id }) => payments.void(id));
-  // The computer date looks wrong when money was received "after" today.
+  // The computer date looks wrong when money was received, or a backup made, "after" today.
   handle('clock:check', z.undefined(), () => {
-    const latest = paid.latestPaidOn();
-    return { looksWrong: latest !== null && latest > businessToday().date };
+    const today = businessToday().date;
+    const latest = [paid.latestPaidOn(), backupSettings.lastBackupOn()];
+    return { looksWrong: latest.some((date) => date !== null && date > today) };
   });
 }

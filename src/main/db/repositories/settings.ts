@@ -4,6 +4,7 @@ import {
   type Settings,
   type SettingsUpdate,
 } from '@shared/settings';
+import { dateStringSchema, type DateString } from '@shared/dates';
 import type { Db } from '../connection';
 
 /** Reads and writes rows of the key/value settings table: the one place with this SQL. */
@@ -88,6 +89,26 @@ export function createSettingsRepository(db: Db): SettingsRepository {
     },
   };
 }
+
+const BACKUP_FOLDER_KEY = 'backup_folder';
+const LAST_BACKUP_KEY = 'last_backup_at';
+
+/** Where backups go and when the last one was made (keys `backup_folder`, `last_backup_at`). */
+export function createBackupSettingsRepository(db: Db) {
+  const store = createKeyValueStore(db);
+  return {
+    folder: (): string | null => store.read(BACKUP_FOLDER_KEY) || null,
+    setFolder: (folder: string): void => store.write(BACKUP_FOLDER_KEY, folder),
+    /** The local date of the last backup; null if none was made or the value is unreadable. */
+    lastBackupOn: (): DateString | null => {
+      const parsed = dateStringSchema.safeParse(store.read(LAST_BACKUP_KEY));
+      return parsed.success ? parsed.data : null;
+    },
+    setLastBackupOn: (date: DateString): void => store.write(LAST_BACKUP_KEY, date),
+  };
+}
+
+export type BackupSettingsRepository = ReturnType<typeof createBackupSettingsRepository>;
 
 /** A salted scrypt hash. The secret itself is never stored. */
 export interface StoredSecret {

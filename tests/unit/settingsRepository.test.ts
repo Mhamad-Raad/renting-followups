@@ -8,7 +8,10 @@ import {
 import { createConnection, type Db } from '../../src/main/db/connection';
 import { migrate } from '../../src/main/db/migrate';
 import { MIGRATIONS } from '../../src/main/db/migrations';
-import { createSettingsRepository } from '../../src/main/db/repositories/settings';
+import {
+  createBackupSettingsRepository,
+  createSettingsRepository,
+} from '../../src/main/db/repositories/settings';
 
 let db: Db;
 
@@ -104,5 +107,19 @@ describe('applySettingsUpdate', () => {
   it('ignores an invalid change', () => {
     const invalid = { language: 'fr' } as unknown as SettingsUpdate;
     expect(applySettingsUpdate(DEFAULT_SETTINGS, invalid)).toEqual(DEFAULT_SETTINGS);
+  });
+});
+
+describe('backup settings', () => {
+  it('keeps the folder and the last backup date, and ignores an unreadable date', () => {
+    const backup = createBackupSettingsRepository(db);
+    expect(backup.folder()).toBeNull();
+    expect(backup.lastBackupOn()).toBeNull();
+    backup.setFolder('E:\\Backups');
+    backup.setLastBackupOn('2026-10-22');
+    expect(backup.folder()).toBe('E:\\Backups');
+    expect(backup.lastBackupOn()).toBe('2026-10-22');
+    db.prepare("UPDATE settings SET value = 'yesterday' WHERE key = 'last_backup_at'").run();
+    expect(backup.lastBackupOn()).toBeNull();
   });
 });

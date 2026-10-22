@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { DamagedScreen } from '../pages/auth/DamagedScreen';
 import { LockScreen } from '../pages/auth/LockScreen';
 import { RecoveryScreen } from '../pages/auth/RecoveryScreen';
 import { SetupScreen } from '../pages/auth/SetupScreen';
@@ -28,5 +29,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
       );
     case 'unlocked':
       return children;
+    case 'damaged':
+      return <DamagedScreen />;
   }
 }

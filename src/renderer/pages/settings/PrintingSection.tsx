@@ -102,7 +102,7 @@ export function PrintingSection() {
         </BigButton>
       </Form>
 
-      <div className={styles.logoRow}>
+      <div className={styles.column}>
         <span className={styles.label}>{t('settings.logo')}</span>
         <p className={styles.hint}>{t('settings.logoHint', { size: maxSize })}</p>
         <div className={styles.buttonRow}>
