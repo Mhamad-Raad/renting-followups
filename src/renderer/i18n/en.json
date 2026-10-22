@@ -36,6 +36,7 @@
     "dark": "Dark",
     "themeColor": "Theme colour",
     "themeColors": {
+      "green": "Green",
       "blue": "Blue",
       "teal": "Teal",
       "indigo": "Indigo",

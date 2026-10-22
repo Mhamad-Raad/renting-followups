@@ -13,7 +13,15 @@ export const FONT_SIZES = ['small', 'normal', 'large', 'extraLarge'] as const;
 export type FontSize = (typeof FONT_SIZES)[number];
 
 /** Ready-made theme colours; none is green, orange or red, so they never look like a month status. */
-export const THEME_COLORS = ['blue', 'teal', 'indigo', 'purple', 'brown', 'slate'] as const;
+export const THEME_COLORS = [
+  'green',
+  'blue',
+  'teal',
+  'indigo',
+  'purple',
+  'brown',
+  'slate',
+] as const;
 export type ThemeColor = (typeof THEME_COLORS)[number];
 
 /** The choices offered for "days before month end"; any whole number in range is accepted. */
@@ -52,7 +60,7 @@ export const DEFAULT_SETTINGS: Settings = {
   digitStyle: 'western',
   themeMode: 'light',
   fontSize: 'normal',
-  themeColor: 'blue',
+  themeColor: 'green',
   fontFamily: 'noto-sans-arabic',
   remindDays: DEFAULT_REMIND_DAYS,
   printTitle: '',

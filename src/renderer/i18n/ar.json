@@ -36,6 +36,7 @@
     "dark": "داكن",
     "themeColor": "اللون الرئيسي",
     "themeColors": {
+      "green": "أخضر",
       "blue": "أزرق",
       "teal": "أزرق مخضر",
       "indigo": "نيلي",

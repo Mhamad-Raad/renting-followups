@@ -90,7 +90,7 @@ function withAccent(colors: Map<string, string>, accent: string): Map<string, st
 
 it.each(THEME_COLORS)('themes.css maps theme colour %s onto the accent', (accent) => {
   const selector =
-    accent === 'blue' ? ':root,\n:root[data-accent' : `:root[data-accent='${accent}']`;
+    accent === 'green' ? ':root,\n:root[data-accent' : `:root[data-accent='${accent}']`;
   const block = css.split('}').find((part) => part.includes(selector)) ?? '';
   expect(block).toContain(`--color-accent: var(--accent-${accent});`);
   expect(block).toContain(`--color-on-accent: var(--accent-${accent}-on);`);
