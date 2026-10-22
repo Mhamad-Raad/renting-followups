@@ -20,7 +20,8 @@
     "test:watch": "vitest",
     "pretest:e2e": "install-electron && electron-vite build",
     "test:e2e": "playwright test",
-    "check": "npm run typecheck && npm run lint && npm run test"
+    "check": "npm run typecheck && npm run lint && npm run test",
+    "seed": "node scripts/run-ts.mjs scripts/seed.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -38,6 +39,7 @@
     "eslint-plugin-react-hooks": "7.1.1",
     "fontkit": "2.0.4",
     "globals": "17.13.0",
+    "jiti": "2.7.0",
     "prettier": "3.9.10",
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.0",
