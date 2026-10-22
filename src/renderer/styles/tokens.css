@@ -37,6 +37,10 @@
   --duration-normal: 220ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
   --slide-distance: 8px;
+  /* Small size changes: a button press, a hover, a dialog appearing. */
+  --scale-press: 0.97;
+  --scale-hover: 1.06;
+  --scale-enter: 0.96;
   /* Delay between month boxes appearing; 11 steps stay under 300ms. */
   --stagger-step: 18ms;
   /* Flips slide animations so they follow the reading direction. */
@@ -63,5 +67,8 @@
     --duration-normal: 80ms;
     --slide-distance: 0px;
     --stagger-step: 0ms;
+    --scale-press: 1;
+    --scale-hover: 1;
+    --scale-enter: 1;
   }
 }

@@ -79,7 +79,7 @@
   font-weight: 700;
   line-height: 1.2rem;
   text-align: center;
-  animation: badge-pulse 600ms var(--ease) 1;
+  animation: badge-pulse var(--duration-normal) var(--ease) 1;
 }
 
 @keyframes badge-pulse {
