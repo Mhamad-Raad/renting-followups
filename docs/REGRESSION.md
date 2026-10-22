@@ -169,3 +169,17 @@ Automated (`npm run test:e2e` and unit tests) unless marked _manual_.
 - [ ] A damaged data file shows the recovery screen, and restoring a backup brings the data back.
 - [ ] The monthly backup reminder appears when no backup was made this month, and Back up now in it clears the reminder.
 - [ ] _manual_ On Windows, back up to a USB drive, remove it, and Back up now says plainly that the folder is missing.
+
+## Iteration 12: Excel import and demo data
+
+Automated (`npm run test:e2e` and unit tests) unless marked _manual_.
+
+- [ ] Areas → Import from Excel (also on the empty Areas screen): Download template saves an Excel file.
+- [ ] Choosing a filled file shows a preview: areas to import, rows skipped with plain reasons and row numbers, new categories; nothing is saved before Import areas.
+- [ ] Import areas creates the good rows and their categories, and Areas shows "Imported areas: N. New categories: M."
+- [ ] Choosing the same file again skips every area already imported.
+- [ ] A file without the template's columns is refused in plain words.
+- [ ] A 200-row Excel file imports in one go; columns are found by name in any language; CSV with `,` or `;` and a leading-0 phone (unit tests).
+- [ ] If any area cannot be created, nothing at all is saved (unit test).
+- [ ] _manual_ On Windows, fill the downloaded template in Excel (Sorani and English), save, and import it.
+- [ ] _manual_ `npm run seed`, then start the app on `demo-data`: Areas, Home and Reports open quickly with 200 areas.
