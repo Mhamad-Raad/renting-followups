@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import Database from 'better-sqlite3';
 import type { DateString } from '@shared/dates';
 import type { Db } from '../db/connection';
+import type { LogoKind } from './logo';
 
 /**
  * Backups (ARCHITECTURE.md section 13): a full copy of the database made with
@@ -31,7 +32,7 @@ export function backupFileName(date: DateString, number: number): string {
 }
 
 /** The logo copied beside a backup, for example `rent-backup-2026-10-22.logo.png`. */
-export function logoCopyName(backupName: string, extension: 'png' | 'jpg'): string {
+export function logoCopyName(backupName: string, extension: LogoKind): string {
   return backupName.replace(/\.db$/i, `.logo.${extension}`);
 }
 
@@ -43,7 +44,7 @@ export function dateInBackupName(fileName: string): DateString | null {
 /** The logo to copy with a backup: its path and file type. */
 export interface LogoFile {
   path: string;
-  extension: 'png' | 'jpg';
+  extension: LogoKind;
 }
 
 export class BackupFolderMissingError extends Error {
