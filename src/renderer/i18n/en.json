@@ -334,6 +334,49 @@
     "paymentEdited": "Payment edited: {{name}}",
     "receiptCancelled": "Receipt cancelled: {{name}}"
   },
+  "backup": {
+    "title": "Backup",
+    "intro": "A backup is a copy of all your data, with your settings and logo. Keep backups somewhere safe, for example on a USB drive. The app keeps the newest {{number}} backups in the folder and removes older ones it made.",
+    "folder": "Backup folder",
+    "noFolder": "No folder chosen yet. You will be asked the first time you back up.",
+    "chooseFolder": "Choose folder…",
+    "changeFolder": "Change folder…",
+    "sameDrive": "A copy on the same drive is lost if the drive fails. Please also copy backups to a USB drive.",
+    "lastBackup": "Last backup: {{date}}",
+    "never": "No backup has been made yet.",
+    "now": "Back up now",
+    "saved": "Backup saved: {{file}}",
+    "problems": {
+      "folder_missing": "The backup folder cannot be found. If it is on a USB drive, plug the drive in, or choose another folder.",
+      "failed": "The backup could not be made. Please try again, or choose another folder."
+    },
+    "files": "Backup files",
+    "restoreTitle": "Restore from backup",
+    "restoreIntro": "Brings back all data from a backup. You will see what the backup holds before anything is replaced.",
+    "restore": "Restore from backup…",
+    "confirmTitle": "Restore this backup?",
+    "confirmRestore": "Replace my data with this backup",
+    "madeOn": "Backup made on {{date}}",
+    "areasInBackup": "Areas: {{number}}",
+    "paymentsInBackup": "Payments: {{number}}",
+    "replaceWarning": "This will replace all current data. A safety copy of the current data is saved first, so nothing is lost.",
+    "passwordNote": "The app will close and open again. Then open it with the password that was in use when this backup was made; the recovery phrase from that time comes back too.",
+    "restarting": "Restoring. The app will now close and open again.",
+    "refused": {
+      "not_backup": "This file is not a backup made by this app. Please choose a file named like rent-backup-2026-10-01.db.",
+      "damaged": "This backup file is damaged and cannot be used. Please try another backup.",
+      "too_new": "This backup was made by a newer version of the app, so this version cannot open it.",
+      "failed": "The backup could not be read. Please try again.",
+      "cannot_upgrade": "This backup could not be brought up to date for this version of the app, so it cannot be used. Your data was not changed."
+    },
+    "restoredNotice": "Your data was restored from the backup of {{date}}. Open the app with the password that was in use then.",
+    "restoreFailed": "The backup could not be put in place. Your data was not changed.",
+    "damaged": {
+      "title": "Your data cannot be opened",
+      "intro": "The data file is damaged. Nothing has been changed or deleted. You can bring your data back from a backup.",
+      "noBackup": "If you have no backup, close the app and ask for help. The damaged file is never deleted."
+    }
+  },
   "months": {
     "title": "Months of {{year}}",
     "box": "Month {{month}}: {{status}}",
@@ -490,6 +533,7 @@
     "goTo": "Go to Notifications",
     "more": "… and {{number}} more",
     "toastBody": "Reminders that need attention: {{number}}. Open the app to see them.",
-    "endsOn": "Month {{month}} is not fully paid. It ends on {{date}}."
+    "endsOn": "Month {{month}} is not fully paid. It ends on {{date}}.",
+    "backupDue": "No backup has been made this month."
   }
 }

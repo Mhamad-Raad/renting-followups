@@ -1,3 +1,10 @@
+import type {
+  BackupResult,
+  BackupStatus,
+  FolderChoice,
+  RestoreChoice,
+  RestoreOutcome,
+} from './backup';
 import type { ActivityPage, ActivityQuery } from './audit';
 import type {
   AuthStatus,
@@ -100,6 +107,16 @@ export interface IpcContract {
   'areas:restore': { input: IdInput; output: RestoreResult };
   'deleted:list': { input: undefined; output: DeletedItems };
   'activity:list': { input: ActivityQuery; output: ActivityPage };
+  'backup:status': { input: undefined; output: BackupStatus };
+  'backup:chooseFolder': { input: undefined; output: FolderChoice };
+  'backup:now': { input: undefined; output: BackupResult };
+  'restore:choose': { input: undefined; output: RestoreChoice };
+  /** Confirms the backup checked by restore:choose; the app then restarts to put it in place. */
+  'restore:apply': { input: undefined; output: { ok: boolean } };
+  /** The owner said no to the checked backup; its copy is removed. */
+  'restore:cancel': { input: undefined; output: null };
+  /** How a restore at this start went, for the lock screen; null when there was none. */
+  'restore:result': { input: undefined; output: RestoreOutcome | null };
   'payments:forArea': { input: AreaReceiptsQuery; output: Receipt[] };
   'payments:suggestedStart': { input: AreaPaymentsQuery; output: YearMonth | null };
   'payments:preview': { input: PaymentPreviewQuery; output: AllocationResult | null };
@@ -158,6 +175,13 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'areas:restore': false,
   'deleted:list': false,
   'activity:list': false,
+  'backup:status': false,
+  'backup:chooseFolder': false,
+  'backup:now': false,
+  'restore:choose': false,
+  'restore:apply': false,
+  'restore:cancel': false,
+  'restore:result': true,
   'payments:forArea': false,
   'payments:suggestedStart': false,
   'payments:preview': false,
@@ -211,6 +235,13 @@ export const CHANGES_DATA: Record<IpcChannel, boolean> = {
   'areas:restore': true,
   'deleted:list': false,
   'activity:list': false,
+  'backup:status': false,
+  'backup:chooseFolder': false,
+  'backup:now': true,
+  'restore:choose': false,
+  'restore:apply': false,
+  'restore:cancel': false,
+  'restore:result': false,
   'payments:forArea': false,
   'payments:suggestedStart': false,
   'payments:preview': false,

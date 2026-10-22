@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import en from '../../src/renderer/i18n/en.json' with { type: 'json' };
+import { mkdirSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { createDataDir, launchUnlocked, removeDataDir } from './launch';
 
 /** One area that has paid nothing since January last year, and one that is vacant. */
@@ -39,6 +41,8 @@ test('the popup on opening and the Notifications page show the same reminders', 
     await expect(popup).toBeVisible();
     await expect(popup.getByText('Shop late')).toBeVisible();
     await expect(popup.getByText('Shop vacant')).toHaveCount(0);
+    // No backup has been made yet this month.
+    await expect(popup.getByText(en.notifications.backupDue)).toBeVisible();
     await popup.getByRole('button', { name: en.notifications.goTo }).click();
     await expect(popup).toBeHidden();
 
@@ -47,8 +51,9 @@ test('the popup on opening and the Notifications page show the same reminders', 
     await expect(late.getByRole('listitem')).toHaveCount(1);
     await expect(late).toContainText('Shop late');
     await expect(page.getByText('Shop vacant')).toHaveCount(0);
+    await expect(page.getByText(en.notifications.backupDue)).toBeVisible();
     await expect(page.getByRole('navigation')).toContainText(
-      en.notifications.count.replace('{{number}}', '1'),
+      en.notifications.count.replace('{{number}}', '2'),
     );
   } finally {
     await app.close();
@@ -63,10 +68,12 @@ test('paying everything owed clears the bell at once', async () => {
     await seed(page);
     await page.reload();
     await page.getByRole('dialog').getByRole('button', { name: en.common.ok }).click();
-    const bell = page
-      .getByRole('navigation')
-      .getByText(en.notifications.count.replace('{{number}}', '1'));
-    await expect(bell).toHaveCount(1);
+    // The late area and the monthly backup reminder.
+    const bell = (count: number) =>
+      page
+        .getByRole('navigation')
+        .getByText(en.notifications.count.replace('{{number}}', String(count)));
+    await expect(bell(2)).toHaveCount(1);
 
     // Record payment from the Notifications page opens the area with the form ready.
     await page.getByRole('link', { name: new RegExp(`^${en.nav.notifications}`) }).click();
@@ -81,7 +88,33 @@ test('paying everything owed clears the bell at once', async () => {
       .getByRole('button', { name: en.common.save, exact: true })
       .click();
     await expect(page.getByText(/Payment saved/)).toBeVisible();
-    await expect(bell).toHaveCount(0);
+    await expect(bell(1)).toHaveCount(1);
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
+test('Back up now in the popup makes a backup and the reminder goes away', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    await seed(page);
+    const folder = join(dataDir, 'usb');
+    mkdirSync(folder);
+    // The first backup asks for a folder: answer as the owner would.
+    await app.evaluate(({ dialog }, chosen) => {
+      dialog.showOpenDialog = (() =>
+        Promise.resolve({ canceled: false, filePaths: [chosen] })) as typeof dialog.showOpenDialog;
+    }, folder);
+    await page.reload();
+    const popup = page.getByRole('dialog', { name: en.notifications.popupTitle });
+    await popup.getByRole('button', { name: en.backup.now }).click();
+    await expect(popup.getByText(/Backup saved: rent-backup-\d{4}-\d{2}-\d{2}\.db/)).toBeVisible();
+    expect(readdirSync(folder)).toEqual([expect.stringMatching(/^rent-backup-.*\.db$/)]);
+    await expect(
+      page.getByRole('navigation').getByText(en.notifications.count.replace('{{number}}', '1')),
+    ).toHaveCount(1);
   } finally {
     await app.close();
     removeDataDir(dataDir);

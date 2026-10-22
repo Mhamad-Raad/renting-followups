@@ -7,6 +7,7 @@ import { BigButton } from '../../components/BigButton';
 import { Notice } from '../../components/Notice';
 import { PasswordField } from '../../components/PasswordField';
 import { TextField } from '../../components/TextField';
+import { RestoreOutcomeNotice } from '../settings/RestoreOutcomeNotice';
 import { AuthLayout } from './AuthLayout';
 import { useRecoveryPhraseHint } from './useRecoveryPhraseHint';
 
@@ -54,6 +55,7 @@ export function SetupScreen({ onDone, onAlreadySet }: SetupScreenProps) {
       intro={t('auth.setup.intro')}
       onSubmit={() => void submit()}
     >
+      <RestoreOutcomeNotice />
       <PasswordField
         label={t('auth.password')}
         value={password}

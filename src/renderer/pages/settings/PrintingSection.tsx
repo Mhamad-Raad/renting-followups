@@ -9,16 +9,11 @@ import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Form } from '../../components/Form';
-import { Notice } from '../../components/Notice';
+import { Notice, type NoticeMessage } from '../../components/Notice';
 import { TextField } from '../../components/TextField';
 import printStyles from '../../print/print.module.css';
 import { PrintHeader } from '../../print/PrintHeader';
 import styles from './SettingsPage.module.css';
-
-interface Message {
-  tone: 'success' | 'error';
-  text: string;
-}
 
 /**
  * Settings → Printing: the title and logo on every printed receipt and
@@ -31,7 +26,7 @@ export function PrintingSection() {
   const [title, setTitle] = useState(settings.printTitle);
   const [busy, setBusy] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
-  const [message, setMessage] = useState<Message | null>(null);
+  const [message, setMessage] = useState<NoticeMessage | null>(null);
   const logoSrc = logo.state.status === 'ready' ? logo.state.data : null;
   const maxSize = formatPlain(LOGO_MAX_MEGABYTES, settings.digitStyle);
   const mounted = useMountedRef();
@@ -102,7 +97,7 @@ export function PrintingSection() {
         </BigButton>
       </Form>
 
-      <div className={styles.logoRow}>
+      <div className={styles.column}>
         <span className={styles.label}>{t('settings.logo')}</span>
         <p className={styles.hint}>{t('settings.logoHint', { size: maxSize })}</p>
         <div className={styles.buttonRow}>

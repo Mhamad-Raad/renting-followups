@@ -11,6 +11,7 @@ import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { LANGUAGE_NAMES } from '../../i18n';
 import { AppearanceSection } from './AppearanceSection';
+import { BackupSection } from './BackupSection';
 import { PrintingSection } from './PrintingSection';
 import { RemindersSection } from './RemindersSection';
 import { SecuritySection } from './SecuritySection';
@@ -64,6 +65,7 @@ export function SettingsPage() {
       <AppearanceSection change={change} />
       <PrintingSection />
       <RemindersSection change={change} />
+      <BackupSection />
       <SecuritySection />
 
       <section className={styles.section}>

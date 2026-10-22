@@ -2,7 +2,7 @@
 
 ## Current iteration
 
-**Iteration 10: Settings**, on branch `iter-10-settings`. Built, fully reviewed (self-review plus an independent review), pushed; waiting for the owner to say "continue".
+**Iteration 11: Backup and restore**, on branch `iter-11-backup`. Built, fully reviewed (self-review plus an independent review), pushed; waiting for the owner to say "continue".
 
 ## Done
 
@@ -16,14 +16,17 @@
 - Iteration 7 (merged, tag `iter-07`): Reports page with remembered filters, area picker, the month strip, totals per currency; areas repository split in three. 341 unit tests and 28 end-to-end tests pass.
 - Iteration 8 (merged, tag `iter-08`): receipt and report printing (Windows print dialog or PDF) through hidden windows, Excel export, print buttons on Reports, the area page, the Areas list (tick boxes) and Home; phone digit order fixed for Arabic-Indic digits. 354 unit tests and 33 end-to-end tests pass.
 - Iteration 9 (merged, tag `iter-09`): reminders (late rent, month end) from one function, popup on opening, Notifications page, bell count, daily Windows notification, month ranges. 364 unit tests and 36 end-to-end tests pass.
-- Iteration 10: the full Settings page: six theme colours, six bundled fonts tested for Sorani, print title and logo (on prints and the Excel title row) with a live preview, reminder days, Activity log page; fixes for Arabic-Indic number order in English and the popup button. 561 unit tests and 43 end-to-end tests pass.
+- Iteration 10 (merged, tag `iter-10`): the full Settings page: six theme colours, six bundled fonts tested for Sorani, print title and logo (on prints and the Excel title row) with a live preview, reminder days, Activity log page; fixes for Arabic-Indic number order in English and the popup button. 561 unit tests and 43 end-to-end tests pass.
+- Iteration 11: Back up now (the newest 12 kept, logo copied beside each backup, same-drive warning), Restore in two steps with a safety copy and a restart, a recovery screen for damaged data, receipt numbers that never repeat after a restore, and the monthly backup reminder. 593 unit tests and 49 end-to-end tests pass.
 
 ## Next
 
-- On "continue": merge `iter-10-settings` into `main` with `--no-ff`, tag `iter-10`, push.
-- Then iteration 11 (Backup and restore). The backup must also copy the logo file (`userData/logo/`), which is outside the database. Add the backup reminder deferred from iteration 9.
+- On "continue": merge `iter-11-backup` into `main` with `--no-ff`, tag `iter-11`, push.
+- Then iteration 12 (Excel import and demo data), 13 polish and QA, 14 packaging.
 
 ## Open questions
+
+- Safety copies (made before each restore and each upgrade) are never removed. Keep them all, or keep only the newest few (for example 10)?
 
 - Late rent (Notifications and Home) shows the current renter even when an earlier renter left owing it: show the renter of those months instead?
 

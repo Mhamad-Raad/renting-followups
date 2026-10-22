@@ -9,8 +9,11 @@ const MAX_SECRET_LENGTH = 200;
 export const MAX_WRONG_ATTEMPTS = 5;
 export const WAIT_AFTER_WRONG_ATTEMPTS_MS = 30_000;
 
-/** Where the app is when it starts: no password yet, locked, or open. */
-export type AuthStatus = 'setup' | 'locked' | 'unlocked';
+/**
+ * Where the app is when it starts: no password yet, locked, or open; or
+ * `damaged` when the data file cannot be read and only a restore is offered.
+ */
+export type AuthStatus = 'setup' | 'locked' | 'unlocked' | 'damaged';
 
 /** The answer to anything that checks a password or recovery phrase. */
 export type SecretCheckResult =

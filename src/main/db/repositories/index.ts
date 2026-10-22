@@ -11,7 +11,11 @@ import { createPriceChangeRepository } from './priceChanges';
 import { createPriceRepository } from './prices';
 import { createReportRepository } from './reports';
 import { createRenterRepository } from './renters';
-import { createCredentialsRepository, createSettingsRepository } from './settings';
+import {
+  createBackupSettingsRepository,
+  createCredentialsRepository,
+  createSettingsRepository,
+} from './settings';
 
 /** Every repository, created once with its prepared statements. */
 export function createRepositories(db: Db) {
@@ -26,6 +30,7 @@ export function createRepositories(db: Db) {
   return {
     settings: createSettingsRepository(db),
     credentials: createCredentialsRepository(db),
+    backupSettings: createBackupSettingsRepository(db),
     categories,
     areas,
     areaViews: createAreaViewRepository(db, { areas, paid, prices }),

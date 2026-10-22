@@ -5,6 +5,7 @@ import { useSecretCheck } from '../../app/useSecretCheck';
 import { BigButton } from '../../components/BigButton';
 import { Notice } from '../../components/Notice';
 import { PasswordField } from '../../components/PasswordField';
+import { RestoreOutcomeNotice } from '../settings/RestoreOutcomeNotice';
 import { AuthLayout } from './AuthLayout';
 import styles from './LockScreen.module.css';
 
@@ -34,6 +35,7 @@ export function LockScreen({ onUnlocked, onForgot }: LockScreenProps) {
 
   return (
     <AuthLayout title={t('auth.lock.title')} onSubmit={() => void submit()}>
+      <RestoreOutcomeNotice />
       <PasswordField
         key={attempt}
         label={t('auth.password')}

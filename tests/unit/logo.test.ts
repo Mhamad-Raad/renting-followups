@@ -88,3 +88,12 @@ describe('logo store', () => {
     expect(logoStore().read()).toBeNull();
   });
 });
+
+describe('logo file for backups', () => {
+  it('names the current logo file and its type, or nothing', () => {
+    const logo = logoStore();
+    expect(logo.file()).toBeNull();
+    logo.save(JPEG);
+    expect(logo.file()).toEqual({ path: join(directory, 'logo.jpg'), extension: 'jpg' });
+  });
+});

@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { monthIndex, type BusinessToday, type YearMonth } from '@shared/dates';
 import type { PriceRow } from '@shared/prices';
-import { buildReminders, type ReminderArea } from '../../src/main/services/notifications';
+import {
+  buildBackupReminder,
+  buildReminders,
+  type ReminderArea,
+} from '../../src/main/services/notifications';
 
 const RENT = 250_000;
 const byName = (a: string, b: string) => a.localeCompare(b);
@@ -89,5 +93,23 @@ describe('buildReminders', () => {
       'month_end:B many',
       'month_end:C due',
     ]);
+  });
+});
+
+describe('backup reminder', () => {
+  const today: BusinessToday = { date: '2026-10-22', month: { year: 2026, month: 10 } };
+
+  it('reminds while no backup was made this calendar month', () => {
+    expect(buildBackupReminder(null, today, true)).toEqual({ kind: 'backup', lastBackupOn: null });
+    expect(buildBackupReminder('2026-09-30', today, true)).toEqual({
+      kind: 'backup',
+      lastBackupOn: '2026-09-30',
+    });
+    expect(buildBackupReminder('2025-10-22', today, true)?.kind).toBe('backup');
+  });
+
+  it('is quiet after a backup this month, and before there is any area', () => {
+    expect(buildBackupReminder('2026-10-01', today, true)).toBeNull();
+    expect(buildBackupReminder(null, today, false)).toBeNull();
   });
 });

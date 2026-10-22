@@ -13,6 +13,8 @@ interface ConfirmDialogProps {
   cancelLabel?: string;
   /** Use 'danger' for deletes and cancellations. */
   tone?: 'normal' | 'danger';
+  /** Puts the keyboard on Cancel, so a stray Enter changes nothing (for the weightiest actions). */
+  focusCancel?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -25,6 +27,7 @@ export function ConfirmDialog({
   confirmLabel,
   cancelLabel,
   tone = 'normal',
+  focusCancel = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -33,10 +36,16 @@ export function ConfirmDialog({
     <Dialog open={open} title={title} onClose={onCancel}>
       <div className={styles.body}>{children}</div>
       <DialogActions>
-        <BigButton variant={tone === 'danger' ? 'danger' : 'primary'} onClick={onConfirm} autoFocus>
+        <BigButton
+          variant={tone === 'danger' ? 'danger' : 'primary'}
+          onClick={onConfirm}
+          autoFocus={!focusCancel}
+        >
           {confirmLabel}
         </BigButton>
-        <BigButton onClick={onCancel}>{cancelLabel ?? t('common.cancel')}</BigButton>
+        <BigButton onClick={onCancel} autoFocus={focusCancel}>
+          {cancelLabel ?? t('common.cancel')}
+        </BigButton>
       </DialogActions>
     </Dialog>
   );
