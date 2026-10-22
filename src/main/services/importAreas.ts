@@ -478,7 +478,7 @@ export function buildImportTemplate(language: Language, currentYear: number): Ex
     allowBlank: true,
     formulae: [1, 12],
     showErrorMessage: true,
-    error: t('import.problem.bad_month'),
+    error: t('import.problem.bad_month', { min: '1', max: '12' }),
   });
 
   const help = workbook.addWorksheet(t('import.template.helpSheet'), {
