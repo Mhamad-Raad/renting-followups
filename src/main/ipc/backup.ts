@@ -45,6 +45,9 @@ export interface RestoreDependencies {
  * Choosing and confirming a restore. Also used on the damaged-data screen,
  * where no password can be checked, so it needs nothing from the database.
  */
+/** The backup being written, if any; a restore waits for it. */
+let backupRunning: Promise<unknown> | null = null;
+
 export function registerRestoreIpc(deps: RestoreDependencies): void {
   let checked: BackupInfo | null = null;
 
@@ -68,10 +71,12 @@ export function registerRestoreIpc(deps: RestoreDependencies): void {
     }
   });
 
-  handle('restore:apply', z.undefined(), () => {
+  handle('restore:apply', z.undefined(), async () => {
     // Only a backup checked in this session can be restored; the screen never sends a path.
     if (!checked || !confirmRestore(deps.paths, checked)) return { ok: false };
     logger.info('restore.confirmed', { madeOn: checked.madeOn });
+    // A backup still being written is finished first; the restart would cut it off.
+    await backupRunning;
     deps.restart();
     return { ok: true };
   });
@@ -87,7 +92,6 @@ export interface BackupDependencies {
 
 export function registerBackupIpc(deps: BackupDependencies): void {
   const { backupSettings } = deps;
-  let busy = false;
 
   const askForFolder = () =>
     showOpenDialog({
@@ -114,9 +118,7 @@ export function registerBackupIpc(deps: BackupDependencies): void {
   });
 
   // Uses the saved folder; asks for one the first time.
-  handle('backup:now', z.undefined(), async (): Promise<BackupResult> => {
-    if (busy) return { ok: false, reason: 'failed' };
-    busy = true;
+  const backUp = async (): Promise<BackupResult> => {
     try {
       let folder = backupSettings.folder();
       if (!folder) {
@@ -133,8 +135,17 @@ export function registerBackupIpc(deps: BackupDependencies): void {
       if (error instanceof BackupFolderMissingError) return { ok: false, reason: 'folder_missing' };
       logger.error('backup.failed', describeError(error));
       return { ok: false, reason: 'failed' };
+    }
+  };
+
+  handle('backup:now', z.undefined(), async (): Promise<BackupResult> => {
+    if (backupRunning) return { ok: false, reason: 'failed' };
+    const running = backUp();
+    backupRunning = running;
+    try {
+      return await running;
     } finally {
-      busy = false;
+      backupRunning = null;
     }
   });
 }
