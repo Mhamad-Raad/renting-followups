@@ -80,6 +80,15 @@ test('the template downloads, and a filled file imports its good rows after a pr
     );
     expect(before.ok && before.data).toEqual([]);
 
+    // Cancelling "Choose another file" keeps this preview, and Import still works.
+    await app.evaluate(({ dialog }) => {
+      dialog.showOpenDialog = (() =>
+        Promise.resolve({ canceled: true, filePaths: [] })) as typeof dialog.showOpenDialog;
+    });
+    await page.getByRole('button', { name: en.import.chooseAnother }).click();
+    await expect(page.getByText('Areas to import: 2')).toBeVisible();
+    await answerDialogs(app, file);
+
     await page.getByRole('button', { name: en.import.importButton }).click();
     await expect(page.getByText('Imported areas: 2. New categories: 2.')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Shop 1' })).toBeVisible();

@@ -44,12 +44,13 @@ export function registerImportIpc(db: Db, repos: Repositories): void {
   });
 
   handle('import:choose', z.undefined(), async (): Promise<ImportChoice> => {
-    checked = null;
     const file = await askToOpen({
       properties: ['openFile'],
       filters: [{ name: t('import.template.importFiles'), extensions: ['xlsx', 'csv'] }],
     });
+    // Cancelling keeps the preview already on screen, and its rows.
     if (!file) return { ok: true, done: 'cancelled' };
+    checked = null;
     const table = await readTable(file);
     if (table === null) return { ok: false, reason: 'not_readable' };
     if (table === 'too_large') return { ok: false, reason: 'too_large' };
