@@ -33,9 +33,23 @@ export interface MonthEndReminder extends AreaRef {
   endsOn: DateString;
 }
 
+/** No backup has been made this calendar month (ARCHITECTURE.md section 13). */
+export interface BackupReminder {
+  kind: 'backup';
+  /** The last backup's date; null if none was ever made. */
+  lastBackupOn: DateString | null;
+}
+
+/** A reminder about one area. */
+export type AreaReminder = LateRent | MonthEndReminder;
+
 /**
  * Everything the popup, the Notifications page, the bell and the Windows
  * notification show. Worked out from the data each time, never stored, by one
  * function in the main process (`services/notifications.ts`).
  */
-export type Reminder = LateRent | MonthEndReminder;
+export type Reminder = AreaReminder | BackupReminder;
+
+export function isAreaReminder(reminder: Reminder): reminder is AreaReminder {
+  return reminder.kind !== 'backup';
+}

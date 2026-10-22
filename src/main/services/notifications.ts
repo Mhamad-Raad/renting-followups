@@ -1,10 +1,17 @@
 import type { Currency } from '@shared/currency';
-import { daysInMonth, parseDateString, toDateString, type BusinessToday } from '@shared/dates';
+import {
+  daysInMonth,
+  parseDateString,
+  toDateString,
+  type BusinessToday,
+  type DateString,
+} from '@shared/dates';
 import {
   ALWAYS_REMIND_LAST_DAYS,
+  type AreaReminder,
+  type BackupReminder,
   type LateRent,
   type MonthEndReminder,
-  type Reminder,
 } from '@shared/notifications';
 import type { PriceRow } from '@shared/prices';
 import { unpaidMonths, type PaidHistory } from './monthStatus';
@@ -35,7 +42,7 @@ export function buildReminders(
   today: BusinessToday,
   remindDays: number,
   compareNames: (a: string, b: string) => number,
-): Reminder[] {
+): AreaReminder[] {
   const day = parseDateString(today.date)?.day ?? 1;
   const lastDay = daysInMonth(today.month.year, today.month.month);
   const daysLeft = lastDay - day + 1;
@@ -78,4 +85,21 @@ export function buildReminders(
   late.sort((a, b) => b.months.length - a.months.length || compareNames(a.areaName, b.areaName));
   monthEnd.sort((a, b) => compareNames(a.areaName, b.areaName));
   return [...late, ...monthEnd];
+}
+
+/**
+ * The backup reminder: shown while no backup has been made in the current
+ * calendar month. Not shown before there is any area, as there is nothing to
+ * keep safe yet.
+ */
+export function buildBackupReminder(
+  lastBackupOn: DateString | null,
+  today: BusinessToday,
+  hasAreas: boolean,
+): BackupReminder | null {
+  if (!hasAreas) return null;
+  const last = lastBackupOn === null ? null : parseDateString(lastBackupOn);
+  const thisMonth =
+    last !== null && last.year === today.month.year && last.month === today.month.month;
+  return thisMonth ? null : { kind: 'backup', lastBackupOn };
 }

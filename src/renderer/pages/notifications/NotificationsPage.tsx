@@ -1,12 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import type { Reminder } from '@shared/notifications';
+import { isAreaReminder, type AreaReminder } from '@shared/notifications';
 import { useReminders } from '../../app/useReminders';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import styles from './Notifications.module.css';
+import { BackupReminderBox } from './BackupReminderBox';
 import { ReminderRow } from './ReminderRow';
 
-/** Late rent and month-end reminders, worked out fresh from the data. */
+/** The backup reminder, late rent and month-end reminders, worked out fresh from the data. */
 export function NotificationsPage() {
   const { t } = useTranslation();
   const reminders = useReminders();
@@ -21,13 +22,16 @@ export function NotificationsPage() {
     );
   }
   const items = reminders.state.data;
-  const late = items.filter((item) => item.kind === 'late');
-  const monthEnd = items.filter((item) => item.kind === 'month_end');
+  const backup = items.find((item) => item.kind === 'backup');
+  const areaItems = items.filter(isAreaReminder);
+  const late = areaItems.filter((item) => item.kind === 'late');
+  const monthEnd = areaItems.filter((item) => item.kind === 'month_end');
   return (
     <>
       {header}
       <div className={styles.stack}>
         {items.length === 0 && <Notice tone="success">{t('notifications.none')}</Notice>}
+        {backup && <BackupReminderBox reminder={backup} />}
         <ReminderSection title={t('notifications.late')} items={late} />
         <ReminderSection title={t('notifications.monthEnd')} items={monthEnd} />
       </div>
@@ -35,7 +39,7 @@ export function NotificationsPage() {
   );
 }
 
-function ReminderSection({ title, items }: { title: string; items: readonly Reminder[] }) {
+function ReminderSection({ title, items }: { title: string; items: readonly AreaReminder[] }) {
   if (items.length === 0) return null;
   return (
     <section className={styles.section}>

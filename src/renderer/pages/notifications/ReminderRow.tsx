@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { formatDate, formatMonthRuns, formatYearMonth } from '@shared/dates';
 import { formatPlain } from '@shared/formatNumber';
-import type { Reminder } from '@shared/notifications';
+import type { AreaReminder } from '@shared/notifications';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { MoneyText } from '../../components/MoneyText';
@@ -16,7 +16,7 @@ import styles from './Notifications.module.css';
  * page: a short coloured label, then the months or days left on a line that
  * wraps, so a long list never makes the page wider than the window.
  */
-export function ReminderDescription({ reminder }: { reminder: Reminder }) {
+export function ReminderDescription({ reminder }: { reminder: AreaReminder }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const digits = settings.digitStyle;
@@ -48,7 +48,7 @@ export function ReminderDescription({ reminder }: { reminder: Reminder }) {
 }
 
 /** One reminder: the area, its renter, what is wrong and owed, and Record payment. */
-export function ReminderRow({ reminder, onOpen }: { reminder: Reminder; onOpen?: () => void }) {
+export function ReminderRow({ reminder, onOpen }: { reminder: AreaReminder; onOpen?: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   return (

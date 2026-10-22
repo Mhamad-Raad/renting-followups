@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { formatPlain } from '@shared/formatNumber';
+import { isAreaReminder } from '@shared/notifications';
 import { useIpcQuery } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { Dialog, DialogActions } from '../../components/Dialog';
 import styles from './Notifications.module.css';
+import { BackupReminderBox } from './BackupReminderBox';
 import { ReminderRow } from './ReminderRow';
 
 /** The popup shows the first few; the rest are one click away on the Notifications page. */
@@ -26,16 +28,24 @@ export function StartupReminders() {
   const [dismissed, setDismissed] = useState(false);
   const items = reminders.state.status === 'ready' ? reminders.state.data : [];
   const open = !dismissed && items.length > 0;
+  // The backup reminder has its own box at the top, so a long late-rent list never hides it.
+  const backup = items.find((item) => item.kind === 'backup');
+  const areaItems = items.filter(isAreaReminder);
 
   const close = () => setDismissed(true);
-  const rest = items.length - POPUP_LIMIT;
+  const rest = areaItems.length - POPUP_LIMIT;
   return (
     <Dialog open={open} title={t('notifications.popupTitle')} onClose={close}>
-      <ul className={`${styles.list} ${styles.popupList}`}>
-        {items.slice(0, POPUP_LIMIT).map((item) => (
-          <ReminderRow key={`${item.kind}-${item.areaId}`} reminder={item} onOpen={close} />
-        ))}
-      </ul>
+      <div className={styles.popupList}>
+        {backup && <BackupReminderBox reminder={backup} />}
+        {areaItems.length > 0 && (
+          <ul className={styles.list}>
+            {areaItems.slice(0, POPUP_LIMIT).map((item) => (
+              <ReminderRow key={`${item.kind}-${item.areaId}`} reminder={item} onOpen={close} />
+            ))}
+          </ul>
+        )}
+      </div>
       {rest > 0 && (
         <p className={styles.more}>
           {t('notifications.more', { number: formatPlain(rest, settings.digitStyle) })}
