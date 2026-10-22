@@ -37,7 +37,8 @@ export function TextField({
         {label}
       </label>
       <div className={styles.row}>
-        <div className={styles.box}>
+        {/* The box takes the field's own direction, so the button inside never covers the text. */}
+        <div className={styles.box} dir={inside ? inputProps.dir : undefined}>
           <input
             ref={ref}
             id={id}

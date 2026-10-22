@@ -36,7 +36,8 @@ export function PasswordField({
       type={visible ? 'text' : 'password'}
       autoComplete={autoComplete}
       spellCheck={false}
-      dir="auto"
+      // Always left to right with the eye on the right, whatever is typed, so text never runs under the eye.
+      dir="ltr"
       hint={capsLock ? t('auth.capsLock') : hint}
       onKeyDown={trackCapsLock}
       onKeyUp={trackCapsLock}
