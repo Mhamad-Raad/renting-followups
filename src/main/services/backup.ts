@@ -105,8 +105,10 @@ export async function createBackup(
 /**
  * Removes all but the newest `keep` backups, with their logo copies. Only
  * files named exactly as the app names its backups are ever touched, and
- * `justMade` never is. Newest means last written, not the date in the name:
- * the computer's clock may have been wrong when a backup was made.
+ * `justMade` never is. Newest means last written, not the date in the name,
+ * so backups named with a clock that was ahead do not crowd out later ones.
+ * A clock set back makes new backups look oldest; the newest is still always
+ * kept, and the app warns when the computer date looks wrong.
  */
 export function pruneBackups(folder: string, keep: number, justMade: string | null = null): void {
   const backups = readdirSync(folder)
