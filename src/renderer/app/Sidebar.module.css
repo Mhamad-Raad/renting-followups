@@ -67,8 +67,9 @@
 /* The number of reminders on the bell: one soft pulse when it changes, never looping. */
 .badge {
   position: absolute;
-  inset-block-start: -0.7rem;
-  inset-inline-end: -0.9rem;
+  /* Starts at the bell's middle and grows away from it, so even "99+" leaves the bell visible. */
+  inset-block-start: -0.8rem;
+  inset-inline-start: 55%;
   min-width: 1.4rem;
   padding: 0 0.3rem;
   border: 2px solid var(--color-surface);
