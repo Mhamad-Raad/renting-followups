@@ -141,6 +141,8 @@ test('saying no to a checked backup changes nothing and leaves no copy behind', 
     await answerOpenDialog(app, backup);
     await page.getByRole('button', { name: en.backup.restore }).click();
     const dialog = page.getByRole('dialog', { name: en.backup.confirmTitle });
+    // The keyboard starts on Cancel: a stray Enter must never replace the data.
+    await expect(dialog.getByRole('button', { name: en.common.cancel })).toBeFocused();
     await dialog.getByRole('button', { name: en.common.cancel }).click();
     await expect(dialog).toHaveCount(0);
     await expect.poll(() => readdirSync(join(dataDir, 'restore'))).toEqual([]);

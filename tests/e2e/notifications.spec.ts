@@ -39,6 +39,8 @@ test('the popup on opening and the Notifications page show the same reminders', 
     await page.reload();
     const popup = page.getByRole('dialog', { name: en.notifications.popupTitle });
     await expect(popup).toBeVisible();
+    // The keyboard starts on OK, so Enter simply closes the popup.
+    await expect(popup.getByRole('button', { name: en.common.ok })).toBeFocused();
     await expect(popup.getByText('Shop late')).toBeVisible();
     await expect(popup.getByText('Shop vacant')).toHaveCount(0);
     // No backup has been made yet this month.
