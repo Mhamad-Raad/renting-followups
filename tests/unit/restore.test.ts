@@ -21,6 +21,7 @@ import { checkBackup } from '../../src/main/services/backupCheck';
 import {
   applyReadyRestore,
   confirmRestore,
+  highestReceiptNumber,
   type RestorePaths,
 } from '../../src/main/services/restore';
 import { areaInput } from './helpers';
@@ -254,6 +255,24 @@ describe('a damaged data file', () => {
       'damaged beyond reading',
     );
     expect(kept[1]).toMatch(/\.db-wal$/);
+  });
+});
+
+describe('restoring over a damaged data file', () => {
+  it('goes on from the highest receipt number in the safety copies', async () => {
+    const source = makeDatabase(join(root, 'source.db'), 1);
+    const name = await createBackup(source, backups, '2026-10-01', null);
+    source.close();
+    // A safety copy from before an upgrade, when 40 receipt numbers had been given.
+    mkdirSync(paths.safetyFolder, { recursive: true });
+    const earlier = makeDatabase(join(paths.safetyFolder, 'before-migration-v3_old.db'), 0);
+    earlier.prepare("INSERT INTO settings (key, value) VALUES ('last_receipt_number', '40')").run();
+    earlier.close();
+    writeFileSync(paths.database, 'damaged beyond reading');
+    const { info } = checkBackup(join(backups, name), paths, MIGRATIONS);
+    if (info) confirmRestore(paths, info);
+    expect(applyReadyRestore(paths, NOW)?.ok).toBe(true);
+    expect(highestReceiptNumber(paths.database)).toBe(40);
   });
 });
 

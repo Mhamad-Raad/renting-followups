@@ -2,6 +2,7 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   renameSync,
   rmSync,
@@ -25,6 +26,9 @@ import { LOGO_KINDS, logoFileName, type LogoKind } from './logo';
  *    keeps a safety copy of the current data and puts the backup in its place.
  *    An older backup is then upgraded by the normal migrations.
  */
+
+/** The journal files SQLite keeps beside a database. */
+const JOURNALS = ['-wal', '-shm'] as const;
 
 export interface RestorePaths {
   /** The app's `restore` folder, where a checked backup waits. */
@@ -95,6 +99,26 @@ export function highestReceiptNumber(file: string): number {
   }
 }
 
+/**
+ * The highest receipt number in any readable safety copy, for when the data
+ * file itself cannot be read: the best known number it had reached. Each copy
+ * is read from a scratch copy, as SQLite would add files beside the original.
+ */
+function highestInSafetyCopies(folder: string, scratch: string): number {
+  let highest = 0;
+  for (const name of readdirSync(folder).filter((file) => file.endsWith('.db'))) {
+    try {
+      for (const suffix of ['', '-wal']) {
+        copyIfPresent(join(folder, `${name}${suffix}`), `${scratch}${suffix}`);
+      }
+      highest = Math.max(highest, highestReceiptNumber(scratch));
+    } finally {
+      for (const suffix of ['', ...JOURNALS]) rmSync(`${scratch}${suffix}`, { force: true });
+    }
+  }
+  return highest;
+}
+
 /** Makes sure the database's receipt counter is at least `atLeast`. */
 export function raiseReceiptCounter(file: string, atLeast: number): void {
   if (atLeast <= highestReceiptNumber(file)) return;
@@ -154,8 +178,6 @@ function foldJournal(database: string): boolean {
   }
 }
 
-const JOURNALS = ['-wal', '-shm'] as const;
-
 /**
  * Runs at startup, before the database is opened. If a confirmed backup is
  * waiting, keeps a safety copy of the current data (database, journal and
@@ -184,7 +206,12 @@ export function applyReadyRestore(paths: RestorePaths, now: Date): RestoreOutcom
     }
     folded = foldJournal(paths.database);
     // Receipts printed after the backup was made keep their numbers: counting goes on from the higher one.
-    raiseReceiptCounter(ready(paths), highestReceiptNumber(paths.database));
+    raiseReceiptCounter(
+      ready(paths),
+      folded
+        ? highestReceiptNumber(paths.database)
+        : highestInSafetyCopies(paths.safetyFolder, join(paths.staging, 'reading.db')),
+    );
     // A journal left over would be applied to the backup and spoil it; it is in the safety copy.
     for (const suffix of JOURNALS) rmSync(`${paths.database}${suffix}`, { force: true });
     renameWithRetry(ready(paths), paths.database);
