@@ -8,10 +8,18 @@ interface PrintHeaderProps {
   title: string;
   /** Short lines under the title, such as the filters used and the date. */
   details?: readonly string[];
+  /** A heading on paper; plain text in the Settings preview, so that page keeps one main heading. */
+  titleAs?: 'h1' | 'p';
 }
 
 /** The top of every printed page, also shown as the preview in Settings. */
-export function PrintHeader({ logo, printTitle, title, details = [] }: PrintHeaderProps) {
+export function PrintHeader({
+  logo,
+  printTitle,
+  title,
+  details = [],
+  titleAs: Title = 'h1',
+}: PrintHeaderProps) {
   return (
     <header className={styles.header}>
       {logo && <img className={styles.logo} src={logo} alt="" />}
@@ -20,7 +28,7 @@ export function PrintHeader({ logo, printTitle, title, details = [] }: PrintHead
           {printTitle}
         </p>
       )}
-      <h1 className={styles.title}>{title}</h1>
+      <Title className={styles.title}>{title}</Title>
       {details.map((line) => (
         <p key={line} className={styles.detail}>
           {line}

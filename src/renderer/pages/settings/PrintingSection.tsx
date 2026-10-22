@@ -111,6 +111,7 @@ export function PrintingSection() {
           <PrintHeader
             logo={logoSrc}
             printTitle={title.trim()}
+            titleAs="p"
             title={t('print.receiptNumber', {
               number: formatReceiptNumber(1, settings.digitStyle),
             })}
