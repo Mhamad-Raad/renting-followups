@@ -8,8 +8,10 @@ export interface Swatch<T> {
   color: string | null;
   /** The colour of the tick drawn on the swatch; white by default. */
   tickColor?: string;
-  /** Read aloud and shown on hover, since a colour alone says nothing to a screen reader. */
+  /** Read aloud, since a colour alone says nothing to a screen reader. */
   label: string;
+  /** Shows the label on hover too; only for plain names, never for a colour code. */
+  showLabel?: boolean;
 }
 
 interface SwatchPickerProps<T> {
@@ -38,7 +40,7 @@ export function SwatchPicker<T extends string | null>({
             style={
               swatch.color ? { backgroundColor: swatch.color, color: swatch.tickColor } : undefined
             }
-            title={swatch.label}
+            title={swatch.showLabel ? swatch.label : undefined}
           >
             <input
               type="radio"

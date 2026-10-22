@@ -169,7 +169,7 @@ function CategoryForm({ category, onSaved, onCancel }: CategoryFormProps) {
         label={t('categories.color')}
         value={color}
         swatches={[
-          { value: null, color: null, label: t('categories.noColor') },
+          { value: null, color: null, label: t('categories.noColor'), showLabel: true },
           ...CATEGORY_COLORS.map((value) => ({ value, color: value, label: value })),
         ]}
         onChange={setColor}

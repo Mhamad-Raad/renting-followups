@@ -32,6 +32,7 @@ export function AppearanceSection({ change }: { change: ChangeSettings }) {
           color: `var(--accent-${color})`,
           tickColor: `var(--accent-${color}-on)`,
           label: t(`settings.themeColors.${color}`),
+          showLabel: true,
         }))}
         onChange={(themeColor) => change({ themeColor })}
       />
