@@ -8,9 +8,9 @@ import { useIpcQuery } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { CategoryDot } from '../../components/CategoryDot';
-import { EmptyState } from '../../components/EmptyState';
 import { FigureCards } from '../../components/FigureCards';
 import { LoadError } from '../../components/LoadError';
+import { NoAreasYet } from '../areas/NoAreasYet';
 import { LinkButton } from '../../components/LinkButton';
 import { MoneyText } from '../../components/MoneyText';
 import { StatusPill } from '../../components/MonthBoxes';
@@ -76,15 +76,7 @@ export function HomePage() {
     return (
       <>
         {header}
-        <EmptyState
-          title={t('areas.empty.title')}
-          body={t('areas.empty.body')}
-          action={
-            <LinkButton to="/areas/new" variant="primary">
-              {t('areas.empty.button')}
-            </LinkButton>
-          }
-        />
+        <NoAreasYet />
       </>
     );
   }

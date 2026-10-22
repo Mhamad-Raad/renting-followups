@@ -19,6 +19,7 @@ import { PhoneText } from '../../components/PhoneText';
 import { SearchField } from '../../components/SearchField';
 import styles from './AreasPage.module.css';
 import { ReportOutputButtons } from '../../print/ReportOutputButtons';
+import { NoAreasYet } from './NoAreasYet';
 import { RentText } from './RentText';
 
 const SEARCH_DELAY_MS = 150;
@@ -96,20 +97,7 @@ export function AreasPage() {
       <>
         {header}
         {notice && <Notice tone="success">{notice}</Notice>}
-        <EmptyState
-          title={t('areas.empty.title')}
-          body={t('areas.empty.body')}
-          action={
-            <>
-              <LinkButton to="/areas/new" variant="primary">
-                {t('areas.empty.button')}
-              </LinkButton>
-              <LinkButton to="/areas/import" icon="download">
-                {t('areas.empty.importButton')}
-              </LinkButton>
-            </>
-          }
-        />
+        <NoAreasYet />
       </>
     );
   }
