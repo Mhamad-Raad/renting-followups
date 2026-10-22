@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { dateStringFromLocal, formatDate } from '@shared/dates';
 import { formatPlain } from '@shared/formatNumber';
-import { reportFilterParts } from '@shared/reportText';
+import { PART_SEPARATOR, reportFilterParts } from '@shared/reportText';
 import { reportQuerySchema, type ReportQuery } from '@shared/reports';
 import { useIpcQuery } from '../app/ipc';
 import { useSettings } from '../app/SettingsContext';
@@ -63,7 +63,7 @@ function ReportPaper({ query }: { query: ReportQuery }) {
       (part) =>
         `${t(part.labelKey)}: ${'text' in part.value ? part.value.text : t(part.value.key)}`,
     )
-    .join(' · ');
+    .join(PART_SEPARATOR);
 
   return (
     <PrintFrame

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { SEARCH_MAX, type AreaListItem } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
+import { PART_SEPARATOR } from '@shared/reportText';
 import { useIpcQuery, type QueryState } from '../../app/ipc';
 import { useFlashNotice } from '../../app/flash';
 import { useSettings } from '../../app/SettingsContext';
@@ -132,7 +133,7 @@ export function AreasPage() {
         <p className={styles.count} aria-live="polite">
           {t('areas.count', { number: formatPlain(sorted.length, settings.digitStyle) })}
           {chosen.length > 0 &&
-            ` · ${t('print.selectedCount', { number: formatPlain(chosen.length, settings.digitStyle) })}`}
+            `${PART_SEPARATOR}${t('print.selectedCount', { number: formatPlain(chosen.length, settings.digitStyle) })}`}
         </p>
         {chosen.length > 0 && (
           <ReportOutputButtons

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
+import { PART_SEPARATOR } from '@shared/reportText';
 import { formatDate, formatMonthRuns, formatYearMonth } from '@shared/dates';
 import { formatPlain } from '@shared/formatNumber';
 import type { AreaReminder } from '@shared/notifications';
@@ -61,7 +62,7 @@ export function ReminderRow({ reminder, onOpen }: { reminder: AreaReminder; onOp
           {reminder.renterName ?? t('areas.noRenter')}
           {reminder.renterPhone && (
             <>
-              {' · '}
+              {PART_SEPARATOR}
               <PhoneText phone={reminder.renterPhone} />
             </>
           )}
