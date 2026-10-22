@@ -41,12 +41,17 @@ test('the popup on opening and the Notifications page show the same reminders', 
     await expect(popup).toBeVisible();
     // The keyboard starts on OK, so Enter simply closes the popup.
     await expect(popup.getByRole('button', { name: en.common.ok })).toBeFocused();
+    // The page behind the popup does not scroll while it is open.
+    const pageScroll = () =>
+      page.evaluate(() => getComputedStyle(document.documentElement).overflowY);
+    expect(await pageScroll()).toBe('hidden');
     await expect(popup.getByText('Shop late')).toBeVisible();
     await expect(popup.getByText('Shop vacant')).toHaveCount(0);
     // No backup has been made yet this month.
     await expect(popup.getByText(en.notifications.backupDue)).toBeVisible();
     await popup.getByRole('button', { name: en.notifications.goTo }).click();
     await expect(popup).toBeHidden();
+    expect(await pageScroll()).not.toBe('hidden');
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(en.pages.notifications.title);
     const late = page.getByRole('list', { name: en.notifications.late });
