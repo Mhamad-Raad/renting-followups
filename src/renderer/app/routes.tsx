@@ -4,6 +4,7 @@ import { AreaFormPage } from '../pages/areas/AreaFormPage';
 import { AreaPage } from '../pages/areas/AreaPage';
 import { AreasPage } from '../pages/areas/AreasPage';
 import { CategoriesPage } from '../pages/areas/CategoriesPage';
+import { ActivityLogPage } from '../pages/settings/ActivityLogPage';
 import { DeletedItemsPage } from '../pages/settings/DeletedItemsPage';
 import { HomePage } from '../pages/home/HomePage';
 import { NotificationsPage } from '../pages/notifications/NotificationsPage';
@@ -43,4 +44,5 @@ export const INNER_ROUTES: readonly { path: string; element: ReactElement }[] = 
   { path: '/areas/:id', element: <AreaPage /> },
   { path: '/areas/:id/edit', element: <AreaFormPage /> },
   { path: '/settings/deleted', element: <DeletedItemsPage /> },
+  { path: '/settings/activity', element: <ActivityLogPage /> },
 ];

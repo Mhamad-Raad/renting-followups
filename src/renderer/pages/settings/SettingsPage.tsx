@@ -66,6 +66,7 @@ export function SettingsPage() {
         <h2 className={styles.sectionTitle}>{t('settings.data')}</h2>
         <div className={styles.buttonRow}>
           <LinkButton to="/settings/deleted">{t('deletedItems.open')}</LinkButton>
+          <LinkButton to="/settings/activity">{t('activity.title')}</LinkButton>
         </div>
       </section>
     </>

@@ -45,3 +45,20 @@
 .muted {
   color: var(--color-text-muted);
 }
+
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.parts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+}
+
+.parts > * + * {
+  padding-inline-start: var(--space-2);
+  border-inline-start: 1px solid var(--color-border);
+}
