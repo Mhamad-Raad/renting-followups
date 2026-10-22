@@ -192,6 +192,50 @@ describe('backup then restore', () => {
   });
 });
 
+describe('receipt numbers after a restore', () => {
+  it('go on from the highest number ever given, so a printed number is never given again', async () => {
+    const live = makeDatabase(paths.database, 1);
+    const name = await createBackup(live, backups, '2026-10-01', null);
+    // Two receipts printed after the backup was made.
+    const repos = createRepositories(live);
+    for (const paidOn of ['2026-10-05', '2026-10-06']) {
+      repos.payments.create(
+        {
+          areaId: 1,
+          isBackfill: false,
+          amount: 250_000,
+          from: { year: 2026, month: 1 },
+          paidOn,
+          note: '',
+        },
+        { date: '2026-10-10', month: { year: 2026, month: 10 } },
+      );
+    }
+    live.close();
+
+    const { info } = checkBackup(join(backups, name), paths, MIGRATIONS);
+    if (info) confirmRestore(paths, info);
+    expect(applyReadyRestore(paths, NOW)?.ok).toBe(true);
+    const restored = createConnection(paths.database);
+    try {
+      const next = createRepositories(restored).payments.create(
+        {
+          areaId: 1,
+          isBackfill: false,
+          amount: 250_000,
+          from: { year: 2026, month: 1 },
+          paidOn: '2026-10-20',
+          note: '',
+        },
+        { date: '2026-10-20', month: { year: 2026, month: 10 } },
+      );
+      expect(next).toMatchObject({ ok: true, receiptNumber: 3 });
+    } finally {
+      restored.close();
+    }
+  });
+});
+
 describe('checking a chosen file', () => {
   it('refuses an older backup that cannot be brought up to date', async () => {
     const older = makeDatabase(join(root, 'old.db'), 1, MIGRATIONS.slice(0, 2));

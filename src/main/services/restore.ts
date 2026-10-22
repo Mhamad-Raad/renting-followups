@@ -65,6 +65,52 @@ export function confirmRestore(paths: RestorePaths, info: BackupInfo): boolean {
   return true;
 }
 
+/**
+ * The highest receipt number a database has given out (its counter, or its
+ * highest receipt); 0 when it cannot be read. A restore keeps counting from
+ * the higher of the old and the restored data, so no number is given twice.
+ */
+export function highestReceiptNumber(file: string): number {
+  try {
+    const db = new Database(file, { readonly: true, fileMustExist: true });
+    try {
+      const counter = db
+        .prepare("SELECT value FROM settings WHERE key = 'last_receipt_number'")
+        .get() as { value: string } | undefined;
+      const hasReceipts =
+        db
+          .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'receipts'")
+          .get() !== undefined;
+      const highest = hasReceipts
+        ? ((
+            db.prepare('SELECT MAX(receipt_number) AS highest FROM receipts').get() as {
+              highest: number | null;
+            }
+          ).highest ?? 0)
+        : 0;
+      return Math.max(Number(counter?.value ?? 0) || 0, highest);
+    } finally {
+      db.close();
+    }
+  } catch {
+    return 0;
+  }
+}
+
+/** Makes sure the database's receipt counter is at least `atLeast`. */
+export function raiseReceiptCounter(file: string, atLeast: number): void {
+  if (atLeast <= highestReceiptNumber(file)) return;
+  const db = new Database(file, { fileMustExist: true });
+  try {
+    db.prepare(
+      `INSERT INTO settings (key, value) VALUES ('last_receipt_number', ?)
+       ON CONFLICT (key) DO UPDATE SET value = excluded.value`,
+    ).run(String(atLeast));
+  } finally {
+    db.close();
+  }
+}
+
 /** Copies a file if it exists. */
 function copyIfPresent(from: string, to: string): void {
   if (existsSync(from)) copyFileSync(from, to);
@@ -108,6 +154,8 @@ export function applyReadyRestore(paths: RestorePaths, now: Date): RestoreOutcom
     mkdirSync(paths.safetyFolder, { recursive: true });
     const safety = join(paths.safetyFolder, safetyCopyName('before-restore', now));
     foldJournal(paths.database);
+    // Receipts printed after the backup was made keep their numbers: counting goes on from the higher one.
+    raiseReceiptCounter(ready(paths), highestReceiptNumber(paths.database));
     copyIfPresent(paths.database, `${safety}.db`);
     for (const kind of LOGO_KINDS) {
       copyIfPresent(join(paths.logoFolder, logoFileName(kind)), `${safety}.logo.${kind}`);
