@@ -116,6 +116,21 @@ describe('checking a file', () => {
     }
   });
 
+  it('puts back the leading 0 that Excel drops from a mobile number typed as a number', () => {
+    const preview = check(
+      table(
+        row({ name: 'A', renterPhone: '7501234567' }),
+        row({ name: 'B', renterPhone: '٧٥٠١٢٣٤٥٦٧' }),
+        row({ name: 'C', renterPhone: '066 123 4567' }),
+      ),
+    );
+    expect(preview.rows.map((area) => area.renter?.phone)).toEqual([
+      '07501234567',
+      '٠٧٥٠١٢٣٤٥٦٧',
+      '066 123 4567',
+    ]);
+  });
+
   it('may leave out the optional columns', () => {
     const preview = check([
       { row: 1, cells: HEADER.slice(0, 6) },

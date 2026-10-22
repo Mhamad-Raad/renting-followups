@@ -27,6 +27,7 @@ import {
   type ImportRow,
   type RowProblem,
 } from '@shared/import';
+import { toWesternDigits } from '@shared/digits';
 import { normalizeText } from '@shared/normalizeText';
 import { parseAmount, parseInteger } from '@shared/parseNumber';
 import { LANGUAGES, type Language } from '@shared/settings';
@@ -231,6 +232,17 @@ const TEMPLATE_ROWS = 1000;
 
 const isBlank = (row: TableRow) => row.cells.every((cell) => cell === '');
 
+/**
+ * An Iraqi mobile number is 07 and nine digits. Excel drops the leading 0 of
+ * a phone typed into a number cell (7501234567), so it is put back.
+ */
+function withLeadingZero(phone: string): string {
+  if (!/^7\d{9}$/.test(toWesternDigits(phone))) return phone;
+  // The 0 in the same digits as the number: ٠ before ٧, ۰ before ۷.
+  const zero = String.fromCharCode((phone.codePointAt(0) ?? 0x37) - 7);
+  return `${zero}${phone}`;
+}
+
 /** Checks one row; returns the area to create, or what is wrong with the row. */
 function checkRow(
   value: (column: ImportColumn) => string,
@@ -271,7 +283,7 @@ function checkRow(
   }
 
   const renterName = value('renterName');
-  const phone = value('renterPhone');
+  const phone = withLeadingZero(value('renterPhone'));
   if (phone !== '' && !PHONE_PATTERN.test(phone)) problems.push({ kind: 'bad_phone' });
   if (phone !== '' && renterName === '') problems.push({ kind: 'phone_without_renter' });
 
