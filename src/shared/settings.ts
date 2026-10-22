@@ -9,7 +9,7 @@ export type Language = (typeof LANGUAGES)[number];
 export const THEME_MODES = ['light', 'dark'] as const;
 export type ThemeMode = (typeof THEME_MODES)[number];
 
-export const FONT_SIZES = ['small', 'normal', 'large', 'extraLarge'] as const;
+export const FONT_SIZES = ['extraSmall', 'small', 'normal', 'large', 'extraLarge'] as const;
 export type FontSize = (typeof FONT_SIZES)[number];
 
 /** Ready-made theme colours; none is green, orange or red, so they never look like a month status. */

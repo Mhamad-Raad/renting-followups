@@ -47,6 +47,7 @@
     "font": "الخط",
     "fontSize": "حجم الخط",
     "fontSizes": {
+      "extraSmall": "صغير جداً",
       "small": "صغير",
       "normal": "عادي",
       "large": "كبير",

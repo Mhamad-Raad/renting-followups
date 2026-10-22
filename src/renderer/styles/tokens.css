@@ -52,6 +52,9 @@
   --direction-sign: -1;
 }
 
+:root[data-font-size='extraSmall'] {
+  --font-size-root: 14px;
+}
 :root[data-font-size='small'] {
   --font-size-root: 16px;
 }

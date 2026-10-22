@@ -47,6 +47,7 @@
     "font": "فۆنت",
     "fontSize": "قەبارەی نووسین",
     "fontSizes": {
+      "extraSmall": "زۆر بچووک",
       "small": "بچووک",
       "normal": "ئاسایی",
       "large": "گەورە",
