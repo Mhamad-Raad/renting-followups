@@ -356,6 +356,19 @@ describe('editing and cancelling receipts', () => {
     expect(receipts()).toHaveLength(1);
   });
 
+  it('gives the reminders every area with its whole price and payment history', () => {
+    payOk({ amount: RENT + 10 });
+    const [area] = repos.areaViews.reminderAreas();
+    expect(area).toMatchObject({
+      id: areaId,
+      name: 'Shop 1',
+      currency: 'IQD',
+      renterName: 'Karwan Ahmed',
+    });
+    expect(area?.prices).toEqual([{ year: 2026, month: 1, monthlyPrice: RENT }]);
+    expect([...(area?.paid.values() ?? [])]).toEqual([RENT, 10]);
+  });
+
   it('knows the latest date money was received', () => {
     expect(repos.paid.latestPaidOn()).toBeNull();
     payOk({ paidOn: '2026-03-02' });

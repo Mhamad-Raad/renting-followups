@@ -6,6 +6,7 @@ import { registerCategoryIpc } from './categories';
 import { setUnlockCheck } from './handle';
 import { registerHomeIpc } from './home';
 import { registerLogIpc } from './log';
+import { registerNotificationIpc } from './notifications';
 import { registerPaymentIpc } from './payments';
 import { registerPrintIpc } from './print';
 import { registerReportIpc } from './reports';
@@ -32,4 +33,5 @@ export function registerIpcHandlers({ repos, auth }: IpcDependencies): void {
   registerHomeIpc(repos);
   registerReportIpc(repos);
   registerPrintIpc(repos);
+  registerNotificationIpc(repos);
 }

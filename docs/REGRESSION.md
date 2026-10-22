@@ -128,3 +128,15 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] _manual_ The printed report is A4 landscape with the header row on every page, page numbers, ✓ ½ ✗ – symbols and the totals only at the end.
 - [ ] _manual_ The receipt is one A4 page with title, number, date, area, renter, phone, months, amount, note and a signature line; Sorani and Arabic read right to left.
 - [ ] _manual_ With Arabic-Indic digits, phone numbers read in the right order on screen, in print and in PDF.
+
+## Iteration 9: Notifications
+
+Automated (`npm run test:e2e`) unless marked _manual_.
+
+- [ ] Opening the app with late rent shows the popup with the same areas as the Notifications page; vacant areas never appear.
+- [ ] Go to Notifications opens the page; OK closes the popup; with nothing to report there is no popup and the page says so.
+- [ ] The bell shows the number of reminders; paying everything owed clears it at once.
+- [ ] Record payment on a reminder opens that area with the payment form ready.
+- [ ] _manual_ In the last 7 days of a month an unpaid current month shows under "This month ends soon" with its last date; on the last day it says "ends today".
+- [ ] _manual_ On Windows, with the app left open overnight and something late, one Windows notification appears the next day; clicking it brings the app to the front.
+- [ ] _manual_ The bell pulses once when its number changes, and not at all with reduced motion.

@@ -1,13 +1,19 @@
 import { expect, test, type Page } from '@playwright/test';
 import { phoneForDisplay } from '../../src/shared/digits';
 import en from '../../src/renderer/i18n/en.json' with { type: 'json' };
-import { createDataDir, launchUnlocked, removeDataDir, type LaunchedApp } from './launch';
+import {
+  createDataDir,
+  launchUnlocked,
+  removeDataDir,
+  type LaunchedApp,
+  reloadApp,
+} from './launch';
 
 /** Starts unlocked, in English (so the test reads like the screens), on the Areas page. */
 async function openAreas(dataDir: string): Promise<LaunchedApp> {
   const launched = await launchUnlocked(dataDir);
   await launched.page.evaluate(() => window.api.invoke('settings:update', { language: 'en' }));
-  await launched.page.reload();
+  await reloadApp(launched.page);
   await launched.page.getByRole('link', { name: en.nav.areas }).click();
   return launched;
 }
@@ -91,7 +97,7 @@ test('price changes, vacant and renter changes are kept as history', async () =>
   const { app, page } = await openAreas(dataDir);
   try {
     await createAreasThroughIpc(page, ['Shop 1']);
-    await page.reload();
+    await reloadApp(page);
     await page.getByRole('link', { name: 'Shop 1' }).click();
 
     await page.getByRole('button', { name: en.area.changePrice }).click();
@@ -131,7 +137,7 @@ test('a deleted area can be restored from Settings', async () => {
   const { app, page } = await openAreas(dataDir);
   try {
     await createAreasThroughIpc(page, ['Shop 1']);
-    await page.reload();
+    await reloadApp(page);
     await page.getByRole('link', { name: 'Shop 1' }).click();
     await page.getByRole('button', { name: en.common.delete }).click();
     await page.getByRole('dialog').getByRole('button', { name: en.common.delete }).click();
@@ -180,7 +186,7 @@ test('phone numbers follow the chosen digit style', async () => {
   try {
     await createAreasThroughIpc(page, ['Shop 1']);
     await page.evaluate(() => window.api.invoke('settings:update', { digitStyle: 'arabic' }));
-    await page.reload();
+    await reloadApp(page);
     await expect(page.getByRole('row').nth(1)).toContainText(phoneForDisplay('0750 0', 'arabic'));
     await page.getByRole('link', { name: 'Shop 1' }).click();
     await expect(page.getByText(phoneForDisplay('0750 0', 'arabic')).first()).toBeVisible();
@@ -218,7 +224,7 @@ test('the list and the area page show this year in month colours', async () => {
       },
       { year: today.getFullYear(), month },
     );
-    await page.reload();
+    await reloadApp(page);
 
     const boxLabel = (number: number, status: string) =>
       en.months.box.replace('{{month}}', String(number)).replace('{{status}}', status);
@@ -250,7 +256,7 @@ test('ticked areas hidden by a search are not printed or counted', async () => {
   const { app, page } = await openAreas(dataDir);
   try {
     await createAreasThroughIpc(page, ['Shop 1', 'Shop 2']);
-    await page.reload();
+    await reloadApp(page);
     await page.getByRole('checkbox', { name: 'Select Shop 1' }).check();
     await expect(page.getByText(en.print.selectedCount.replace('{{number}}', '1'))).toBeVisible();
     await page.getByLabel(en.areas.search).fill('Shop 2');

@@ -350,3 +350,15 @@ Named in ARCHITECTURE.md for Excel export; pure JavaScript, runs in the main pro
 ### Fixed along the way
 
 - With Arabic-Indic digits, phone numbers showed their digit groups in reverse order (the bidirectional algorithm treats spaces between Arabic-Indic digits as right-to-left). Separators now carry invisible left-to-right marks (`phoneForDisplay`).
+
+## Iteration 9: Notifications
+
+- One function, `buildReminders` (`services/notifications.ts`), feeds the popup, the Notifications page, the bell and the Windows notification, so they never disagree. It uses `unpaidMonths` from `monthStatus.ts`, which `areaStanding` (Home) now also uses.
+- **Late rent:** every past month not fully paid, in any year; vacant months and months before the rent started never appear. **Month reminder:** this month not fully paid and the month ends within 7 days (counting today), or always in its last 3 days. The "days before month end" setting is added on the Settings screen (iteration 10); until then 7 is used.
+- **Backup reminder:** added with backups in iteration 11, so it never asks for something the app cannot do yet.
+- Order: late rent first (most late months first), then month reminders; same urgency by name.
+- **Popup:** once each time the app is opened (after the password), showing the first 6 reminders and "… and N more", with OK and Go to Notifications; nothing when there is nothing to report.
+- **Bell:** the count sits on the bell icon with one soft pulse when it changes (none with reduced motion); screen readers hear "Notifications, Reminders: 3". It recounts after every save that changes rent data (`CHANGES_DATA` in `shared/ipc.ts`, one entry per channel) and every 10 minutes, so a month that turns late at midnight shows without a restart.
+- **Windows notification:** at most once a day while the app runs, only when something needs attention, never on the day the app was opened (the popup covers it), not in test ghost mode; its hourly timer is stopped when the app quits.
+- **Wording:** a reminder names the month's last day ("ends on 31/5/2026", "ends today") instead of counting days, which avoids plural forms and off-by-one confusion. Runs of months show as ranges ("1/2026 – 9/2026"), also on receipts.
+- `monthStatus.ts` is about 300 lines: kept as one file on purpose, because ARCHITECTURE.md makes it the single module for colours and totals.

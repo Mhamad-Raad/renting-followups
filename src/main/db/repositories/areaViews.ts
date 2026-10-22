@@ -7,6 +7,7 @@ import type { AreaYear } from '@shared/months';
 import { normalizePhone, normalizeText } from '@shared/normalizeText';
 import { priceForMonth } from '@shared/prices';
 import { areaStanding, areaYear, NO_PAYMENTS, type AreaOverview } from '../../services/monthStatus';
+import type { ReminderArea } from '../../services/notifications';
 import type { Db } from '../connection';
 import type { AreaRepository } from './areas';
 import type { PaidRepository } from './paid';
@@ -86,6 +87,23 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
     year(id: number, year: number, today: YearMonth, month: number | null = null): AreaYear | null {
       if (!areas.isActive(id)) return null;
       return areaYear(prices.forArea(id), paid.inAreaYear(id, year), year, today, month);
+    },
+
+    /** Every area in use with its whole price and payment history, for the reminders. */
+    reminderAreas(): ReminderArea[] {
+      const pricesByArea = prices.forActiveAreas();
+      const historyByArea = paid.historyForActiveAreas();
+      return selectList
+        .all({ categoryId: null, namePattern: containsPattern(''), phonePattern: null })
+        .map((row) => ({
+          id: row.id,
+          name: row.name,
+          currency: row.currency,
+          renterName: row.renter_name,
+          renterPhone: row.renter_phone,
+          prices: pricesByArea.get(row.id) ?? [],
+          paid: historyByArea.get(row.id) ?? new Map(),
+        }));
     },
 
     /** Every area in use with this year's figures and its standing today, for Home. */

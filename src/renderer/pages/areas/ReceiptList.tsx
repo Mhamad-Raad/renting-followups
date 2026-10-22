@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { formatDate, formatYearMonth } from '@shared/dates';
+import { formatDate, formatMonthRuns } from '@shared/dates';
 import { formatReceiptNumber, type Receipt } from '@shared/payments';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
@@ -43,9 +43,7 @@ export function ReceiptList({ receipts, onEdit, onCancel, onPrint, printing }: R
             </strong>
             <span className={styles.months}>
               {t('receipts.months', {
-                months: receipt.allocations
-                  .map((month) => formatYearMonth(month, digits))
-                  .join(t('receipts.separator')),
+                months: formatMonthRuns(receipt.allocations, digits, t('receipts.separator')),
               })}
             </span>
             {receipt.note && (

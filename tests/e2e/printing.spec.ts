@@ -4,7 +4,7 @@ import { expect, test, type ElectronApplication, type Page } from '@playwright/t
 import ExcelJS from 'exceljs';
 import en from '../../src/renderer/i18n/en.json' with { type: 'json' };
 import type { ReportQuery } from '../../src/shared/reports';
-import { createDataDir, launchUnlocked, removeDataDir } from './launch';
+import { createDataDir, launchUnlocked, removeDataDir, reloadApp } from './launch';
 
 /** Answers the next "Save as" dialogs in the main process with `path`, as if the owner chose it. */
 async function chooseSavePath(app: ElectronApplication, path: string) {
@@ -178,7 +178,7 @@ test('the buttons on screen print and export, with a plain message each time', a
   try {
     await seed(page);
     await page.evaluate(() => window.api.invoke('settings:update', { language: 'en' }));
-    await page.reload();
+    await reloadApp(page);
     await fakePrinter(app);
 
     // Area page: Save and print receipt, then the receipt's own Print button says it is sent.

@@ -34,6 +34,7 @@ import type {
 import type { YearMonth } from './dates';
 import type { HomeSummary } from './home';
 import type { AreaYear } from './months';
+import type { Reminder } from './notifications';
 import type {
   AllocationResult,
   AreaPaymentsQuery,
@@ -109,6 +110,7 @@ export interface IpcContract {
   'print:receipt': { input: PrintReceiptInput; output: PrintResult };
   'print:report': { input: PrintReportInput; output: PrintResult };
   'export:reportExcel': { input: ExportReportInput; output: PrintResult };
+  'notifications:list': { input: undefined; output: Reminder[] };
 }
 export type IpcChannel = keyof IpcContract;
 export type IpcInput<C extends IpcChannel> = IpcContract[C]['input'];
@@ -162,6 +164,56 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'print:receipt': false,
   'print:report': false,
   'export:reportExcel': false,
+  'notifications:list': false,
+};
+
+/**
+ * Which channels change the rent data, so screens that summarise it (the
+ * bell's count) know to look again. A Record forces every channel to be listed.
+ */
+export const CHANGES_DATA: Record<IpcChannel, boolean> = {
+  'settings:get': false,
+  'settings:update': true,
+  'log:rendererError': false,
+  'auth:status': false,
+  'auth:setup': false,
+  'auth:unlock': false,
+  'auth:recover': false,
+  'auth:changePassword': false,
+  'auth:changeRecoveryPhrase': false,
+  'categories:list': false,
+  'categories:create': true,
+  'categories:update': true,
+  'categories:delete': true,
+  'categories:restore': true,
+  'areas:list': false,
+  'areas:get': false,
+  'areas:year': false,
+  'areas:create': true,
+  'areas:update': true,
+  'areas:priceChangeImpact': false,
+  'areas:changePrice': true,
+  'areas:changeRenter': true,
+  'areas:delete': true,
+  'areas:restore': true,
+  'deleted:list': false,
+  'payments:forArea': false,
+  'payments:suggestedStart': false,
+  'payments:preview': false,
+  'payments:create': true,
+  'payments:update': true,
+  'payments:void': true,
+  'clock:check': false,
+  'home:summary': false,
+  'reports:build': false,
+  'reports:lastFilters': false,
+  'reports:rememberFilters': false,
+  'print:ready': false,
+  'print:receiptData': false,
+  'print:receipt': false,
+  'print:report': false,
+  'export:reportExcel': false,
+  'notifications:list': false,
 };
 export const IPC_CHANNELS = Object.keys(OPEN_WHILE_LOCKED) as IpcChannel[];
 

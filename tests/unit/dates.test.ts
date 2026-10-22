@@ -4,7 +4,9 @@ import {
   dateStringSchema,
   daysInMonth,
   formatDate,
+  formatMonthRuns,
   formatYearMonth,
+  monthRuns,
   monthIndex,
   parseDateString,
   toDateString,
@@ -92,5 +94,24 @@ describe('withPriceFrom', () => {
       { year: 2026, month: 6, monthlyPrice: 0 },
     ]);
     expect(prices[1]?.monthlyPrice).toBe(200);
+  });
+});
+
+describe('month runs', () => {
+  const m = (month: number, year = 2026) => ({ year, month });
+
+  it('groups consecutive months, across the end of a year, and keeps gaps apart', () => {
+    expect(monthRuns([m(3), m(1), m(2), m(11, 2025), m(12, 2025), m(6)])).toEqual([
+      { from: m(11, 2025), to: m(3) },
+      { from: m(6), to: m(6) },
+    ]);
+    expect(monthRuns([])).toEqual([]);
+  });
+
+  it('shows runs as ranges and single months on their own', () => {
+    expect(formatMonthRuns([m(1), m(2), m(3), m(5)], 'western', ', ')).toBe(
+      '1/2026 – 3/2026, 5/2026',
+    );
+    expect(formatMonthRuns([m(4), m(4)], 'arabic', '، ')).toBe('٤/٢٠٢٦');
   });
 });
