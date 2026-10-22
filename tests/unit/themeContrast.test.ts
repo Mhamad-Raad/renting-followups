@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { THEME_COLORS } from '@shared/settings';
 
 const css = readFileSync(join(import.meta.dirname, '../../src/renderer/styles/themes.css'), 'utf8');
 
@@ -64,23 +65,54 @@ const TEXT_PAIRS: [string, string][] = [
   ['status-na', 'status-na-bg'],
 ];
 
+/** The colours a theme colour gives the accent tokens, as themes.css maps them. */
+function withAccent(colors: Map<string, string>, accent: string): Map<string, string> {
+  const result = new Map(colors);
+  for (const [token, suffix] of [
+    ['color-accent', ''],
+    ['color-accent-hover', '-hover'],
+    ['color-accent-soft', '-soft'],
+    ['color-on-accent', '-on'],
+  ] as const) {
+    const value = colors.get(`accent-${accent}${suffix}`);
+    if (value) result.set(token, value);
+  }
+  return result;
+}
+
+it.each(THEME_COLORS)('themes.css maps theme colour %s onto the accent', (accent) => {
+  const selector =
+    accent === 'blue' ? ':root,\n:root[data-accent' : `:root[data-accent='${accent}']`;
+  const block = css.split('}').find((part) => part.includes(selector)) ?? '';
+  expect(block).toContain(`--color-accent: var(--accent-${accent});`);
+  expect(block).toContain(`--color-on-accent: var(--accent-${accent}-on);`);
+});
+
 describe.each([
   ['light', ":root[data-theme='light']"],
   ['dark', ":root[data-theme='dark']"],
 ])('%s theme', (_name, selector) => {
-  const colors = themeColors(selector);
-  const color = (name: string) => {
-    const value = colors.get(name);
-    if (!value) throw new Error(`Missing colour --${name}`);
-    return value;
-  };
+  const base = themeColors(selector);
 
-  it.each(TEXT_PAIRS)('%s on %s is readable (at least 4.5:1)', (foreground, background) => {
-    expect(contrast(color(foreground), color(background))).toBeGreaterThanOrEqual(4.5);
+  describe.each(THEME_COLORS)('with theme colour %s', (accent) => {
+    const colors = withAccent(base, accent);
+    const color = (name: string) => {
+      const value = colors.get(name);
+      if (!value) throw new Error(`Missing colour --${name}`);
+      return value;
+    };
+
+    it.each(TEXT_PAIRS)('%s on %s is readable (at least 4.5:1)', (foreground, background) => {
+      expect(contrast(color(foreground), color(background))).toBeGreaterThanOrEqual(4.5);
+    });
   });
 
   it('keeps paid, due and late clearly different colours', () => {
-    const hues = ['status-paid', 'status-due', 'status-late'].map((name) => hue(color(name)));
+    const hues = ['status-paid', 'status-due', 'status-late'].map((name) => {
+      const value = base.get(name);
+      if (!value) throw new Error(`Missing colour --${name}`);
+      return hue(value);
+    });
     for (let i = 0; i < hues.length; i += 1) {
       for (let j = i + 1; j < hues.length; j += 1) {
         const gap = Math.abs((hues[i] ?? 0) - (hues[j] ?? 0));

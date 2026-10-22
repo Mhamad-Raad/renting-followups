@@ -20,6 +20,7 @@ export function createKeyValueStore(db: Db) {
        value = excluded.value,
        updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')`,
   );
+  const deleteOne = db.prepare<[string]>('DELETE FROM settings WHERE key = ?');
   const writeMany = db.transaction((entries: [string, string][]) => {
     for (const [key, value] of entries) upsert.run(key, value);
   });
@@ -30,8 +31,13 @@ export function createKeyValueStore(db: Db) {
       upsert.run(key, value);
     },
     writeMany,
+    remove: (key: string): void => {
+      deleteOne.run(key);
+    },
   };
 }
+
+export type KeyValueStore = ReturnType<typeof createKeyValueStore>;
 
 /** Column `key` values in the settings table, as named in ARCHITECTURE.md. */
 const STORAGE_KEYS: Record<keyof Settings, string> = {
@@ -39,6 +45,10 @@ const STORAGE_KEYS: Record<keyof Settings, string> = {
   digitStyle: 'digit_style',
   themeMode: 'theme_mode',
   fontSize: 'font_size',
+  themeColor: 'theme_color',
+  fontFamily: 'font_family',
+  remindDays: 'remind_days_before_month_end',
+  printTitle: 'print_title',
 };
 const SETTING_NAMES = Object.keys(STORAGE_KEYS) as (keyof Settings)[];
 
@@ -54,7 +64,10 @@ export function createSettingsRepository(db: Db): SettingsRepository {
     const stored = store.readAll();
     const read = <K extends keyof Settings>(name: K): Settings[K] => {
       // A missing or unreadable value falls back to the default instead of breaking the app.
-      const parsed = settingsSchema.shape[name].safeParse(stored.get(STORAGE_KEYS[name]));
+      const raw = stored.get(STORAGE_KEYS[name]);
+      const value =
+        typeof DEFAULT_SETTINGS[name] === 'number' && raw !== undefined ? Number(raw) : raw;
+      const parsed = settingsSchema.shape[name].safeParse(value);
       return parsed.success ? (parsed.data as Settings[K]) : DEFAULT_SETTINGS[name];
     };
     return Object.fromEntries(SETTING_NAMES.map((name) => [name, read(name)])) as Settings;
@@ -66,7 +79,9 @@ export function createSettingsRepository(db: Db): SettingsRepository {
       store.writeMany(
         SETTING_NAMES.flatMap((name) => {
           const value = changes[name];
-          return value === undefined ? [] : [[STORAGE_KEYS[name], value] as [string, string]];
+          return value === undefined
+            ? []
+            : [[STORAGE_KEYS[name], String(value)] as [string, string]];
         }),
       );
       return getAll();

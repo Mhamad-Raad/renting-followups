@@ -43,6 +43,29 @@ describe('settings repository', () => {
     ]);
   });
 
+  it('keeps numbers and text as they were saved', () => {
+    const settings = createSettingsRepository(db);
+    settings.update({ remindDays: 10, printTitle: '  Kawa Rentals  ', themeColor: 'teal' });
+    expect(settings.getAll()).toMatchObject({
+      remindDays: 10,
+      printTitle: 'Kawa Rentals',
+      themeColor: 'teal',
+    });
+    expect(
+      db.prepare("SELECT value FROM settings WHERE key = 'remind_days_before_month_end'").get(),
+    ).toEqual({ value: '10' });
+  });
+
+  it.each([
+    ['remind_days_before_month_end', 'soon', 'remindDays'],
+    ['remind_days_before_month_end', '0', 'remindDays'],
+    ['font_family', 'Comic Sans', 'fontFamily'],
+    ['theme_color', 'green', 'themeColor'],
+  ] as const)('falls back to the default when %s is %j', (key, value, name) => {
+    db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run(key, value);
+    expect(createSettingsRepository(db).getAll()[name]).toBe(DEFAULT_SETTINGS[name]);
+  });
+
   it('falls back to the default when a stored value is unreadable', () => {
     db.prepare("INSERT INTO settings (key, value) VALUES ('theme_mode', 'purple')").run();
     expect(createSettingsRepository(db).getAll().themeMode).toBe('light');
@@ -54,12 +77,20 @@ describe('settings update validation', () => {
     expect(settingsUpdateSchema.safeParse({ language: 'ar' }).success).toBe(true);
   });
 
-  it.each([[{ language: 'fr' }], [{ fontSize: 99 }], [{ passwordHash: 'x' }], [null], ['ckb']])(
-    'rejects %j',
-    (input) => {
-      expect(settingsUpdateSchema.safeParse(input).success).toBe(false);
-    },
-  );
+  it.each([
+    [{ language: 'fr' }],
+    [{ fontSize: 99 }],
+    [{ themeColor: 'red' }],
+    [{ remindDays: 0 }],
+    [{ remindDays: 2.5 }],
+    [{ remindDays: '7' }],
+    [{ printTitle: 'x'.repeat(81) }],
+    [{ passwordHash: 'x' }],
+    [null],
+    ['ckb'],
+  ])('rejects %j', (input) => {
+    expect(settingsUpdateSchema.safeParse(input).success).toBe(false);
+  });
 });
 
 describe('applySettingsUpdate', () => {

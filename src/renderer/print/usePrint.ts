@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PrintOutput, PrintResult } from '@shared/printing';
 import type { ReportQuery } from '@shared/reports';
 import { callIpc } from '../app/ipc';
+import { useMountedRef } from '../app/useMountedRef';
 
 export type PrintJob =
   | { kind: 'receipt'; id: number; output: PrintOutput }
@@ -36,13 +37,7 @@ export function usePrint() {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<PrintMessage | null>(null);
-  const mounted = useRef(true);
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
+  const mounted = useMountedRef();
 
   const run = useCallback(
     async (job: PrintJob) => {
@@ -58,7 +53,7 @@ export function usePrint() {
       setBusy(false);
       setMessage(describe(t, result.ok ? result.data : null, job));
     },
-    [t],
+    [mounted, t],
   );
 
   return { run, busy, message };

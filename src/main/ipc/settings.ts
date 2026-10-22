@@ -1,9 +1,39 @@
+import { stat, readFile } from 'node:fs/promises';
+import { BrowserWindow, dialog } from 'electron';
 import { z } from 'zod';
-import { settingsUpdateSchema } from '@shared/settings';
+import { LOGO_MAX_BYTES, settingsUpdateSchema, type LogoChoiceResult } from '@shared/settings';
 import type { SettingsRepository } from '../db/repositories/settings';
+import type { LogoStore } from '../services/logo';
+import { translate } from '../services/translate';
 import { handle } from './handle';
 
-export function registerSettingsIpc(settings: SettingsRepository): void {
+/** Asks for a picture file. Null when the owner cancels. */
+async function askForPicture(filterName: string): Promise<string | null> {
+  const options = {
+    properties: ['openFile' as const],
+    filters: [{ name: filterName, extensions: ['png', 'jpg', 'jpeg'] }],
+  };
+  const parent = BrowserWindow.getFocusedWindow();
+  const result = parent
+    ? await dialog.showOpenDialog(parent, options)
+    : await dialog.showOpenDialog(options);
+  return result.canceled ? null : (result.filePaths[0] ?? null);
+}
+
+export function registerSettingsIpc(settings: SettingsRepository, logo: LogoStore): void {
   handle('settings:get', z.undefined(), () => settings.getAll());
   handle('settings:update', settingsUpdateSchema, (changes) => settings.update(changes));
+  handle('settings:logo', z.undefined(), () => logo.read());
+  handle('settings:chooseLogo', z.undefined(), async (): Promise<LogoChoiceResult> => {
+    const path = await askForPicture(translate(settings.getAll().language, 'settings.pictures'));
+    if (!path) return { ok: true, done: 'cancelled' };
+    // Checked before reading, so a huge file is never loaded.
+    if ((await stat(path)).size > LOGO_MAX_BYTES) return { ok: false, reason: 'too_large' };
+    const saved = logo.save(await readFile(path));
+    return saved.ok ? { ok: true, done: 'saved' } : saved;
+  });
+  handle('settings:removeLogo', z.undefined(), () => {
+    logo.remove();
+    return null;
+  });
 }

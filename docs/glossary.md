@@ -29,6 +29,11 @@ The key words of the app in Sorani, English and Arabic. Every translation uses t
 | Report                  | ڕاپۆرت             | تقرير            | A printable table of areas and totals.                                               |
 | Notifications           | ئاگادارکردنەوەکان  | التنبيهات        | Reminders about late rent and backups.                                               |
 | Settings                | ڕێکخستنەکان        | الإعدادات        | Language, appearance, printing, backup, security.                                    |
+| Theme colour            | ڕەنگی سەرەکی       | اللون الرئيسي    | The colour of buttons and highlights, chosen in Settings.                            |
+| Font                    | فۆنت               | الخط             | The letter style of the whole app and of printed pages.                              |
+| Logo                    | لۆگۆ               | الشعار           | The owner's picture printed at the top of receipts and reports.                      |
+| Activity log            | تۆماری چالاکییەکان | سجل النشاط       | The read-only list of every change, newest first.                                    |
+| Reminders               | بیرخستنەوەکان      | التذكيرات        | Late rent and month-end notices.                                                     |
 | Backup                  | پاشەکەوتی یەدەگ    | نسخة احتياطية    | A safety copy of all data.                                                           |
 | Password                | وشەی نهێنی         | كلمة المرور      | Opens the app on every start.                                                        |
 | Recovery phrase         | ڕستەی گەڕانەوە     | عبارة الاسترداد  | A sentence the owner writes down; sets a new password if the password is forgotten.  |

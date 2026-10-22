@@ -59,3 +59,21 @@
 .tick {
   color: var(--color-accent);
 }
+
+/* Choices with a sample line form an even grid of cards. */
+.choices:has(.sample) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+}
+
+/* The sample sits on its own line under the label. */
+.choice:has(.sample) {
+  flex-wrap: wrap;
+  padding-block: var(--space-2);
+}
+
+.sample {
+  flex-basis: 100%;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}

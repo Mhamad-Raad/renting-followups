@@ -34,6 +34,16 @@
     "themeMode": "Light or dark",
     "light": "Light",
     "dark": "Dark",
+    "themeColor": "Theme colour",
+    "themeColors": {
+      "blue": "Blue",
+      "teal": "Teal",
+      "indigo": "Indigo",
+      "purple": "Purple",
+      "brown": "Brown",
+      "slate": "Slate grey"
+    },
+    "font": "Font",
     "fontSize": "Text size",
     "fontSizes": {
       "small": "Small",
@@ -41,6 +51,25 @@
       "large": "Large",
       "extraLarge": "Extra large"
     },
+    "printing": "Printing",
+    "printTitle": "Title on printed pages",
+    "printTitleHint": "For example your name or your business name. Leave it empty for no title.",
+    "titleSaved": "Title saved.",
+    "logo": "Logo",
+    "logoHint": "A PNG or JPG picture, up to {{size}} MB. A copy is kept by the app, so the original file can be moved.",
+    "chooseLogo": "Choose logo…",
+    "changeLogo": "Change logo…",
+    "removeLogo": "Remove logo",
+    "removeLogoQuestion": "Printed pages will have no logo. You can choose one again at any time.",
+    "logoSaved": "Logo saved.",
+    "logoRemoved": "Logo removed.",
+    "logoFailed": "The logo could not be saved. Please try again.",
+    "logoProblems": {
+      "too_large": "This picture is too large. Please choose one under {{size}} MB.",
+      "not_image": "This file is not a PNG or JPG picture. Please choose another one."
+    },
+    "pictures": "Pictures",
+    "preview": "How the top of a printed receipt will look",
     "saved": "Saved.",
     "saveFailed": "The setting could not be saved. Please try again.",
     "security": "Security",
@@ -48,6 +77,9 @@
     "changeRecoveryPhrase": "Change recovery phrase",
     "passwordChanged": "Password changed.",
     "phraseChanged": "Recovery phrase changed.",
+    "reminders": "Reminders",
+    "remindDays": "Days before the month ends to start the reminder",
+    "remindDaysHint": "In the last {{number}} days of a month the reminder always shows.",
     "data": "Data"
   },
   "common": {
@@ -275,8 +307,32 @@
     "restored": "Restored.",
     "duplicate_name": "This cannot be restored because another item with the same name is in use. Rename that one first.",
     "not_found": "This item was not found.",
-    "open": "Deleted items",
-    "back": "Settings"
+    "open": "Deleted items"
+  },
+  "activity": {
+    "title": "Activity log",
+    "intro": "Every change to categories, areas, rents, renters and payments is listed here, newest first. Nothing on this page can be changed.",
+    "empty": "Nothing has been changed yet.",
+    "older": "Show older",
+    "noName": "(no name)",
+    "fromMonth": "From month {{month}}",
+    "arrow": "→",
+    "changed": "Changed: {{name}}",
+    "categoryAdded": "Category added: {{name}}",
+    "categoryEdited": "Category edited: {{name}}",
+    "categoryDeleted": "Category deleted: {{name}}",
+    "categoryRestored": "Category restored: {{name}}",
+    "areaAdded": "Area added: {{name}}",
+    "areaEdited": "Area edited: {{name}}",
+    "areaDeleted": "Area deleted: {{name}}",
+    "areaRestored": "Area restored: {{name}}",
+    "rentChanged": "Rent changed: {{name}}",
+    "markedVacant": "Marked as vacant: {{name}}",
+    "renterChanged": "New renter: {{name}}",
+    "renterLeft": "Renter left: {{name}}",
+    "paymentRecorded": "Payment recorded: {{name}}",
+    "paymentEdited": "Payment edited: {{name}}",
+    "receiptCancelled": "Receipt cancelled: {{name}}"
   },
   "months": {
     "title": "Months of {{year}}",

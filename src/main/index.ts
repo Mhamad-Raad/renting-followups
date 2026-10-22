@@ -5,6 +5,7 @@ import { closeDatabase, openDatabase } from './db/connection';
 import { migrate } from './db/migrate';
 import { MIGRATIONS } from './db/migrations';
 import { createRepositories } from './db/repositories';
+import { createKeyValueStore } from './db/repositories/settings';
 import { registerIpcHandlers } from './ipc';
 import { currentReminders } from './ipc/notifications';
 import { hardenSession, hardenWindow } from './security';
@@ -12,6 +13,7 @@ import { createAuthService } from './services/auth';
 import { writeSafetySnapshot } from './services/backup';
 import { startDailyToast, stopDailyToast } from './services/dailyToast';
 import { describeError, initLogger, logger } from './services/logger';
+import { createLogoStore } from './services/logo';
 import { startupFailureMessage } from './services/messages';
 import { translate } from './services/translate';
 import { appWebPreferences, loadRenderer, RENDERER_DIRECTORY } from './windows';
@@ -58,7 +60,8 @@ function startServices(): { themeMode: ThemeMode } {
 
   const repos = createRepositories(db);
   const auth = createAuthService(repos.credentials);
-  registerIpcHandlers({ repos, auth });
+  const logo = createLogoStore(join(dataDirectory, 'logo'), createKeyValueStore(db));
+  registerIpcHandlers({ repos, auth, logo });
   if (!isGhost) {
     startDailyToast({
       countReminders: () => currentReminders(repos).length,

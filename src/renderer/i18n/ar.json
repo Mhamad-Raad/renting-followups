@@ -34,6 +34,16 @@
     "themeMode": "فاتح أو داكن",
     "light": "فاتح",
     "dark": "داكن",
+    "themeColor": "اللون الرئيسي",
+    "themeColors": {
+      "blue": "أزرق",
+      "teal": "أزرق مخضر",
+      "indigo": "نيلي",
+      "purple": "بنفسجي",
+      "brown": "بني",
+      "slate": "رمادي"
+    },
+    "font": "الخط",
     "fontSize": "حجم الخط",
     "fontSizes": {
       "small": "صغير",
@@ -41,6 +51,25 @@
       "large": "كبير",
       "extraLarge": "كبير جداً"
     },
+    "printing": "الطباعة",
+    "printTitle": "العنوان على الصفحات المطبوعة",
+    "printTitleHint": "مثلاً اسمك أو اسم عملك. اتركه فارغاً إن لم ترد عنواناً.",
+    "titleSaved": "تم حفظ العنوان.",
+    "logo": "الشعار",
+    "logoHint": "صورة PNG أو JPG، حتى {{size}} ميغابايت. يحتفظ البرنامج بنسخة منها، فيمكن نقل الملف الأصلي.",
+    "chooseLogo": "اختيار الشعار…",
+    "changeLogo": "تغيير الشعار…",
+    "removeLogo": "إزالة الشعار",
+    "removeLogoQuestion": "لن يظهر شعار على الصفحات المطبوعة. يمكنك اختيار شعار مرة أخرى في أي وقت.",
+    "logoSaved": "تم حفظ الشعار.",
+    "logoRemoved": "تمت إزالة الشعار.",
+    "logoFailed": "تعذّر حفظ الشعار. يرجى المحاولة مرة أخرى.",
+    "logoProblems": {
+      "too_large": "هذه الصورة كبيرة جداً. يرجى اختيار صورة أصغر من {{size}} ميغابايت.",
+      "not_image": "هذا الملف ليس صورة PNG أو JPG. يرجى اختيار ملف آخر."
+    },
+    "pictures": "الصور",
+    "preview": "هكذا سيبدو أعلى الوصل المطبوع",
     "saved": "تم الحفظ.",
     "saveFailed": "تعذّر حفظ الإعداد. يرجى المحاولة مرة أخرى.",
     "security": "الأمان",
@@ -48,6 +77,9 @@
     "changeRecoveryPhrase": "تغيير عبارة الاسترداد",
     "passwordChanged": "تم تغيير كلمة المرور.",
     "phraseChanged": "تم تغيير عبارة الاسترداد.",
+    "reminders": "التذكيرات",
+    "remindDays": "كم يوماً قبل نهاية الشهر يبدأ التذكير",
+    "remindDaysHint": "في آخر {{number}} أيام من الشهر يظهر التذكير دائماً.",
     "data": "البيانات"
   },
   "common": {
@@ -275,8 +307,32 @@
     "restored": "تمت الاستعادة.",
     "duplicate_name": "لا يمكن الاستعادة لأن عنصراً آخر بالاسم نفسه مستخدم. غيّر اسمه أولاً.",
     "not_found": "لم يُعثر على هذا العنصر.",
-    "open": "المحذوفات",
-    "back": "الإعدادات"
+    "open": "المحذوفات"
+  },
+  "activity": {
+    "title": "سجل النشاط",
+    "intro": "كل تغيير على الفئات والعقارات والإيجارات والمستأجرين والدفعات مسجل هنا، الأحدث أولاً. لا يمكن تغيير أي شيء في هذه الصفحة.",
+    "empty": "لم يتغير شيء بعد.",
+    "older": "عرض الأقدم",
+    "noName": "(بلا اسم)",
+    "fromMonth": "من الشهر {{month}}",
+    "arrow": "←",
+    "changed": "تم التغيير: {{name}}",
+    "categoryAdded": "أُضيفت فئة: {{name}}",
+    "categoryEdited": "عُدّلت فئة: {{name}}",
+    "categoryDeleted": "حُذفت فئة: {{name}}",
+    "categoryRestored": "استُعيدت فئة: {{name}}",
+    "areaAdded": "أُضيف عقار: {{name}}",
+    "areaEdited": "عُدّل عقار: {{name}}",
+    "areaDeleted": "حُذف عقار: {{name}}",
+    "areaRestored": "استُعيد عقار: {{name}}",
+    "rentChanged": "تغيّر الإيجار: {{name}}",
+    "markedVacant": "أصبح شاغراً: {{name}}",
+    "renterChanged": "مستأجر جديد: {{name}}",
+    "renterLeft": "غادر المستأجر: {{name}}",
+    "paymentRecorded": "سُجّلت دفعة: {{name}}",
+    "paymentEdited": "عُدّلت دفعة: {{name}}",
+    "receiptCancelled": "أُلغي وصل: {{name}}"
   },
   "months": {
     "title": "أشهر {{year}}",

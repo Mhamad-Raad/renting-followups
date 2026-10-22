@@ -87,7 +87,7 @@ export function registerPrintIpc({ categories, payments, reports, settings }: Re
       extension: 'xlsx',
     });
     if (!path) return { ok: true, done: 'cancelled' };
-    const { language, digitStyle } = settings.getAll();
+    const { language, digitStyle, printTitle } = settings.getAll();
     const categoryName =
       query.categoryId === null
         ? null
@@ -100,6 +100,7 @@ export function registerPrintIpc({ categories, payments, reports, settings }: Re
         digitStyle,
         categoryName,
         printedOn: businessToday().date,
+        printTitle,
       },
     );
     await saveFile(path, new Uint8Array(await workbook.xlsx.writeBuffer()));

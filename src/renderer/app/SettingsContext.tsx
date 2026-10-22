@@ -23,13 +23,15 @@ interface SettingsContextValue {
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
-/** Puts language, direction, theme and text size on <html>, where the CSS reads them. */
+/** Puts language, direction, theme, font and text size on <html>, where the CSS reads them. */
 function applyToDocument(settings: Settings): void {
   const root = document.documentElement;
   root.lang = settings.language;
   root.dir = LANGUAGE_DIRECTION[settings.language];
-  // Paper is always printed light and at normal size, whatever the screen uses.
+  // Paper is always printed light and at normal size, whatever the screen uses; the font is the chosen one.
   root.dataset['theme'] = isPrintPage() ? 'light' : settings.themeMode;
+  root.dataset['accent'] = settings.themeColor;
+  root.dataset['font'] = settings.fontFamily;
   root.dataset['fontSize'] = isPrintPage() ? 'normal' : settings.fontSize;
   void i18next.changeLanguage(settings.language);
   document.title = i18next.t('app.name');

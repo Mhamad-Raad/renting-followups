@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { checkNewPassword, checkNewRecoveryPhrase, type NewSecretProblem } from '@shared/auth';
-import { callIpc } from '../app/ipc';
-import { useNewSecretProblemText, useSecretCheck } from '../app/useSecretCheck';
-import { BigButton } from '../components/BigButton';
-import { Dialog, DialogActions } from '../components/Dialog';
-import { Form } from '../components/Form';
-import { Notice } from '../components/Notice';
-import { PasswordField } from '../components/PasswordField';
-import { TextField } from '../components/TextField';
-import { useRecoveryPhraseHint } from './auth/useRecoveryPhraseHint';
+import { callIpc } from '../../app/ipc';
+import { useNewSecretProblemText, useSecretCheck } from '../../app/useSecretCheck';
+import { BigButton } from '../../components/BigButton';
+import { Dialog, DialogActions } from '../../components/Dialog';
+import { Form } from '../../components/Form';
+import { Notice } from '../../components/Notice';
+import { PasswordField } from '../../components/PasswordField';
+import { TextField } from '../../components/TextField';
+import { useRecoveryPhraseHint } from '../auth/useRecoveryPhraseHint';
 import styles from './SettingsPage.module.css';
 
 type Change = 'password' | 'phrase';

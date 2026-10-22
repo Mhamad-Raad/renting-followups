@@ -32,6 +32,17 @@ export function toDigitStyle(text: string, style: DigitStyle): string {
 const LEFT_TO_RIGHT_MARK = '‎';
 
 /**
+ * A separator between two numbers ("1/2026 – 4/2026", a date and a time).
+ * Between Arabic-Indic numbers the bidirectional algorithm reads spaces and
+ * dashes as right-to-left, which swaps the numbers in English text. Invisible
+ * left-to-right marks around the separator keep the first number first, in
+ * left-to-right and right-to-left text alike.
+ */
+export function numberSeparator(separator: string, style: DigitStyle): string {
+  return style === 'western' ? separator : `${LEFT_TO_RIGHT_MARK}${separator}${LEFT_TO_RIGHT_MARK}`;
+}
+
+/**
  * A phone number for display in the chosen digit style. With Arabic-Indic
  * digits the bidirectional algorithm treats the spaces and dashes between
  * digit groups as right-to-left, which swaps the groups even inside a

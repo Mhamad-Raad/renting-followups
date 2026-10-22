@@ -102,7 +102,7 @@ Besides the letters listed in `ARCHITECTURE.md`, search also treats ھ like ە, 
 
 ### Fonts: system font until iteration 10
 
-For now the app uses the Windows system font (Segoe UI, which covers Sorani) through the `--font-family` variable. Bundling open-licence fonts, with the automated Sorani letter test, is part of the font setting in iteration 10.
+For now the app uses the Windows system font (Segoe UI, which covers Sorani) through the `--font-family` variable. Bundling open-licence fonts, with the automated Sorani letter test, is part of the font setting in iteration 10. (Done in iteration 10; see below.)
 
 ### Styles
 
@@ -362,3 +362,28 @@ Named in ARCHITECTURE.md for Excel export; pure JavaScript, runs in the main pro
 - **Windows notification:** at most once a day while the app runs, only when something needs attention, never on the day the app was opened (the popup covers it), not in test ghost mode; its hourly timer is stopped when the app quits.
 - **Wording:** a reminder names the month's last day ("ends on 31/5/2026", "ends today") instead of counting days, which avoids plural forms and off-by-one confusion. Runs of months show as ranges ("1/2026 – 9/2026"), also on receipts.
 - `monthStatus.ts` is about 300 lines: kept as one file on purpose, because ARCHITECTURE.md makes it the single module for colours and totals.
+
+## Iteration 10: Settings
+
+### Bundled fonts
+
+- Six open-licence (OFL 1.1) fonts are bundled in `src/renderer/fonts/`, each with its licence file: Noto Sans Arabic (the default, closest to the earlier system look), Noto Naskh Arabic, Vazirmatn, IBM Plex Sans Arabic, Amiri and Scheherazade New. The files come from the Fontsource packages (version 5.3.0), regular and bold only, split into an Arabic-script part and a Latin part so the screen loads only what it shows (under 1 MB in total). Segoe UI stays as the fallback for any other letter.
+- `tests/unit/fonts.test.ts` opens every font file and fails if any Sorani letter (ڕ ڵ ۆ ێ ە ڤ پ چ ژ گ ک) or Arabic-Indic digit is missing, checks each licence file, and checks that `fonts.css` offers exactly the tested list (`FONT_FAMILIES` in `src/shared/fonts.ts`). All six pass.
+- Iteration 14 (packaging) must ship the `OFL.txt` files with the installer.
+
+| Package (dev only) | Why                                                                     |
+| ------------------ | ----------------------------------------------------------------------- |
+| `fontkit` 2.0.4    | Reads the bundled font files in the Sorani letter test. Not in the app. |
+
+### Settings page
+
+- One page of big sections in the order of ARCHITECTURE.md section 12: language and number style, appearance (light/dark, theme colour, font, text size), printing, reminders, security, and data (Deleted items, Activity log). Backup is added in iteration 11. The settings screens moved to `src/renderer/pages/settings/`.
+- **Theme colour:** six colours (blue, the default, teal, indigo, purple, brown, slate grey). None is green, orange or red, so the app's colour never looks like a month status. Each has light and dark values in `themes.css` (`--accent-<name>`); the chosen one is mapped onto `--color-accent` with `data-accent` on `<html>`, the same CSS-variable mechanism as light/dark and text size. The contrast test checks every colour in both modes.
+- **Font:** `data-font` on `<html>` picks the bundled font; printed pages use it too.
+- **Reminder days:** choices 3, 5, 7, 10, 14 (default 7); the last 3 days always remind. Stored as text under `remind_days_before_month_end` and read back as a number; anything unreadable falls back to 7.
+- **Print title:** up to 80 characters. Saved with the Save button, with Enter, and when leaving the box (which also happens when going to another page), not on every key, so spaces can be typed and a typed title is never lost. Empty means no title line; printed pages no longer show the app name instead, as section 8.6 says "(if set)". The Excel sheet starts with the title when there is one.
+- **Logo:** PNG or JPEG only, up to 2 MB, recognised by its first bytes, not its name (SVG is refused because it can contain scripts). The app keeps a copy as `logo/logo.png` or `logo/logo.jpg` in its data folder and stores only that file name in `logo_path`, so the setting can never point anywhere else and still works if the data folder moves. The screen receives the picture as a `data:` address (already allowed by the page's security policy). Print pages wait for the logo before printing. The logo is not put into the Excel sheet. Remove logo asks first and deletes the copy.
+- **Activity log:** read-only, newest first, 100 entries at a time with "Show older". Each line is a plain sentence ("Rent changed: Shop 1") with the useful details (receipt number, month, renter, old → new amount) and the local date and time. Areas and categories show their current name. Settings changes are not logged (ARCHITECTURE.md section 5 lists what the log records).
+- **Arabic-Indic numbers in English:** between Arabic-Indic numbers, spaces and dashes counted as right-to-left, so in English month ranges and lists came out backwards ("9/2026 – 1/2026"). Separators between numbers now carry invisible left-to-right marks (`numberSeparator` in `shared/digits.ts`, used for month ranges and the activity log's date and time), as phone numbers already did. In the activity log the details are separate boxes with a thin line between them: a middle dot (·) looks just like the Arabic-Indic zero (٠).
+- **To review in iteration 13:** the middle dot is still used between words in a few places (the report filter line, the totals row, the Areas list selection count, reminder rows). It is not next to a number in most of them, but next to Arabic-Indic digits it can look like a zero.
+- **For iteration 11 (backup):** the logo is a file in the data folder, outside the database, so backups must copy it too (ARCHITECTURE.md section 13 already asks for this). Restoring a database without its logo is safe: the logo is simply missing.

@@ -33,18 +33,19 @@ export interface ExcelOptions {
   digitStyle: DigitStyle;
   categoryName: string | null;
   printedOn: DateString;
+  /** The owner's print title from Settings, as the first line; empty for none. */
+  printTitle: string;
 }
 
 export function buildReportWorkbook(
   report: Report,
   query: ReportQuery,
-  { language, digitStyle, categoryName, printedOn }: ExcelOptions,
+  { language, digitStyle, categoryName, printedOn, printTitle }: ExcelOptions,
 ): ExcelJS.Workbook {
   const t = (key: string, values?: Record<string, string>) => translate(language, key, values);
   const rtl = language !== 'en';
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet(t('pages.reports.title'), {
-    views: [{ rightToLeft: rtl, state: 'frozen', ySplit: 4 }],
     pageSetup: {
       paperSize: 9,
       orientation: 'landscape',
@@ -58,6 +59,7 @@ export function buildReportWorkbook(
     `#,##0${FRACTION_DIGITS[currency] > 0 ? '.00' : ''} "${t(`currency.${currency}`)}"`;
   const toMajor = (amount: number, currency: Currency) => amount / 10 ** FRACTION_DIGITS[currency];
 
+  if (printTitle) sheet.addRow([printTitle]).font = { bold: true, size: 12 };
   sheet.addRow([t('print.reportTitle')]).font = { bold: true, size: 14 };
   sheet.addRow([
     reportFilterParts(query, categoryName, digitStyle)
@@ -81,6 +83,8 @@ export function buildReportWorkbook(
     t('area.notes'),
   ]);
   header.font = { bold: true };
+  // The heading lines and the column names stay in view while scrolling.
+  sheet.views = [{ rightToLeft: rtl, state: 'frozen', ySplit: header.number }];
 
   for (const row of report.rows) {
     const line = sheet.addRow([

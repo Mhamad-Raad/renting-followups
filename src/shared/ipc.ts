@@ -1,3 +1,4 @@
+import type { ActivityPage, ActivityQuery } from './audit';
 import type {
   AuthStatus,
   ChangePasswordInput,
@@ -56,7 +57,7 @@ import type {
   ReceiptPrintData,
 } from './printing';
 import type { Report, ReportFilters, ReportQuery } from './reports';
-import type { Settings, SettingsUpdate } from './settings';
+import type { LogoChoiceResult, Settings, SettingsUpdate } from './settings';
 
 /** A renderer crash report: error type and stack frames, never the message. */
 export interface RendererErrorReport {
@@ -71,6 +72,10 @@ export interface RendererErrorReport {
 export interface IpcContract {
   'settings:get': { input: undefined; output: Settings };
   'settings:update': { input: SettingsUpdate; output: Settings };
+  /** The print logo as a data address, or null when there is none. */
+  'settings:logo': { input: undefined; output: string | null };
+  'settings:chooseLogo': { input: undefined; output: LogoChoiceResult };
+  'settings:removeLogo': { input: undefined; output: null };
   'log:rendererError': { input: RendererErrorReport; output: null };
   'auth:status': { input: undefined; output: AuthStatus };
   'auth:setup': { input: SetupInput; output: { ok: true } | { ok: false; reason: 'already_set' } };
@@ -94,6 +99,7 @@ export interface IpcContract {
   'areas:delete': { input: IdInput; output: { ok: true } | { ok: false; reason: 'not_found' } };
   'areas:restore': { input: IdInput; output: RestoreResult };
   'deleted:list': { input: undefined; output: DeletedItems };
+  'activity:list': { input: ActivityQuery; output: ActivityPage };
   'payments:forArea': { input: AreaReceiptsQuery; output: Receipt[] };
   'payments:suggestedStart': { input: AreaPaymentsQuery; output: YearMonth | null };
   'payments:preview': { input: PaymentPreviewQuery; output: AllocationResult | null };
@@ -125,6 +131,9 @@ export type IpcOutput<C extends IpcChannel> = IpcContract[C]['output'];
 export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'settings:get': true,
   'settings:update': false,
+  'settings:logo': false,
+  'settings:chooseLogo': false,
+  'settings:removeLogo': false,
   'log:rendererError': true,
   'auth:status': true,
   'auth:setup': true,
@@ -148,6 +157,7 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'areas:delete': false,
   'areas:restore': false,
   'deleted:list': false,
+  'activity:list': false,
   'payments:forArea': false,
   'payments:suggestedStart': false,
   'payments:preview': false,
@@ -174,6 +184,9 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
 export const CHANGES_DATA: Record<IpcChannel, boolean> = {
   'settings:get': false,
   'settings:update': true,
+  'settings:logo': false,
+  'settings:chooseLogo': false,
+  'settings:removeLogo': false,
   'log:rendererError': false,
   'auth:status': false,
   'auth:setup': false,
@@ -197,6 +210,7 @@ export const CHANGES_DATA: Record<IpcChannel, boolean> = {
   'areas:delete': true,
   'areas:restore': true,
   'deleted:list': false,
+  'activity:list': false,
   'payments:forArea': false,
   'payments:suggestedStart': false,
   'payments:preview': false,

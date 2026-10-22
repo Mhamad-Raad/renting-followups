@@ -3,14 +3,14 @@ import { useTranslation } from 'react-i18next';
 import type { RestoreResult } from '@shared/areas';
 import type { IpcResult } from '@shared/ipc';
 import { dateStringFromLocal, formatDate } from '@shared/dates';
-import { callIpc, useIpcQuery } from '../app/ipc';
-import { useSettings } from '../app/SettingsContext';
-import { BigButton } from '../components/BigButton';
-import { EmptyState } from '../components/EmptyState';
-import { LinkButton } from '../components/LinkButton';
-import { Notice } from '../components/Notice';
-import { PageHeader } from '../components/PageHeader';
-import styles from './DeletedItemsPage.module.css';
+import { callIpc, useIpcQuery } from '../../app/ipc';
+import { useSettings } from '../../app/SettingsContext';
+import { BigButton } from '../../components/BigButton';
+import { EmptyState } from '../../components/EmptyState';
+import { LinkButton } from '../../components/LinkButton';
+import { Notice } from '../../components/Notice';
+import { PageHeader } from '../../components/PageHeader';
+import styles from './SettingsList.module.css';
 
 interface DeletedRow {
   id: number;
@@ -86,7 +86,7 @@ export function DeletedItemsPage() {
           ))}
         <div>
           <LinkButton to="/settings" icon="back">
-            {t('deletedItems.back')}
+            {t('pages.settings.title')}
           </LinkButton>
         </div>
       </div>

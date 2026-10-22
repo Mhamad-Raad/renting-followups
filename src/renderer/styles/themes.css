@@ -11,16 +11,38 @@
   --color-border: #d6d1c7;
   --color-text: #1f2328;
   --color-text-muted: #545b63;
-  --color-accent: #1f5f99;
-  --color-accent-hover: #194e7e;
-  --color-accent-soft: #e2ecf6;
-  --color-on-accent: #ffffff;
   --color-danger: #b3261e;
   --color-danger-hover: #93201a;
   --color-focus: #f0a43a;
   --color-backdrop: rgb(20 22 26 / 45%);
   --shadow-card: 0 1px 2px rgb(0 0 0 / 6%), 0 2px 8px rgb(0 0 0 / 5%);
   --shadow-dialog: 0 12px 40px rgb(0 0 0 / 22%);
+
+  /* Theme colours (Settings → Theme colour), each with its hover, soft background and text on it. */
+  --accent-blue: #1f5f99;
+  --accent-blue-hover: #194e7e;
+  --accent-blue-soft: #e2ecf6;
+  --accent-blue-on: #ffffff;
+  --accent-teal: #0f6b6b;
+  --accent-teal-hover: #0b5555;
+  --accent-teal-soft: #dcefee;
+  --accent-teal-on: #ffffff;
+  --accent-indigo: #3f4fa8;
+  --accent-indigo-hover: #33408a;
+  --accent-indigo-soft: #e5e8f6;
+  --accent-indigo-on: #ffffff;
+  --accent-purple: #6a3f9a;
+  --accent-purple-hover: #573280;
+  --accent-purple-soft: #eee6f6;
+  --accent-purple-on: #ffffff;
+  --accent-brown: #8a5a2b;
+  --accent-brown-hover: #714822;
+  --accent-brown-soft: #f3e9de;
+  --accent-brown-on: #ffffff;
+  --accent-slate: #4a5866;
+  --accent-slate-hover: #3b4752;
+  --accent-slate-soft: #e6eaee;
+  --accent-slate-on: #ffffff;
 
   --status-paid: #1e6b2a;
   --status-paid-bg: #dff0e0;
@@ -42,16 +64,37 @@
   --color-border: #3b4048;
   --color-text: #eceef1;
   --color-text-muted: #aab0b8;
-  --color-accent: #6ea8e0;
-  --color-accent-hover: #8dbbe8;
-  --color-accent-soft: #23364a;
-  --color-on-accent: #0f1a26;
   --color-danger: #f08a80;
   --color-danger-hover: #f5a59d;
   --color-focus: #f0b45a;
   --color-backdrop: rgb(0 0 0 / 60%);
   --shadow-card: 0 1px 2px rgb(0 0 0 / 30%);
   --shadow-dialog: 0 12px 40px rgb(0 0 0 / 55%);
+
+  --accent-blue: #6ea8e0;
+  --accent-blue-hover: #8dbbe8;
+  --accent-blue-soft: #23364a;
+  --accent-blue-on: #0f1a26;
+  --accent-teal: #5cc2bd;
+  --accent-teal-hover: #7dd0cc;
+  --accent-teal-soft: #1d3a3a;
+  --accent-teal-on: #0d1f1f;
+  --accent-indigo: #9aa5f0;
+  --accent-indigo-hover: #b3bbf4;
+  --accent-indigo-soft: #2a2f50;
+  --accent-indigo-on: #141833;
+  --accent-purple: #c09be8;
+  --accent-purple-hover: #cfb2ee;
+  --accent-purple-soft: #3a2b4c;
+  --accent-purple-on: #1e1229;
+  --accent-brown: #d9a66e;
+  --accent-brown-hover: #e3b989;
+  --accent-brown-soft: #43331f;
+  --accent-brown-on: #24190c;
+  --accent-slate: #a9b8c7;
+  --accent-slate-hover: #bfcbd6;
+  --accent-slate-soft: #313a44;
+  --accent-slate-on: #141a20;
 
   --status-paid: #8fd694;
   --status-paid-bg: #1f3b25;
@@ -63,4 +106,43 @@
   --status-upcoming-bg: #30343a;
   --status-na: #8a9098;
   --status-na-bg: #26292e;
+}
+
+/* The chosen theme colour, in the current light or dark values. */
+:root,
+:root[data-accent='blue'] {
+  --color-accent: var(--accent-blue);
+  --color-accent-hover: var(--accent-blue-hover);
+  --color-accent-soft: var(--accent-blue-soft);
+  --color-on-accent: var(--accent-blue-on);
+}
+:root[data-accent='teal'] {
+  --color-accent: var(--accent-teal);
+  --color-accent-hover: var(--accent-teal-hover);
+  --color-accent-soft: var(--accent-teal-soft);
+  --color-on-accent: var(--accent-teal-on);
+}
+:root[data-accent='indigo'] {
+  --color-accent: var(--accent-indigo);
+  --color-accent-hover: var(--accent-indigo-hover);
+  --color-accent-soft: var(--accent-indigo-soft);
+  --color-on-accent: var(--accent-indigo-on);
+}
+:root[data-accent='purple'] {
+  --color-accent: var(--accent-purple);
+  --color-accent-hover: var(--accent-purple-hover);
+  --color-accent-soft: var(--accent-purple-soft);
+  --color-on-accent: var(--accent-purple-on);
+}
+:root[data-accent='brown'] {
+  --color-accent: var(--accent-brown);
+  --color-accent-hover: var(--accent-brown-hover);
+  --color-accent-soft: var(--accent-brown-soft);
+  --color-on-accent: var(--accent-brown-on);
+}
+:root[data-accent='slate'] {
+  --color-accent: var(--accent-slate);
+  --color-accent-hover: var(--accent-slate-hover);
+  --color-accent-soft: var(--accent-slate-soft);
+  --color-on-accent: var(--accent-slate-on);
 }

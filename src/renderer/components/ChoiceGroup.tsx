@@ -9,6 +9,10 @@ interface Choice<T extends string> {
   lang?: string;
   /** Forces left-to-right order, for labels such as "1 2 3" that must not be reversed in RTL. */
   ltr?: boolean;
+  /** Draws the choice in this font, for picking a font by its look. */
+  fontFamily?: string;
+  /** A second, smaller line under the label, such as sample letters. */
+  sample?: string;
 }
 
 interface ChoiceGroupProps<T extends string> {
@@ -34,7 +38,12 @@ export function ChoiceGroup<T extends string>({
       <legend className={styles.legend}>{label}</legend>
       <div className={styles.choices}>
         {choices.map((choice) => (
-          <label key={choice.value} className={styles.choice} lang={choice.lang}>
+          <label
+            key={choice.value}
+            className={styles.choice}
+            lang={choice.lang}
+            style={choice.fontFamily ? { fontFamily: choice.fontFamily } : undefined}
+          >
             <input
               type="radio"
               name={name}
@@ -44,6 +53,7 @@ export function ChoiceGroup<T extends string>({
             />
             {choice.value === value && <Icon name="check" className={styles.tick} />}
             {choice.ltr ? <bdi dir="ltr">{choice.label}</bdi> : <span>{choice.label}</span>}
+            {choice.sample && <span className={styles.sample}>{choice.sample}</span>}
           </label>
         ))}
       </div>

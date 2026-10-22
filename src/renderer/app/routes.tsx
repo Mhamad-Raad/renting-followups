@@ -4,11 +4,12 @@ import { AreaFormPage } from '../pages/areas/AreaFormPage';
 import { AreaPage } from '../pages/areas/AreaPage';
 import { AreasPage } from '../pages/areas/AreasPage';
 import { CategoriesPage } from '../pages/areas/CategoriesPage';
-import { DeletedItemsPage } from '../pages/DeletedItemsPage';
+import { ActivityLogPage } from '../pages/settings/ActivityLogPage';
+import { DeletedItemsPage } from '../pages/settings/DeletedItemsPage';
 import { HomePage } from '../pages/home/HomePage';
 import { NotificationsPage } from '../pages/notifications/NotificationsPage';
 import { ReportsPage } from '../pages/reports/ReportsPage';
-import { SettingsPage } from '../pages/SettingsPage';
+import { SettingsPage } from '../pages/settings/SettingsPage';
 
 interface NavItem {
   path: string;
@@ -43,4 +44,5 @@ export const INNER_ROUTES: readonly { path: string; element: ReactElement }[] = 
   { path: '/areas/:id', element: <AreaPage /> },
   { path: '/areas/:id/edit', element: <AreaFormPage /> },
   { path: '/settings/deleted', element: <DeletedItemsPage /> },
+  { path: '/settings/activity', element: <ActivityLogPage /> },
 ];

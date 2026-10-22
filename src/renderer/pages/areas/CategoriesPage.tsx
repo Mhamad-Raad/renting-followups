@@ -1,12 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CATEGORY_NAME_MAX, type Category, type CategoryColor } from '@shared/categories';
+import {
+  CATEGORY_COLORS,
+  CATEGORY_NAME_MAX,
+  type Category,
+  type CategoryColor,
+} from '@shared/categories';
 import { formatPlain } from '@shared/formatNumber';
 import { callIpc, useIpcQuery } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { CategoryDot } from '../../components/CategoryDot';
-import { ColorPicker } from '../../components/ColorPicker';
+import { SwatchPicker } from '../../components/SwatchPicker';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Dialog, DialogActions } from '../../components/Dialog';
 import { EmptyState } from '../../components/EmptyState';
@@ -160,10 +165,13 @@ function CategoryForm({ category, onSaved, onCancel }: CategoryFormProps) {
         autoFocus
         dir="auto"
       />
-      <ColorPicker
+      <SwatchPicker
         label={t('categories.color')}
-        noColorLabel={t('categories.noColor')}
         value={color}
+        swatches={[
+          { value: null, color: null, label: t('categories.noColor'), showLabel: true },
+          ...CATEGORY_COLORS.map((value) => ({ value, color: value, label: value })),
+        ]}
         onChange={setColor}
       />
       {problem && <Notice tone="error">{problem}</Notice>}
