@@ -11,6 +11,7 @@ import { registerBackupIpc, registerRestoreIpc, type RestoreDependencies } from 
 import { registerCategoryIpc } from './categories';
 import { handle, setUnlockCheck } from './handle';
 import { registerHomeIpc } from './home';
+import { registerImportIpc } from './import';
 import { registerLogIpc } from './log';
 import { registerNotificationIpc } from './notifications';
 import { registerPaymentIpc } from './payments';
@@ -50,6 +51,7 @@ export function registerIpcHandlers(deps: IpcDependencies): void {
   registerPrintIpc(repos);
   registerNotificationIpc(repos);
   registerActivityIpc(repos);
+  registerImportIpc(deps.db, repos);
   registerRestoreIpc(deps.restore);
   registerBackupIpc({
     db: deps.db,

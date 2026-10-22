@@ -6,6 +6,7 @@ import type {
   RestoreOutcome,
 } from './backup';
 import type { ActivityPage, ActivityQuery } from './audit';
+import type { ImportChoice, ImportResult, TemplateResult } from './import';
 import type {
   AuthStatus,
   ChangePasswordInput,
@@ -117,6 +118,12 @@ export interface IpcContract {
   'restore:cancel': { input: undefined; output: null };
   /** How a restore at this start went, for the lock screen; null when there was none. */
   'restore:result': { input: undefined; output: RestoreOutcome | null };
+  /** Saves the import template where the owner chooses. */
+  'import:template': { input: undefined; output: TemplateResult };
+  /** Asks for a file and checks it; the preview waits in the main process for import:apply. */
+  'import:choose': { input: undefined; output: ImportChoice };
+  /** Imports the areas of the file checked by import:choose. */
+  'import:apply': { input: undefined; output: ImportResult };
   'payments:forArea': { input: AreaReceiptsQuery; output: Receipt[] };
   'payments:suggestedStart': { input: AreaPaymentsQuery; output: YearMonth | null };
   'payments:preview': { input: PaymentPreviewQuery; output: AllocationResult | null };
@@ -182,6 +189,9 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'restore:apply': false,
   'restore:cancel': false,
   'restore:result': true,
+  'import:template': false,
+  'import:choose': false,
+  'import:apply': false,
   'payments:forArea': false,
   'payments:suggestedStart': false,
   'payments:preview': false,
@@ -242,6 +252,9 @@ export const CHANGES_DATA: Record<IpcChannel, boolean> = {
   'restore:apply': false,
   'restore:cancel': false,
   'restore:result': false,
+  'import:template': false,
+  'import:choose': false,
+  'import:apply': true,
   'payments:forArea': false,
   'payments:suggestedStart': false,
   'payments:preview': false,
