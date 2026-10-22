@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { DIGIT_STYLES, toDigitStyle } from '@shared/digits';
 import type { IpcErrorCode } from '@shared/ipc';
 import { FONT_SIZES, LANGUAGES, type SettingsUpdate } from '@shared/settings';
-import { useSettings } from '../app/SettingsContext';
-import { ChoiceGroup } from '../components/ChoiceGroup';
-import { Notice } from '../components/Notice';
-import { LinkButton } from '../components/LinkButton';
-import { PageHeader } from '../components/PageHeader';
-import { LANGUAGE_NAMES } from '../i18n';
+import { useSettings } from '../../app/SettingsContext';
+import { ChoiceGroup } from '../../components/ChoiceGroup';
+import { Notice } from '../../components/Notice';
+import { LinkButton } from '../../components/LinkButton';
+import { PageHeader } from '../../components/PageHeader';
+import { LANGUAGE_NAMES } from '../../i18n';
 import { SecuritySection } from './SecuritySection';
 import styles from './SettingsPage.module.css';
 

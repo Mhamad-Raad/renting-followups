@@ -4,11 +4,11 @@ import { AreaFormPage } from '../pages/areas/AreaFormPage';
 import { AreaPage } from '../pages/areas/AreaPage';
 import { AreasPage } from '../pages/areas/AreasPage';
 import { CategoriesPage } from '../pages/areas/CategoriesPage';
-import { DeletedItemsPage } from '../pages/DeletedItemsPage';
+import { DeletedItemsPage } from '../pages/settings/DeletedItemsPage';
 import { HomePage } from '../pages/home/HomePage';
 import { NotificationsPage } from '../pages/notifications/NotificationsPage';
 import { ReportsPage } from '../pages/reports/ReportsPage';
-import { SettingsPage } from '../pages/SettingsPage';
+import { SettingsPage } from '../pages/settings/SettingsPage';
 
 interface NavItem {
   path: string;
