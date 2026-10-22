@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { DIGIT_STYLES, toDigitStyle } from '@shared/digits';
 import type { IpcErrorCode } from '@shared/ipc';
 import { LANGUAGES, type SettingsUpdate } from '@shared/settings';
+import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { ChoiceGroup } from '../../components/ChoiceGroup';
 import { LinkButton } from '../../components/LinkButton';
@@ -23,9 +24,12 @@ export function SettingsPage() {
   const { t } = useTranslation();
   const { settings, updateSettings } = useSettings();
   const [error, setError] = useState<IpcErrorCode | null>(null);
+  const mounted = useMountedRef();
 
   const change: ChangeSettings = (changes) => {
-    void updateSettings(changes).then((result) => setError(result.ok ? null : result.error));
+    void updateSettings(changes).then((result) => {
+      if (mounted.current) setError(result.ok ? null : result.error);
+    });
   };
 
   return (
