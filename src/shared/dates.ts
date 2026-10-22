@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { formatPlain } from './formatNumber';
-import type { DigitStyle } from './digits';
+import { numberSeparator, toDigitStyle, type DigitStyle } from './digits';
 
 /** The years the app accepts anywhere: wide enough for old records and future rent. */
 export const MIN_YEAR = 2000;
@@ -79,6 +79,14 @@ export function formatDate(value: DateString, style: DigitStyle): string {
   return [parts.day, parts.month, parts.year].map((part) => formatPlain(part, style)).join('/');
 }
 
+/** Shows a moment as local day/month/year and 24-hour time, for example 20/10/2026 14:05. */
+export function formatDateTime(date: Date, style: DigitStyle): string {
+  const time = [date.getHours(), date.getMinutes()]
+    .map((part) => String(part).padStart(2, '0'))
+    .join(':');
+  return `${formatDate(dateStringFromLocal(date), style)}${numberSeparator(' ', style)}${toDigitStyle(time, style)}`;
+}
+
 /** Shows a month as month/year, for example 10/2026. */
 export function formatYearMonth({ year, month }: YearMonth, style: DigitStyle): string {
   return `${formatPlain(month, style)}/${formatPlain(year, style)}`;
@@ -112,7 +120,7 @@ export function formatMonthRuns(
     .map(({ from, to }) =>
       compareYearMonth(from, to) === 0
         ? formatYearMonth(from, style)
-        : `${formatYearMonth(from, style)} – ${formatYearMonth(to, style)}`,
+        : `${formatYearMonth(from, style)}${numberSeparator(' – ', style)}${formatYearMonth(to, style)}`,
     )
-    .join(separator);
+    .join(numberSeparator(separator, style));
 }
