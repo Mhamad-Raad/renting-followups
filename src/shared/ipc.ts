@@ -1,3 +1,4 @@
+import type { ActivityPage, ActivityQuery } from './audit';
 import type {
   AuthStatus,
   ChangePasswordInput,
@@ -98,6 +99,7 @@ export interface IpcContract {
   'areas:delete': { input: IdInput; output: { ok: true } | { ok: false; reason: 'not_found' } };
   'areas:restore': { input: IdInput; output: RestoreResult };
   'deleted:list': { input: undefined; output: DeletedItems };
+  'activity:list': { input: ActivityQuery; output: ActivityPage };
   'payments:forArea': { input: AreaReceiptsQuery; output: Receipt[] };
   'payments:suggestedStart': { input: AreaPaymentsQuery; output: YearMonth | null };
   'payments:preview': { input: PaymentPreviewQuery; output: AllocationResult | null };
@@ -155,6 +157,7 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'areas:delete': false,
   'areas:restore': false,
   'deleted:list': false,
+  'activity:list': false,
   'payments:forArea': false,
   'payments:suggestedStart': false,
   'payments:preview': false,
@@ -207,6 +210,7 @@ export const CHANGES_DATA: Record<IpcChannel, boolean> = {
   'areas:delete': true,
   'areas:restore': true,
   'deleted:list': false,
+  'activity:list': false,
   'payments:forArea': false,
   'payments:suggestedStart': false,
   'payments:preview': false,

@@ -1,6 +1,7 @@
 import type { Repositories } from '../db/repositories';
 import type { AuthService } from '../services/auth';
 import type { LogoStore } from '../services/logo';
+import { registerActivityIpc } from './activity';
 import { registerAreaIpc } from './areas';
 import { registerAuthIpc } from './auth';
 import { registerCategoryIpc } from './categories';
@@ -36,4 +37,5 @@ export function registerIpcHandlers({ repos, auth, logo }: IpcDependencies): voi
   registerReportIpc(repos);
   registerPrintIpc(repos);
   registerNotificationIpc(repos);
+  registerActivityIpc(repos);
 }

@@ -1,4 +1,5 @@
 import type { Db } from '../connection';
+import { createActivityRepository } from './activity';
 import { createAllocationRepository } from './allocations';
 import { createAreaRepository } from './areas';
 import { createAreaViewRepository } from './areaViews';
@@ -32,6 +33,7 @@ export function createRepositories(db: Db) {
     paid,
     payments,
     reports: createReportRepository(db, { paid, prices }),
+    activity: createActivityRepository(db),
   };
 }
 
