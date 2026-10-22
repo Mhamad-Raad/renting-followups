@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -67,5 +67,8 @@ describe('startup check of the data file', () => {
     writeFileSync(file, 'this is not a database, the file was overwritten');
     expect(startupCheck()).toBe('damaged');
     expect(readLanguageQuietly(file)).toBeNull();
+    // Nothing keeps the file open: it can be removed at once (Windows refuses while it is open).
+    rmSync(file);
+    expect(existsSync(file)).toBe(false);
   });
 });

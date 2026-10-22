@@ -11,8 +11,14 @@ let connection: Db | null = null;
  */
 export function createConnection(file: string): Db {
   const db = new Database(file);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
+  try {
+    db.pragma('journal_mode = WAL');
+    db.pragma('foreign_keys = ON');
+  } catch (error) {
+    // A file that is not a database fails here: close it, so it is never left open (and locked on Windows).
+    db.close();
+    throw error;
+  }
   return db;
 }
 
