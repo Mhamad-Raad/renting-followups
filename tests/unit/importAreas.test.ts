@@ -133,6 +133,7 @@ describe('checking a file', () => {
         row({ name: 'E', renterPhone: 'call me' }),
         row({ name: 'F', startYear: String(YEAR + 3), monthlyPrice: '' }),
         row({ name: 'x'.repeat(121) }),
+        row({ name: 'G', monthlyPrice: '99999999999999' }),
       ),
     );
     expect(preview.rows).toEqual([]);
@@ -158,6 +159,7 @@ describe('checking a file', () => {
         ],
       },
       { row: 8, problems: [{ kind: 'too_long', column: 'name', max: 120 }] },
+      { row: 9, problems: [{ kind: 'bad_price', currency: 'IQD' }] },
     ]);
   });
 

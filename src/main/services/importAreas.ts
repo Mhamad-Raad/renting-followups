@@ -5,6 +5,7 @@ import {
   ADDRESS_MAX,
   AREA_NAME_MAX,
   areaCreateSchema,
+  MAX_MONTHLY_PRICE,
   NOTES_MAX,
   PERSON_NAME_MAX,
   PHONE_MAX,
@@ -187,7 +188,8 @@ function checkRow(
   let monthlyPrice: number | null = null;
   if (value('monthlyPrice') !== '') {
     const parsed = parseAmount(value('monthlyPrice'), FRACTION_DIGITS[currency ?? 'USD']);
-    if (parsed.ok) monthlyPrice = parsed.value;
+    // The same upper limit as the area form, so a checked row can always be saved.
+    if (parsed.ok && parsed.value <= MAX_MONTHLY_PRICE) monthlyPrice = parsed.value;
     else problems.push({ kind: 'bad_price', currency });
   }
 
