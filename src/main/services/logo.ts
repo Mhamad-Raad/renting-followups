@@ -47,8 +47,13 @@ export function createLogoStore(directory: string, store: KeyValueStore) {
       mkdirSync(directory, { recursive: true });
       const file = join(directory, KINDS[kind].file);
       // Written beside the old logo and swapped in whole, so a failure never leaves half a picture.
-      writeFileSync(`${file}.tmp`, bytes);
-      renameSync(`${file}.tmp`, file);
+      const temporary = `${file}.tmp`;
+      try {
+        writeFileSync(temporary, bytes);
+        renameSync(temporary, file);
+      } finally {
+        rmSync(temporary, { force: true });
+      }
       store.write(LOGO_KEY, KINDS[kind].file);
       removeFiles(kind);
       return { ok: true };

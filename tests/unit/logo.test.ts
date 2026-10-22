@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -63,6 +63,16 @@ describe('logo store', () => {
     const big = new Uint8Array(LOGO_MAX_BYTES + 1);
     big.set(PNG);
     expect(logoStore().save(big)).toEqual({ ok: false, reason: 'too_large' });
+  });
+
+  it('leaves no temporary file and keeps the old logo when the new one cannot be put in place', () => {
+    const logo = logoStore();
+    logo.save(PNG);
+    // A folder where the new file should go makes the final swap fail.
+    mkdirSync(join(directory, 'logo.jpg'));
+    expect(() => logo.save(JPEG)).toThrow();
+    expect(readdirSync(directory).sort()).toEqual(['logo.jpg', 'logo.png']);
+    expect(logo.read()).toMatch(/^data:image\/png;base64,/);
   });
 
   it('removes the logo and its file', () => {
