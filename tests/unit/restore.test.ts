@@ -236,6 +236,27 @@ describe('receipt numbers after a restore', () => {
   });
 });
 
+describe('a damaged data file', () => {
+  it('is replaced by the backup, with it and its journal kept in the safety copies', async () => {
+    const source = makeDatabase(join(root, 'source.db'), 1);
+    const name = await createBackup(source, backups, '2026-10-01', null);
+    source.close();
+    writeFileSync(paths.database, 'damaged beyond reading');
+    writeFileSync(`${paths.database}-wal`, 'a journal that belongs to it');
+    const { info } = checkBackup(join(backups, name), paths, MIGRATIONS);
+    if (info) confirmRestore(paths, info);
+    expect(applyReadyRestore(paths, NOW)?.ok).toBe(true);
+    expect(areaCount(paths.database)).toBe(1);
+    expect(existsSync(`${paths.database}-wal`)).toBe(false);
+    const kept = readdirSync(paths.safetyFolder).sort();
+    expect(kept).toHaveLength(2);
+    expect(readFileSync(join(paths.safetyFolder, kept[0] ?? ''), 'utf8')).toBe(
+      'damaged beyond reading',
+    );
+    expect(kept[1]).toMatch(/\.db-wal$/);
+  });
+});
+
 describe('checking a chosen file', () => {
   it('refuses an older backup that cannot be brought up to date', async () => {
     const older = makeDatabase(join(root, 'old.db'), 1, MIGRATIONS.slice(0, 2));

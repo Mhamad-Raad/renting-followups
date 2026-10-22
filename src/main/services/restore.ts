@@ -111,6 +111,26 @@ export function raiseReceiptCounter(file: string, atLeast: number): void {
   }
 }
 
+const RENAME_TRIES = 5;
+const RENAME_WAIT_MS = 200;
+
+/**
+ * Renames, trying again for a moment if the file is briefly held by another
+ * program (on Windows, a virus scanner or a sync tool can do this).
+ */
+function renameWithRetry(from: string, to: string): void {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      renameSync(from, to);
+      return;
+    } catch (error) {
+      if (attempt >= RENAME_TRIES) throw error;
+      // A short wait at startup, before any window exists; nothing else is waiting on this.
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, RENAME_WAIT_MS);
+    }
+  }
+}
+
 /** Copies a file if it exists. */
 function copyIfPresent(from: string, to: string): void {
   if (existsSync(from)) copyFileSync(from, to);
@@ -118,21 +138,25 @@ function copyIfPresent(from: string, to: string): void {
 
 /**
  * Folds any changes still in the journal (left by a crash) into the data file,
- * so the file on its own is complete. Not possible for a damaged file; its
- * journal is then kept with the safety copy instead.
+ * so the file on its own is complete. Returns false when that is not possible
+ * (a damaged file); SQLite may then remove the journal, so it must already be
+ * in the safety copy.
  */
-function foldJournal(database: string): void {
+function foldJournal(database: string): boolean {
   try {
     const old = new Database(database, { fileMustExist: true });
     try {
       old.pragma('wal_checkpoint(TRUNCATE)');
+      return true;
     } finally {
       old.close();
     }
   } catch {
-    // Damaged or missing: handled by moving the journal aside below.
+    return false;
   }
 }
+
+const JOURNALS = ['-wal', '-shm'] as const;
 
 /**
  * Runs at startup, before the database is opened. If a confirmed backup is
@@ -149,33 +173,32 @@ export function applyReadyRestore(paths: RestorePaths, now: Date): RestoreOutcom
   } catch {
     // The date is only for the message; the restore itself does not need it.
   }
-  const moved: [from: string, to: string][] = [];
+  const safety = join(paths.safetyFolder, safetyCopyName('before-restore', now));
+  let folded = false;
   try {
+    // First an exact copy of the files as they are, before SQLite touches them.
     mkdirSync(paths.safetyFolder, { recursive: true });
-    const safety = join(paths.safetyFolder, safetyCopyName('before-restore', now));
-    foldJournal(paths.database);
-    // Receipts printed after the backup was made keep their numbers: counting goes on from the higher one.
-    raiseReceiptCounter(ready(paths), highestReceiptNumber(paths.database));
-    copyIfPresent(paths.database, `${safety}.db`);
+    for (const suffix of ['', ...JOURNALS]) {
+      copyIfPresent(`${paths.database}${suffix}`, `${safety}.db${suffix}`);
+    }
     for (const kind of LOGO_KINDS) {
       copyIfPresent(join(paths.logoFolder, logoFileName(kind)), `${safety}.logo.${kind}`);
     }
-    // A journal left over would be applied to the backup and spoil it, so it moves
-    // to the safety copy (never deleted).
-    for (const suffix of ['-wal', '-shm']) {
-      const journal = `${paths.database}${suffix}`;
-      if (!existsSync(journal)) continue;
-      renameSync(journal, `${safety}.db${suffix}`);
-      moved.push([journal, `${safety}.db${suffix}`]);
-    }
-    renameSync(ready(paths), paths.database);
+    folded = foldJournal(paths.database);
+    // Receipts printed after the backup was made keep their numbers: counting goes on from the higher one.
+    raiseReceiptCounter(ready(paths), highestReceiptNumber(paths.database));
+    // A journal left over would be applied to the backup and spoil it; it is in the safety copy.
+    for (const suffix of JOURNALS) rmSync(`${paths.database}${suffix}`, { force: true });
+    renameWithRetry(ready(paths), paths.database);
   } catch {
-    // Put back whatever was moved, so the current data is exactly as before.
-    for (const [from, to] of moved) {
-      try {
-        renameSync(to, from);
-      } catch {
-        // Still safe: the file is in the safety copies folder.
+    // Put the journal back if it was not folded in, so the current data is exactly as before.
+    if (!folded) {
+      for (const suffix of JOURNALS) {
+        try {
+          copyIfPresent(`${safety}.db${suffix}`, `${paths.database}${suffix}`);
+        } catch {
+          // Still safe: the journal is in the safety copies folder.
+        }
       }
     }
     clearStep(paths, 'ready');
