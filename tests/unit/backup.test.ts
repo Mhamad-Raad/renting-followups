@@ -64,6 +64,17 @@ describe('createBackup', () => {
     expect(readFileSync(join(folder, 'rent-backup-2026-10-22.logo.png'), 'utf8')).toBe('picture');
   });
 
+  it('never pairs a new backup with a logo left from one deleted by hand', async () => {
+    writeFileSync(join(folder, 'rent-backup-2026-10-22.logo.png'), 'old picture');
+    const logo = join(folder, 'source.jpg');
+    writeFileSync(logo, 'new picture');
+    await createBackup(db, folder, '2026-10-22', { path: logo, extension: 'jpg' });
+    expect(existsSync(join(folder, 'rent-backup-2026-10-22.logo.png'))).toBe(false);
+    expect(readFileSync(join(folder, 'rent-backup-2026-10-22.logo.jpg'), 'utf8')).toBe(
+      'new picture',
+    );
+  });
+
   it('says plainly when the folder is gone, and writes nothing', async () => {
     await expect(createBackup(db, join(folder, 'usb'), '2026-10-22', null)).rejects.toBeInstanceOf(
       BackupFolderMissingError,

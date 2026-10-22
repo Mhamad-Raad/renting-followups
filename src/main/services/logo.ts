@@ -17,6 +17,7 @@ const KINDS = {
   jpg: { file: 'logo.jpg', mime: 'image/jpeg', signature: [0xff, 0xd8, 0xff] },
 } as const;
 export type LogoKind = keyof typeof KINDS;
+export const LOGO_KINDS = Object.keys(KINDS) as LogoKind[];
 
 /** The logo copy's file name in the logo folder for each picture type. */
 export function logoFileName(kind: LogoKind): string {
@@ -36,7 +37,7 @@ export function createLogoStore(directory: string, store: KeyValueStore) {
   /** The stored kind; anything else in the setting (for example a hand-edited path) is ignored. */
   const storedKind = (): LogoKind | null => {
     const name = store.read(LOGO_KEY);
-    return (Object.keys(KINDS) as LogoKind[]).find((kind) => KINDS[kind].file === name) ?? null;
+    return LOGO_KINDS.find((kind) => KINDS[kind].file === name) ?? null;
   };
 
   const removeFiles = (keep: LogoKind | null) => {

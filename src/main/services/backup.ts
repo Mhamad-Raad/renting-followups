@@ -12,7 +12,7 @@ import Database from 'better-sqlite3';
 import { BACKUPS_KEPT } from '@shared/backup';
 import type { DateString } from '@shared/dates';
 import type { Db } from '../db/connection';
-import type { LogoKind } from './logo';
+import { LOGO_KINDS, type LogoKind } from './logo';
 
 /**
  * Backups (ARCHITECTURE.md section 13): a full copy of the database made with
@@ -83,6 +83,8 @@ export async function createBackup(
   let number = 1;
   while (existsSync(join(folder, backupFileName(today, number)))) number += 1;
   const name = backupFileName(today, number);
+  // A logo copy left from a backup of this name deleted by hand must not be taken for this one's.
+  for (const kind of LOGO_KINDS) rmSync(join(folder, logoCopyName(name, kind)), { force: true });
   const partial = join(folder, `${name}.partial`);
   const logoCopy = logo ? join(folder, logoCopyName(name, logo.extension)) : null;
   try {

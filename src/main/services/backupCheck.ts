@@ -6,7 +6,8 @@ import { dateStringFromLocal } from '@shared/dates';
 import { createConnection } from '../db/connection';
 import { migrate, type Migration } from '../db/migrate';
 import { checkCopy, dateInBackupName, logoCopyName } from './backup';
-import { clearStep, LOGO_KINDS, pending, stagedLogo, type RestorePaths } from './restore';
+import { LOGO_KINDS } from './logo';
+import { clearStep, pending, stagedLogo, type RestorePaths } from './restore';
 
 /**
  * Checking a chosen backup before the owner is asked to confirm a restore

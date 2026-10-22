@@ -12,7 +12,7 @@ import Database from 'better-sqlite3';
 import type { BackupInfo, RestoreOutcome } from '@shared/backup';
 import type { DateString } from '@shared/dates';
 import { safetyCopyName } from './backup';
-import { logoFileName, type LogoKind } from './logo';
+import { LOGO_KINDS, logoFileName, type LogoKind } from './logo';
 
 /**
  * Restore (ARCHITECTURE.md section 13) in two steps, so the data file is
@@ -25,8 +25,6 @@ import { logoFileName, type LogoKind } from './logo';
  *    keeps a safety copy of the current data and puts the backup in its place.
  *    An older backup is then upgraded by the normal migrations.
  */
-
-export const LOGO_KINDS: readonly LogoKind[] = ['png', 'jpg'];
 
 export interface RestorePaths {
   /** The app's `restore` folder, where a checked backup waits. */
