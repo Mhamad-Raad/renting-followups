@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BACKUPS_KEPT } from '@shared/backup';
 import { formatDate } from '@shared/dates';
+import { formatPlain } from '@shared/formatNumber';
 import { callIpc, useIpcQuery } from '../../app/ipc';
 import { useBackupNow } from '../../app/useBackupNow';
 import { useMountedRef } from '../../app/useMountedRef';
@@ -35,7 +37,9 @@ export function BackupSection() {
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>{t('backup.title')}</h2>
-      <p className={styles.hint}>{t('backup.intro')}</p>
+      <p className={styles.hint}>
+        {t('backup.intro', { number: formatPlain(BACKUPS_KEPT, settings.digitStyle) })}
+      </p>
       {message && <Notice tone={message.tone}>{message.text}</Notice>}
       {info && (
         <>

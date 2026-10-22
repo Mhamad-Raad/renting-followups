@@ -1,5 +1,8 @@
 import type { DateString } from './dates';
 
+/** How many backups are kept in the folder; older ones made by the app are removed. */
+export const BACKUPS_KEPT = 12;
+
 /** What Settings shows about backups. */
 export interface BackupStatus {
   /** The chosen backup folder; null until one is chosen. */

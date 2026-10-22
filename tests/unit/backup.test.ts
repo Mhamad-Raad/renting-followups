@@ -11,8 +11,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { BACKUPS_KEPT } from '@shared/backup';
 import {
-  BACKUPS_KEPT,
   BackupFolderMissingError,
   createBackup,
   dateInBackupName,

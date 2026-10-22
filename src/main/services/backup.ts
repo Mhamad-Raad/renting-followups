@@ -9,6 +9,7 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
+import { BACKUPS_KEPT } from '@shared/backup';
 import type { DateString } from '@shared/dates';
 import type { Db } from '../db/connection';
 import type { LogoKind } from './logo';
@@ -19,9 +20,6 @@ import type { LogoKind } from './logo';
  * copied beside it. A backup only gets its final name once it has been
  * checked, so a half-written file never looks like a good backup.
  */
-
-/** How many backups are kept in the folder; older ones made by the app are removed. */
-export const BACKUPS_KEPT = 12;
 
 const BACKUP_NAME = /^rent-backup-(\d{4}-\d{2}-\d{2})(?:-(\d+))?\.db$/;
 const LOGO_COPY_NAME = /^(rent-backup-\d{4}-\d{2}-\d{2}(?:-\d+)?)\.logo\.(png|jpg)$/;

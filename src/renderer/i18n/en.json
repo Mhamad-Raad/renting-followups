@@ -336,7 +336,7 @@
   },
   "backup": {
     "title": "Backup",
-    "intro": "A backup is a copy of all your data, with your settings and logo. Keep backups somewhere safe, for example on a USB drive.",
+    "intro": "A backup is a copy of all your data, with your settings and logo. Keep backups somewhere safe, for example on a USB drive. The app keeps the newest {{number}} backups in the folder and removes older ones it made.",
     "folder": "Backup folder",
     "noFolder": "No folder chosen yet. You will be asked the first time you back up.",
     "chooseFolder": "Choose folder…",
