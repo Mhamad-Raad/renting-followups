@@ -62,6 +62,8 @@
 }
 
 .box {
+  /* Lets the amount and the word size themselves to the box's width. */
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -88,19 +90,26 @@
   line-height: 1.2;
 }
 
+/*
+ * The amount and the status word stay on one line: at the normal size when
+ * they fit, smaller in a narrow box (large text, a small window). A digit is
+ * about 0.6em wide, so `--chars` letters fit at (box width ÷ 0.6) ÷ chars.
+ */
+.amount,
+.word {
+  max-width: 100%;
+  font-size: clamp(0.7rem, calc(160cqi / var(--chars)), var(--text-md));
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .amount {
   /* One line high even when nothing is paid, so all boxes match. */
   min-height: 1lh;
-  max-width: 100%;
-  overflow-wrap: anywhere;
   color: var(--color-text);
-  font-size: var(--text-sm);
-  font-weight: 600;
 }
 
 .word {
-  font-size: var(--text-sm);
-  font-weight: 600;
   line-height: 1.3;
 }
 

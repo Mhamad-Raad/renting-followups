@@ -2,6 +2,9 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
+  justify-content: center;
+  /* The whole square around the box can be clicked, not just the small box. */
+  min-width: var(--control-height);
   min-height: var(--control-height);
   cursor: pointer;
 }

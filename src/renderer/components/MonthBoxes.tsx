@@ -9,6 +9,9 @@ import styles from './MonthBoxes.module.css';
 type MonthWord = Exclude<MonthStatus, 'not_applicable'> | 'vacant' | 'notStarted';
 
 /** The word for a month. One that is not applicable says why: vacant (rent 0), or rent not started. */
+/** Lets a line of a month box shrink to fit the box instead of breaking (see `--chars` in the CSS). */
+const fitted = (text: string) => ({ '--chars': Math.max(text.length, 1) }) as CSSProperties;
+
 export function monthWord({ status, expected }: Pick<MonthBox, 'status' | 'expected'>): MonthWord {
   if (status !== 'not_applicable') return status;
   return expected === 0 ? 'vacant' : 'notStarted';
@@ -87,6 +90,8 @@ export const MonthBoxes = memo(function MonthBoxes({
     );
   }
 
+  const amountText = (paid: number) => formatAmount(paid, FRACTION_DIGITS[currency], digits);
+
   return (
     <div className={styles.container}>
       <ol
@@ -106,12 +111,18 @@ export const MonthBoxes = memo(function MonthBoxes({
             <span className={styles.number} aria-hidden="true">
               {formatPlain(box.month, digits)}
             </span>
-            <span className={styles.amount} aria-hidden="true">
-              {box.paid > 0 && (
-                <bdi dir="ltr">{formatAmount(box.paid, FRACTION_DIGITS[currency], digits)}</bdi>
-              )}
+            <span
+              className={styles.amount}
+              aria-hidden="true"
+              style={fitted(box.paid > 0 ? amountText(box.paid) : '')}
+            >
+              {box.paid > 0 && <bdi dir="ltr">{amountText(box.paid)}</bdi>}
             </span>
-            <span className={styles.word} aria-hidden="true">
+            <span
+              className={styles.word}
+              aria-hidden="true"
+              style={fitted(t(`months.status.${monthWord(box)}`))}
+            >
               {t(`months.status.${monthWord(box)}`)}
             </span>
           </li>
