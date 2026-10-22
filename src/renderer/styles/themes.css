@@ -9,11 +9,13 @@
   --color-surface: #ffffff;
   --color-surface-muted: #efece5;
   --color-border: #d6d1c7;
+  /* Edges of boxes you type in or press (fields, buttons, choices): clearly visible. */
+  --color-control-border: #857f73;
   --color-text: #1f2328;
   --color-text-muted: #545b63;
   --color-danger: #b3261e;
   --color-danger-hover: #93201a;
-  --color-focus: #f0a43a;
+  --color-focus: #b45f06;
   --color-backdrop: rgb(20 22 26 / 45%);
   --shadow-card: 0 1px 2px rgb(0 0 0 / 6%), 0 2px 8px rgb(0 0 0 / 5%);
   --shadow-dialog: 0 12px 40px rgb(0 0 0 / 22%);
@@ -62,6 +64,7 @@
   --color-surface: #24272c;
   --color-surface-muted: #2c3036;
   --color-border: #3b4048;
+  --color-control-border: #737a84;
   --color-text: #eceef1;
   --color-text-muted: #aab0b8;
   --color-danger: #f08a80;

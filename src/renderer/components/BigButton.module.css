@@ -35,7 +35,7 @@
 
 .secondary {
   background: var(--color-surface);
-  border-color: var(--color-border);
+  border-color: var(--color-control-border);
   color: var(--color-text);
 }
 .secondary:hover:not(:disabled) {

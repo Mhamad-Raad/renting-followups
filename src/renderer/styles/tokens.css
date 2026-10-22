@@ -31,7 +31,8 @@
   --control-height: max(48px, 2.75rem);
   --sidebar-width: 15rem;
   --content-max-width: 72rem;
-  --focus-ring: 0 0 0 3px var(--color-focus);
+  /* A thin gap in the surface colour, then the ring, so it shows on any button colour. */
+  --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 5px var(--color-focus);
 
   --duration-fast: 150ms;
   --duration-normal: 220ms;

@@ -65,6 +65,14 @@ const TEXT_PAIRS: [string, string][] = [
   ['status-na', 'status-na-bg'],
 ];
 
+// Edges and the focus ring next to them; WCAG asks for 3:1 for parts of controls.
+const CONTROL_PAIRS: [string, string][] = [
+  ['color-control-border', 'color-surface'],
+  ['color-control-border', 'color-background'],
+  ['color-focus', 'color-surface'],
+  ['color-focus', 'color-background'],
+];
+
 /** The colours a theme colour gives the accent tokens, as themes.css maps them. */
 function withAccent(colors: Map<string, string>, accent: string): Map<string, string> {
   const result = new Map(colors);
@@ -105,6 +113,12 @@ describe.each([
     it.each(TEXT_PAIRS)('%s on %s is readable (at least 4.5:1)', (foreground, background) => {
       expect(contrast(color(foreground), color(background))).toBeGreaterThanOrEqual(4.5);
     });
+  });
+
+  it.each(CONTROL_PAIRS)('%s on %s is easy to see (at least 3:1)', (part, background) => {
+    const [a, b] = [base.get(part), base.get(background)];
+    if (!a || !b) throw new Error(`Missing colour --${part} or --${background}`);
+    expect(contrast(a, b)).toBeGreaterThanOrEqual(3);
   });
 
   it('keeps paid, due and late clearly different colours', () => {
