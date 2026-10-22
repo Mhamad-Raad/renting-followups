@@ -4,7 +4,7 @@ import { formatPlain } from '@shared/formatNumber';
 import { DEFAULT_REPORT_FILTERS, type ReportFilters } from '@shared/reports';
 import { callIpc, useIpcQuery } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
-import { Notice } from '../../components/Notice';
+import { LoadError } from '../../components/LoadError';
 import { PageHeader } from '../../components/PageHeader';
 import { ReportOutputButtons } from '../../print/ReportOutputButtons';
 import { AreaPicker } from './AreaPicker';
@@ -61,7 +61,7 @@ function ReportView({ initialFilters }: { initialFilters: ReportFilters | undefi
         onYear={setYear}
         onFilters={changeFilters}
       />
-      {report.state.status === 'error' && <Notice tone="error">{t('errors.unexpected')}</Notice>}
+      {report.state.status === 'error' && <LoadError onRetry={report.reload} />}
       {report.state.status === 'ready' && (
         <>
           <AreaPicker candidates={candidates} excludedIds={excludedIds} onChange={setExcludedIds} />

@@ -8,6 +8,7 @@ import { useBackupNow } from '../../app/useBackupNow';
 import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
+import { LoadError } from '../../components/LoadError';
 import { Notice } from '../../components/Notice';
 import { RestoreButton } from './RestoreButton';
 import styles from './SettingsPage.module.css';
@@ -73,7 +74,7 @@ export function BackupSection() {
         </>
       )}
       {status.state.status === 'loading' && <p className={styles.hint}>{t('common.loading')}</p>}
-      {status.state.status === 'error' && <Notice tone="error">{t('errors.unexpected')}</Notice>}
+      {status.state.status === 'error' && <LoadError onRetry={status.reload} />}
       <h3 className={styles.label}>{t('backup.restoreTitle')}</h3>
       <p className={styles.hint}>{t('backup.restoreIntro')}</p>
       <RestoreButton />

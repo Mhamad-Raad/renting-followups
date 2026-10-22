@@ -9,6 +9,7 @@ import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { EmptyState } from '../../components/EmptyState';
 import { LinkButton } from '../../components/LinkButton';
+import { LoadError } from '../../components/LoadError';
 import { MoneyText } from '../../components/MoneyText';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
@@ -130,9 +131,8 @@ export function ActivityLogPage() {
       <PageHeader title={t('activity.title')} />
       <div className={styles.stack}>
         <p className={styles.muted}>{t('activity.intro')}</p>
-        {(first.state.status === 'error' || older.status === 'error') && (
-          <Notice tone="error">{t('errors.unexpected')}</Notice>
-        )}
+        {first.state.status === 'error' && <LoadError onRetry={first.reload} />}
+        {older.status === 'error' && <Notice tone="error">{t('errors.unexpected')}</Notice>}
         {firstPage && entries.length === 0 && <EmptyState title={t('activity.empty')} />}
         {entries.length > 0 && (
           <ul className={styles.list}>

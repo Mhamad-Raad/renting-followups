@@ -8,6 +8,7 @@ import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { EmptyState } from '../../components/EmptyState';
+import { LoadError } from '../../components/LoadError';
 import { LinkButton } from '../../components/LinkButton';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
@@ -76,7 +77,7 @@ export function DeletedItemsPage() {
       <div className={styles.stack}>
         <p className={styles.muted}>{t('deletedItems.intro')}</p>
         {message && <Notice tone={message.tone}>{message.text}</Notice>}
-        {deleted.state.status === 'error' && <Notice tone="error">{t('errors.unexpected')}</Notice>}
+        {deleted.state.status === 'error' && <LoadError onRetry={deleted.reload} />}
         {deleted.state.status === 'ready' &&
           (deleted.state.data.areas.length + deleted.state.data.categories.length === 0 ? (
             <EmptyState title={t('deletedItems.empty')} />

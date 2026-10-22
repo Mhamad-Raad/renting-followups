@@ -10,6 +10,7 @@ import { BigButton } from '../../components/BigButton';
 import { CategoryDot } from '../../components/CategoryDot';
 import { EmptyState } from '../../components/EmptyState';
 import { FigureCards } from '../../components/FigureCards';
+import { LoadError } from '../../components/LoadError';
 import { LinkButton } from '../../components/LinkButton';
 import { MoneyText } from '../../components/MoneyText';
 import { StatusPill } from '../../components/MonthBoxes';
@@ -66,7 +67,7 @@ export function HomePage() {
     return (
       <>
         {header}
-        <Notice tone="error">{t('errors.unexpected')}</Notice>
+        <LoadError onRetry={summary.reload} />
       </>
     );
   }

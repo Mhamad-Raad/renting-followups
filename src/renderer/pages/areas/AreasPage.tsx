@@ -10,6 +10,7 @@ import { useDebouncedValue } from '../../app/useDebouncedValue';
 import { CategoryDot } from '../../components/CategoryDot';
 import { Checkbox } from '../../components/Checkbox';
 import { EmptyState } from '../../components/EmptyState';
+import { LoadError } from '../../components/LoadError';
 import { LinkButton } from '../../components/LinkButton';
 import { MonthBoxes, YearSummaryText } from '../../components/MonthBoxes';
 import { Notice } from '../../components/Notice';
@@ -78,7 +79,12 @@ export function AreasPage() {
     return (
       <>
         {header}
-        <Notice tone="error">{t('errors.unexpected')}</Notice>
+        <LoadError
+          onRetry={() => {
+            areas.reload();
+            categories.reload();
+          }}
+        />
       </>
     );
   }

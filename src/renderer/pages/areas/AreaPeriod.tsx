@@ -6,7 +6,7 @@ import { useSettings } from '../../app/SettingsContext';
 import { FigureCards } from '../../components/FigureCards';
 import { MoneyText } from '../../components/MoneyText';
 import { MonthBoxes } from '../../components/MonthBoxes';
-import { Notice } from '../../components/Notice';
+import { LoadError } from '../../components/LoadError';
 import styles from './AreaPage.module.css';
 import { ReportOutputButtons } from '../../print/ReportOutputButtons';
 import { areaYears, PeriodFilter } from './PeriodFilter';
@@ -48,7 +48,7 @@ export function AreaPeriod({
         onYear={period.setYear}
         onMonth={period.setMonth}
       />
-      {months.state.status === 'error' && <Notice tone="error">{t('errors.unexpected')}</Notice>}
+      {months.state.status === 'error' && <LoadError onRetry={months.reload} />}
       {months.state.status === 'ready' && months.state.data && (
         <>
           <FigureCards
@@ -102,9 +102,7 @@ export function AreaPeriod({
 
       <section className={styles.card}>
         <h2 className={styles.heading}>{t('receipts.title')}</h2>
-        {receipts.state.status === 'error' && (
-          <Notice tone="error">{t('errors.unexpected')}</Notice>
-        )}
+        {receipts.state.status === 'error' && <LoadError onRetry={receipts.reload} />}
         {receipts.state.status === 'ready' && (
           <ReceiptList
             receipts={receipts.state.data}

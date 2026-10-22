@@ -17,6 +17,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Dialog, DialogActions } from '../../components/Dialog';
 import { EmptyState } from '../../components/EmptyState';
 import { Form } from '../../components/Form';
+import { LoadError } from '../../components/LoadError';
 import { LinkButton } from '../../components/LinkButton';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
@@ -72,9 +73,7 @@ export function CategoriesPage() {
       />
       <div className={styles.stack}>
         {message && <Notice tone={message.tone}>{message.text}</Notice>}
-        {categories.state.status === 'error' && (
-          <Notice tone="error">{t('errors.unexpected')}</Notice>
-        )}
+        {categories.state.status === 'error' && <LoadError onRetry={categories.reload} />}
         {categories.state.status === 'ready' &&
           (categories.state.data.length === 0 ? (
             <EmptyState title={t('categories.empty')} />

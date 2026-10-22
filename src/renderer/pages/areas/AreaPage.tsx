@@ -11,6 +11,7 @@ import { flash, useFlashNotice } from '../../app/flash';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { LoadError } from '../../components/LoadError';
 import { LinkButton } from '../../components/LinkButton';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
@@ -41,7 +42,8 @@ export function AreaPage() {
   const area = useIpcQuery('areas:get', { id: areaId ?? 0 });
 
   if (area.state.status === 'loading') return null;
-  if (areaId === null || area.state.status === 'error' || area.state.data === null) {
+  if (area.state.status === 'error') return <LoadError onRetry={area.reload} />;
+  if (areaId === null || area.state.data === null) {
     return (
       <>
         <Notice tone="error">{t('areaForm.problems.not_found')}</Notice>
