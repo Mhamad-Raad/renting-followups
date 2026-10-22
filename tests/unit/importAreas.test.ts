@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type ExcelJS from 'exceljs';
@@ -12,6 +12,7 @@ import {
   importAreas,
   importContext,
   readTable,
+  unpackedSize,
   type TableRow,
 } from '../../src/main/services/importAreas';
 import { translate } from '../../src/main/services/translate';
@@ -356,6 +357,28 @@ describe('reading files', () => {
     const read = await readTable(file);
     if (!Array.isArray(read)) throw new Error('not read');
     expect(check(read).rows[0]).toMatchObject({ name: 'Shop 1', address: 'Main street, 2' });
+  });
+
+  it('refuses a small Excel file that would unpack to far too much', async () => {
+    // A zip table of contents with one file claiming to unpack to 100 MB.
+    const entry = Buffer.alloc(46 + 5);
+    entry.writeUInt32LE(0x02014b50, 0);
+    entry.writeUInt32LE(100 * 1024 * 1024, 24);
+    entry.writeUInt16LE(5, 28);
+    entry.write('a.xml', 46);
+    const end = Buffer.alloc(22);
+    end.writeUInt32LE(0x06054b50, 0);
+    end.writeUInt16LE(1, 10);
+    end.writeUInt32LE(entry.length, 12);
+    end.writeUInt32LE(0, 16);
+    const file = join(folder, 'packed.xlsx');
+    writeFileSync(file, Buffer.concat([entry, end]));
+    expect(await readTable(file)).toBe('too_large');
+
+    // A real template unpacks to well under the limit.
+    const template = join(folder, 'template.xlsx');
+    await buildImportTemplate('en', YEAR).xlsx.writeFile(template);
+    expect(unpackedSize(readFileSync(template))).toBeLessThan(5 * 1024 * 1024);
   });
 
   it('says plainly when a file is not a spreadsheet', async () => {

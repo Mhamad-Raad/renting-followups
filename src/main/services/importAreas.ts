@@ -126,26 +126,92 @@ function csvDelimiter(file: string): string {
   );
 }
 
+/** Rows read from a CSV file before stopping: the header, the most rows allowed, and one more. */
+const READ_LIMIT = IMPORT_MAX_ROWS + 2;
+/**
+ * The most an Excel file may unpack to. A real file of the most rows allowed
+ * is a few megabytes; a small file packed to unpack to far more would fill
+ * the memory and freeze the app.
+ */
+const XLSX_MAX_UNPACKED_BYTES = 50 * 1024 * 1024;
+
+/** A row's cells as text; null for an empty row. */
+function rowCells(
+  values: ExcelJS.CellValue[] | Record<string, ExcelJS.CellValue>,
+): string[] | null {
+  const cells = Array.isArray(values) ? values.slice(1).map((value) => cellText(value)) : [];
+  return cells.some((cell) => cell !== '') ? cells : null;
+}
+
+/**
+ * How many bytes a zip file (an .xlsx is one) says its files unpack to, from
+ * its table of contents at the end; null when that table cannot be read.
+ */
+export function unpackedSize(zip: Buffer): number | null {
+  const END_SIGNATURE = 0x06054b50;
+  const ENTRY_SIGNATURE = 0x02014b50;
+  // The end record is 22 bytes, followed by a comment of up to 65535 bytes.
+  const searchFrom = Math.max(0, zip.length - 22 - 0xffff);
+  let end = -1;
+  for (let at = zip.length - 22; at >= searchFrom; at -= 1) {
+    if (zip.readUInt32LE(at) === END_SIGNATURE) {
+      end = at;
+      break;
+    }
+  }
+  if (end < 0) return null;
+  const entries = zip.readUInt16LE(end + 10);
+  let at = zip.readUInt32LE(end + 16);
+  let total = 0;
+  for (let index = 0; index < entries; index += 1) {
+    if (at + 46 > zip.length || zip.readUInt32LE(at) !== ENTRY_SIGNATURE) return null;
+    const size = zip.readUInt32LE(at + 24);
+    // 0xFFFFFFFF means a size too big for this field (zip64): far over any limit here.
+    if (size === 0xffffffff) return Number.POSITIVE_INFINITY;
+    total += size;
+    at += 46 + zip.readUInt16LE(at + 28) + zip.readUInt16LE(at + 30) + zip.readUInt16LE(at + 32);
+  }
+  return total;
+}
+
+/** Reads the first sheet of an Excel file, after checking it does not unpack to too much. */
+async function readXlsx(file: string): Promise<TableRow[] | 'too_large' | null> {
+  const zip = readFileSync(file);
+  const size = unpackedSize(zip);
+  if (size === null) return null;
+  if (size > XLSX_MAX_UNPACKED_BYTES) return 'too_large';
+  const sheet = (
+    await new ExcelJS.Workbook().xlsx.load(
+      zip.buffer.slice(zip.byteOffset, zip.byteOffset + zip.byteLength),
+    )
+  ).worksheets[0];
+  const rows: TableRow[] = [];
+  sheet?.eachRow({ includeEmpty: false }, (row, number) => {
+    const cells = rowCells(row.values);
+    if (cells) rows.push({ row: number, cells });
+  });
+  return rows;
+}
+
+/** Reads a CSV file; every value stays text, so a phone's leading 0 is kept. */
+async function readCsv(file: string): Promise<TableRow[]> {
+  const sheet = await new ExcelJS.Workbook().csv.readFile(file, {
+    map: (value: unknown) => value,
+    parserOptions: { delimiter: csvDelimiter(file), maxRows: READ_LIMIT },
+  });
+  const rows: TableRow[] = [];
+  sheet.eachRow({ includeEmpty: false }, (row, number) => {
+    const cells = rowCells(row.values);
+    if (cells) rows.push({ row: number, cells });
+  });
+  return rows;
+}
+
 /** Reads the first sheet of an Excel (.xlsx) or CSV file as text rows; null when it cannot be read. */
 export async function readTable(file: string): Promise<TableRow[] | 'too_large' | null> {
   try {
     if (statSync(file).size > IMPORT_MAX_BYTES) return 'too_large';
-    const workbook = new ExcelJS.Workbook();
-    const sheet =
-      extname(file).toLowerCase() === '.csv'
-        ? // Every value stays text, so a phone's leading 0 is kept.
-          await workbook.csv.readFile(file, {
-            map: (value: unknown) => value,
-            parserOptions: { delimiter: csvDelimiter(file) },
-          })
-        : (await workbook.xlsx.readFile(file)).worksheets[0];
-    if (!sheet) return [];
-    const rows: TableRow[] = [];
-    sheet.eachRow({ includeEmpty: false }, (row, number) => {
-      const values = Array.isArray(row.values) ? row.values.slice(1) : [];
-      rows.push({ row: number, cells: values.map((value) => cellText(value)) });
-    });
-    return rows;
+    return extname(file).toLowerCase() === '.csv' ? await readCsv(file) : await readXlsx(file);
   } catch {
     return null;
   }
