@@ -13,6 +13,13 @@
   gap: var(--space-2);
 }
 
+.box {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
 .input {
   flex: 1;
   min-width: 0;
@@ -58,4 +65,39 @@
   background: var(--color-surface-muted);
   color: var(--color-text-muted);
   cursor: not-allowed;
+}
+
+/* Room at the end of the box for the button inside it. */
+.withInside {
+  padding-inline-end: calc(var(--control-height) + var(--space-1));
+}
+
+.inside {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: var(--space-1);
+  display: flex;
+  align-items: center;
+}
+
+/* The round icon button inside a box, such as the password eye. */
+.iconButton {
+  display: grid;
+  place-items: center;
+  width: calc(var(--control-height) - var(--space-2));
+  height: calc(var(--control-height) - var(--space-2));
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.iconButton:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
 }

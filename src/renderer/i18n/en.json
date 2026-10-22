@@ -125,8 +125,8 @@
     "newRecoveryPhrase": "New recovery phrase",
     "recoveryPhraseHint": "A sentence only you know, for example the name of your first school and your street. At least {{min}} letters.",
     "writeItDown": "Write down your recovery phrase and keep it safe. If you lose both the password and the recovery phrase, nobody can open your data.",
-    "show": "Show",
-    "hide": "Hide",
+    "show": "Show password",
+    "hide": "Hide password",
     "capsLock": "Caps Lock is on.",
     "forgot": "Forgot password?",
     "setup": {

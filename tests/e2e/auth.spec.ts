@@ -62,6 +62,23 @@ test('first run creates the password; relaunch asks for it and rejects a wrong o
   }
 });
 
+test('the eye inside the password box shows and hides what was typed', async () => {
+  const dataDir = createDataDir();
+  try {
+    const { app, page } = await launchApp(dataDir);
+    const box = page.getByLabel(text.password, { exact: true });
+    await box.fill('secret-1');
+    await expect(box).toHaveAttribute('type', 'password');
+    await page.getByRole('button', { name: text.show }).first().click();
+    await expect(box).toHaveAttribute('type', 'text');
+    await page.getByRole('button', { name: text.hide }).first().click();
+    await expect(box).toHaveAttribute('type', 'password');
+    await app.close();
+  } finally {
+    removeDataDir(dataDir);
+  }
+});
+
 test('five wrong passwords make the owner wait, with a countdown', async () => {
   const dataDir = createDataDir();
   try {
