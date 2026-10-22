@@ -5,29 +5,28 @@ import {
   readFileSync,
   renameSync,
   rmSync,
-  statSync,
   writeFileSync,
 } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { join } from 'node:path';
 import Database from 'better-sqlite3';
-import { dateStringFromLocal, type DateString } from '@shared/dates';
-import type { BackupInfo, RestoreCheck, RestoreOutcome } from '@shared/backup';
-import { checkCopy, dateInBackupName, logoCopyName, safetyCopyName } from './backup';
+import type { BackupInfo, RestoreOutcome } from '@shared/backup';
+import type { DateString } from '@shared/dates';
+import { safetyCopyName } from './backup';
 import { logoFileName, type LogoKind } from './logo';
 
 /**
  * Restore (ARCHITECTURE.md section 13) in two steps, so the data file is
  * never replaced while it is open:
  *
- * 1. `checkBackup` copies the chosen file into the app's `restore` folder and
- *    checks it (a real backup, undamaged, not from a newer app). The owner
- *    then sees what it holds and confirms; `confirmRestore` marks it ready.
+ * 1. `checkBackup` (backupCheck.ts) copies the chosen file into the app's
+ *    `restore` folder and checks it. The owner then sees what it holds and
+ *    confirms; `confirmRestore` marks it ready.
  * 2. The app restarts, and before it opens the database `applyReadyRestore`
  *    keeps a safety copy of the current data and puts the backup in its place.
  *    An older backup is then upgraded by the normal migrations.
  */
 
-const LOGO_KINDS: readonly LogoKind[] = ['png', 'jpg'];
+export const LOGO_KINDS: readonly LogoKind[] = ['png', 'jpg'];
 
 export interface RestorePaths {
   /** The app's `restore` folder, where a checked backup waits. */
@@ -40,109 +39,16 @@ export interface RestorePaths {
   safetyFolder: string;
 }
 
-const pending = (paths: RestorePaths) => join(paths.staging, 'pending.db');
+export const pending = (paths: RestorePaths) => join(paths.staging, 'pending.db');
 const ready = (paths: RestorePaths) => join(paths.staging, 'ready.db');
-const stagedLogo = (paths: RestorePaths, step: 'pending' | 'ready', kind: LogoKind) =>
+export const stagedLogo = (paths: RestorePaths, step: 'pending' | 'ready', kind: LogoKind) =>
   join(paths.staging, `${step}-logo.${kind}`);
 const readyInfo = (paths: RestorePaths) => join(paths.staging, 'ready.json');
 
-function clearStep(paths: RestorePaths, step: 'pending' | 'ready'): void {
+export function clearStep(paths: RestorePaths, step: 'pending' | 'ready'): void {
   rmSync(join(paths.staging, `${step}.db`), { force: true });
   for (const kind of LOGO_KINDS) rmSync(stagedLogo(paths, step, kind), { force: true });
   if (step === 'ready') rmSync(readyInfo(paths), { force: true });
-}
-
-/** Reads what the owner needs to recognise a backup; null when it is not an app backup. */
-function readBackup(
-  file: string,
-  latestVersion: number,
-): { ok: false; reason: 'not_backup' | 'too_new' } | { ok: true; areas: number; receipts: number } {
-  let copy: Database.Database;
-  try {
-    copy = new Database(file, { fileMustExist: true });
-  } catch {
-    return { ok: false, reason: 'not_backup' };
-  }
-  try {
-    const has = (table: string) =>
-      copy.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(table) !==
-      undefined;
-    if (!has('schema_version') || !has('settings')) return { ok: false, reason: 'not_backup' };
-    const version =
-      (
-        copy.prepare('SELECT MAX(version) AS version FROM schema_version').get() as {
-          version: number | null;
-        }
-      ).version ?? 0;
-    if (version > latestVersion) return { ok: false, reason: 'too_new' };
-    // A backup always has a password: the app cannot be used before one is made.
-    if (!copy.prepare("SELECT 1 FROM settings WHERE key = 'password_hash'").get()) {
-      return { ok: false, reason: 'not_backup' };
-    }
-    const count = (sql: string) => (copy.prepare(sql).get() as { count: number }).count;
-    return {
-      ok: true,
-      areas: has('areas')
-        ? count('SELECT COUNT(*) AS count FROM areas WHERE deleted_at IS NULL')
-        : 0,
-      receipts: has('receipts')
-        ? count('SELECT COUNT(*) AS count FROM receipts WHERE voided_at IS NULL')
-        : 0,
-    };
-  } catch {
-    // Not a SQLite file, or one too damaged to read.
-    return { ok: false, reason: 'not_backup' };
-  } finally {
-    copy.close();
-  }
-}
-
-/**
- * Copies the chosen backup into the staging folder and checks it. Nothing
- * of the current data is touched. On success the copy waits for the owner's
- * confirmation; otherwise it is removed.
- */
-export function checkBackup(
-  source: string,
-  paths: RestorePaths,
-  latestVersion: number,
-): { check: RestoreCheck; info: BackupInfo | null } {
-  mkdirSync(paths.staging, { recursive: true });
-  clearStep(paths, 'pending');
-  const file = pending(paths);
-  const refuse = (reason: 'not_backup' | 'damaged' | 'too_new') => {
-    clearStep(paths, 'pending');
-    return { check: { ok: false as const, reason }, info: null };
-  };
-  copyFileSync(source, file);
-
-  let whole: boolean;
-  try {
-    whole = checkCopy(file);
-  } catch {
-    return refuse('not_backup');
-  }
-  const read = readBackup(file, latestVersion);
-  if (!read.ok) return refuse(read.reason);
-  if (!whole) return refuse('damaged');
-
-  const logo = LOGO_KINDS.find((kind) =>
-    existsSync(join(dirname(source), logoCopyName(basename(source), kind))),
-  );
-  if (logo) {
-    copyFileSync(
-      join(dirname(source), logoCopyName(basename(source), logo)),
-      stagedLogo(paths, 'pending', logo),
-    );
-  }
-  const info: BackupInfo = {
-    fileName: basename(source),
-    madeOn: dateInBackupName(basename(source)) ?? dateStringFromLocal(statSync(source).mtime),
-    areas: read.areas,
-    receipts: read.receipts,
-    hasLogo: logo !== undefined,
-  };
-  return { check: { ok: true }, info };
 }
 
 /** The owner confirmed: the checked backup will replace the data at the next start. */

@@ -366,7 +366,8 @@
       "not_backup": "This file is not a backup made by this app. Please choose a file named like rent-backup-2026-10-01.db.",
       "damaged": "This backup file is damaged and cannot be used. Please try another backup.",
       "too_new": "This backup was made by a newer version of the app, so this version cannot open it.",
-      "failed": "The backup could not be read. Please try again."
+      "failed": "The backup could not be read. Please try again.",
+      "cannot_upgrade": "This backup could not be brought up to date for this version of the app, so it cannot be used. Your data was not changed."
     },
     "restoredNotice": "Your data was restored from the backup of {{date}}. Open the app with the password that was in use then.",
     "restoreFailed": "The backup could not be put in place. Your data was not changed.",

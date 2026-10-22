@@ -95,7 +95,7 @@ function startServices(): { themeMode: ThemeMode } {
   if (outcome) logger.info('restore.applied', { ok: outcome.ok });
   const restore = (language: () => Language): RestoreDependencies => ({
     paths: restorePaths,
-    latestVersion: MIGRATIONS.at(-1)?.version ?? 0,
+    migrations: MIGRATIONS,
     language,
     outcome,
     restart: restartApp,

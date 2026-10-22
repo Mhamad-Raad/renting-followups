@@ -32,13 +32,15 @@ export interface BackupInfo {
   hasLogo: boolean;
 }
 
-export type RestoreCheck =
-  { ok: true } | { ok: false; reason: 'not_backup' | 'damaged' | 'too_new' };
+/** Why a chosen file cannot be restored. */
+export type RestoreRefusal = 'not_backup' | 'damaged' | 'too_new' | 'cannot_upgrade';
+
+export type RestoreCheck = { ok: true } | { ok: false; reason: RestoreRefusal };
 
 export type RestoreChoice =
   | { ok: true; done: 'cancelled' }
   | { ok: true; done: 'checked'; info: BackupInfo }
-  | { ok: false; reason: 'not_backup' | 'damaged' | 'too_new' | 'failed' };
+  | { ok: false; reason: RestoreRefusal | 'failed' };
 
 /** How the last restore went, shown once after the restart. */
 export interface RestoreOutcome {

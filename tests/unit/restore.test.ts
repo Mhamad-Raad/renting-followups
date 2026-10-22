@@ -17,9 +17,9 @@ import { migrate } from '../../src/main/db/migrate';
 import { MIGRATIONS } from '../../src/main/db/migrations';
 import { createRepositories } from '../../src/main/db/repositories';
 import { createBackup } from '../../src/main/services/backup';
+import { checkBackup } from '../../src/main/services/backupCheck';
 import {
   applyReadyRestore,
-  checkBackup,
   confirmRestore,
   type RestorePaths,
 } from '../../src/main/services/restore';
@@ -100,7 +100,7 @@ describe('backup then restore', () => {
     const atBackup = dump(live);
     createRepositories(live).areas.create(areaInput(1, { name: 'Shop 3' }));
 
-    const { check, info } = checkBackup(join(backups, name), paths, LATEST);
+    const { check, info } = checkBackup(join(backups, name), paths, MIGRATIONS);
     expect(check).toEqual({ ok: true });
     expect(info).toEqual({
       fileName: 'rent-backup-2026-10-01.db',
@@ -138,7 +138,7 @@ describe('backup then restore', () => {
     });
     live.close();
 
-    const { info } = checkBackup(join(backups, name), paths, LATEST);
+    const { info } = checkBackup(join(backups, name), paths, MIGRATIONS);
     expect(info?.hasLogo).toBe(true);
     if (info) confirmRestore(paths, info);
     applyReadyRestore(paths, NOW);
@@ -154,7 +154,7 @@ describe('backup then restore', () => {
     older.close();
     makeDatabase(paths.database, 0).close();
 
-    const { check, info } = checkBackup(join(backups, name), paths, LATEST);
+    const { check, info } = checkBackup(join(backups, name), paths, MIGRATIONS);
     expect(check).toEqual({ ok: true });
     if (info) confirmRestore(paths, info);
     applyReadyRestore(paths, NOW);
@@ -182,7 +182,7 @@ describe('backup then restore', () => {
     live.close();
     expect(existsSync(`${paths.database}-wal`)).toBe(true);
 
-    const { info } = checkBackup(join(backups, name), paths, LATEST);
+    const { info } = checkBackup(join(backups, name), paths, MIGRATIONS);
     if (info) confirmRestore(paths, info);
     expect(applyReadyRestore(paths, NOW)?.ok).toBe(true);
     expect(existsSync(`${paths.database}-wal`)).toBe(false);
@@ -193,8 +193,21 @@ describe('backup then restore', () => {
 });
 
 describe('checking a chosen file', () => {
+  it('refuses an older backup that cannot be brought up to date', async () => {
+    const older = makeDatabase(join(root, 'old.db'), 1, MIGRATIONS.slice(0, 2));
+    // Something the next upgrade step cannot work with.
+    older.exec('CREATE TABLE receipts (id INTEGER PRIMARY KEY, voided_at TEXT)');
+    const name = await createBackup(older, backups, '2025-01-01', null);
+    older.close();
+    expect(checkBackup(join(backups, name), paths, MIGRATIONS).check).toEqual({
+      ok: false,
+      reason: 'cannot_upgrade',
+    });
+    expect(readdirSync(paths.staging)).toEqual([]);
+  });
+
   const refused = (file: string) => {
-    const result = checkBackup(file, paths, LATEST);
+    const result = checkBackup(file, paths, MIGRATIONS);
     expect(readdirSync(paths.staging)).toEqual([]);
     return result.check;
   };
@@ -235,7 +248,7 @@ describe('checking a chosen file', () => {
     const live = makeDatabase(paths.database, 2);
     const before = dump(live);
     writeFileSync(join(backups, 'notes.db'), 'not a database');
-    checkBackup(join(backups, 'notes.db'), paths, LATEST);
+    checkBackup(join(backups, 'notes.db'), paths, MIGRATIONS);
     expect(dump(live)).toEqual(before);
     live.close();
   });
@@ -246,7 +259,7 @@ describe('when the swap cannot be done', () => {
     const source = makeDatabase(join(root, 'source.db'), 1);
     const name = await createBackup(source, backups, '2026-10-01', null);
     source.close();
-    const { info } = checkBackup(join(backups, name), paths, LATEST);
+    const { info } = checkBackup(join(backups, name), paths, MIGRATIONS);
     if (info) confirmRestore(paths, info);
     // A folder where the data file should be makes every step fail.
     mkdirSync(paths.database);

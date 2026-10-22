@@ -11,12 +11,14 @@ import type {
 } from '@shared/backup';
 import type { Language } from '@shared/settings';
 import type { Db } from '../db/connection';
+import type { Migration } from '../db/migrate';
 import type { BackupSettingsRepository } from '../db/repositories/settings';
 import { BackupFolderMissingError, createBackup, isSameDrive } from '../services/backup';
 import { businessToday } from '../services/clock';
 import { describeError, logger } from '../services/logger';
 import type { LogoStore } from '../services/logo';
-import { checkBackup, confirmRestore, type RestorePaths } from '../services/restore';
+import { checkBackup } from '../services/backupCheck';
+import { confirmRestore, type RestorePaths } from '../services/restore';
 import { translate } from '../services/translate';
 import { handle } from './handle';
 
@@ -30,7 +32,7 @@ async function showOpenDialog(options: OpenDialogOptions): Promise<string | null
 
 export interface RestoreDependencies {
   paths: RestorePaths;
-  latestVersion: number;
+  migrations: readonly Migration[];
   /** The language for the file dialog's labels. */
   language: () => Language;
   /** How the restore at this start went; null when there was none. */
@@ -56,7 +58,7 @@ export function registerRestoreIpc(deps: RestoreDependencies): void {
     });
     if (!source) return { ok: true, done: 'cancelled' };
     try {
-      const { check, info } = checkBackup(source, deps.paths, deps.latestVersion);
+      const { check, info } = checkBackup(source, deps.paths, deps.migrations);
       if (!check.ok || !info) return check.ok ? { ok: false, reason: 'failed' } : check;
       checked = info;
       return { ok: true, done: 'checked', info };
