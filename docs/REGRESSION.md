@@ -183,3 +183,17 @@ Automated (`npm run test:e2e` and unit tests) unless marked _manual_.
 - [ ] If any area cannot be created, nothing at all is saved (unit test).
 - [ ] _manual_ On Windows, fill the downloaded template in Excel (Sorani and English), save, and import it.
 - [ ] _manual_ `npm run seed`, then start the app on `demo-data`: Areas, Home and Reports open quickly with 200 areas.
+
+## Iteration 13: Polish, QA and performance
+
+Automated (`npm run test:e2e` and unit tests) unless marked _manual_.
+
+- [ ] The Restore question starts with the keyboard on Cancel; the reminders popup starts on OK.
+- [ ] A PDF or Excel file that cannot be written says so plainly; a failed PDF does not count as a print.
+- [ ] A backup checked but never confirmed is gone after the app is closed and opened.
+- [ ] Focus ring and the edges of fields and buttons are clearly visible in light and dark (unit test).
+- [ ] _manual_ With Arabic-Indic digits, month ranges read in order in English, Sorani and Arabic (first month first in the reading direction), on screen and on receipts.
+- [ ] _manual_ Printed report page numbers read "Page 2 / 19" in every language and digit style, in the chosen font.
+- [ ] _manual_ Every screen that cannot load shows Try again; the Home and Areas empty screens offer Add your first area and Import from Excel.
+- [ ] _manual_ With extra-large text, month box amounts and status words stay inside their boxes; a bell count above 99 shows "99+" beside the bell.
+- [ ] _manual_ `npm run seed -- demo-data 5`, then the memory routine of IMPLEMENTATION.md section 7: listeners and page elements return to the same numbers each round.
