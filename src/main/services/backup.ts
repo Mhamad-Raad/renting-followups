@@ -25,6 +25,9 @@ export const BACKUPS_KEPT = 12;
 
 const BACKUP_NAME = /^rent-backup-(\d{4}-\d{2}-\d{2})(?:-(\d+))?\.db$/;
 const LOGO_COPY_NAME = /^(rent-backup-\d{4}-\d{2}-\d{2}(?:-\d+)?)\.logo\.(png|jpg)$/;
+/** What an unfinished backup leaves behind after a crash or power cut. */
+const LEFTOVER_NAME =
+  /^rent-backup-\d{4}-\d{2}-\d{2}(?:-\d+)?\.db\.partial(?:-wal|-shm|-journal)?$/;
 
 /** The backup's file name; a second backup on the same day gets "-2", and so on. */
 export function backupFileName(date: DateString, number: number): string {
@@ -76,6 +79,9 @@ export async function createBackup(
   logo: LogoFile | null,
 ): Promise<string> {
   if (!existsSync(folder) || !statSync(folder).isDirectory()) throw new BackupFolderMissingError();
+  for (const leftover of readdirSync(folder).filter((file) => LEFTOVER_NAME.test(file))) {
+    rmSync(join(folder, leftover), { force: true });
+  }
   let number = 1;
   while (existsSync(join(folder, backupFileName(today, number)))) number += 1;
   const name = backupFileName(today, number);
@@ -92,25 +98,25 @@ export async function createBackup(
   } finally {
     rmSync(partial, { force: true });
   }
-  pruneBackups(folder, BACKUPS_KEPT);
+  pruneBackups(folder, BACKUPS_KEPT, name);
   return name;
 }
 
 /**
  * Removes all but the newest `keep` backups, with their logo copies. Only
- * files named exactly as the app names its backups are ever touched.
+ * files named exactly as the app names its backups are ever touched, and
+ * `justMade` never is. Newest means last written, not the date in the name:
+ * the computer's clock may have been wrong when a backup was made.
  */
-export function pruneBackups(folder: string, keep: number): void {
+export function pruneBackups(folder: string, keep: number, justMade: string | null = null): void {
   const backups = readdirSync(folder)
-    .map((name) => ({ name, match: BACKUP_NAME.exec(name) }))
-    .filter((entry) => entry.match !== null)
-    .map(({ name, match }) => ({
-      stem: name.replace(/\.db$/, ''),
-      date: match?.[1] ?? '',
-      number: Number(match?.[2] ?? 1),
-    }))
-    .sort((a, b) => (a.date === b.date ? b.number - a.number : a.date < b.date ? 1 : -1));
-  const removed = new Set(backups.slice(keep).map((backup) => backup.stem));
+    .filter((name) => BACKUP_NAME.test(name) && name !== justMade)
+    .map((name) => ({ name, written: statSync(join(folder, name)).mtimeMs }))
+    .sort((a, b) => b.written - a.written || (a.name < b.name ? 1 : -1));
+  const kept = justMade === null ? keep : keep - 1;
+  const removed = new Set(
+    backups.slice(Math.max(kept, 0)).map((backup) => backup.name.replace(/\.db$/, '')),
+  );
   for (const name of readdirSync(folder)) {
     const stem = BACKUP_NAME.test(name)
       ? name.replace(/\.db$/, '')

@@ -1,4 +1,12 @@
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
@@ -63,11 +71,37 @@ describe('createBackup', () => {
     expect(existsSync(join(folder, 'usb'))).toBe(false);
   });
 
-  it('leaves no half-written file when the backup fails', async () => {
-    const closed = new Database(':memory:');
-    closed.close();
-    await expect(createBackup(closed, folder, '2026-10-22', null)).rejects.toThrow();
+  it('leaves no half-written file when the backup fails part way', async () => {
+    // The copy is written and checked, then copying the logo fails.
+    const missingLogo = { path: join(folder, 'gone.png'), extension: 'png' as const };
+    await expect(createBackup(db, folder, '2026-10-22', missingLogo)).rejects.toThrow();
     expect(readdirSync(folder)).toEqual([]);
+  });
+
+  it('clears what an interrupted backup left behind, and nothing else', async () => {
+    for (const name of [
+      'rent-backup-2026-10-01.db.partial',
+      'rent-backup-2026-10-01.db.partial-wal',
+      'notes.partial',
+    ]) {
+      writeFileSync(join(folder, name), '');
+    }
+    await createBackup(db, folder, '2026-10-22', null);
+    expect(readdirSync(folder).sort()).toEqual(['notes.partial', 'rent-backup-2026-10-22.db']);
+  });
+
+  it('keeps a new backup even when older ones carry later dates (a clock that was ahead)', async () => {
+    for (let month = 1; month <= BACKUPS_KEPT; month += 1) {
+      const name = join(folder, `rent-backup-2027-${String(month).padStart(2, '0')}-01.db`);
+      writeFileSync(name, '');
+      // Written long ago, in order: 2027-01 is the oldest file.
+      utimesSync(name, month * 1000, month * 1000);
+    }
+    const made = await createBackup(db, folder, '2026-10-22', null);
+    const left = readdirSync(folder);
+    expect(left).toContain(made);
+    expect(left).toHaveLength(BACKUPS_KEPT);
+    expect(left).not.toContain('rent-backup-2027-01-01.db');
   });
 });
 
@@ -77,9 +111,15 @@ describe('pruneBackups', () => {
       { length: 14 },
       (_, index) => `2026-01-${String(index + 1).padStart(2, '0')}`,
     );
-    for (const day of days) writeFileSync(join(folder, `rent-backup-${day}.db`), '');
+    days.forEach((day, index) => {
+      const file = join(folder, `rent-backup-${day}.db`);
+      writeFileSync(file, '');
+      // Written in date order, a second apart.
+      utimesSync(file, (index + 1) * 1000, (index + 1) * 1000);
+    });
     writeFileSync(join(folder, 'rent-backup-2026-01-01.logo.png'), '');
     writeFileSync(join(folder, 'rent-backup-2026-01-14-2.db'), '');
+    utimesSync(join(folder, 'rent-backup-2026-01-14-2.db'), 20_000, 20_000);
     writeFileSync(join(folder, 'my-own-copy.db'), '');
     writeFileSync(join(folder, 'rent-backup-old.db'), '');
     pruneBackups(folder, BACKUPS_KEPT);
