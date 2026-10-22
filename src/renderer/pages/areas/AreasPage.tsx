@@ -63,6 +63,9 @@ export function AreasPage() {
       actions={
         <>
           <LinkButton to="/areas/categories">{t('areas.categories')}</LinkButton>
+          <LinkButton to="/areas/import" icon="download">
+            {t('areas.import')}
+          </LinkButton>
           <LinkButton to="/areas/new" variant="primary">
             {t('areas.add')}
           </LinkButton>
@@ -91,9 +94,14 @@ export function AreasPage() {
           title={t('areas.empty.title')}
           body={t('areas.empty.body')}
           action={
-            <LinkButton to="/areas/new" variant="primary">
-              {t('areas.empty.button')}
-            </LinkButton>
+            <>
+              <LinkButton to="/areas/new" variant="primary">
+                {t('areas.empty.button')}
+              </LinkButton>
+              <LinkButton to="/areas/import" icon="download">
+                {t('areas.empty.importButton')}
+              </LinkButton>
+            </>
           }
         />
       </>

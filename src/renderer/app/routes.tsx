@@ -4,6 +4,7 @@ import { AreaFormPage } from '../pages/areas/AreaFormPage';
 import { AreaPage } from '../pages/areas/AreaPage';
 import { AreasPage } from '../pages/areas/AreasPage';
 import { CategoriesPage } from '../pages/areas/CategoriesPage';
+import { ImportPage } from '../pages/areas/ImportPage';
 import { ActivityLogPage } from '../pages/settings/ActivityLogPage';
 import { DeletedItemsPage } from '../pages/settings/DeletedItemsPage';
 import { HomePage } from '../pages/home/HomePage';
@@ -41,6 +42,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
 export const INNER_ROUTES: readonly { path: string; element: ReactElement }[] = [
   { path: '/areas/new', element: <AreaFormPage /> },
   { path: '/areas/categories', element: <CategoriesPage /> },
+  { path: '/areas/import', element: <ImportPage /> },
   { path: '/areas/:id', element: <AreaPage /> },
   { path: '/areas/:id/edit', element: <AreaFormPage /> },
   { path: '/settings/deleted', element: <DeletedItemsPage /> },
