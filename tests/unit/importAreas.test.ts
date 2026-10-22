@@ -396,6 +396,16 @@ describe('reading files', () => {
     expect(unpackedSize(readFileSync(template))).toBeLessThan(5 * 1024 * 1024);
   });
 
+  it('says plainly when a CSV file is not saved as UTF-8', async () => {
+    const file = join(folder, 'unicode.csv');
+    // Excel's "Unicode Text" is UTF-16, which starts with the bytes FF FE.
+    writeFileSync(
+      file,
+      Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(HEADER.join(','), 'utf16le')]),
+    );
+    expect(await readTable(file)).toBeNull();
+  });
+
   it('says plainly when a file is not a spreadsheet', async () => {
     const file = join(folder, 'photo.xlsx');
     writeFileSync(file, 'not a spreadsheet');

@@ -233,7 +233,7 @@
       "separator": "; "
     },
     "file": {
-      "not_readable": "This file could not be read. Please choose an Excel file (.xlsx) or a CSV file.",
+      "not_readable": "This file could not be read. Please choose an Excel file (.xlsx), or a CSV file saved as \"CSV UTF-8\".",
       "too_large": "This file is too large. Please choose a file smaller than 10 MB.",
       "empty": "This file has no areas in it.",
       "too_many_rows": "This file has more than {{max}} rows. Please split it into smaller files.",
