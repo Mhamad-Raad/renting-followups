@@ -1,0 +1,240 @@
+/*
+ * The bundled open-licence fonts (OFL, licence next to each font in
+ * src/renderer/fonts). Each is split into Arabic-script and Latin parts, so the
+ * screen only loads what it shows. Settings → Font sets data-font on <html>.
+ * The list must match FONT_FAMILIES in src/shared/fonts.ts (a test checks it).
+ */
+
+/* Noto Sans Arabic */
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/noto-sans-arabic/arabic-400.woff2') format('woff2');
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+FB50-FDFF, U+FE70-FEFC;
+}
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  font-weight: 700;
+  font-display: block;
+  src: url('../fonts/noto-sans-arabic/arabic-700.woff2') format('woff2');
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+FB50-FDFF, U+FE70-FEFC;
+}
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/noto-sans-arabic/latin-400.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2212, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  font-weight: 700;
+  font-display: block;
+  src: url('../fonts/noto-sans-arabic/latin-700.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2212, U+FEFF, U+FFFD;
+}
+:root[data-font='noto-sans-arabic'] {
+  --font-family: 'Noto Sans Arabic', var(--font-fallback);
+}
+
+/* Noto Naskh Arabic */
+@font-face {
+  font-family: 'Noto Naskh Arabic';
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/noto-naskh-arabic/arabic-400.woff2') format('woff2');
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+FB50-FDFF, U+FE70-FEFC;
+}
+@font-face {
+  font-family: 'Noto Naskh Arabic';
+  font-weight: 700;
+  font-display: block;
+  src: url('../fonts/noto-naskh-arabic/arabic-700.woff2') format('woff2');
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+FB50-FDFF, U+FE70-FEFC;
+}
+@font-face {
+  font-family: 'Noto Naskh Arabic';
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/noto-naskh-arabic/latin-400.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2212, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Noto Naskh Arabic';
+  font-weight: 700;
+  font-display: block;
+  src: url('../fonts/noto-naskh-arabic/latin-700.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2212, U+FEFF, U+FFFD;
+}
+:root[data-font='noto-naskh-arabic'] {
+  --font-family: 'Noto Naskh Arabic', var(--font-fallback);
+}
+
+/* Vazirmatn */
+@font-face {
+  font-family: 'Vazirmatn';
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/vazirmatn/arabic-400.woff2') format('woff2');
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+FB50-FDFF, U+FE70-FEFC;
+}
+@font-face {
+  font-family: 'Vazirmatn';
+  font-weight: 700;
+  font-display: block;
+  src: url('../fonts/vazirmatn/arabic-700.woff2') format('woff2');
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+FB50-FDFF, U+FE70-FEFC;
+}
+@font-face {
+  font-family: 'Vazirmatn';
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/vazirmatn/latin-400.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2212, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Vazirmatn';
+  font-weight: 700;
+  font-display: block;
+  src: url('../fonts/vazirmatn/latin-700.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2212, U+FEFF, U+FFFD;
+}
+:root[data-font='vazirmatn'] {
+  --font-family: 'Vazirmatn', var(--font-fallback);
+}
+
+/* IBM Plex Sans Arabic */
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/ibm-plex-sans-arabic/arabic-400.woff2') format('woff2');
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+FB50-FDFF, U+FE70-FEFC;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  font-weight: 700;
+  font-display: block;
+  src: url('../fonts/ibm-plex-sans-arabic/arabic-700.woff2') format('woff2');
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+FB50-FDFF, U+FE70-FEFC;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/ibm-plex-sans-arabic/latin-400.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2212, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  font-weight: 700;
+  font-display: block;
+  src: url('../fonts/ibm-plex-sans-arabic/latin-700.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2212, U+FEFF, U+FFFD;
+}
+:root[data-font='ibm-plex-sans-arabic'] {
+  --font-family: 'IBM Plex Sans Arabic', var(--font-fallback);
+}
+
+/* Amiri */
+@font-face {
+  font-family: 'Amiri';
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/amiri/arabic-400.woff2') format('woff2');
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+FB50-FDFF, U+FE70-FEFC;
+}
+@font-face {
+  font-family: 'Amiri';
+  font-weight: 700;
+  font-display: block;
+  src: url('../fonts/amiri/arabic-700.woff2') format('woff2');
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+FB50-FDFF, U+FE70-FEFC;
+}
+@font-face {
+  font-family: 'Amiri';
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/amiri/latin-400.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2212, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Amiri';
+  font-weight: 700;
+  font-display: block;
+  src: url('../fonts/amiri/latin-700.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2212, U+FEFF, U+FFFD;
+}
+:root[data-font='amiri'] {
+  --font-family: 'Amiri', var(--font-fallback);
+}
+
+/* Scheherazade New */
+@font-face {
+  font-family: 'Scheherazade New';
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/scheherazade-new/arabic-400.woff2') format('woff2');
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+FB50-FDFF, U+FE70-FEFC;
+}
+@font-face {
+  font-family: 'Scheherazade New';
+  font-weight: 700;
+  font-display: block;
+  src: url('../fonts/scheherazade-new/arabic-700.woff2') format('woff2');
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+FB50-FDFF, U+FE70-FEFC;
+}
+@font-face {
+  font-family: 'Scheherazade New';
+  font-weight: 400;
+  font-display: block;
+  src: url('../fonts/scheherazade-new/latin-400.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2212, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Scheherazade New';
+  font-weight: 700;
+  font-display: block;
+  src: url('../fonts/scheherazade-new/latin-700.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2212, U+FEFF, U+FFFD;
+}
+:root[data-font='scheherazade-new'] {
+  --font-family: 'Scheherazade New', var(--font-fallback);
+}

@@ -102,7 +102,7 @@ Besides the letters listed in `ARCHITECTURE.md`, search also treats ھ like ە, 
 
 ### Fonts: system font until iteration 10
 
-For now the app uses the Windows system font (Segoe UI, which covers Sorani) through the `--font-family` variable. Bundling open-licence fonts, with the automated Sorani letter test, is part of the font setting in iteration 10.
+For now the app uses the Windows system font (Segoe UI, which covers Sorani) through the `--font-family` variable. Bundling open-licence fonts, with the automated Sorani letter test, is part of the font setting in iteration 10. (Done in iteration 10; see below.)
 
 ### Styles
 
@@ -362,3 +362,15 @@ Named in ARCHITECTURE.md for Excel export; pure JavaScript, runs in the main pro
 - **Windows notification:** at most once a day while the app runs, only when something needs attention, never on the day the app was opened (the popup covers it), not in test ghost mode; its hourly timer is stopped when the app quits.
 - **Wording:** a reminder names the month's last day ("ends on 31/5/2026", "ends today") instead of counting days, which avoids plural forms and off-by-one confusion. Runs of months show as ranges ("1/2026 – 9/2026"), also on receipts.
 - `monthStatus.ts` is about 300 lines: kept as one file on purpose, because ARCHITECTURE.md makes it the single module for colours and totals.
+
+## Iteration 10: Settings
+
+### Bundled fonts
+
+- Six open-licence (OFL 1.1) fonts are bundled in `src/renderer/fonts/`, each with its licence file: Noto Sans Arabic (the default, closest to the earlier system look), Noto Naskh Arabic, Vazirmatn, IBM Plex Sans Arabic, Amiri and Scheherazade New. The files come from the Fontsource packages (version 5.3.0), regular and bold only, split into an Arabic-script part and a Latin part so the screen loads only what it shows (under 1 MB in total). Segoe UI stays as the fallback for any other letter.
+- `tests/unit/fonts.test.ts` opens every font file and fails if any Sorani letter (ڕ ڵ ۆ ێ ە ڤ پ چ ژ گ ک) or Arabic-Indic digit is missing, checks each licence file, and checks that `fonts.css` offers exactly the tested list (`FONT_FAMILIES` in `src/shared/fonts.ts`). All six pass.
+- Iteration 14 (packaging) must ship the `OFL.txt` files with the installer.
+
+| Package (dev only) | Why                                                                     |
+| ------------------ | ----------------------------------------------------------------------- |
+| `fontkit` 2.0.4    | Reads the bundled font files in the Sorani letter test. Not in the app. |
