@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { app, BrowserWindow, dialog, Menu } from 'electron';
+import { formatPlain } from '@shared/formatNumber';
 import { DEFAULT_SETTINGS, LANGUAGES, type Language, type ThemeMode } from '@shared/settings';
 import {
   closeDatabase,
@@ -132,10 +133,12 @@ function startServices(): { themeMode: ThemeMode } {
     startDailyToast({
       countReminders: () => currentReminders(repos).length,
       texts: (count) => {
-        const { language } = repos.settings.getAll();
+        const { language, digitStyle } = repos.settings.getAll();
         return {
           title: translate(language, 'app.name'),
-          body: translate(language, 'notifications.toastBody', { number: String(count) }),
+          body: translate(language, 'notifications.toastBody', {
+            number: formatPlain(count, digitStyle),
+          }),
         };
       },
       onClick: focusMainWindow,
