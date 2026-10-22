@@ -263,6 +263,41 @@ describe('importing', () => {
   });
 });
 
+describe('a full file', () => {
+  it('imports 200 areas from an Excel file in one go', async () => {
+    const workbook = buildImportTemplate('ckb', YEAR);
+    const sheet = workbook.worksheets[0];
+    if (!sheet) throw new Error('no sheet');
+    for (let number = 1; number <= 200; number += 1) {
+      sheet.addRow([
+        `دووکانی ${number}`,
+        number % 2 === 0 ? 'دووکانەکان' : 'شوقەکان',
+        number % 5 === 0 ? 'USD' : 'IQD',
+        number % 5 === 0 ? 450.5 : 250_000 + number * 1000,
+        (number % 12) + 1,
+        2024,
+        number % 3 === 0 ? '' : `کرێچی ${number}`,
+        number % 3 === 0 ? '' : `0750${String(number).padStart(7, '0')}`,
+      ]);
+    }
+    const file = join(folder, 'areas.xlsx');
+    await workbook.xlsx.writeFile(file);
+    const read = await readTable(file);
+    if (!Array.isArray(read)) throw new Error('not read');
+    const preview = check(read);
+    expect(preview.problems).toEqual([]);
+    expect(preview.rows).toHaveLength(200);
+
+    expect(importAreas(db, repos, preview.rows)).toEqual({ ok: true, areas: 200, categories: 2 });
+    expect(repos.categories.list().map((category) => category.areaCount)).toEqual([100, 100]);
+    expect(repos.areas.get(5)).toMatchObject({
+      currency: 'USD',
+      prices: [{ monthlyPrice: 45_050 }],
+    });
+    expect(repos.areas.get(7)?.renters[0]?.phone).toBe('07500000007');
+  });
+});
+
 describe('reading files', () => {
   async function saveWorkbook(workbook: ExcelJS.Workbook, name: string): Promise<string> {
     const file = join(folder, name);
