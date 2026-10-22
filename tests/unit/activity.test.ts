@@ -68,6 +68,20 @@ describe('activity log', () => {
     expect(firstPage()[0]).toMatchObject({ action: 'delete', name: null, amount: null });
   });
 
+  it('keeps the readable details when one stored field is unexpected', () => {
+    db.prepare(
+      `INSERT INTO audit_log (action, entity, entity_id, details_json)
+       VALUES ('change_renter', 'area', ?, '{"renter": "Dara", "previous": {"odd": true}, "startedOn": 5}')`,
+    ).run(areaId);
+    db.prepare(
+      `INSERT INTO audit_log (action, entity, entity_id, details_json)
+       VALUES ('void', 'receipt', 999, '{"amount": 50000, "receiptNumber": "x", "renter": ["odd"]}')`,
+    ).run();
+    const [voided, renter] = firstPage();
+    expect(renter).toMatchObject({ renter: 'Dara', name: 'Shop 1' });
+    expect(voided).toMatchObject({ amount: 50_000, renter: null });
+  });
+
   it('loads older entries a page at a time', () => {
     const insert = db.prepare(
       "INSERT INTO audit_log (action, entity, entity_id, details_json) VALUES ('update', 'area', ?, '{}')",

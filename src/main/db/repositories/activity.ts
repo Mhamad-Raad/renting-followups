@@ -22,23 +22,22 @@ interface ActivityRow {
   receipt_number: number | null;
 }
 
-const amount = z.number().int().nonnegative();
-const name = z.string();
-const change = z.object({ amount: amount.optional(), name: name.optional() });
+// Each field is read on its own: one that is missing or unexpected is left out
+// of the line, and never hides the others.
+const amount = z.number().int().nonnegative().optional().catch(undefined);
+const text = z.string().optional().catch(undefined);
+const change = z.object({ amount, name: text }).nullable().optional().catch(undefined);
 
-/**
- * The parts of the stored details the log shows (see the `audit.record`
- * calls). Anything missing or unexpected is simply left out of the line.
- */
+/** The parts of the stored details the log shows (see the `audit.record` calls). */
 const detailsSchema = z.object({
-  name: name.optional(),
-  amount: amount.optional(),
-  monthlyPrice: amount.optional(),
-  previousPrice: amount.nullable().optional(),
-  from: yearMonthSchema.optional(),
-  renter: name.nullable().optional(),
-  before: change.nullable().optional(),
-  after: change.nullable().optional(),
+  name: text,
+  amount,
+  monthlyPrice: amount,
+  previousPrice: amount,
+  from: yearMonthSchema.optional().catch(undefined),
+  renter: text,
+  before: change,
+  after: change,
 });
 
 function readDetails(json: string): z.infer<typeof detailsSchema> {
