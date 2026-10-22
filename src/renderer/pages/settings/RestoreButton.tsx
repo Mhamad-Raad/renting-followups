@@ -8,13 +8,8 @@ import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { Notice } from '../../components/Notice';
+import { Notice, type NoticeMessage } from '../../components/Notice';
 import styles from './SettingsPage.module.css';
-
-interface Message {
-  tone: 'success' | 'error';
-  text: string;
-}
 
 /**
  * Restore from backup (ARCHITECTURE.md section 13): pick a file, see what it
@@ -29,7 +24,7 @@ export function RestoreButton({ primary = false }: { primary?: boolean }) {
   const digits = settings.digitStyle;
   const [busy, setBusy] = useState(false);
   const [checked, setChecked] = useState<BackupInfo | null>(null);
-  const [message, setMessage] = useState<Message | null>(null);
+  const [message, setMessage] = useState<NoticeMessage | null>(null);
 
   const choose = async () => {
     setBusy(true);
@@ -76,6 +71,7 @@ export function RestoreButton({ primary = false }: { primary?: boolean }) {
         title={t('backup.confirmTitle')}
         confirmLabel={t('backup.confirmRestore')}
         tone="danger"
+        focusCancel
         onConfirm={() => void confirm()}
         onCancel={() => setChecked(null)}
       >

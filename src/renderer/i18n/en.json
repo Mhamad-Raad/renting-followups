@@ -341,7 +341,6 @@
     "noFolder": "No folder chosen yet. You will be asked the first time you back up.",
     "chooseFolder": "Choose folder…",
     "changeFolder": "Change folder…",
-    "folderMissing": "The backup folder cannot be found. If it is on a USB drive, plug the drive in, or choose another folder.",
     "sameDrive": "A copy on the same drive is lost if the drive fails. Please also copy backups to a USB drive.",
     "lastBackup": "Last backup: {{date}}",
     "never": "No backup has been made yet.",

@@ -2,6 +2,12 @@ import type { ReactNode } from 'react';
 import { Icon } from './Icon';
 import styles from './Notice.module.css';
 
+/** A message waiting to be shown in a Notice, such as the result of a save. */
+export interface NoticeMessage {
+  tone: 'success' | 'error';
+  text: string;
+}
+
 interface NoticeProps {
   tone: 'success' | 'warning' | 'error';
   children: ReactNode;

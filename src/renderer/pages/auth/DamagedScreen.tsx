@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { RestoreButton } from '../settings/RestoreButton';
+import { RestoreOutcomeNotice } from '../settings/RestoreOutcomeNotice';
 import { AuthLayout } from './AuthLayout';
 
 /**
@@ -15,6 +16,7 @@ export function DamagedScreen() {
       intro={t('backup.damaged.intro')}
       onSubmit={() => {}}
     >
+      <RestoreOutcomeNotice />
       <RestoreButton primary />
       <p>{t('backup.damaged.noBackup')}</p>
     </AuthLayout>

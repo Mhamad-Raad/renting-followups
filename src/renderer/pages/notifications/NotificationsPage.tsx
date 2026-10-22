@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { isAreaReminder, type AreaReminder } from '@shared/notifications';
+import { useBackupNow } from '../../app/useBackupNow';
 import { useReminders } from '../../app/useReminders';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
@@ -11,6 +12,8 @@ import { ReminderRow } from './ReminderRow';
 export function NotificationsPage() {
   const { t } = useTranslation();
   const reminders = useReminders();
+  // The result stays here: after a backup the reminder (and its box) goes away.
+  const backupNow = useBackupNow();
   const header = <PageHeader title={t('pages.notifications.title')} />;
   if (reminders.state.status === 'loading') return header;
   if (reminders.state.status === 'error') {
@@ -31,7 +34,16 @@ export function NotificationsPage() {
       {header}
       <div className={styles.stack}>
         {items.length === 0 && <Notice tone="success">{t('notifications.none')}</Notice>}
-        {backup && <BackupReminderBox reminder={backup} />}
+        {backupNow.message && (
+          <Notice tone={backupNow.message.tone}>{backupNow.message.text}</Notice>
+        )}
+        {backup && (
+          <BackupReminderBox
+            reminder={backup}
+            onBackUp={() => void backupNow.backUp()}
+            busy={backupNow.busy}
+          />
+        )}
         <ReminderSection title={t('notifications.late')} items={late} />
         <ReminderSection title={t('notifications.monthEnd')} items={monthEnd} />
       </div>

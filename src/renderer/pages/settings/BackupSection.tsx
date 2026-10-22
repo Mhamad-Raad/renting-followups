@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@shared/dates';
 import { callIpc, useIpcQuery } from '../../app/ipc';
+import { useBackupNow } from '../../app/useBackupNow';
 import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
@@ -9,48 +10,27 @@ import { Notice } from '../../components/Notice';
 import { RestoreButton } from './RestoreButton';
 import styles from './SettingsPage.module.css';
 
-interface Message {
-  tone: 'success' | 'error';
-  text: string;
-}
-
 /** Settings → Backup: the folder, Back up now, the last backup's date, and Restore. */
 export function BackupSection() {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const mounted = useMountedRef();
   const status = useIpcQuery('backup:status');
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<Message | null>(null);
+  const backupNow = useBackupNow(status.refresh);
+  const { message, setMessage } = backupNow;
+  const [choosing, setChoosing] = useState(false);
+  const busy = backupNow.busy || choosing;
   const info = status.state.status === 'ready' ? status.state.data : null;
 
-  const run = async (work: () => Promise<Message | null>) => {
-    setBusy(true);
+  const chooseFolder = async () => {
+    setChoosing(true);
     setMessage(null);
-    const result = await work();
+    const result = await callIpc('backup:chooseFolder');
     if (!mounted.current) return;
-    setBusy(false);
-    setMessage(result);
+    setChoosing(false);
+    if (!result.ok) setMessage({ tone: 'error', text: t('settings.saveFailed') });
     status.refresh();
   };
-
-  const backUpNow = () =>
-    run(async () => {
-      const result = await callIpc('backup:now');
-      const outcome = result.ok ? result.data : null;
-      if (!outcome || !outcome.ok) {
-        return { tone: 'error', text: t(`backup.problems.${outcome?.reason ?? 'failed'}`) };
-      }
-      return outcome.done === 'saved'
-        ? { tone: 'success', text: t('backup.saved', { file: outcome.fileName }) }
-        : null;
-    });
-
-  const chooseFolder = () =>
-    run(async () => {
-      const result = await callIpc('backup:chooseFolder');
-      return result.ok ? null : { tone: 'error', text: t('settings.saveFailed') };
-    });
 
   return (
     <section className={styles.section}>
@@ -68,7 +48,9 @@ export function BackupSection() {
             ) : (
               <span className={styles.hint}>{t('backup.noFolder')}</span>
             )}
-            {info.folderMissing && <Notice tone="warning">{t('backup.folderMissing')}</Notice>}
+            {info.folderMissing && (
+              <Notice tone="warning">{t('backup.problems.folder_missing')}</Notice>
+            )}
             {info.sameDrive && <Notice tone="warning">{t('backup.sameDrive')}</Notice>}
           </div>
           <p>
@@ -77,7 +59,7 @@ export function BackupSection() {
               : t('backup.never')}
           </p>
           <div className={styles.buttonRow}>
-            <BigButton variant="primary" onClick={() => void backUpNow()} disabled={busy}>
+            <BigButton variant="primary" onClick={() => void backupNow.backUp()} disabled={busy}>
               {t('backup.now')}
             </BigButton>
             <BigButton onClick={() => void chooseFolder()} disabled={busy}>
@@ -86,6 +68,7 @@ export function BackupSection() {
           </div>
         </>
       )}
+      {status.state.status === 'loading' && <p className={styles.hint}>{t('common.loading')}</p>}
       {status.state.status === 'error' && <Notice tone="error">{t('errors.unexpected')}</Notice>}
       <h3 className={styles.label}>{t('backup.restoreTitle')}</h3>
       <p className={styles.hint}>{t('backup.restoreIntro')}</p>
