@@ -22,6 +22,13 @@ export const REMIND_DAYS_MAX = 28;
 
 export const PRINT_TITLE_MAX = 80;
 
+/** The largest logo picture accepted; a logo is printed small, so this is plenty. */
+export const LOGO_MAX_MEGABYTES = 2;
+export const LOGO_MAX_BYTES = LOGO_MAX_MEGABYTES * 1024 * 1024;
+
+export type LogoChoiceResult =
+  { ok: true; done: 'saved' | 'cancelled' } | { ok: false; reason: 'too_large' | 'not_image' };
+
 /** The settings the screen reads and changes. Validated on every write. */
 export const settingsSchema = z.object({
   language: z.enum(LANGUAGES),

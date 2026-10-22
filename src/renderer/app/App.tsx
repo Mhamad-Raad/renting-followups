@@ -2,6 +2,7 @@ import { HashRouter, Route, Routes } from 'react-router';
 import { AuthGate } from './AuthGate';
 import { CrashScreen } from './CrashScreen';
 import { ErrorBoundary } from './ErrorBoundary';
+import { PrintLayout } from '../print/PrintLayout';
 import { ReceiptPrint } from '../print/ReceiptPrint';
 import { ReportPrint } from '../print/ReportPrint';
 import { Layout } from './Layout';
@@ -20,8 +21,10 @@ export function App() {
           <HashRouter>
             <Routes>
               {/* Print pages: no sidebar; opened by the main process in hidden windows. */}
-              <Route path="/print/receipt/:id" element={<ReceiptPrint />} />
-              <Route path="/print/report" element={<ReportPrint />} />
+              <Route element={<PrintLayout />}>
+                <Route path="/print/receipt/:id" element={<ReceiptPrint />} />
+                <Route path="/print/report" element={<ReportPrint />} />
+              </Route>
               <Route element={<Layout />}>
                 {[...NAV_ITEMS, ...INNER_ROUTES].map((route) => (
                   <Route key={route.path} path={route.path} element={route.element} />

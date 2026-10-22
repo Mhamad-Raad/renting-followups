@@ -61,7 +61,12 @@ const REPORT: Report = {
   ],
 };
 
-const OPTIONS = { digitStyle: 'western', categoryName: null, printedOn: '2026-05-15' } as const;
+const OPTIONS = {
+  digitStyle: 'western',
+  categoryName: null,
+  printedOn: '2026-05-15',
+  printTitle: '',
+} as const;
 
 describe('Excel report', () => {
   it('has the same columns as the printed report, with the area rows and money as numbers', () => {
@@ -118,6 +123,22 @@ describe('Excel report', () => {
     const english = buildReportWorkbook(REPORT, QUERY, { ...OPTIONS, language: 'en' })
       .worksheets[0];
     expect(english?.views[0]?.rightToLeft).toBe(false);
+  });
+
+  it('puts the print title from Settings first and keeps the column names in view', () => {
+    const plain = buildReportWorkbook(REPORT, QUERY, { ...OPTIONS, language: 'en' }).worksheets[0];
+    expect(plain?.getRow(1).getCell(1).value).toBe('Rent report');
+    expect(plain?.views[0]).toMatchObject({ state: 'frozen', ySplit: 4 });
+
+    const titled = buildReportWorkbook(REPORT, QUERY, {
+      ...OPTIONS,
+      language: 'en',
+      printTitle: 'Kawa Rentals',
+    }).worksheets[0];
+    expect(titled?.getRow(1).getCell(1).value).toBe('Kawa Rentals');
+    expect(titled?.getRow(2).getCell(1).value).toBe('Rent report');
+    expect(titled?.getRow(5).getCell(1).value).toBe('Area');
+    expect(titled?.views[0]).toMatchObject({ state: 'frozen', ySplit: 5 });
   });
 
   it('uses the same status colours as the light theme', () => {

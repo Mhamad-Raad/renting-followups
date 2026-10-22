@@ -56,7 +56,7 @@ import type {
   ReceiptPrintData,
 } from './printing';
 import type { Report, ReportFilters, ReportQuery } from './reports';
-import type { Settings, SettingsUpdate } from './settings';
+import type { LogoChoiceResult, Settings, SettingsUpdate } from './settings';
 
 /** A renderer crash report: error type and stack frames, never the message. */
 export interface RendererErrorReport {
@@ -71,6 +71,10 @@ export interface RendererErrorReport {
 export interface IpcContract {
   'settings:get': { input: undefined; output: Settings };
   'settings:update': { input: SettingsUpdate; output: Settings };
+  /** The print logo as a data address, or null when there is none. */
+  'settings:logo': { input: undefined; output: string | null };
+  'settings:chooseLogo': { input: undefined; output: LogoChoiceResult };
+  'settings:removeLogo': { input: undefined; output: null };
   'log:rendererError': { input: RendererErrorReport; output: null };
   'auth:status': { input: undefined; output: AuthStatus };
   'auth:setup': { input: SetupInput; output: { ok: true } | { ok: false; reason: 'already_set' } };
@@ -125,6 +129,9 @@ export type IpcOutput<C extends IpcChannel> = IpcContract[C]['output'];
 export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'settings:get': true,
   'settings:update': false,
+  'settings:logo': false,
+  'settings:chooseLogo': false,
+  'settings:removeLogo': false,
   'log:rendererError': true,
   'auth:status': true,
   'auth:setup': true,
@@ -174,6 +181,9 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
 export const CHANGES_DATA: Record<IpcChannel, boolean> = {
   'settings:get': false,
   'settings:update': true,
+  'settings:logo': false,
+  'settings:chooseLogo': false,
+  'settings:removeLogo': false,
   'log:rendererError': false,
   'auth:status': false,
   'auth:setup': false,

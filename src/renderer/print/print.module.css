@@ -11,6 +11,14 @@
   text-align: center;
 }
 
+.logo {
+  display: block;
+  max-width: 60mm;
+  max-height: 22mm;
+  margin: 0 auto 2mm;
+  object-fit: contain;
+}
+
 .owner {
   margin: 0;
   font-size: 11pt;
