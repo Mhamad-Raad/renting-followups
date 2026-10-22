@@ -2,7 +2,7 @@
 
 ## Current iteration
 
-**Iteration 9: Notifications**, on branch `iter-09-notifications`. Built, fully reviewed (self-review plus an independent review), pushed; waiting for the owner to say "continue".
+**Iteration 10: Settings**, on branch `iter-10-settings`. Built, fully reviewed (self-review plus an independent review), pushed; waiting for the owner to say "continue".
 
 ## Done
 
@@ -15,12 +15,13 @@
 - Iteration 6 (merged, tag `iter-06`): area page Year/Month filter with the four figures and the period's receipts, the price-change warning over paid months, Home cards per currency and the Needs attention list. Owner decided: Still owed counts months up to now; old debts stay on Home; a price change shares paid money out again. 323 unit tests and 26 end-to-end tests pass.
 - Iteration 7 (merged, tag `iter-07`): Reports page with remembered filters, area picker, the month strip, totals per currency; areas repository split in three. 341 unit tests and 28 end-to-end tests pass.
 - Iteration 8 (merged, tag `iter-08`): receipt and report printing (Windows print dialog or PDF) through hidden windows, Excel export, print buttons on Reports, the area page, the Areas list (tick boxes) and Home; phone digit order fixed for Arabic-Indic digits. 354 unit tests and 33 end-to-end tests pass.
-- Iteration 9: reminders (late rent, month end) from one function, popup on opening, Notifications page, bell count, daily Windows notification, month ranges. 364 unit tests and 36 end-to-end tests pass.
+- Iteration 9 (merged, tag `iter-09`): reminders (late rent, month end) from one function, popup on opening, Notifications page, bell count, daily Windows notification, month ranges. 364 unit tests and 36 end-to-end tests pass.
+- Iteration 10: the full Settings page: six theme colours, six bundled fonts tested for Sorani, print title and logo (on prints and the Excel title row) with a live preview, reminder days, Activity log page; fixes for Arabic-Indic number order in English and the popup button. 561 unit tests and 43 end-to-end tests pass.
 
 ## Next
 
-- On "continue": merge `iter-09-notifications` into `main` with `--no-ff`, tag `iter-09`, push.
-- Then iteration 10 (Settings): language and digits, appearance (theme colour, fonts with a Sorani test, text size), printing (title, logo with preview), reminder days, security, deleted items, activity log.
+- On "continue": merge `iter-10-settings` into `main` with `--no-ff`, tag `iter-10`, push.
+- Then iteration 11 (Backup and restore). The backup must also copy the logo file (`userData/logo/`), which is outside the database. Add the backup reminder deferred from iteration 9.
 
 ## Open questions
 

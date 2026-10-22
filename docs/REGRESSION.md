@@ -140,3 +140,18 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] _manual_ In the last 7 days of a month an unpaid current month shows under "This month ends soon" with its last date; on the last day it says "ends today".
 - [ ] _manual_ On Windows, with the app left open overnight and something late, one Windows notification appears the next day; clicking it brings the app to the front.
 - [ ] _manual_ The bell pulses once when its number changes, and not at all with reduced motion.
+
+## Iteration 10: Settings
+
+Automated (`npm run test:e2e`) unless marked _manual_.
+
+- [ ] Settings → Theme colour changes buttons and highlights at once, in light and dark mode, and is remembered.
+- [ ] Settings → Font shows six fonts, each written in its own letters with the Sorani sample; the choice applies at once and is remembered.
+- [ ] Settings → Reminders: the month-end reminder starts the chosen number of days before the month ends (always in the last 3 days).
+- [ ] Settings → Printing: the title and logo show in the preview and on printed receipts and reports; the title is the first line of the Excel sheet.
+- [ ] Choosing a file that is not a PNG or JPG, or a picture over 2 MB, is refused in plain words; Remove logo asks first.
+- [ ] Settings → Activity log lists every change, newest first, with Show older for long logs.
+- [ ] Every font in Settings has every Sorani letter and the Arabic-Indic digits (unit test).
+- [ ] Every theme colour is readable in light and dark mode (unit test).
+- [ ] _manual_ With Arabic-Indic digits in English, month ranges and the activity log's date and time read in the right order.
+- [ ] _manual_ The reminder popup fits its Record payment button in every language and text size.
