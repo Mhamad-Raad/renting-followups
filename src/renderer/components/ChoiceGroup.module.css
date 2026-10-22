@@ -59,3 +59,15 @@
 .tick {
   color: var(--color-accent);
 }
+
+/* The sample sits on its own line under the label. */
+.choice:has(.sample) {
+  flex-wrap: wrap;
+  padding-block: var(--space-2);
+}
+
+.sample {
+  flex-basis: 100%;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}

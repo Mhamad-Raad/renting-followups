@@ -34,6 +34,16 @@
     "themeMode": "فاتح أو داكن",
     "light": "فاتح",
     "dark": "داكن",
+    "themeColor": "اللون الرئيسي",
+    "themeColors": {
+      "blue": "أزرق",
+      "teal": "أزرق مخضر",
+      "indigo": "نيلي",
+      "purple": "بنفسجي",
+      "brown": "بني",
+      "slate": "رمادي"
+    },
+    "font": "الخط",
     "fontSize": "حجم الخط",
     "fontSizes": {
       "small": "صغير",
@@ -48,6 +58,9 @@
     "changeRecoveryPhrase": "تغيير عبارة الاسترداد",
     "passwordChanged": "تم تغيير كلمة المرور.",
     "phraseChanged": "تم تغيير عبارة الاسترداد.",
+    "reminders": "التذكيرات",
+    "remindDays": "كم يوماً قبل نهاية الشهر يبدأ التذكير",
+    "remindDaysHint": "في آخر {{number}} أيام من الشهر يظهر التذكير دائماً.",
     "data": "البيانات"
   },
   "common": {

@@ -34,6 +34,16 @@
     "themeMode": "Light or dark",
     "light": "Light",
     "dark": "Dark",
+    "themeColor": "Theme colour",
+    "themeColors": {
+      "blue": "Blue",
+      "teal": "Teal",
+      "indigo": "Indigo",
+      "purple": "Purple",
+      "brown": "Brown",
+      "slate": "Slate grey"
+    },
+    "font": "Font",
     "fontSize": "Text size",
     "fontSizes": {
       "small": "Small",
@@ -48,6 +58,9 @@
     "changeRecoveryPhrase": "Change recovery phrase",
     "passwordChanged": "Password changed.",
     "phraseChanged": "Recovery phrase changed.",
+    "reminders": "Reminders",
+    "remindDays": "Days before the month ends to start the reminder",
+    "remindDaysHint": "In the last {{number}} days of a month the reminder always shows.",
     "data": "Data"
   },
   "common": {

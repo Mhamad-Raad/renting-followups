@@ -2,23 +2,28 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DIGIT_STYLES, toDigitStyle } from '@shared/digits';
 import type { IpcErrorCode } from '@shared/ipc';
-import { FONT_SIZES, LANGUAGES, type SettingsUpdate } from '@shared/settings';
+import { LANGUAGES, type SettingsUpdate } from '@shared/settings';
 import { useSettings } from '../../app/SettingsContext';
 import { ChoiceGroup } from '../../components/ChoiceGroup';
-import { Notice } from '../../components/Notice';
 import { LinkButton } from '../../components/LinkButton';
+import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { LANGUAGE_NAMES } from '../../i18n';
+import { AppearanceSection } from './AppearanceSection';
+import { RemindersSection } from './RemindersSection';
 import { SecuritySection } from './SecuritySection';
 import styles from './SettingsPage.module.css';
 
-/** Language, number style, light/dark, text size and security so far; the rest comes in iteration 10. */
+/** Saves a change; it shows at once, and a failed save shows one message at the top. */
+export type ChangeSettings = (changes: SettingsUpdate) => void;
+
+/** One page of big sections (ARCHITECTURE.md section 12); every change applies immediately. */
 export function SettingsPage() {
   const { t } = useTranslation();
   const { settings, updateSettings } = useSettings();
   const [error, setError] = useState<IpcErrorCode | null>(null);
 
-  const change = (changes: SettingsUpdate) => {
+  const change: ChangeSettings = (changes) => {
     void updateSettings(changes).then((result) => setError(result.ok ? null : result.error));
   };
 
@@ -51,28 +56,8 @@ export function SettingsPage() {
         />
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>{t('settings.appearance')}</h2>
-        <ChoiceGroup
-          label={t('settings.themeMode')}
-          value={settings.themeMode}
-          choices={[
-            { value: 'light', label: t('settings.light') },
-            { value: 'dark', label: t('settings.dark') },
-          ]}
-          onChange={(themeMode) => change({ themeMode })}
-        />
-        <ChoiceGroup
-          label={t('settings.fontSize')}
-          value={settings.fontSize}
-          choices={FONT_SIZES.map((size) => ({
-            value: size,
-            label: t(`settings.fontSizes.${size}`),
-          }))}
-          onChange={(fontSize) => change({ fontSize })}
-        />
-      </section>
-
+      <AppearanceSection change={change} />
+      <RemindersSection change={change} />
       <SecuritySection />
 
       <section className={styles.section}>

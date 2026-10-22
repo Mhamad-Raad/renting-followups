@@ -34,6 +34,16 @@
     "themeMode": "ڕووناک یان تاریک",
     "light": "ڕووناک",
     "dark": "تاریک",
+    "themeColor": "ڕەنگی سەرەکی",
+    "themeColors": {
+      "blue": "شین",
+      "teal": "شینی سەوزباو",
+      "indigo": "نیلی",
+      "purple": "مۆر",
+      "brown": "قاوەیی",
+      "slate": "خۆڵەمێشی"
+    },
+    "font": "فۆنت",
     "fontSize": "قەبارەی نووسین",
     "fontSizes": {
       "small": "بچووک",
@@ -48,6 +58,9 @@
     "changeRecoveryPhrase": "گۆڕینی ڕستەی گەڕانەوە",
     "passwordChanged": "وشەی نهێنی گۆڕدرا.",
     "phraseChanged": "ڕستەی گەڕانەوە گۆڕدرا.",
+    "reminders": "بیرخستنەوەکان",
+    "remindDays": "چەند ڕۆژ پێش تەواوبوونی مانگ بیرخستنەوە دەست پێ بکات",
+    "remindDaysHint": "لە {{number}} ڕۆژی کۆتایی مانگدا بیرخستنەوەکە هەمیشە دەردەکەوێت.",
     "data": "زانیاری"
   },
   "common": {
