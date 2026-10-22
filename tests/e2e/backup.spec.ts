@@ -153,6 +153,20 @@ test('saying no to a checked backup changes nothing and leaves no copy behind', 
   }
 });
 
+test('a backup checked but never confirmed is not kept after the app is closed', async () => {
+  const dataDir = createDataDir();
+  try {
+    // What closing the app on the Restore question leaves behind.
+    mkdirSync(join(dataDir, 'restore'));
+    writeFileSync(join(dataDir, 'restore', 'pending.db'), 'a full copy of some data');
+    const { app } = await launchUnlocked(dataDir);
+    expect(readdirSync(join(dataDir, 'restore'))).toEqual([]);
+    await app.close();
+  } finally {
+    removeDataDir(dataDir);
+  }
+});
+
 test('a file that is not a backup is refused in plain words and nothing changes', async () => {
   const dataDir = createDataDir();
   const { app, page } = await launchUnlocked(dataDir);

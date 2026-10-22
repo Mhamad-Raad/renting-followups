@@ -22,7 +22,7 @@ import { writeSafetySnapshot } from './services/backup';
 import { startDailyToast, stopDailyToast } from './services/dailyToast';
 import { describeError, initLogger, logger } from './services/logger';
 import { createLogoStore } from './services/logo';
-import { applyReadyRestore } from './services/restore';
+import { applyReadyRestore, clearStep } from './services/restore';
 import { startupFailureMessage } from './services/messages';
 import { translate } from './services/translate';
 import { appWebPreferences, loadRenderer, RENDERER_DIRECTORY } from './windows';
@@ -92,6 +92,8 @@ function startServices(): { themeMode: ThemeMode } {
     safetyFolder,
   };
   const outcome = applyReadyRestore(restorePaths, new Date());
+  // A backup checked but never confirmed (the app was closed on the question) is not kept.
+  clearStep(restorePaths, 'pending');
   if (outcome) logger.info('restore.applied', { ok: outcome.ok });
   const restore = (language: () => Language): RestoreDependencies => ({
     paths: restorePaths,
