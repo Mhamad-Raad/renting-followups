@@ -24,7 +24,7 @@
 ## Next
 
 - On "continue": merge `iter-13-polish` into `main` with `--no-ff`, tag `iter-13`, push.
-- Then iteration 14 (packaging and release): the Windows installer, with an explicit file list (`out/` and `package.json` only) and a check that no demo data (`demo-data/`, `scripts/`) is packed; then the Windows-only checks listed in `docs/reviews/iteration-13.md`.
+- Then iteration 14 (packaging and release): the Windows installer, with an explicit file list (`out/`, `resources/` and `package.json` only; the installer icon is `build/icon.ico`) and a check that no demo data (`demo-data/`, `scripts/`) is packed; then the Windows-only checks listed in `docs/reviews/iteration-13.md`.
 
 ## Open questions
 
