@@ -32,14 +32,15 @@ export function toDigitStyle(text: string, style: DigitStyle): string {
 const LEFT_TO_RIGHT_MARK = '‎';
 
 /**
- * A separator between two numbers ("1/2026 – 4/2026", a date and a time).
- * Between Arabic-Indic numbers the bidirectional algorithm reads spaces and
- * dashes as right-to-left, which swaps the numbers in English text. Invisible
- * left-to-right marks around the separator keep the first number first, in
- * left-to-right and right-to-left text alike.
+ * Marks a number with Arabic-Indic digits (a date, a month, a time) as one
+ * self-contained piece. The bidirectional algorithm treats such digits as
+ * right-to-left when it orders the spaces and dashes between them, which
+ * swapped "1/2026 – 3/2026" in English. An isolated piece counts as neutral,
+ * so the pieces follow the reading direction of the text around them: first
+ * on the left in English, first on the right in Sorani and Arabic.
  */
-export function numberSeparator(separator: string, style: DigitStyle): string {
-  return style === 'western' ? separator : `${LEFT_TO_RIGHT_MARK}${separator}${LEFT_TO_RIGHT_MARK}`;
+export function isolateNumber(text: string, style: DigitStyle): string {
+  return style === 'western' ? text : `\u2066${text}\u2069`;
 }
 
 /**

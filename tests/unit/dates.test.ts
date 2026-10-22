@@ -113,9 +113,10 @@ describe('month runs', () => {
     expect(formatMonthRuns([m(1), m(2), m(3), m(5)], 'western', ', ')).toBe(
       '1/2026 – 3/2026, 5/2026',
     );
-    expect(formatMonthRuns([m(4), m(4)], 'arabic', '، ')).toBe('٤/٢٠٢٦');
+    // Each Arabic-Indic month is one isolated piece, so the range follows the text's direction.
+    expect(formatMonthRuns([m(4), m(4)], 'arabic', '، ')).toBe('\u2066٤/٢٠٢٦\u2069');
     expect(formatMonthRuns([m(1), m(2), m(5)], 'arabic', ', ')).toBe(
-      '١/٢٠٢٦\u200e – \u200e٢/٢٠٢٦\u200e, \u200e٥/٢٠٢٦',
+      '\u2066١/٢٠٢٦\u2069 – \u2066٢/٢٠٢٦\u2069, \u2066٥/٢٠٢٦\u2069',
     );
   });
 });
@@ -124,7 +125,7 @@ describe('formatDateTime', () => {
   it('shows the local day and a 24-hour time in the chosen digits', () => {
     const moment = new Date(2026, 9, 21, 9, 5);
     expect(formatDateTime(moment, 'western')).toBe('21/10/2026 09:05');
-    // Arabic-Indic numbers keep their order in English text thanks to the invisible marks.
-    expect(formatDateTime(moment, 'arabic')).toBe('٢١/١٠/٢٠٢٦\u200e \u200e٠٩:٠٥');
+    // The date and the time are isolated pieces, so they keep their order in any language.
+    expect(formatDateTime(moment, 'arabic')).toBe('\u2066٢١/١٠/٢٠٢٦\u2069 \u2066٠٩:٠٥\u2069');
   });
 });
