@@ -21,7 +21,8 @@
     "pretest:e2e": "install-electron && electron-vite build",
     "test:e2e": "playwright test",
     "check": "npm run typecheck && npm run lint && npm run test",
-    "seed": "node scripts/run-ts.mjs scripts/seed.ts"
+    "seed": "node scripts/run-ts.mjs scripts/seed.ts",
+    "demo": "node scripts/demo.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
