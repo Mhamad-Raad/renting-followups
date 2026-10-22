@@ -1,5 +1,4 @@
 import { existsSync } from 'node:fs';
-import { BrowserWindow, dialog, type OpenDialogOptions } from 'electron';
 import { z } from 'zod';
 import type {
   BackupInfo,
@@ -15,20 +14,13 @@ import type { Migration } from '../db/migrate';
 import type { BackupSettingsRepository } from '../db/repositories/settings';
 import { BackupFolderMissingError, createBackup, isSameDrive } from '../services/backup';
 import { businessToday } from '../services/clock';
+import { askToOpen } from '../services/dialogs';
 import { describeError, logger } from '../services/logger';
 import type { LogoStore } from '../services/logo';
 import { checkBackup } from '../services/backupCheck';
 import { clearStep, confirmRestore, type RestorePaths } from '../services/restore';
 import { translate } from '../services/translate';
 import { handle } from './handle';
-
-async function showOpenDialog(options: OpenDialogOptions): Promise<string | null> {
-  const parent = BrowserWindow.getFocusedWindow();
-  const result = parent
-    ? await dialog.showOpenDialog(parent, options)
-    : await dialog.showOpenDialog(options);
-  return result.canceled ? null : (result.filePaths[0] ?? null);
-}
 
 export interface RestoreDependencies {
   paths: RestorePaths;
@@ -55,7 +47,7 @@ export function registerRestoreIpc(deps: RestoreDependencies): void {
 
   handle('restore:choose', z.undefined(), async (): Promise<RestoreChoice> => {
     checked = null;
-    const source = await showOpenDialog({
+    const source = await askToOpen({
       properties: ['openFile'],
       filters: [{ name: translate(deps.language(), 'backup.files'), extensions: ['db'] }],
     });
@@ -100,7 +92,7 @@ export function registerBackupIpc(deps: BackupDependencies): void {
   const { backupSettings } = deps;
 
   const askForFolder = () =>
-    showOpenDialog({
+    askToOpen({
       title: translate(deps.language(), 'backup.chooseFolder'),
       properties: ['openDirectory', 'createDirectory'],
     });

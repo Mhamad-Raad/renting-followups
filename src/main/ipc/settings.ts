@@ -1,31 +1,26 @@
 import { stat, readFile } from 'node:fs/promises';
-import { BrowserWindow, dialog } from 'electron';
 import { z } from 'zod';
 import { LOGO_MAX_BYTES, settingsUpdateSchema, type LogoChoiceResult } from '@shared/settings';
 import type { SettingsRepository } from '../db/repositories/settings';
+import { askToOpen } from '../services/dialogs';
 import type { LogoStore } from '../services/logo';
 import { translate } from '../services/translate';
 import { handle } from './handle';
-
-/** Asks for a picture file. Null when the owner cancels. */
-async function askForPicture(filterName: string): Promise<string | null> {
-  const options = {
-    properties: ['openFile' as const],
-    filters: [{ name: filterName, extensions: ['png', 'jpg', 'jpeg'] }],
-  };
-  const parent = BrowserWindow.getFocusedWindow();
-  const result = parent
-    ? await dialog.showOpenDialog(parent, options)
-    : await dialog.showOpenDialog(options);
-  return result.canceled ? null : (result.filePaths[0] ?? null);
-}
 
 export function registerSettingsIpc(settings: SettingsRepository, logo: LogoStore): void {
   handle('settings:get', z.undefined(), () => settings.getAll());
   handle('settings:update', settingsUpdateSchema, (changes) => settings.update(changes));
   handle('settings:logo', z.undefined(), () => logo.read());
   handle('settings:chooseLogo', z.undefined(), async (): Promise<LogoChoiceResult> => {
-    const path = await askForPicture(translate(settings.getAll().language, 'settings.pictures'));
+    const path = await askToOpen({
+      properties: ['openFile'],
+      filters: [
+        {
+          name: translate(settings.getAll().language, 'settings.pictures'),
+          extensions: ['png', 'jpg', 'jpeg'],
+        },
+      ],
+    });
     if (!path) return { ok: true, done: 'cancelled' };
     // Checked before reading, so a huge file is never loaded.
     if ((await stat(path)).size > LOGO_MAX_BYTES) return { ok: false, reason: 'too_large' };
