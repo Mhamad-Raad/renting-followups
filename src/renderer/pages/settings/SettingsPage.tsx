@@ -10,6 +10,7 @@ import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { LANGUAGE_NAMES } from '../../i18n';
 import { AppearanceSection } from './AppearanceSection';
+import { PrintingSection } from './PrintingSection';
 import { RemindersSection } from './RemindersSection';
 import { SecuritySection } from './SecuritySection';
 import styles from './SettingsPage.module.css';
@@ -57,6 +58,7 @@ export function SettingsPage() {
       </section>
 
       <AppearanceSection change={change} />
+      <PrintingSection />
       <RemindersSection change={change} />
       <SecuritySection />
 
