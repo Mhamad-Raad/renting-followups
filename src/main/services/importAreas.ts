@@ -1,4 +1,4 @@
-import { statSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { extname } from 'node:path';
 import ExcelJS from 'exceljs';
 import {
@@ -112,6 +112,19 @@ export function cellText(value: ExcelJS.CellValue): string {
   return '';
 }
 
+/**
+ * The separator of a CSV file, from its first line: Excel writes `;` instead
+ * of `,` on computers set to many languages (Arabic among them).
+ */
+function csvDelimiter(file: string): string {
+  const firstLine = readFileSync(file, 'utf8').split(/\r?\n/, 1)[0] ?? '';
+  const count = (separator: string) => firstLine.split(separator).length;
+  return [';', '\t'].reduce(
+    (best, separator) => (count(separator) > count(best) ? separator : best),
+    ',',
+  );
+}
+
 /** Reads the first sheet of an Excel (.xlsx) or CSV file as text rows; null when it cannot be read. */
 export async function readTable(file: string): Promise<TableRow[] | 'too_large' | null> {
   try {
@@ -120,7 +133,10 @@ export async function readTable(file: string): Promise<TableRow[] | 'too_large' 
     const sheet =
       extname(file).toLowerCase() === '.csv'
         ? // Every value stays text, so a phone's leading 0 is kept.
-          await workbook.csv.readFile(file, { map: (value: unknown) => value })
+          await workbook.csv.readFile(file, {
+            map: (value: unknown) => value,
+            parserOptions: { delimiter: csvDelimiter(file) },
+          })
         : (await workbook.xlsx.readFile(file)).worksheets[0];
     if (!sheet) return [];
     const rows: TableRow[] = [];

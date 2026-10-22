@@ -345,6 +345,17 @@ describe('reading files', () => {
     expect(check(read).rows[0]?.renter?.phone).toBe('07501234567');
   });
 
+  it('reads a CSV file separated by semicolons, as Excel writes it on Arabic computers', async () => {
+    const file = join(folder, 'areas.csv');
+    writeFileSync(
+      file,
+      `${HEADER.join(';')}\r\nShop 1;Shops;IQD;250000;1;2025;;;Main street, 2;\r\n`,
+    );
+    const read = await readTable(file);
+    if (!Array.isArray(read)) throw new Error('not read');
+    expect(check(read).rows[0]).toMatchObject({ name: 'Shop 1', address: 'Main street, 2' });
+  });
+
   it('says plainly when a file is not a spreadsheet', async () => {
     const file = join(folder, 'photo.xlsx');
     writeFileSync(file, 'not a spreadsheet');
