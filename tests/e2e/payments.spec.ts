@@ -109,7 +109,7 @@ test('edit and cancel a receipt, record a past payment, and refuse too much', as
     await dialog.getByLabel(en.paymentDialog.amount).fill('250000');
     await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
     await expect(page.getByText(en.paymentDialog.pastSaved)).toBeVisible();
-    await expect(page.getByText(en.receipts.pastRecord)).toBeVisible();
+    await expect(page.getByText(en.receipts.pastRecord, { exact: true })).toBeVisible();
     await expect(boxes.getByLabel(boxLabel(month, en.months.status.paid))).toBeVisible();
 
     await page.getByRole('button', { name: en.area.recordPayment }).click();

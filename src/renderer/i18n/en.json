@@ -70,7 +70,6 @@
     },
     "pictures": "Pictures",
     "preview": "How the top of a printed receipt will look",
-    "saved": "Saved.",
     "saveFailed": "The setting could not be saved. Please try again.",
     "security": "Security",
     "changePassword": "Change password",
@@ -78,15 +77,13 @@
     "passwordChanged": "Password changed.",
     "phraseChanged": "Recovery phrase changed.",
     "reminders": "Reminders",
-    "remindDays": "Days before the month ends to start the reminder",
+    "remindDays": "Start reminding this many days before the month ends",
     "remindDaysHint": "In the last {{number}} days of a month the reminder always shows.",
     "data": "Data"
   },
   "common": {
     "ok": "OK",
     "cancel": "Cancel",
-    "close": "Close",
-    "yes": "Yes",
     "loading": "Loading…",
     "tryAgain": "Try again",
     "save": "Save",
@@ -98,8 +95,7 @@
     "requiredField": "Please fill this in.",
     "month": "Month",
     "year": "Year",
-    "day": "Day",
-    "noResults": "Nothing found."
+    "day": "Day"
   },
   "currency": {
     "IQD": "IQD",
@@ -147,7 +143,7 @@
       "submit": "Set new password and open"
     },
     "problems": {
-      "passwordTooShort": "The password needs at least {{min}} characters.",
+      "passwordTooShort": "The password needs at least {{min}} letters or numbers.",
       "passwordsDiffer": "The two passwords are not the same. Please type them again.",
       "phraseTooShort": "The recovery phrase needs at least {{min}} letters.",
       "phraseSameAsPassword": "The recovery phrase must be different from the password."
@@ -321,7 +317,7 @@
       "expectedMonth": "Total for the month",
       "received": "Received",
       "remaining": "Still owed",
-      "remainingHint": "Still owed counts rent up to this month. \"Received\" counts money by the rent month it paid, not the day it arrived."
+      "remainingHint": "\"Still owed\" counts rent up to this month. \"Received\" counts each payment under the month it pays for, not the day it arrived."
     }
   },
   "priceDialog": {
@@ -335,7 +331,7 @@
     "before_rent_start": "This month is before the rent started ({{month}}). Please choose a later month.",
     "priceSaved": "New price saved.",
     "vacantSaved": "The area is marked as vacant.",
-    "warning": "Saving shares the money already paid out again with the new rent:",
+    "warning": "If you save, the money already paid is spread over the months again using the new rent:",
     "statusChange": "Month {{month}}: {{before}} {{paidBefore}} → {{after}} {{paidAfter}}",
     "saveAnyway": "Save anyway",
     "no_room": "The money already paid from this month would have no month to go to (for example, the area stays vacant). Please cancel or edit those receipts first."
@@ -441,10 +437,10 @@
       "damaged": "This backup file is damaged and cannot be used. Please try another backup.",
       "too_new": "This backup was made by a newer version of the app, so this version cannot open it.",
       "failed": "The backup could not be read. Please try again.",
-      "cannot_upgrade": "This backup could not be brought up to date for this version of the app, so it cannot be used. Your data was not changed."
+      "cannot_upgrade": "This backup cannot be used with this app. Your data was not changed."
     },
     "restoredNotice": "Your data was restored from the backup of {{date}}. Open the app with the password that was in use then.",
-    "restoreFailed": "The backup could not be put in place. Your data was not changed.",
+    "restoreFailed": "The backup could not be restored. Your data was not changed.",
     "damaged": {
       "title": "Your data cannot be opened",
       "intro": "The data file is damaged. Nothing has been changed or deleted. You can bring your data back from a backup.",
@@ -490,7 +486,7 @@
     "future_date": "The date received cannot be after today.",
     "cancelled": "This receipt was cancelled and can no longer be changed.",
     "saved": "Payment saved. Receipt No. {{number}}",
-    "pastSaved": "Past payment saved.",
+    "pastSaved": "Past record saved.",
     "updated": "Receipt saved.",
     "nothing_open": "There is no rent to fill from this month: it is vacant, or more than two years ahead. Please choose another month."
   },
@@ -508,7 +504,7 @@
     "cancelDone": "The receipt was cancelled.",
     "undo": "Undo",
     "undone": "The payment was undone. Receipt No. {{number}} is kept as cancelled.",
-    "pastUndone": "The past payment was undone.",
+    "pastUndone": "The past record was removed.",
     "separator": ", "
   },
   "clock": {
@@ -551,13 +547,12 @@
     },
     "total": "Total {{currency}} | Areas: {{number}}",
     "empty": "No areas match these filters.",
-    "footer": "\"Received\" counts money by the rent month it paid, not the day it arrived: rent for month {{december}} paid in month {{november}} counts toward that month {{december}}. \"Still owed\" counts rent up to this month.",
+    "footer": "\"Received\" counts each payment under the month it pays for, not the day it arrived: rent for month {{december}} paid in month {{november}} counts under month {{december}}. \"Still owed\" counts rent up to this month.",
     "caption": "Report: one row per area, then the totals per currency"
   },
   "print": {
     "reportTitle": "Rent report",
     "printedOn": "Printed on {{date}}",
-    "receiptTitle": "Receipt",
     "receiptNumber": "Receipt No. {{number}}",
     "copy": "Copy",
     "date": "Date",
