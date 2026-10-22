@@ -41,12 +41,13 @@ export function registerPrintIpc({ categories, payments, reports, settings }: Re
       path = await askWhereToSave(fileName, { name: t('print.pdfFiles'), extension: 'pdf' });
       if (!path) return { ok: true, done: 'cancelled' };
     }
-    const job = await withHiddenPage(route, async (contents) => {
-      if (!path) return sendToPrinter(contents, landscape);
-      await saveFile(path, await renderPdf(contents));
-      return 'saved' as const;
-    });
-    return job.ok ? { ok: true, done: job.value } : job;
+    const job = await withHiddenPage<Buffer | 'printed' | 'cancelled'>(route, (contents) =>
+      path ? renderPdf(contents) : sendToPrinter(contents, landscape),
+    );
+    if (!job.ok) return job;
+    if (typeof job.value === 'string') return { ok: true, done: job.value };
+    if (!path || !(await saveFile(path, job.value))) return { ok: false, reason: 'save_failed' };
+    return { ok: true, done: 'saved' };
   };
 
   const reportFileName = (year: number) => t('print.fileReport', { year: String(year) });
@@ -103,7 +104,7 @@ export function registerPrintIpc({ categories, payments, reports, settings }: Re
         printTitle,
       },
     );
-    await saveFile(path, new Uint8Array(await workbook.xlsx.writeBuffer()));
-    return { ok: true, done: 'saved' };
+    const saved = await saveFile(path, new Uint8Array(await workbook.xlsx.writeBuffer()));
+    return saved ? { ok: true, done: 'saved' } : { ok: false, reason: 'save_failed' };
   });
 }

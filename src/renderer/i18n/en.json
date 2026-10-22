@@ -190,7 +190,7 @@
     "chooseFile": "Choose file…",
     "chooseAnother": "Choose another file…",
     "templateSaved": "The template was saved.",
-    "templateFailed": "The template could not be saved. Please try again.",
+    "templateFailed": "The template could not be saved. If a file of that name is open in Excel, close it and try again.",
     "fileLabel": "File: {{name}}",
     "readyCount": "Areas to import: {{number}}",
     "skippedCount": "Rows that will be skipped: {{number}}",
@@ -592,7 +592,8 @@
       "busy": "Another print is still being prepared. Please wait a moment and try again.",
       "failed": "Printing did not work. Please check the printer and try again.",
       "past_record": "A past record has no receipt number, so it cannot be printed as a receipt.",
-      "not_found": "This receipt could not be found. It may have been cancelled."
+      "not_found": "This receipt could not be found. It may have been cancelled.",
+      "save_failed": "The file could not be saved. If it is open in another program, such as Excel, close it and try again."
     },
     "selectedCount": "Selected: {{number}}"
   },
