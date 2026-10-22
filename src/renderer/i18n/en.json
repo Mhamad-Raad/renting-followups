@@ -360,7 +360,7 @@
     "areasInBackup": "Areas: {{number}}",
     "paymentsInBackup": "Payments: {{number}}",
     "replaceWarning": "This will replace all current data. A safety copy of the current data is saved first, so nothing is lost.",
-    "passwordNote": "The app will close and open again. Then open it with the password that was in use when this backup was made.",
+    "passwordNote": "The app will close and open again. Then open it with the password that was in use when this backup was made; the recovery phrase from that time comes back too.",
     "restarting": "Restoring. The app will now close and open again.",
     "refused": {
       "not_backup": "This file is not a backup made by this app. Please choose a file named like rent-backup-2026-10-01.db.",
