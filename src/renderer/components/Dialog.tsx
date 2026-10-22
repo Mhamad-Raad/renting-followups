@@ -6,6 +6,8 @@ interface DialogProps {
   title: string;
   /** Called for Esc; the parent decides whether to close. */
   onClose: () => void;
+  /** 'wide' for a dialog that shows a list, such as the reminders on opening. */
+  size?: 'normal' | 'wide';
   children: ReactNode;
 }
 
@@ -13,7 +15,7 @@ interface DialogProps {
  * The one dialog frame of the app: dimmed background, fade and slight scale,
  * focus kept inside, Esc to close. Only one dialog is ever open at a time.
  */
-export function Dialog({ open, title, onClose, children }: DialogProps) {
+export function Dialog({ open, title, onClose, size = 'normal', children }: DialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 
@@ -31,7 +33,7 @@ export function Dialog({ open, title, onClose, children }: DialogProps) {
   return (
     <dialog
       ref={dialogRef}
-      className={styles.dialog}
+      className={size === 'wide' ? `${styles.dialog} ${styles.wide}` : styles.dialog}
       aria-labelledby={titleId}
       onCancel={(event) => {
         // Esc: let React decide, so the open prop stays the single source of truth.

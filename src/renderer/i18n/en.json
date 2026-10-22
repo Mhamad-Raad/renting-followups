@@ -601,11 +601,12 @@
     "lastDay": "Month {{month}} is not fully paid and ends today.",
     "owes": "Still owes",
     "none": "Nothing needs attention. All rent is paid up to this month.",
-    "popupTitle": "Things that need attention",
+    "popupTitle": "Areas that need attention",
     "goTo": "Go to Notifications",
     "more": "… and {{number}} more",
     "toastBody": "Reminders that need attention: {{number}}. Open the app to see them.",
     "endsOn": "Month {{month}} is not fully paid. It ends on {{date}}.",
-    "backupDue": "No backup has been made this month."
+    "backupDue": "No backup has been made this month.",
+    "popupSummary": "Number of areas: {{number}}. You can see all of them on the Notifications page."
   }
 }

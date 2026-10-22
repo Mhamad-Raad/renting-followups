@@ -76,23 +76,56 @@
   white-space: nowrap;
 }
 
-/* The popup's reminders scroll inside the dialog when there are many. */
-.popupList {
+/* The popup: a summary line, the backup strip, then the areas in their own scrolling box. */
+.popup {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  max-height: 55vh;
+  gap: var(--space-4);
+}
+
+.summary {
+  margin: calc(var(--space-2) * -1) 0 0;
+  color: var(--color-text-muted);
+}
+
+.popupList {
+  max-height: 46vh;
   overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.popupList .list {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* One line per area in the popup: who, then how late and how much, then the button. */
+.row.compact {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  padding: var(--space-3) var(--space-4);
+}
+
+.compact .what {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2) var(--space-3);
 }
 
 .more {
-  margin: var(--space-3) 0 0;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-block-start: 1px solid var(--color-border);
   color: var(--color-text-muted);
+  text-align: center;
 }
 
 /* Narrow lists (a small window, or the popup) put the button on its own line. */
 @container (max-width: 50rem) {
-  .row {
+  .row:not(.compact) {
     grid-template-columns: 1fr 1fr;
   }
 }

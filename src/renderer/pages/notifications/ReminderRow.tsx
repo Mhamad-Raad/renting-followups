@@ -12,6 +12,19 @@ import { PhoneText } from '../../components/PhoneText';
 import { areaLink, recordPaymentLink } from '../areas/links';
 import styles from './Notifications.module.css';
 
+/** The short coloured label of a reminder: how many months are late, or Due. */
+function ReminderPill({ reminder }: { reminder: AreaReminder }) {
+  const { t } = useTranslation();
+  const { settings } = useSettings();
+  return reminder.kind === 'late' ? (
+    <StatusPill status="late">
+      {t('home.lateMonths', { number: formatPlain(reminder.months.length, settings.digitStyle) })}
+    </StatusPill>
+  ) : (
+    <StatusPill status="due">{t('months.status.due')}</StatusPill>
+  );
+}
+
 /**
  * What a reminder says, in the same words on the popup and the Notifications
  * page: a short coloured label, then the months or days left on a line that
@@ -24,9 +37,7 @@ export function ReminderDescription({ reminder }: { reminder: AreaReminder }) {
   if (reminder.kind === 'late') {
     return (
       <>
-        <StatusPill status="late">
-          {t('home.lateMonths', { number: formatPlain(reminder.months.length, digits) })}
-        </StatusPill>
+        <ReminderPill reminder={reminder} />
         <span className={styles.detail}>
           {t('receipts.months', {
             months: formatMonthRuns(reminder.months, digits, t('receipts.separator')),
@@ -38,7 +49,7 @@ export function ReminderDescription({ reminder }: { reminder: AreaReminder }) {
   const month = formatYearMonth(reminder.month, digits);
   return (
     <>
-      <StatusPill status="due">{t('months.status.due')}</StatusPill>
+      <ReminderPill reminder={reminder} />
       <span className={styles.detail}>
         {reminder.daysLeft === 1
           ? t('notifications.lastDay', { month })
@@ -48,12 +59,19 @@ export function ReminderDescription({ reminder }: { reminder: AreaReminder }) {
   );
 }
 
+interface ReminderRowProps {
+  reminder: AreaReminder;
+  onOpen?: () => void;
+  /** The popup's short form: one line per area, without the list of months. */
+  compact?: boolean;
+}
+
 /** One reminder: the area, its renter, what is wrong and owed, and Record payment. */
-export function ReminderRow({ reminder, onOpen }: { reminder: AreaReminder; onOpen?: () => void }) {
+export function ReminderRow({ reminder, onOpen, compact = false }: ReminderRowProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   return (
-    <li className={styles.row}>
+    <li className={compact ? `${styles.row} ${styles.compact}` : styles.row}>
       <div className={styles.who}>
         <Link to={areaLink(reminder.areaId)} className={styles.name} onClick={onOpen}>
           {reminder.areaName}
@@ -69,14 +87,18 @@ export function ReminderRow({ reminder, onOpen }: { reminder: AreaReminder; onOp
         </span>
       </div>
       <div className={styles.what}>
-        <ReminderDescription reminder={reminder} />
-        <span className={styles.second}>{t('notifications.owes')}</span>
+        {compact ? (
+          <ReminderPill reminder={reminder} />
+        ) : (
+          <ReminderDescription reminder={reminder} />
+        )}
+        {!compact && <span className={styles.second}>{t('notifications.owes')}</span>}
         <strong className={styles.owed}>
           <MoneyText amount={reminder.owed} currency={reminder.currency} />
         </strong>
       </div>
       <BigButton
-        variant="primary"
+        variant={compact ? 'secondary' : 'primary'}
         onClick={() => {
           onOpen?.();
           void navigate(recordPaymentLink(reminder.areaId));
