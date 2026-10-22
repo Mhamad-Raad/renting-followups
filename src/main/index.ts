@@ -27,6 +27,7 @@ import { applyReadyRestore, clearStep } from './services/restore';
 import { startupFailureMessage } from './services/messages';
 import { translate } from './services/translate';
 import { appWebPreferences, loadRenderer, RENDERER_DIRECTORY } from './windows';
+import appIcon from '../../resources/icon.png?asset';
 
 const APP_NAME = 'Rent Tracker';
 const MIN_WIDTH = 1100;
@@ -159,6 +160,8 @@ function startMemoryLog(): void {
 function createMainWindow(themeMode: ThemeMode): void {
   const window = new BrowserWindow({
     title: APP_NAME,
+    // The app's own icon in the title bar and on the taskbar; the installer uses build/icon.ico.
+    icon: appIcon,
     backgroundColor: WINDOW_BACKGROUND[themeMode],
     minWidth: MIN_WIDTH,
     minHeight: MIN_HEIGHT,
