@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { formatYearMonth } from '@shared/dates';
-import type { DigitStyle } from '@shared/digits';
+import { toDigitStyle, type DigitStyle } from '@shared/digits';
 import { formatPlain } from '@shared/formatNumber';
 import type { ImportChoice, ImportPreview, RowProblem } from '@shared/import';
 import { flash } from '../../app/flash';
@@ -46,7 +46,10 @@ function problemText(problem: RowProblem, t: Translate, digits: DigitStyle): str
           : 'import.problem.bad_price',
       );
     case 'bad_year':
-      return t('import.problem.bad_year', { min: String(problem.min), max: String(problem.max) });
+      return t('import.problem.bad_year', {
+        min: toDigitStyle(String(problem.min), digits),
+        max: toDigitStyle(String(problem.max), digits),
+      });
     case 'same_as_row':
       return t('import.problem.same_as_row', { row: number(problem.otherRow) });
     default:
