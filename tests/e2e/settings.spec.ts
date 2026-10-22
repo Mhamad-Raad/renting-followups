@@ -237,3 +237,29 @@ test('the activity log lists changes, newest first', async () => {
     removeDataDir(dataDir);
   }
 });
+
+test('Show older adds the next entries of a long activity log, with no repeats', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    await page.evaluate(async () => {
+      for (let index = 1; index <= 120; index += 1) {
+        await window.api.invoke('categories:create', { name: `Category ${index}`, color: null });
+      }
+    });
+    await openSettings(page);
+    await page.getByRole('link', { name: 'Activity log' }).click();
+    const rows = page.getByRole('main').getByRole('listitem');
+    await expect(rows).toHaveCount(100);
+    await expect(rows.first()).toHaveText(/Category added: Category 120/);
+    await page.getByRole('button', { name: 'Show older' }).click();
+    await expect(rows).toHaveCount(120);
+    await expect(
+      rows.last().getByText('Category added: Category 1', { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Show older' })).toHaveCount(0);
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
