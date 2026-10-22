@@ -155,3 +155,17 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] Every theme colour is readable in light and dark mode (unit test).
 - [ ] _manual_ With Arabic-Indic digits in English, month ranges and the activity log's date and time read in the right order.
 - [ ] _manual_ The reminder popup fits its Record payment button in every language and text size.
+
+## Iteration 11: Backup and restore
+
+Automated (`npm run test:e2e` and unit tests) unless marked _manual_.
+
+- [ ] Settings → Back up now asks for a folder the first time, writes `rent-backup-YYYY-MM-DD.db` (with the logo beside it) and shows the date of the last backup.
+- [ ] The folder keeps the newest 12 backups; older ones made by the app are removed, other files are never touched, and the backup just made is never removed.
+- [ ] Backup then Restore brings back exactly the backed-up data and logo; a safety copy of the replaced data is kept.
+- [ ] A file that is not a backup, a damaged backup, one from a newer app version, or an older one that cannot be upgraded is refused in plain words and nothing changes.
+- [ ] After a restore, new receipt numbers continue from the highest number ever given (never reused).
+- [ ] If the swap fails at start (for example a locked file), the current data and its journal stay exactly as they were.
+- [ ] A damaged data file shows the recovery screen, and restoring a backup brings the data back.
+- [ ] The monthly backup reminder appears when no backup was made this month, and Back up now in it clears the reminder.
+- [ ] _manual_ On Windows, back up to a USB drive, remove it, and Back up now says plainly that the folder is missing.
