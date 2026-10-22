@@ -596,7 +596,7 @@
     "count": "Reminders: {{number}}",
     "late": "Late rent",
     "monthEnd": "This month ends soon",
-    "lastDay": "Month {{month}} is not fully paid and ends today",
+    "lastDay": "Month {{month}} is not fully paid and ends today.",
     "owes": "Still owes",
     "none": "Nothing needs attention. All rent is paid up to this month.",
     "popupTitle": "Things that need attention",
