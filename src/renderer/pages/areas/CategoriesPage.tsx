@@ -8,6 +8,7 @@ import {
 } from '@shared/categories';
 import { formatPlain } from '@shared/formatNumber';
 import { callIpc, useIpcQuery } from '../../app/ipc';
+import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { CategoryDot } from '../../components/CategoryDot';
@@ -27,6 +28,7 @@ type Editing = { category: Category | null } | null;
 /** Add, rename, recolour and delete the groups that areas belong to. */
 export function CategoriesPage() {
   const { t } = useTranslation();
+  const mounted = useMountedRef();
   const { settings } = useSettings();
   const categories = useIpcQuery('categories:list');
   const [editing, setEditing] = useState<Editing>(null);
@@ -48,6 +50,7 @@ export function CategoriesPage() {
   const remove = async (category: Category) => {
     setDeleting(null);
     const result = await callIpc('categories:delete', { id: category.id });
+    if (!mounted.current) return;
     if (!result.ok) setMessage({ tone: 'error', text: t('errors.unexpected') });
     else if (!result.data.ok)
       setMessage({ tone: 'error', text: t(`categories.${result.data.reason}`) });
@@ -134,6 +137,7 @@ interface CategoryFormProps {
 
 function CategoryForm({ category, onSaved, onCancel }: CategoryFormProps) {
   const { t } = useTranslation();
+  const mounted = useMountedRef();
   const [name, setName] = useState(category?.name ?? '');
   const [color, setColor] = useState<CategoryColor | null>(category?.color ?? null);
   const [showProblems, setShowProblems] = useState(false);
@@ -148,10 +152,14 @@ function CategoryForm({ category, onSaved, onCancel }: CategoryFormProps) {
     const result = category
       ? await callIpc('categories:update', { id: category.id, name, color })
       : await callIpc('categories:create', { name, color });
+    if (result.ok && result.data.ok) {
+      onSaved();
+      return;
+    }
+    if (!mounted.current) return;
     setBusy(false);
     if (!result.ok) setProblem(t('errors.unexpected'));
     else if (!result.data.ok) setProblem(t(`categories.${result.data.reason}`));
-    else onSaved();
   };
 
   return (

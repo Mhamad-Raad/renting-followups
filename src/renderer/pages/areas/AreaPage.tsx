@@ -6,6 +6,7 @@ import { yearMonthOf } from '@shared/dates';
 import { formatReceiptNumber, type Receipt } from '@shared/payments';
 import { priceForMonth } from '@shared/prices';
 import { callIpc, useIpcQuery } from '../../app/ipc';
+import { useMountedRef } from '../../app/useMountedRef';
 import { flash, useFlashNotice } from '../../app/flash';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
@@ -57,6 +58,7 @@ export function AreaPage() {
 
 function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => void }) {
   const { t } = useTranslation();
+  const mounted = useMountedRef();
   const { settings } = useSettings();
   const navigate = useNavigate();
   const flashed = useFlashNotice();
@@ -100,6 +102,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
   const cancelReceipt = async (id: number, message: string) => {
     setDialog(null);
     const result = await callIpc('payments:void', { id });
+    if (!mounted.current) return;
     if (result.ok && result.data.ok) done(message);
     else setProblem(t('errors.unexpected'));
   };
@@ -118,6 +121,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
   const remove = async () => {
     setDialog(null);
     const result = await callIpc('areas:delete', { id: area.id });
+    if (!mounted.current) return;
     if (result.ok && result.data.ok) {
       void navigate('/areas', { state: flash(t('areas.deleted')) });
     } else {

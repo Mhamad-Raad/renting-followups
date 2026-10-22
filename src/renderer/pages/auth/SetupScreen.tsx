@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { checkNewPassword, checkNewRecoveryPhrase, type NewSecretProblem } from '@shared/auth';
 import { callIpc } from '../../app/ipc';
+import { useMountedRef } from '../../app/useMountedRef';
 import { useNewSecretProblemText } from '../../app/useSecretCheck';
 import { BigButton } from '../../components/BigButton';
 import { Notice } from '../../components/Notice';
@@ -21,6 +22,7 @@ interface SetupScreenProps {
 /** First run: create the password (typed twice) and the recovery phrase. */
 export function SetupScreen({ onDone, onAlreadySet }: SetupScreenProps) {
   const { t } = useTranslation();
+  const mounted = useMountedRef();
   const problemText = useNewSecretProblemText();
   const phraseHint = useRecoveryPhraseHint();
   const [password, setPassword] = useState('');
@@ -43,6 +45,7 @@ export function SetupScreen({ onDone, onAlreadySet }: SetupScreenProps) {
     setBusy(true);
     setFailed(false);
     const result = await callIpc('auth:setup', { password, recoveryPhrase: phrase });
+    if (!mounted.current) return;
     setBusy(false);
     if (!result.ok) setFailed(true);
     else if (result.data.ok) onDone();

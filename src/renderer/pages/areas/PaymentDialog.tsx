@@ -13,6 +13,7 @@ import {
   type Receipt,
 } from '@shared/payments';
 import { callIpc, useIpcQuery, type QueryState } from '../../app/ipc';
+import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { useDebouncedValue } from '../../app/useDebouncedValue';
 import { AmountField } from '../../components/AmountField';
@@ -97,6 +98,7 @@ interface PaymentFormProps {
 
 function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) {
   const { t } = useTranslation();
+  const mounted = useMountedRef();
   const { settings } = useSettings();
   const editing = mode.kind === 'edit' ? mode.receipt : null;
   const [amount, setAmount] = useState<number | null>(editing?.totalAmount ?? null);
@@ -121,16 +123,19 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
     const details = { amount, from, paidOn, note };
     if (editing) {
       const result = await callIpc('payments:update', { id: editing.id, ...details });
+      // A saved change always reaches the page, even if the dialog was closed meanwhile.
+      if (result.ok && result.data.ok) return onSaved({ message: t('paymentDialog.updated') });
+      if (!mounted.current) return;
       setBusy(false);
-      if (!result.ok) return setProblem(t('errors.unexpected'));
-      if (!result.data.ok) return setProblem(explain(result.data));
-      return onSaved({ message: t('paymentDialog.updated') });
+      return setProblem(result.ok ? explain(result.data) : t('errors.unexpected'));
     }
     const isBackfill = mode.kind === 'past';
     const result = await callIpc('payments:create', { areaId: area.id, isBackfill, ...details });
-    setBusy(false);
-    if (!result.ok) return setProblem(t('errors.unexpected'));
-    if (!result.data.ok) return setProblem(explain(result.data));
+    if (!result.ok || !result.data.ok) {
+      if (!mounted.current) return;
+      setBusy(false);
+      return setProblem(result.ok ? explain(result.data) : t('errors.unexpected'));
+    }
     const { id, receiptNumber } = result.data;
     onSaved({
       message:

@@ -11,6 +11,7 @@ import {
 import { CATEGORY_NAME_MAX } from '@shared/categories';
 import { dateStringFromLocal, yearMonthOf, type DateString } from '@shared/dates';
 import { callIpc, useIpcQuery } from '../../app/ipc';
+import { useMountedRef } from '../../app/useMountedRef';
 import { flash } from '../../app/flash';
 import { BigButton } from '../../components/BigButton';
 import { Checkbox } from '../../components/Checkbox';
@@ -50,6 +51,7 @@ function EditAreaLoader({ areaId }: { areaId: number }) {
 
 function AreaForm({ area }: { area: AreaDetails | null }) {
   const { t } = useTranslation();
+  const mounted = useMountedRef();
   const navigate = useNavigate();
   const categories = useIpcQuery('categories:list');
   const today = new Date();
@@ -106,6 +108,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
   async function resolveCategoryId(): Promise<number | null> {
     if (categoryChoice !== NEW_CATEGORY) return Number(categoryChoice);
     const created = await callIpc('categories:create', { name: newCategoryName, color: null });
+    if (!mounted.current) return null;
     if (!created.ok) {
       setProblem('unexpected');
       return null;
@@ -126,6 +129,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
     if (Object.values(fieldProblems).some(Boolean) || busy) return;
     setBusy(true);
     const categoryId = await resolveCategoryId();
+    if (!mounted.current) return;
     if (categoryId === null) {
       setBusy(false);
       return;
@@ -152,6 +156,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
           rentStartsFrom: rent.startsFrom,
           renter: renterDetails && { ...renterDetails, startedOn: renter.since },
         });
+    if (!mounted.current) return;
     setBusy(false);
     if (!result.ok) setProblem('unexpected');
     else if (!result.data.ok) setProblem(result.data.reason);
