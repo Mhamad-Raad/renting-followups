@@ -128,7 +128,8 @@ test('the area page filters by year and month, and warns before a price change',
     const february = en.months.box
       .replace('{{month}}', '2')
       .replace('{{status}}', en.months.status.late);
-    await expect(page.getByLabel(february, { exact: true })).toBeVisible();
+    // The box's label also says what a click does ("… Mark as paid").
+    await expect(page.getByLabel(new RegExp(`^${february}\\.`))).toBeVisible();
   } finally {
     await app.close();
     removeDataDir(dataDir);
