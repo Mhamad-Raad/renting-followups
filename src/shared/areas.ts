@@ -57,12 +57,16 @@ export interface AreaNaming {
   renterName: string | null;
 }
 
-/** Orders areas by what they are called on screen (areas with no name at all come first). */
+/**
+ * Orders areas by what they are called on screen (areas with no name at all
+ * come first); the same label keeps the order the areas were added in, so
+ * every list, print and export agrees.
+ */
 export function compareAreaLabels(
   collator: Intl.Collator,
-): (a: AreaNaming, b: AreaNaming) => number {
+): (a: AreaNaming & { id: number }, b: AreaNaming & { id: number }) => number {
   const label = (area: AreaNaming) => areaLabel(area.name, area.renterName) ?? '';
-  return (a, b) => collator.compare(label(a), label(b));
+  return (a, b) => collator.compare(label(a), label(b)) || a.id - b.id;
 }
 
 export const areaCreateSchema = z

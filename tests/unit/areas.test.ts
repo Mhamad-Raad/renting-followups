@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Db } from '../../src/main/db/connection';
 import type { Repositories } from '../../src/main/db/repositories';
-import { areaCreateSchema, areaLabel } from '@shared/areas';
+import { areaCreateSchema, areaLabel, compareAreaLabels } from '@shared/areas';
 import { areaInput, createTestDatabase } from './helpers';
 
 const TODAY = { year: 2026, month: 10 };
@@ -102,6 +102,17 @@ describe('creating areas', () => {
     createArea({ name: '' });
     const input = areaCreateSchema.parse(areaInput(categoryId, { name: '\u200c' }));
     expect(repos.areas.create(input)).toMatchObject({ ok: true });
+  });
+
+  it('sorts areas by their shown name, then in the order they were added', () => {
+    const areas = [
+      { id: 3, name: '', renterName: 'Aram' },
+      { id: 1, name: 'Shop B', renterName: null },
+      { id: 2, name: '', renterName: 'Aram' },
+      { id: 4, name: '', renterName: null },
+    ];
+    const sorted = [...areas].sort(compareAreaLabels(new Intl.Collator('en')));
+    expect(sorted.map((area) => area.id)).toEqual([4, 2, 3, 1]);
   });
 
   it('shows an area by its name, else its renter, else nothing', () => {

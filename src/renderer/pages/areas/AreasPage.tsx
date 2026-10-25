@@ -187,7 +187,9 @@ export function AreasPage() {
                     <td className={styles.tick} onClick={(event) => event.stopPropagation()}>
                       <Checkbox
                         hideLabel
-                        label={t('print.actions.select', { name: label(area) })}
+                        label={t('print.actions.select', {
+                          name: `${label(area)}${PART_SEPARATOR}${area.categoryName}`,
+                        })}
                         checked={selected.has(area.id)}
                         onChange={(checked) =>
                           setSelected((current) => {

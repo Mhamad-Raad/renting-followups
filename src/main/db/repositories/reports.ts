@@ -99,7 +99,12 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
       const byName = compareAreaLabels(new Intl.Collator(language));
       return {
         candidates: areas
-          .map((area) => ({ id: area.id, name: area.name, renterName: area.renter_name }))
+          .map((area) => ({
+            id: area.id,
+            name: area.name,
+            renterName: area.renter_name,
+            categoryName: area.category_name,
+          }))
           .sort(byName),
         rows: rows.sort(byName),
         totals: reportTotals(rows),
