@@ -581,8 +581,7 @@
       "printSelected": "طباعة المحدد",
       "printReport": "طباعة التقرير",
       "select": "تحديد {{name}}",
-      "selectAll": "تحديد كل المعروض",
-      "printArea": "طباعة هذا العقار"
+      "selectAll": "تحديد كل المعروض"
     },
     "results": {
       "printed": "أُرسل إلى الطابعة.",

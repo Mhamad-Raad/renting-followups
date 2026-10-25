@@ -88,7 +88,7 @@ export function AreaPeriod({
       )}
 
       <ReportOutputButtons
-        printLabel={t('print.actions.printArea')}
+        withPrint={false}
         query={{
           year,
           month,

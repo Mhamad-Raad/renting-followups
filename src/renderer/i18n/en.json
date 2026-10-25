@@ -581,8 +581,7 @@
       "printSelected": "Print selected",
       "printReport": "Print report",
       "select": "Select {{name}}",
-      "selectAll": "Select all shown",
-      "printArea": "Print this area"
+      "selectAll": "Select all shown"
     },
     "results": {
       "printed": "Sent to the printer.",

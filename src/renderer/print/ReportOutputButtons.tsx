@@ -7,24 +7,32 @@ import { usePrint } from './usePrint';
 
 interface ReportOutputButtonsProps {
   query: ReportQuery;
-  /** The print button's words, for example "Print this area"; "Print" by default. */
+  /** The print button's words, for example "Print selected"; "Print" by default. */
   printLabel?: string;
+  /** False leaves out the direct Print button (the area page offers only PDF and Excel). */
+  withPrint?: boolean;
 }
 
 /** Print, Export to PDF and Export to Excel for one report, with the result in plain words. */
-export function ReportOutputButtons({ query, printLabel }: ReportOutputButtonsProps) {
+export function ReportOutputButtons({
+  query,
+  printLabel,
+  withPrint = true,
+}: ReportOutputButtonsProps) {
   const { t } = useTranslation();
   const { run, busy, message } = usePrint();
   return (
     <div className={styles.stack}>
       <div className={styles.buttons}>
-        <BigButton
-          icon="reports"
-          disabled={busy}
-          onClick={() => void run({ kind: 'report', query, output: 'printer' })}
-        >
-          {printLabel ?? t('print.actions.print')}
-        </BigButton>
+        {withPrint && (
+          <BigButton
+            icon="reports"
+            disabled={busy}
+            onClick={() => void run({ kind: 'report', query, output: 'printer' })}
+          >
+            {printLabel ?? t('print.actions.print')}
+          </BigButton>
+        )}
         <BigButton
           disabled={busy}
           onClick={() => void run({ kind: 'report', query, output: 'pdf' })}
