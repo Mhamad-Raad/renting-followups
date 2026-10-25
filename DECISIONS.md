@@ -430,3 +430,12 @@ Named in ARCHITECTURE.md for Excel export; pure JavaScript, runs in the main pro
 - `build/icon.png` (1024 px) and `build/icon.ico` (16 to 256 px) are for the installer and shortcuts; `resources/icon.png` (256 px) is the window and taskbar icon. The original logo picture is only 300 px, so the logo part is slightly soft at large sizes; a larger original would make it crisp.
 - **Green theme colour (owner's choice):** green from the logo is now the first theme colour and the default (light #107c01, a little deeper than the logo's #129901 so white button text stays readable; dark #6cc95c). The earlier rule "no green theme colour, so it never looks like a paid month" is set aside at the owner's request; the paid status keeps its own darker green and its tick and word, so months stay easy to tell apart. Blue and the other colours remain choices in Settings.
 - **Password eye:** the Show/Hide button is now an eye icon inside the password box (a crossed-out eye while the password is shown), still a real button that the keyboard reaches and screen readers announce as "Show password" / "Hide password".
+
+### Optional area name (owner's decision, 2026-10-25)
+
+- The owner's client knows each place only by its group (the sheet title, which is the app's **category**) and its renter, so the area name is now optional. ARCHITECTURE.md section 5 records the rule.
+- **How an area without a name is shown:** by its current renter's name everywhere (lists, area page, Home, reminders, reports, print, Excel, Deleted items, Activity log); "No name" when it has no renter. One shared function decides this (`areaLabel`), so the screens never disagree. Lists sort by what is shown.
+- **Receipts:** the renter is already printed on its own line, so the area line shows the category instead of repeating the renter.
+- **Duplicates:** names that are filled in stay unique within a category. Areas without a name never clash, because the same person may rent two places in one category (as in the client's sheets). Migration 004 changes the unique index to match.
+- **Import:** the name column may be left out or empty. Rows without a name are never flagged as already imported, so the template help asks to import such a file only once. In the preview an empty name shows a dash.
+- **Tests:** the three reminder end-to-end tests failed in the last week of every month (the late test area also got a month-end reminder). The test now pays the current month, so it gives the same counts on any day.

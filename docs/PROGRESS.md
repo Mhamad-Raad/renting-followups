@@ -2,7 +2,7 @@
 
 ## Current iteration
 
-**Iteration 13: Polish, QA and performance**, on branch `iter-13-polish`. Done: two independent audits, the performance and memory tests and the regression walk-through, with every finding fixed. Pushed; waiting for the owner to say "continue".
+**Iteration 13: Polish, QA and performance**, on branch `iter-13-polish`. Done: two independent audits, the performance and memory tests and the regression walk-through, with every finding fixed. Then, at the owner's request, the **area name became optional** (an area is shown by its renter's name), reviewed in `docs/reviews/review-2026-10-25.md`. Pushed; waiting for the owner to say "continue".
 
 ## Done
 
@@ -19,6 +19,7 @@
 - Iteration 10 (merged, tag `iter-10`): the full Settings page: six theme colours, six bundled fonts tested for Sorani, print title and logo (on prints and the Excel title row) with a live preview, reminder days, Activity log page; fixes for Arabic-Indic number order in English and the popup button. 561 unit tests and 43 end-to-end tests pass.
 - Iteration 11 (merged, tag `iter-11`): Back up now (the newest 12 kept, logo copied beside each backup, same-drive warning), Restore in two steps with a safety copy and a restart, a recovery screen for damaged data, receipt numbers that never repeat after a restore, and the monthly backup reminder. 593 unit tests and 49 end-to-end tests pass.
 - Iteration 12 (merged, tag `iter-12`): Areas → Import from Excel (template in the app's language, preview with plain row problems, new categories made automatically, duplicates flagged, everything saved together or not at all), and `npm run seed` demo data (200 areas, three years of payments) for development. 614 unit tests and 51 end-to-end tests pass.
+- Optional area name (2026-10-25, on `iter-13-polish`): areas may have no name and are shown by their renter; receipts show the category; migration 004; import without the name column. 660 unit tests and 55 end-to-end tests pass.
 - Iteration 13: whole-app polish. Dialogs start on the safe button (Cancel on Restore), clearer focus and edges, calmer motion, Try again on every screen that cannot load, plain messages when a file cannot be saved, month ranges and page numbers in the right order in every language, month boxes that fit any amount, clearer wording in all three languages. 200 areas with five years of payments: every screen opens in a quarter of a second or less; memory stays flat. 622 unit tests and 53 end-to-end tests pass.
 
 ## Next
@@ -27,6 +28,9 @@
 - Then iteration 14 (packaging and release): the Windows installer, with an explicit file list (`out/`, `resources/` and `package.json` only; the installer icon is `build/icon.ico`) and a check that no demo data (`demo-data/`, `scripts/`) is packed; then the Windows-only checks listed in `docs/reviews/iteration-13.md`.
 
 ## Open questions
+
+- Data from the client's old system (three 2023 sheets, typed up on the Desktop) is waiting on the client: IQD or USD for each place, three plots paid once a year, two phones written only as "770", and one shop whose total does not match its start month. Then it can become an import file.
+- The new logo (white ring, slightly darker green) is liked by the owner; it goes into the app icons in iteration 14.
 
 - Plainer button names than ARCHITECTURE.md uses? "Change rent" for "Change price", "Save as PDF" for "Export to PDF", "Report options" for "Report filters". Currently as ARCHITECTURE.md says.
 - A native Sorani speaker should check the words listed in `DECISIONS.md` (iteration 13).

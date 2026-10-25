@@ -197,3 +197,11 @@ Automated (`npm run test:e2e` and unit tests) unless marked _manual_.
 - [ ] _manual_ Every screen that cannot load shows Try again; the Home and Areas empty screens offer Add your first area and Import from Excel.
 - [ ] _manual_ With extra-large text, month box amounts and status words stay inside their boxes; a bell count above 99 shows "99+" beside the bell.
 - [ ] _manual_ `npm run seed -- demo-data 5`, then the memory routine of IMPLEMENTATION.md section 7: listeners and page elements return to the same numbers each round.
+
+### Optional area name (2026-10-25)
+
+- [ ] An area can be saved without a name; the list, the area page and Reports show it by its renter's name, or "No name" with no renter (end-to-end and unit tests).
+- [ ] Two areas without a name fit in one category; two with the same filled-in name do not (unit tests).
+- [ ] The receipt of an area without a name shows its category on the Area line (unit test).
+- [ ] An Excel file without the area name column imports (unit test).
+- [ ] _manual_ In Sorani, the form says the name is optional and explains that the renter's name is shown instead.
