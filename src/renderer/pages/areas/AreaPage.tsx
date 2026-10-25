@@ -93,9 +93,12 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
     period.refresh();
   };
 
-  const monthPick = useMonthPick((outcome) =>
-    outcome.tone === 'success' ? done(outcome.text) : setProblem(outcome.text),
-  );
+  const monthPick = useMonthPick((outcome) => {
+    if (outcome.tone === 'error') return setProblem(outcome.text);
+    done(outcome.text);
+    // A month marked as paid can be undone, like any new payment.
+    setUndoable(outcome.undo ?? null);
+  });
 
   const printing = usePrint();
   const printReceipt = (id: number) =>

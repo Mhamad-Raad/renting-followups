@@ -231,6 +231,7 @@ A second button on the area page, **Record past payment**, lets the user mark mo
 On the area page and in the Areas list, every month box that has rent is a button:
 - **A month not fully paid** (late, due, partial or upcoming): after a short question ("Mark month 5 of 2026 as paid? 825,000 IQD"), the rest of that month's rent is recorded as a normal payment dated today, **with a receipt number**, filling only that month.
 - **A paid month**: after a short question that lists what will change, that month is taken out of the receipts that paid it. A receipt that paid only this month is cancelled; a receipt that paid other months too keeps its number and its other months, and its amount goes down by this month's share. Its months may then have a gap (for example 1-2 and 4-8). The change is in the Activity log.
+- A month marked as paid can be undone like any new payment. Editing a receipt with a gap only for its date or note keeps its months; changing its amount or start month, or a price change from an earlier month, shares its money out again oldest month first (with the usual preview or warning), which fills the gap.
 - Vacant and not-started months are not buttons. Report screens and prints are not clickable.
 
 ---
