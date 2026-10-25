@@ -17,18 +17,6 @@ export function monthWord({ status, expected }: Pick<MonthBox, 'status' | 'expec
   return expected === 0 ? 'vacant' : 'notStarted';
 }
 
-/** The compact strip has no room for words: a symbol beside the colour, so colour is never the only signal. */
-const SYMBOLS: Record<MonthWord, string> = {
-  paid: '✓',
-  due: '•',
-  partial: '½',
-  // The symbols ARCHITECTURE.md section 14 asks for, so a black-and-white print still reads.
-  late: '✗',
-  upcoming: '',
-  vacant: '–',
-  notStarted: '–',
-};
-
 /** The colour family of a year summary, matching the month colours. */
 const SUMMARY_COLOR: Record<YearSummary, MonthStatus> = {
   late: 'late',
@@ -42,7 +30,7 @@ interface MonthBoxesProps {
   boxes: readonly MonthBox[];
   year: number;
   currency: Currency;
-  /** A thin strip of symbols for lists, instead of large boxes with amounts. */
+  /** A thin strip of month numbers for lists and prints, instead of large boxes with amounts. */
   compact?: boolean;
   /** The month chosen in the filter, outlined. */
   selected?: number | null;
@@ -50,7 +38,8 @@ interface MonthBoxesProps {
 
 /**
  * The 12 months of a year in their status colours, each with its month number
- * (or symbol) and status word. The statuses come from the main process.
+ * (and, in the large boxes, the amount and status word). The statuses come
+ * from the main process.
  */
 export const MonthBoxes = memo(function MonthBoxes({
   boxes,
@@ -83,7 +72,7 @@ export const MonthBoxes = memo(function MonthBoxes({
             title={label(box)}
             aria-label={label(box)}
           >
-            <span aria-hidden="true">{SYMBOLS[monthWord(box)]}</span>
+            <span aria-hidden="true">{formatPlain(box.month, digits)}</span>
           </li>
         ))}
       </ol>

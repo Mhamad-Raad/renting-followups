@@ -114,8 +114,8 @@
 }
 
 .strip {
-  /* Narrows a little when the list is short of room. */
-  grid-template-columns: repeat(12, minmax(0.8rem, 1.15rem));
+  /* Room for a two-digit month number; narrows a little when the list is short of room. */
+  grid-template-columns: repeat(12, minmax(1.15rem, 1.5rem));
   gap: 2px;
 }
 
@@ -124,7 +124,8 @@
   place-items: center;
   height: 1.5rem;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
   font-weight: 700;
   line-height: 1;
 }
