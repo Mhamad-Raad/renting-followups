@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Db } from '../../src/main/db/connection';
 import type { Repositories } from '../../src/main/db/repositories';
+import { areaCreateSchema, areaLabel } from '@shared/areas';
 import { areaInput, createTestDatabase } from './helpers';
 
 const TODAY = { year: 2026, month: 10 };
@@ -72,6 +73,37 @@ describe('creating areas', () => {
     const other = repos.categories.create({ name: 'Houses', color: null });
     if (!other.ok) throw new Error('category failed');
     expect(repos.areas.create(areaInput(other.id, { name: 'Shop 1' }))).toMatchObject({ ok: true });
+  });
+
+  it('allows any number of areas without a name in one category', () => {
+    const first = createArea({ name: '' });
+    const second = createArea({ name: '' });
+    expect(repos.areas.get(second)?.name).toBe('');
+    repos.areas.softDelete(first);
+    expect(repos.areas.listDeleted()).toEqual([
+      expect.objectContaining({ id: first, name: '', renterName: 'Karwan Ahmed' }),
+    ]);
+    expect(repos.areas.restore(first)).toEqual({ ok: true });
+    expect(
+      repos.areas.update({
+        id: first,
+        categoryId,
+        name: '',
+        address: '',
+        contractStart: null,
+        notes: '',
+      }),
+    ).toMatchObject({ ok: true });
+  });
+
+  it('accepts a blank name from the screen as no name', () => {
+    expect(areaCreateSchema.parse(areaInput(categoryId, { name: '   ' })).name).toBe('');
+  });
+
+  it('shows an area by its name, else its renter, else nothing', () => {
+    expect(areaLabel('Shop 1', 'Aram')).toBe('Shop 1');
+    expect(areaLabel('', 'Aram')).toBe('Aram');
+    expect(areaLabel('', null)).toBeNull();
   });
 
   it('refuses a missing or deleted category', () => {

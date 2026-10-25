@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router';
 import {
   ADDRESS_MAX,
   AREA_NAME_MAX,
+  currentRenter,
   NOTES_MAX,
   PHONE_PATTERN,
   type AreaDetails,
@@ -57,7 +58,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
   const navigate = useNavigate();
   const categories = useIpcQuery('categories:list');
   const today = new Date();
-  const currentRenter = area?.renters.find((renter) => renter.endedOn === null) ?? null;
+  const renterNow = area ? currentRenter(area.renters) : null;
 
   const [name, setName] = useState(area?.name ?? '');
   const [categoryChoice, setCategoryChoice] = useState(area ? String(area.category.id) : '');
@@ -69,8 +70,8 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
     startsFrom: yearMonthOf(today),
   });
   const [renter, setRenter] = useState<RenterInput>({
-    name: currentRenter?.fullName ?? '',
-    phone: currentRenter?.phone ?? '',
+    name: renterNow?.fullName ?? '',
+    phone: renterNow?.phone ?? '',
     since: dateStringFromLocal(today),
   });
   const [address, setAddress] = useState(area?.address ?? '');
@@ -86,7 +87,6 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
   // Mistakes the owner can fix before anything is sent.
   const required = t('common.requiredField');
   const fieldProblems = {
-    name: name.trim() === '' ? required : null,
     category:
       categoryChoice === ''
         ? t('areaForm.problems.chooseCategory')
@@ -99,7 +99,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
         : null,
     phone: PHONE_PATTERN.test(renter.phone) ? null : t('areaForm.problems.phone'),
     renterName:
-      currentRenter && renter.name.trim() === ''
+      renterNow && renter.name.trim() === ''
         ? t('areaForm.problems.renterNameKept')
         : renter.name.trim() === '' && renter.phone.trim() !== ''
           ? t('areaForm.problems.renterNameNeeded')
@@ -149,7 +149,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
       ? await callIpc('areas:update', {
           id: area.id,
           ...common,
-          ...(renterDetails && currentRenter ? { renter: renterDetails } : {}),
+          ...(renterDetails && renterNow ? { renter: renterDetails } : {}),
         })
       : await callIpc('areas:create', {
           ...common,
@@ -171,10 +171,10 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
       <Form className={styles.form} onSubmit={() => void submit()}>
         <section className={styles.section}>
           <TextField
-            label={t('areaForm.name')}
+            label={`${t('areaForm.name')} ${t('common.optional')}`}
+            hint={t('areaForm.nameHint')}
             value={name}
             onChange={setName}
-            error={shown(fieldProblems.name)}
             maxLength={AREA_NAME_MAX}
             autoFocus
             dir="auto"
@@ -218,7 +218,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
           />
         </section>
 
-        {(!area || currentRenter) && (
+        {(!area || renterNow) && (
           <RenterFields
             editing={area !== null}
             renter={renter}

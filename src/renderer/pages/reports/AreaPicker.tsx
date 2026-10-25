@@ -1,12 +1,14 @@
 import { useTranslation } from 'react-i18next';
+import type { AreaNaming } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
 import { useSettings } from '../../app/SettingsContext';
+import { useAreaLabel } from '../../app/useAreaLabel';
 import { BigButton } from '../../components/BigButton';
 import { Checkbox } from '../../components/Checkbox';
 import styles from './ReportsPage.module.css';
 
 interface AreaPickerProps {
-  candidates: readonly { id: number; name: string }[];
+  candidates: readonly ({ id: number } & AreaNaming)[];
   excludedIds: readonly number[];
   onChange: (excludedIds: readonly number[]) => void;
 }
@@ -14,6 +16,7 @@ interface AreaPickerProps {
 /** Ticks which areas go into the report. Folded away by default: usually all of them do. */
 export function AreaPicker({ candidates, excludedIds, onChange }: AreaPickerProps) {
   const { t } = useTranslation();
+  const label = useAreaLabel();
   const { settings } = useSettings();
   const excluded = new Set(excludedIds);
   const chosen = candidates.filter((area) => !excluded.has(area.id)).length;
@@ -38,7 +41,7 @@ export function AreaPicker({ candidates, excludedIds, onChange }: AreaPickerProp
         {candidates.map((area) => (
           <Checkbox
             key={area.id}
-            label={area.name}
+            label={label(area)}
             checked={!excluded.has(area.id)}
             onChange={(checked) => toggle(area.id, checked)}
           />

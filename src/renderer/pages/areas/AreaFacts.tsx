@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import type { AreaDetails } from '@shared/areas';
+import { currentRenter, type AreaDetails } from '@shared/areas';
 import { formatDate } from '@shared/dates';
 import { useSettings } from '../../app/SettingsContext';
 import { CategoryDot } from '../../components/CategoryDot';
@@ -11,7 +11,7 @@ import { RentText } from './RentText';
 export function AreaFacts({ area, price }: { area: AreaDetails; price: number | null }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
-  const renter = area.renters.find((entry) => entry.endedOn === null) ?? null;
+  const renter = currentRenter(area.renters);
   const date = (value: string) => formatDate(value, settings.digitStyle);
   return (
     <section className={styles.card}>

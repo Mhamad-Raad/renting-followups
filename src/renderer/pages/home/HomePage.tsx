@@ -6,6 +6,7 @@ import { DEFAULT_REPORT_FILTERS } from '@shared/reports';
 import { flash } from '../../app/flash';
 import { useIpcQuery } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
+import { useAreaLabel } from '../../app/useAreaLabel';
 import { BigButton } from '../../components/BigButton';
 import { CategoryDot } from '../../components/CategoryDot';
 import { FigureCards } from '../../components/FigureCards';
@@ -145,12 +146,13 @@ function AttentionRow({ item }: { item: AttentionItem }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const navigate = useNavigate();
+  const label = useAreaLabel();
   const { standing } = item;
   return (
     <li className={styles.row}>
       <div className={styles.who}>
         <Link to={areaLink(item.id)} className={styles.name}>
-          {item.name}
+          {label(item)}
         </Link>
         <span className={styles.second}>
           <CategoryDot color={item.categoryColor} />

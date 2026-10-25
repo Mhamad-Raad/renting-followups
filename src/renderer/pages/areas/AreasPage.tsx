@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
-import { SEARCH_MAX, type AreaListItem } from '@shared/areas';
+import { compareAreaLabels, SEARCH_MAX, type AreaListItem } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
 import { PART_SEPARATOR } from '@shared/reportText';
 import { useIpcQuery, type QueryState } from '../../app/ipc';
 import { useFlashNotice } from '../../app/flash';
 import { useSettings } from '../../app/SettingsContext';
+import { useAreaLabel } from '../../app/useAreaLabel';
 import { useDebouncedValue } from '../../app/useDebouncedValue';
 import { CategoryDot } from '../../components/CategoryDot';
 import { Checkbox } from '../../components/Checkbox';
@@ -35,6 +36,7 @@ export function AreasPage() {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const navigate = useNavigate();
+  const label = useAreaLabel();
   const notice = useFlashNotice();
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<number | null>(null);
@@ -51,13 +53,13 @@ export function AreasPage() {
     () => sortedIds(areas.state).filter((id) => selected.has(id)),
     [areas.state, selected],
   );
-  const collator = useMemo(() => new Intl.Collator(settings.language), [settings.language]);
+  const byLabel = useMemo(
+    () => compareAreaLabels(new Intl.Collator(settings.language)),
+    [settings.language],
+  );
   const sorted = useMemo<AreaListItem[]>(
-    () =>
-      areas.state.status === 'ready'
-        ? [...areas.state.data].sort((a, b) => collator.compare(a.name, b.name))
-        : [],
-    [areas.state, collator],
+    () => (areas.state.status === 'ready' ? [...areas.state.data].sort(byLabel) : []),
+    [areas.state, byLabel],
   );
 
   const header = (
@@ -185,7 +187,7 @@ export function AreasPage() {
                     <td className={styles.tick} onClick={(event) => event.stopPropagation()}>
                       <Checkbox
                         hideLabel
-                        label={t('print.actions.select', { name: area.name })}
+                        label={t('print.actions.select', { name: label(area) })}
                         checked={selected.has(area.id)}
                         onChange={(checked) =>
                           setSelected((current) => {
@@ -203,7 +205,7 @@ export function AreasPage() {
                         className={styles.name}
                         onClick={(event) => event.stopPropagation()}
                       >
-                        {area.name}
+                        {label(area)}
                       </Link>
                       <span className={`${styles.second} ${styles.category}`}>
                         <CategoryDot color={area.categoryColor} />

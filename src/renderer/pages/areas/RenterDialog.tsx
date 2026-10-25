@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  currentRenter,
   PERSON_NAME_MAX,
   PHONE_MAX,
   PHONE_PATTERN,
@@ -41,7 +42,7 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
   const { t } = useTranslation();
   const mounted = useMountedRef();
   const { settings } = useSettings();
-  const current = area.renters.find((renter) => renter.endedOn === null) ?? null;
+  const current = currentRenter(area.renters);
   const [kind, setKind] = useState<RenterChange['kind']>('new');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');

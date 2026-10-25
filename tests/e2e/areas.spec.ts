@@ -71,6 +71,30 @@ test('the first area is added from the empty screen and shows on the list', asyn
   }
 });
 
+test('areas without a name are shown by their renter, and two may share a category', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    await createAreasThroughIpc(page, ['', '']);
+    await reloadApp(page);
+    await page.getByRole('link', { name: en.nav.areas }).click();
+    const rows = page.getByRole('row');
+    await expect(rows).toHaveCount(3);
+    await expect(page.getByRole('link', { name: 'Renter 0' })).toBeVisible();
+
+    await page.getByRole('link', { name: en.areas.add }).click();
+    await expect(page.getByText(en.areaForm.nameHint)).toBeVisible();
+    await page.getByLabel(en.areaForm.category).selectOption({ label: 'Shops' });
+    await page.getByLabel(en.areaForm.monthlyRent).fill('100000');
+    await page.getByLabel(en.areaForm.renterName).fill('Kazim');
+    await page.getByRole('button', { name: en.areaForm.save }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Kazim');
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
 test('the form explains missing information and duplicate names in plain words', async () => {
   const dataDir = createDataDir();
   const { app, page } = await openAreas(dataDir);
@@ -78,7 +102,7 @@ test('the form explains missing information and duplicate names in plain words',
     await createAreasThroughIpc(page, ['Shop 1']);
     await page.getByRole('link', { name: en.areas.add }).click();
     await page.getByRole('button', { name: en.areaForm.save }).click();
-    await expect(page.getByText(en.common.requiredField)).toBeVisible();
+    await expect(page.getByText(en.areaForm.problems.chooseCategory)).toBeVisible();
     await expect(page.getByText(en.areaForm.problems.rentRequired)).toBeVisible();
 
     await page.getByLabel(en.areaForm.name).fill('shop 1');

@@ -1,3 +1,4 @@
+import { compareAreaLabels } from '@shared/areas';
 import type { CategoryColor } from '@shared/categories';
 import type { Currency } from '@shared/currency';
 import type { YearMonth } from '@shared/dates';
@@ -95,10 +96,11 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
         });
       }
       // Sorted here, once, so the screen, the printed report and Excel list areas in the same order.
-      const collator = new Intl.Collator(language);
-      const byName = (a: { name: string }, b: { name: string }) => collator.compare(a.name, b.name);
+      const byName = compareAreaLabels(new Intl.Collator(language));
       return {
-        candidates: areas.map((area) => ({ id: area.id, name: area.name })).sort(byName),
+        candidates: areas
+          .map((area) => ({ id: area.id, name: area.name, renterName: area.renter_name }))
+          .sort(byName),
         rows: rows.sort(byName),
         totals: reportTotals(rows),
       };

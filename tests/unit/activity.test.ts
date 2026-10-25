@@ -61,6 +61,38 @@ describe('activity log', () => {
     expect(voided).toMatchObject({ action: 'void', amount: 500_000, currency: 'IQD' });
   });
 
+  it('names an area without a name, and its receipts, by the renter', () => {
+    const shops = repos.categories.list()[0]?.id ?? 0;
+    const area = repos.areas.create(
+      areaInput(shops, {
+        name: '',
+        renter: { fullName: 'Aram', phone: '', startedOn: '2026-01-01' },
+      }),
+    );
+    if (!area.ok) throw new Error('area not created');
+    const paid = repos.payments.create(
+      {
+        areaId: area.id,
+        isBackfill: false,
+        from: { year: 2026, month: 1 },
+        note: '',
+        amount: 250_000,
+        paidOn: '2026-05-10',
+      },
+      TODAY,
+    );
+    if (!paid.ok) throw new Error('payment not saved');
+    expect(
+      firstPage()
+        .slice(0, 2)
+        .map((entry) => [entry.entity, entry.name]),
+    ).toEqual([
+      ['receipt', 'Aram'],
+      ['area', 'Aram'],
+    ]);
+    expect(repos.payments.printData(paid.id, '2026-05-10')).toMatchObject({ areaName: 'Shops' });
+  });
+
   it('shows the name kept in the log when details cannot be read', () => {
     db.prepare(
       "INSERT INTO audit_log (action, entity, entity_id, details_json) VALUES ('delete', 'area', 999, 'not json')",

@@ -95,6 +95,21 @@ describe('Excel report', () => {
     expect(sheet?.getRow(6).getCell(5).numFmt).toBe('#,##0.00 "USD"');
   });
 
+  it('names an area without a name by its renter, or as having no name', () => {
+    const [shop, office] = REPORT.rows;
+    if (!shop || !office) throw new Error('fixture changed');
+    const report = {
+      ...REPORT,
+      rows: [
+        { ...shop, name: '' },
+        { ...office, name: '' },
+      ],
+    };
+    const sheet = buildReportWorkbook(report, QUERY, { ...OPTIONS, language: 'en' }).worksheets[0];
+    expect(sheet?.getRow(5).getCell(1).value).toBe('Karwan Ahmed');
+    expect(sheet?.getRow(6).getCell(1).value).toBe('No name');
+  });
+
   it('colours month cells by status', () => {
     const sheet = buildReportWorkbook(REPORT, QUERY, { ...OPTIONS, language: 'en' }).worksheets[0];
     const fill = (column: number) => {

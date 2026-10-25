@@ -58,10 +58,17 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
   const markRestored = db.prepare<[number]>('UPDATE areas SET deleted_at = NULL WHERE id = ?');
   const selectDeleted = db.prepare<
     [],
-    { id: number; name: string; category_name: string; deleted_at: string }
+    {
+      id: number;
+      name: string;
+      category_name: string;
+      renter_name: string | null;
+      deleted_at: string;
+    }
   >(
-    `SELECT a.id, a.name, c.name AS category_name, a.deleted_at
+    `SELECT a.id, a.name, c.name AS category_name, r.full_name AS renter_name, a.deleted_at
      FROM areas a JOIN categories c ON c.id = a.category_id
+     LEFT JOIN renters r ON r.area_id = a.id AND r.ended_on IS NULL
      WHERE a.deleted_at IS NOT NULL ORDER BY a.deleted_at DESC`,
   );
 
@@ -70,8 +77,9 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
     return row && row.deleted_at === null ? row : null;
   };
   // The search copy of the name is always written from here, so it never drifts from the name.
+  // Areas without a name never clash: they are told apart by their renter.
   const nameInUse = (categoryId: number, name: string, exceptId = 0) =>
-    selectNameInUse.get(categoryId, normalizeText(name), exceptId) !== undefined;
+    name !== '' && selectNameInUse.get(categoryId, normalizeText(name), exceptId) !== undefined;
   const emptyToNull = (text: string) => (text === '' ? null : text);
 
   return {
@@ -224,6 +232,7 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
       return selectDeleted.all().map((row) => ({
         id: row.id,
         name: row.name,
+        renterName: row.renter_name,
         categoryName: row.category_name,
         deletedAt: row.deleted_at,
       }));

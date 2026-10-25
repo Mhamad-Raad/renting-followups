@@ -22,7 +22,6 @@ export type ImportColumn = (typeof IMPORT_COLUMNS)[number];
 
 /** Columns a file must have; the others may be left out. */
 export const REQUIRED_COLUMNS: readonly ImportColumn[] = [
-  'name',
   'category',
   'currency',
   'monthlyPrice',

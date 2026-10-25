@@ -1,4 +1,5 @@
 import ExcelJS from 'exceljs';
+import { areaLabel } from '@shared/areas';
 import { FRACTION_DIGITS, type Currency } from '@shared/currency';
 import { formatDate, type DateString } from '@shared/dates';
 import type { DigitStyle } from '@shared/digits';
@@ -88,7 +89,7 @@ export function buildReportWorkbook(
 
   for (const row of report.rows) {
     const line = sheet.addRow([
-      row.name,
+      areaLabel(row.name, row.renterName) ?? t('areas.noName'),
       row.categoryName,
       row.renterName ?? '',
       row.renterPhone ?? '',

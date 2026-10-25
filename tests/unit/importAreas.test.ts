@@ -157,7 +157,6 @@ describe('checking a file', () => {
       {
         row: 2,
         problems: [
-          { kind: 'missing', column: 'name' },
           { kind: 'bad_currency' },
           { kind: 'bad_month' },
           { kind: 'bad_year', min: 2000, max: YEAR + 2 },
@@ -177,6 +176,21 @@ describe('checking a file', () => {
       { row: 8, problems: [{ kind: 'too_long', column: 'name', max: 120 }] },
       { row: 9, problems: [{ kind: 'bad_price', currency: 'IQD' }] },
     ]);
+  });
+
+  it('imports areas without a name, even two with the same renter in one category', () => {
+    const noNameColumn = (cells: string[]) => cells.slice(1);
+    const preview = check([
+      { row: 1, cells: noNameColumn(HEADER) },
+      { row: 2, cells: noNameColumn(row({ renterName: 'کاظم محمد سعید' })) },
+      { row: 3, cells: noNameColumn(row({ renterName: 'کاظم محمد سعید' })) },
+    ]);
+    expect(preview.problems).toEqual([]);
+    expect(preview.rows.map((area) => [area.name, area.renter?.fullName])).toEqual([
+      ['', 'کاظم محمد سعید'],
+      ['', 'کاظم محمد سعید'],
+    ]);
+    expect(importAreas(db, repos, preview.rows)).toEqual({ ok: true, areas: 2, categories: 1 });
   });
 
   it('flags a name repeated in the same category, even written with other letter forms', () => {
@@ -231,7 +245,7 @@ describe('checking a file', () => {
     ).toEqual({
       ok: false,
       reason: 'missing_columns',
-      columns: ['name', 'category', 'currency', 'monthlyPrice', 'startMonth', 'startYear'],
+      columns: ['category', 'currency', 'monthlyPrice', 'startMonth', 'startYear'],
     });
     expect(checkTable(table(), 'f', context)).toEqual({ ok: false, reason: 'empty' });
     expect(checkTable([], 'f', context)).toEqual({ ok: false, reason: 'empty' });

@@ -263,7 +263,8 @@ function checkRow(
       problems.push({ kind: 'too_long', column, max });
     }
   }
-  for (const column of ['name', 'category', 'currency', 'monthlyPrice'] as const) {
+  // The area name is optional: an area may be known only by its category and renter.
+  for (const column of ['category', 'currency', 'monthlyPrice'] as const) {
     if (value(column) === '') problems.push({ kind: 'missing', column });
   }
 

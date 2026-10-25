@@ -160,7 +160,9 @@ function PreviewDetails({ preview }: { preview: ImportPreview }) {
               <tbody>
                 {shown.map((row) => (
                   <tr key={row.row}>
-                    <td className={styles.strong}>{row.name}</td>
+                    <td className={styles.strong}>
+                      {row.name || <span className={styles.muted}>—</span>}
+                    </td>
                     <td>{row.category}</td>
                     <td className={styles.nowrap}>
                       <MoneyText amount={row.monthlyPrice} currency={row.currency} />

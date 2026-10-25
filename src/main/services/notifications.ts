@@ -1,3 +1,4 @@
+import { areaLabel } from '@shared/areas';
 import type { Currency } from '@shared/currency';
 import {
   daysInMonth,
@@ -82,8 +83,13 @@ export function buildReminders(
     }
   }
 
-  late.sort((a, b) => b.months.length - a.months.length || compareNames(a.areaName, b.areaName));
-  monthEnd.sort((a, b) => compareNames(a.areaName, b.areaName));
+  const byLabel = (a: AreaReminder, b: AreaReminder) =>
+    compareNames(
+      areaLabel(a.areaName, a.renterName) ?? '',
+      areaLabel(b.areaName, b.renterName) ?? '',
+    );
+  late.sort((a, b) => b.months.length - a.months.length || byLabel(a, b));
+  monthEnd.sort(byLabel);
   return [...late, ...monthEnd];
 }
 

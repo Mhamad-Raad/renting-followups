@@ -22,7 +22,8 @@ export const SEARCH_MAX = 200;
 export const MAX_MONTHLY_PRICE = 10_000_000_000_000;
 
 const id = z.number().int().positive();
-const areaName = z.string().trim().min(1).max(AREA_NAME_MAX);
+/** Optional: an area may be known only by its category and renter. */
+const areaName = z.string().trim().max(AREA_NAME_MAX);
 const monthlyPrice = z.number().int().min(0).max(MAX_MONTHLY_PRICE);
 /** Digits of any style, spaces, +, - and brackets: how people write phone numbers. */
 export const PHONE_PATTERN = /^[0-9\u0660-\u0669\u06F0-\u06F9+\-()\s]*$/;
@@ -30,6 +31,29 @@ const phone = z.string().trim().max(PHONE_MAX).regex(PHONE_PATTERN);
 const renterDetails = z
   .object({ fullName: z.string().trim().min(1).max(PERSON_NAME_MAX), phone })
   .strict();
+
+/**
+ * What an area is called on screen and on paper: its own name, or, when it
+ * has none, its current renter's name. Null when it has neither, so the
+ * caller shows its "No name" text in the reader's language.
+ */
+export function areaLabel(name: string, renterName: string | null): string | null {
+  return name !== '' ? name : renterName || null;
+}
+
+/** What `areaLabel` needs: the area's own name and its current renter's name. */
+export interface AreaNaming {
+  name: string;
+  renterName: string | null;
+}
+
+/** Orders areas by what they are called on screen (areas with no name at all come first). */
+export function compareAreaLabels(
+  collator: Intl.Collator,
+): (a: AreaNaming, b: AreaNaming) => number {
+  const label = (area: AreaNaming) => areaLabel(area.name, area.renterName) ?? '';
+  return (a, b) => collator.compare(label(a), label(b));
+}
 
 export const areaCreateSchema = z
   .object({
@@ -108,6 +132,11 @@ export interface AreaListItem {
   summary: YearSummary;
 }
 
+/** The renter with no end date, if anyone rents the area now. */
+export function currentRenter(renters: readonly Renter[]): Renter | null {
+  return renters.find((renter) => renter.endedOn === null) ?? null;
+}
+
 export interface AreaDetails {
   id: number;
   name: string;
@@ -123,7 +152,7 @@ export interface AreaDetails {
 }
 
 export interface DeletedItems {
-  areas: { id: number; name: string; categoryName: string; deletedAt: string }[];
+  areas: ({ id: number; categoryName: string; deletedAt: string } & AreaNaming)[];
   categories: { id: number; name: string; deletedAt: string }[];
 }
 

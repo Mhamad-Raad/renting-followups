@@ -95,8 +95,12 @@ export function createPaymentRepository(
     [number],
     { area_name: string; renter_phone_snapshot: string | null; print_count: number }
   >(
-    `SELECT a.name AS area_name, r.renter_phone_snapshot, r.print_count
-     FROM receipts r JOIN areas a ON a.id = r.area_id WHERE r.id = ?`,
+    // The receipt already names the renter, so an area without a name is shown by its category.
+    `SELECT COALESCE(NULLIF(a.name, ''), c.name) AS area_name, r.renter_phone_snapshot, r.print_count
+     FROM receipts r
+     JOIN areas a ON a.id = r.area_id
+     JOIN categories c ON c.id = a.category_id
+     WHERE r.id = ?`,
   );
   const addPrint = db.prepare<[number]>(
     'UPDATE receipts SET print_count = print_count + 1 WHERE id = ?',
