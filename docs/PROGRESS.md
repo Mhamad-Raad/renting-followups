@@ -2,7 +2,7 @@
 
 ## Current iteration
 
-**Iteration 13: Polish, QA and performance**, on branch `iter-13-polish`. Done: two independent audits, the performance and memory tests and the regression walk-through, with every finding fixed. Then, at the owner's request, the **area name became optional** (an area is shown by its renter's name), reviewed in `docs/reviews/review-2026-10-25.md`. Pushed; waiting for the owner to say "continue".
+**Iteration 13 is merged into `main` (tag `iter-13`)**, together with the owner's later changes: optional area names, numbered month boxes, clicking a box to mark a month paid or not paid, and no Print button on the area page. Next is iteration 14, not started yet.
 
 ## Done
 
@@ -21,12 +21,11 @@
 - Iteration 12 (merged, tag `iter-12`): Areas → Import from Excel (template in the app's language, preview with plain row problems, new categories made automatically, duplicates flagged, everything saved together or not at all), and `npm run seed` demo data (200 areas, three years of payments) for development. 614 unit tests and 51 end-to-end tests pass.
 - Optional area name (2026-10-25, on `iter-13-polish`): areas may have no name and are shown by their renter; receipts show the category; migration 004; import without the name column. 660 unit tests and 55 end-to-end tests pass.
 - Month boxes (2026-10-25, on `iter-13-polish`): numbers instead of symbols in strips and the PDF; click a box to mark a month paid (receipt) or not paid (taken out of its receipts), after a question; no Print button on the area page. 666 unit tests and 56 end-to-end tests. Review: `docs/reviews/review-2026-10-25-month-boxes.md`.
-- Iteration 13: whole-app polish. Dialogs start on the safe button (Cancel on Restore), clearer focus and edges, calmer motion, Try again on every screen that cannot load, plain messages when a file cannot be saved, month ranges and page numbers in the right order in every language, month boxes that fit any amount, clearer wording in all three languages. 200 areas with five years of payments: every screen opens in a quarter of a second or less; memory stays flat. 622 unit tests and 53 end-to-end tests pass.
+- Iteration 13 (merged, tag `iter-13`): whole-app polish. Dialogs start on the safe button (Cancel on Restore), clearer focus and edges, calmer motion, Try again on every screen that cannot load, plain messages when a file cannot be saved, month ranges and page numbers in the right order in every language, month boxes that fit any amount, clearer wording in all three languages. 200 areas with five years of payments: every screen opens in a quarter of a second or less; memory stays flat. 622 unit tests and 53 end-to-end tests pass.
 
 ## Next
 
-- On "continue": merge `iter-13-polish` into `main` with `--no-ff`, tag `iter-13`, push.
-- Then iteration 14 (packaging and release): the Windows installer, with an explicit file list (`out/`, `resources/` and `package.json` only; the installer icon is `build/icon.ico`) and a check that no demo data (`demo-data/`, `scripts/`) is packed; then the Windows-only checks listed in `docs/reviews/iteration-13.md`.
+- Iteration 14, on a new branch `iter-14-packaging` from `main` (packaging and release): the Windows installer, with an explicit file list (`out/`, `resources/` and `package.json` only; the installer icon is `build/icon.ico`) and a check that no demo data (`demo-data/`, `scripts/`) is packed; then the Windows-only checks listed in `docs/reviews/iteration-13.md`, including printing to paper (the Print buttons failed on the Mac). Put the owner's new logo (white ring, slightly darker green: `~/Desktop/logo-option-2.png`) into `build/icon.png`, `build/icon.ico` and `resources/icon.png`.
 
 ## Open questions
 
