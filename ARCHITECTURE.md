@@ -120,7 +120,8 @@ Database settings: WAL mode, `foreign_keys = ON`, all multi-row writes inside tr
 `id, category_id → categories, name, name_normalized, currency ('IQD' | 'USD'), address (nullable), contract_start (nullable date, informational only), notes (text), deleted_at`
 - `currency` is chosen when the area is created and **cannot be changed afterwards**.
 - The area form requires **"Rent starts from" (month number + year, default current month)**. It becomes the first `area_prices` row and decides which months count as applicable.
-- Area names are unique within a category (warn, do not crash).
+- The area name is **optional**: many owners know a place only by its category and its renter. An area without a name is shown everywhere by its current renter's name, and as "No name" when it has no renter. On a receipt, which already shows the renter, its area line shows the category instead. *(Owner's decision, iteration 13.)*
+- Area names that are filled in are unique within a category (warn, do not crash). Areas without a name never clash.
 - `name_normalized` supports search (section 9).
 
 ### area_prices (rent price history)
@@ -386,7 +387,7 @@ Light and dark themes must both have adequate contrast, and the month status col
 
 ## 16. Getting existing data in (critical: the owner already has 100-200 areas)
 
-- **Excel/CSV import of areas:** the app provides a downloadable template (area name, category, currency, monthly price, rent start month/year, renter name, renter phone, address, notes). The import shows a preview with row-level errors in plain wording (e.g. "Row 12: currency must be IQD or USD") and only commits when the user confirms. Unknown categories are created automatically. Duplicate names inside a category are flagged, not silently merged.
+- **Excel/CSV import of areas:** the app provides a downloadable template (area name (optional), category, currency, monthly price, rent start month/year, renter name, renter phone, address, notes). The import shows a preview with row-level errors in plain wording (e.g. "Row 12: currency must be IQD or USD") and only commits when the user confirms. Unknown categories are created automatically. Duplicate names inside a category are flagged, not silently merged.
 - **Record past payment (backfill):** section 7.3.
 - **Demo data generator:** `npm run seed` (dev only) creates 200 areas with 3 years of mixed payments, for performance and UI testing. It is never included in the installer.
 
