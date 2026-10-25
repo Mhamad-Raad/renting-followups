@@ -205,3 +205,12 @@ Automated (`npm run test:e2e` and unit tests) unless marked _manual_.
 - [ ] The receipt of an area without a name shows its category on the Area line (unit test).
 - [ ] An Excel file without the area name column imports (unit test).
 - [ ] _manual_ In Sorani, the form says the name is optional and explains that the renter's name is shown instead.
+
+### Month boxes: numbers and clicks (2026-10-25)
+
+- [ ] The month strips on the Areas list, Reports and the PDF report show month numbers on their colours (manual for the PDF).
+- [ ] Clicking a red month on the area page asks first; Cancel changes nothing; "Mark as paid" makes it green with a new receipt number (end-to-end).
+- [ ] Clicking a green month asks first and lists the receipt that changes; "Mark as not paid" makes it red again (end-to-end).
+- [ ] Taking one month out of a receipt for several months keeps the receipt number and its other months (unit test).
+- [ ] In the Areas list, clicking a month box does not open the area (end-to-end).
+- [ ] The area page has Export to PDF and Export to Excel, and no Print button (end-to-end).
