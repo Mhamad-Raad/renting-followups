@@ -96,8 +96,12 @@ describe('creating areas', () => {
     ).toMatchObject({ ok: true });
   });
 
-  it('accepts a blank name from the screen as no name', () => {
+  it('accepts a blank name, or one of only invisible marks, as no name', () => {
     expect(areaCreateSchema.parse(areaInput(categoryId, { name: '   ' })).name).toBe('');
+    expect(areaCreateSchema.parse(areaInput(categoryId, { name: '\u0640\u200c' })).name).toBe('');
+    createArea({ name: '' });
+    const input = areaCreateSchema.parse(areaInput(categoryId, { name: '\u200c' }));
+    expect(repos.areas.create(input)).toMatchObject({ ok: true });
   });
 
   it('shows an area by its name, else its renter, else nothing', () => {

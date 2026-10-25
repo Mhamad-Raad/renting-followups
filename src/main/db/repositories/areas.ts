@@ -41,7 +41,8 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
   );
   const selectNameInUse = db.prepare<[number, string, number], { id: number }>(
     `SELECT id FROM areas
-     WHERE category_id = ? AND name_normalized = ? AND deleted_at IS NULL AND id <> ?`,
+     WHERE category_id = ? AND name_normalized = ? AND name_normalized <> ''
+       AND deleted_at IS NULL AND id <> ?`,
   );
   const insert = db.prepare<
     [number, string, string, Currency, string | null, string | null, string]
@@ -79,7 +80,7 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
   // The search copy of the name is always written from here, so it never drifts from the name.
   // Areas without a name never clash: they are told apart by their renter.
   const nameInUse = (categoryId: number, name: string, exceptId = 0) =>
-    name !== '' && selectNameInUse.get(categoryId, normalizeText(name), exceptId) !== undefined;
+    selectNameInUse.get(categoryId, normalizeText(name), exceptId) !== undefined;
   const emptyToNull = (text: string) => (text === '' ? null : text);
 
   return {

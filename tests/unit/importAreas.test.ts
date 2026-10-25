@@ -185,6 +185,8 @@ describe('checking a file', () => {
       { row: 2, cells: noNameColumn(row({ renterName: 'کاظم محمد سعید' })) },
       { row: 3, cells: noNameColumn(row({ renterName: 'کاظم محمد سعید' })) },
     ]);
+    const marksOnly = check(table(row({ name: '\u0640' }), row({ name: '\u200c' })));
+    expect(marksOnly.problems).toEqual([]);
     expect(preview.problems).toEqual([]);
     expect(preview.rows.map((area) => [area.name, area.renter?.fullName])).toEqual([
       ['', 'کاظم محمد سعید'],
