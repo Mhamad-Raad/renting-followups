@@ -148,6 +148,32 @@
   }
 }
 
+/* A month box that is a button (ARCHITECTURE.md section 7.4): it fills its place and darkens a little on hover. */
+.slot {
+  display: grid;
+  min-width: 0;
+}
+
+button:is(.box, .cell) {
+  width: 100%;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.cell {
+  padding: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+@media (hover: hover) {
+  button:is(.box, .cell):hover {
+    border-color: var(--box-text);
+    background-color: color-mix(in srgb, var(--box-bg) 88%, var(--box-text));
+  }
+}
+
 /* The tiny strip cells sit close together: a thinner outline that does not cover the neighbours. */
 .cell[data-selected] {
   outline-width: 2px;

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { AreaDetails } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
+import type { MonthBox } from '@shared/months';
 import type { Receipt } from '@shared/payments';
 import { useSettings } from '../../app/SettingsContext';
 import { FigureCards } from '../../components/FigureCards';
@@ -22,6 +23,8 @@ interface AreaPeriodProps {
   onCancel: (receipt: Receipt) => void;
   onPrint: (receipt: Receipt) => void;
   printing: boolean;
+  /** A click on a month box: mark it paid, or not paid (ARCHITECTURE.md section 7.4). */
+  onPickMonth: (box: MonthBox) => void;
 }
 
 /** The chosen year (or month): the filter, the four figures, the 12 boxes and the receipts. */
@@ -33,6 +36,7 @@ export function AreaPeriod({
   onCancel,
   onPrint,
   printing,
+  onPickMonth,
 }: AreaPeriodProps) {
   const { t } = useTranslation();
   const { settings } = useSettings();
@@ -81,6 +85,7 @@ export function AreaPeriod({
               year={year}
               currency={area.currency}
               selected={month}
+              onPick={onPickMonth}
             />
             <p className={styles.footnote}>{t('area.figures.remainingHint')}</p>
           </section>

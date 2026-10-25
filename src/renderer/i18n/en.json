@@ -471,6 +471,20 @@
       "nothing_due": "Nothing due"
     }
   },
+  "monthPick": {
+    "payTitle": "Mark month {{month}} of {{year}} as paid?",
+    "alreadyPaid": "{{amount}} is already paid.",
+    "payBody": "{{amount}} will be recorded as a payment dated today, with a receipt number.",
+    "payButton": "Mark as paid",
+    "paid": "Month {{month}} is paid. Receipt No. {{number}}",
+    "takeOutTitle": "Mark month {{month}} of {{year}} as not paid?",
+    "cancels": "{{receipt}} is cancelled ({{amount}}).",
+    "lowers": "{{receipt}}: {{amount}} is taken off. Its other months stay paid.",
+    "takeOutButton": "Mark as not paid",
+    "takenOut": "Month {{month}} is marked as not paid.",
+    "pay": "Mark as paid",
+    "takeOut": "Mark as not paid"
+  },
   "paymentDialog": {
     "newTitle": "Record payment",
     "pastTitle": "Record past payment",

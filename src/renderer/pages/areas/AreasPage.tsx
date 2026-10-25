@@ -23,6 +23,7 @@ import styles from './AreasPage.module.css';
 import { ReportOutputButtons } from '../../print/ReportOutputButtons';
 import { NoAreasYet } from './NoAreasYet';
 import { RentText } from './RentText';
+import { useMonthPick, type MonthPickOutcome } from './useMonthPick';
 
 const SEARCH_DELAY_MS = 150;
 
@@ -45,6 +46,12 @@ export function AreasPage() {
   const query = useDebouncedValue(search, SEARCH_DELAY_MS);
   const categories = useIpcQuery('categories:list');
   const areas = useIpcQuery('areas:list', { search: query, categoryId });
+  const [pickOutcome, setPickOutcome] = useState<MonthPickOutcome | null>(null);
+  const { refresh: refreshAreas } = areas;
+  const monthPick = useMonthPick((outcome) => {
+    setPickOutcome(outcome);
+    refreshAreas();
+  });
 
   // The list shows the current year; the main process decides each month's status.
   const year = new Date().getFullYear();
@@ -110,6 +117,7 @@ export function AreasPage() {
       {header}
       <div className={styles.stack}>
         {notice && <Notice tone="success">{notice}</Notice>}
+        {pickOutcome && <Notice tone={pickOutcome.tone}>{pickOutcome.text}</Notice>}
         <div className={styles.chips} role="group" aria-label={t('areas.categories')}>
           {[{ id: null, name: t('areas.all'), color: null }, ...categories.state.data].map(
             (category) => (
@@ -234,6 +242,14 @@ export function AreasPage() {
                           year={year}
                           currency={area.currency}
                           compact
+                          onPick={(box) =>
+                            void monthPick.pick({
+                              areaId: area.id,
+                              currency: area.currency,
+                              year,
+                              box,
+                            })
+                          }
                         />
                         <YearSummaryText summary={area.summary} />
                       </div>
@@ -245,6 +261,7 @@ export function AreasPage() {
           </div>
         )}
       </div>
+      {monthPick.dialog}
     </>
   );
 }

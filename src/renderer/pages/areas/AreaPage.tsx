@@ -27,6 +27,7 @@ import { PaymentDialog, type PaymentMode, type PaymentSaved } from './PaymentDia
 import { PriceDialog, type PriceMode } from './PriceDialog';
 import { RenterDialog } from './RenterDialog';
 import { useAreaPeriod } from './useAreaPeriod';
+import { useMonthPick } from './useMonthPick';
 
 type OpenDialog =
   | { kind: 'price'; mode: PriceMode }
@@ -91,6 +92,10 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
     onChanged();
     period.refresh();
   };
+
+  const monthPick = useMonthPick((outcome) =>
+    outcome.tone === 'success' ? done(outcome.text) : setProblem(outcome.text),
+  );
 
   const printing = usePrint();
   const printReceipt = (id: number) =>
@@ -203,6 +208,14 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
           onCancel={(receipt) => setDialog({ kind: 'cancelReceipt', receipt })}
           onPrint={(receipt) => printReceipt(receipt.id)}
           printing={printing.busy}
+          onPickMonth={(box) =>
+            void monthPick.pick({
+              areaId: area.id,
+              currency: area.currency,
+              year: period.year,
+              box,
+            })
+          }
         />
 
         <AreaHistory area={area} />
@@ -214,6 +227,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
         </div>
       </div>
 
+      {monthPick.dialog}
       <PriceDialog
         area={area}
         mode={dialog?.kind === 'price' ? dialog.mode : null}

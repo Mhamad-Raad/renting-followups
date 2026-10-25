@@ -471,6 +471,20 @@
       "nothing_due": "لا شيء مستحق"
     }
   },
+  "monthPick": {
+    "payTitle": "تسجيل الشهر {{month}} من {{year}} كمدفوع؟",
+    "alreadyPaid": "تم دفع {{amount}} من قبل.",
+    "payBody": "سيُسجَّل {{amount}} كدفعة بتاريخ اليوم، مع رقم إيصال.",
+    "payButton": "تسجيل كمدفوع",
+    "paid": "الشهر {{month}} مدفوع. وصل رقم {{number}}",
+    "takeOutTitle": "تسجيل الشهر {{month}} من {{year}} كغير مدفوع؟",
+    "cancels": "يُلغى {{receipt}} ({{amount}}).",
+    "lowers": "{{receipt}}: يُخصم {{amount}}. تبقى أشهره الأخرى مدفوعة.",
+    "takeOutButton": "تسجيل كغير مدفوع",
+    "takenOut": "تم تسجيل الشهر {{month}} كغير مدفوع.",
+    "pay": "تسجيل كمدفوع",
+    "takeOut": "تسجيل كغير مدفوع"
+  },
   "paymentDialog": {
     "newTitle": "تسجيل دفعة",
     "pastTitle": "تسجيل دفعة سابقة",
