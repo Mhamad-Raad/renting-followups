@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { idInputSchema } from '@shared/categories';
 import {
+  areaMonthSchema,
   areaPaymentsQuerySchema,
   areaReceiptsQuerySchema,
   paymentCreateSchema,
@@ -11,7 +12,12 @@ import type { Repositories } from '../db/repositories';
 import { businessToday } from '../services/clock';
 import { handle } from './handle';
 
-export function registerPaymentIpc({ backupSettings, paid, payments }: Repositories): void {
+export function registerPaymentIpc({
+  backupSettings,
+  monthPayments,
+  paid,
+  payments,
+}: Repositories): void {
   handle('payments:forArea', areaReceiptsQuerySchema, (query) => payments.forArea(query));
   handle('payments:suggestedStart', areaPaymentsQuerySchema, ({ areaId }) =>
     payments.suggestedStart(areaId, businessToday().month),
@@ -26,6 +32,11 @@ export function registerPaymentIpc({ backupSettings, paid, payments }: Repositor
     payments.update(input, businessToday()),
   );
   handle('payments:void', idInputSchema, ({ id }) => payments.void(id));
+  // Clicking a paid month box (ARCHITECTURE.md section 7.4): first what would change, then the change.
+  handle('payments:monthTakeOutPreview', areaMonthSchema, (query) =>
+    monthPayments.takeOutPreview(query),
+  );
+  handle('payments:monthTakeOut', areaMonthSchema, (query) => monthPayments.takeOut(query));
   // The computer date looks wrong when money was received, or a backup made, "after" today.
   handle('clock:check', z.undefined(), () => {
     const today = businessToday().date;

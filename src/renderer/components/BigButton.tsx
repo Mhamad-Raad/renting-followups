@@ -16,12 +16,16 @@ export function BigButton({
   type = 'button',
   className,
   children,
+  autoFocus,
   ...rest
 }: BigButtonProps) {
   return (
     <button
       type={type}
       className={[styles.button, styles[variant], className ?? ''].filter(Boolean).join(' ')}
+      autoFocus={autoFocus}
+      // Inside a dialog, React's own focusing happens before the dialog shows; Dialog uses this mark.
+      data-autofocus={autoFocus ? true : undefined}
       {...rest}
     >
       {icon && <Icon name={icon} />}

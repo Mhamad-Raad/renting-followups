@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  currentRenter,
   PERSON_NAME_MAX,
   PHONE_MAX,
   PHONE_PATTERN,
@@ -9,6 +10,7 @@ import {
 } from '@shared/areas';
 import { dateStringFromLocal, formatDate } from '@shared/dates';
 import { callIpc } from '../../app/ipc';
+import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { ChoiceGroup } from '../../components/ChoiceGroup';
@@ -38,8 +40,9 @@ export function RenterDialog({ area, open, onDone, onClose }: RenterDialogProps)
 
 function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) {
   const { t } = useTranslation();
+  const mounted = useMountedRef();
   const { settings } = useSettings();
-  const current = area.renters.find((renter) => renter.endedOn === null) ?? null;
+  const current = currentRenter(area.renters);
   const [kind, setKind] = useState<RenterChange['kind']>('new');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -72,10 +75,15 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
         : { kind, areaId: area.id, endedOn: date };
     setBusy(true);
     const result = await callIpc('areas:changeRenter', change);
+    // A saved change always reaches the page, even if the dialog was closed meanwhile.
+    if (result.ok && result.data.ok) {
+      onDone(t(kind === 'new' ? 'renterDialog.saved' : 'renterDialog.leftSaved'));
+      return;
+    }
+    if (!mounted.current) return;
     setBusy(false);
     if (!result.ok) setProblem(t('errors.unexpected'));
     else if (!result.data.ok) setProblem(explain(result.data.reason));
-    else onDone(t(kind === 'new' ? 'renterDialog.saved' : 'renterDialog.leftSaved'));
   };
 
   return (

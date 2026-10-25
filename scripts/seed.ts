@@ -3,8 +3,8 @@
  * three years of mixed payments, for performance and screen testing. It
  * writes to its own folder and is never part of the app or the installer.
  *
- *   npm run seed                 creates ./demo-data
- *   npm run seed -- <folder>     creates it somewhere else
+ *   npm run seed                     creates ./demo-data with 3 years of payments
+ *   npm run seed -- <folder> [years] creates it somewhere else, with 1 to 10 years
  *
  * Then start the app on it (password "demo1234"), for example in PowerShell:
  *   $env:RENT_TRACKER_DATA_DIR="demo-data"; npm run dev
@@ -26,7 +26,8 @@ import { createRepositories } from '../src/main/db/repositories';
 import { createAuthService } from '../src/main/services/auth';
 
 const AREAS = 200;
-const YEARS_OF_HISTORY = 3;
+const DEFAULT_YEARS = 3;
+const MAX_YEARS = 10;
 const PASSWORD = 'demo1234';
 const RECOVERY_PHRASE = 'demo recovery phrase';
 /** Marks a folder made by this script, so it is the only kind ever replaced. */
@@ -99,6 +100,10 @@ function prepareFolder(folder: string): void {
 
 async function main(): Promise<void> {
   const folder = resolve(process.argv[2] ?? 'demo-data');
+  const years = Number(process.argv[3] ?? DEFAULT_YEARS);
+  if (!Number.isInteger(years) || years < 1 || years > MAX_YEARS) {
+    throw new Error(`Years must be a whole number from 1 to ${MAX_YEARS}.`);
+  }
   prepareFolder(folder);
   const db = createConnection(join(folder, 'rent-tracker.db'));
   try {
@@ -116,7 +121,7 @@ async function main(): Promise<void> {
       date: toDateString(thisMonth.year, thisMonth.month, now.getDate()),
       month: thisMonth,
     };
-    const firstMonth = monthIndex({ year: thisMonth.year - YEARS_OF_HISTORY + 1, month: 1 });
+    const firstMonth = monthIndex({ year: thisMonth.year - years + 1, month: 1 });
     const categoryIds = CATEGORIES.map((category) => {
       const created = repos.categories.create({ name: category.name, color: category.color });
       if (!created.ok) throw new Error('category not created');
@@ -186,7 +191,7 @@ async function main(): Promise<void> {
         }
       }
     })();
-    console.log(`Made ${AREAS} areas and ${receipts} payments in ${folder}`);
+    console.log(`Made ${AREAS} areas and ${receipts} payments over ${years} years in ${folder}`);
     console.log(`Password: ${PASSWORD}`);
   } finally {
     db.close();

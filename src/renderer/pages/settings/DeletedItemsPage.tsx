@@ -4,9 +4,12 @@ import type { RestoreResult } from '@shared/areas';
 import type { IpcResult } from '@shared/ipc';
 import { dateStringFromLocal, formatDate } from '@shared/dates';
 import { callIpc, useIpcQuery } from '../../app/ipc';
+import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
+import { useAreaLabel } from '../../app/useAreaLabel';
 import { BigButton } from '../../components/BigButton';
 import { EmptyState } from '../../components/EmptyState';
+import { LoadError } from '../../components/LoadError';
 import { LinkButton } from '../../components/LinkButton';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
@@ -22,8 +25,11 @@ interface DeletedRow {
 /** Settings → Deleted items: everything soft-deleted, each with Restore. */
 export function DeletedItemsPage() {
   const { t } = useTranslation();
+  const mounted = useMountedRef();
   const { settings } = useSettings();
+  const label = useAreaLabel();
   const deleted = useIpcQuery('deleted:list');
+  const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
 
   // Deletion times are stored in UTC; show the local calendar day.
@@ -33,7 +39,12 @@ export function DeletedItemsPage() {
     });
 
   const restore = async (call: () => Promise<IpcResult<RestoreResult>>) => {
+    // One restore at a time: a double-click must not send a second one.
+    if (restoring) return;
+    setRestoring(true);
     const result = await call();
+    if (!mounted.current) return;
+    setRestoring(false);
     const outcome = result.ok ? result.data : null;
     if (!outcome) setMessage({ tone: 'error', text: t('errors.unexpected') });
     else if (!outcome.ok) setMessage({ tone: 'error', text: t(`deletedItems.${outcome.reason}`) });
@@ -53,7 +64,9 @@ export function DeletedItemsPage() {
               <span className={styles.name}>{row.name}</span>
               {row.detail && <span className={styles.muted}>{row.detail}</span>}
               <span className={styles.muted}>{deletedOn(row.deletedAt)}</span>
-              <BigButton onClick={() => onRestore(row.id)}>{t('common.restore')}</BigButton>
+              <BigButton onClick={() => onRestore(row.id)} disabled={restoring}>
+                {t('common.restore')}
+              </BigButton>
             </li>
           ))}
         </ul>
@@ -66,7 +79,7 @@ export function DeletedItemsPage() {
       <div className={styles.stack}>
         <p className={styles.muted}>{t('deletedItems.intro')}</p>
         {message && <Notice tone={message.tone}>{message.text}</Notice>}
-        {deleted.state.status === 'error' && <Notice tone="error">{t('errors.unexpected')}</Notice>}
+        {deleted.state.status === 'error' && <LoadError onRetry={deleted.reload} />}
         {deleted.state.status === 'ready' &&
           (deleted.state.data.areas.length + deleted.state.data.categories.length === 0 ? (
             <EmptyState title={t('deletedItems.empty')} />
@@ -74,7 +87,12 @@ export function DeletedItemsPage() {
             <>
               {section(
                 t('deletedItems.areas'),
-                deleted.state.data.areas.map((area) => ({ ...area, detail: area.categoryName })),
+                deleted.state.data.areas.map((area) => ({
+                  id: area.id,
+                  name: label(area),
+                  detail: area.categoryName,
+                  deletedAt: area.deletedAt,
+                })),
                 (id) => void restore(() => callIpc('areas:restore', { id })),
               )}
               {section(

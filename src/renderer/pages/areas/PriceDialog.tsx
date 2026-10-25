@@ -6,6 +6,7 @@ import type { StatusChange } from '@shared/months';
 import { formatYearMonth, yearMonthOf } from '@shared/dates';
 import { formatAmount } from '@shared/formatNumber';
 import { callIpc } from '../../app/ipc';
+import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { AmountField } from '../../components/AmountField';
 import { BigButton } from '../../components/BigButton';
@@ -43,6 +44,7 @@ export function PriceDialog({ area, mode, onDone, onClose }: PriceDialogProps) {
 
 function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: PriceMode }) {
   const { t } = useTranslation();
+  const mounted = useMountedRef();
   const { settings } = useSettings();
   const [from, setFrom] = useState(yearMonthOf(new Date()));
   const [price, setPrice] = useState<number | null>(null);
@@ -68,6 +70,7 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
     const change = { areaId: area.id, from, monthlyPrice: needsPrice ? (price ?? 0) : 0 };
     if (changes === null) {
       const impact = await callIpc('areas:priceChangeImpact', change);
+      if (!mounted.current) return;
       // Never save without the check: if it fails, say so and change nothing.
       if (!impact.ok || impact.data === null) {
         setBusy(false);
@@ -82,6 +85,12 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
       }
     }
     const result = await callIpc('areas:changePrice', change);
+    // A saved change always reaches the page, even if the dialog was closed meanwhile.
+    if (result.ok && result.data.ok) {
+      onDone(t(mode === 'vacant' ? 'priceDialog.vacantSaved' : 'priceDialog.priceSaved'));
+      return;
+    }
+    if (!mounted.current) return;
     setBusy(false);
     if (!result.ok) {
       setProblem(t('errors.unexpected'));
@@ -96,8 +105,6 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
             ? t('priceDialog.no_room')
             : t('areaForm.problems.not_found'),
       );
-    } else {
-      onDone(t(mode === 'vacant' ? 'priceDialog.vacantSaved' : 'priceDialog.priceSaved'));
     }
   };
 

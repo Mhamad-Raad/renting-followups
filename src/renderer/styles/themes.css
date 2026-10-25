@@ -9,16 +9,22 @@
   --color-surface: #ffffff;
   --color-surface-muted: #efece5;
   --color-border: #d6d1c7;
+  /* Edges of boxes you type in or press (fields, buttons, choices): clearly visible. */
+  --color-control-border: #857f73;
   --color-text: #1f2328;
   --color-text-muted: #545b63;
   --color-danger: #b3261e;
   --color-danger-hover: #93201a;
-  --color-focus: #f0a43a;
+  --color-focus: #b45f06;
   --color-backdrop: rgb(20 22 26 / 45%);
   --shadow-card: 0 1px 2px rgb(0 0 0 / 6%), 0 2px 8px rgb(0 0 0 / 5%);
   --shadow-dialog: 0 12px 40px rgb(0 0 0 / 22%);
 
   /* Theme colours (Settings → Theme colour), each with its hover, soft background and text on it. */
+  --accent-green: #107c01;
+  --accent-green-hover: #0d6601;
+  --accent-green-soft: #e1f0d8;
+  --accent-green-on: #ffffff;
   --accent-blue: #1f5f99;
   --accent-blue-hover: #194e7e;
   --accent-blue-soft: #e2ecf6;
@@ -62,6 +68,7 @@
   --color-surface: #24272c;
   --color-surface-muted: #2c3036;
   --color-border: #3b4048;
+  --color-control-border: #737a84;
   --color-text: #eceef1;
   --color-text-muted: #aab0b8;
   --color-danger: #f08a80;
@@ -71,6 +78,10 @@
   --shadow-card: 0 1px 2px rgb(0 0 0 / 30%);
   --shadow-dialog: 0 12px 40px rgb(0 0 0 / 55%);
 
+  --accent-green: #6cc95c;
+  --accent-green-hover: #86d478;
+  --accent-green-soft: #213a1c;
+  --accent-green-on: #0d1f0a;
   --accent-blue: #6ea8e0;
   --accent-blue-hover: #8dbbe8;
   --accent-blue-soft: #23364a;
@@ -110,6 +121,12 @@
 
 /* The chosen theme colour, in the current light or dark values. */
 :root,
+:root[data-accent='green'] {
+  --color-accent: var(--accent-green);
+  --color-accent-hover: var(--accent-green-hover);
+  --color-accent-soft: var(--accent-green-soft);
+  --color-on-accent: var(--accent-green-on);
+}
 :root[data-accent='blue'] {
   --color-accent: var(--accent-blue);
   --color-accent-hover: var(--accent-blue-hover);

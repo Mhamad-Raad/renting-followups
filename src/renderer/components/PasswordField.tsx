@@ -1,7 +1,8 @@
 import { useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BigButton } from './BigButton';
+import { Icon } from './Icon';
 import { TextField } from './TextField';
+import styles from './TextField.module.css';
 
 interface PasswordFieldProps {
   label: string;
@@ -15,8 +16,8 @@ interface PasswordFieldProps {
 }
 
 /**
- * A password box with a Show/Hide button (typing blind is hard for many people)
- * and a warning when Caps Lock is on.
+ * A password box with an eye button inside it to show what was typed (typing
+ * blind is hard for many people) and a warning when Caps Lock is on.
  */
 export function PasswordField({
   autoComplete = 'current-password',
@@ -35,14 +36,22 @@ export function PasswordField({
       type={visible ? 'text' : 'password'}
       autoComplete={autoComplete}
       spellCheck={false}
-      dir="auto"
+      // Always left to right with the eye on the right, whatever is typed, so text never runs under the eye.
+      dir="ltr"
       hint={capsLock ? t('auth.capsLock') : hint}
       onKeyDown={trackCapsLock}
       onKeyUp={trackCapsLock}
-      end={
-        <BigButton aria-pressed={visible} onClick={() => setVisible((shown) => !shown)}>
-          {visible ? t('auth.hide') : t('auth.show')}
-        </BigButton>
+      inside={
+        <button
+          type="button"
+          className={styles.iconButton}
+          aria-label={visible ? t('auth.hide') : t('auth.show')}
+          title={visible ? t('auth.hide') : t('auth.show')}
+          aria-pressed={visible}
+          onClick={() => setVisible((shown) => !shown)}
+        >
+          <Icon name={visible ? 'eyeOff' : 'eye'} />
+        </button>
       }
     />
   );

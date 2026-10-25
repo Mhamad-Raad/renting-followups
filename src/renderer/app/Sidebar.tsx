@@ -8,6 +8,9 @@ import { useReminders } from './useReminders';
 import styles from './Sidebar.module.css';
 
 /** The fixed, always-visible main menu on the start side of the window. */
+/** Above this the bell shows "99+", so the number never covers the bell; the page shows the exact count. */
+const BADGE_MAX = 99;
+
 export function Sidebar() {
   const { t } = useTranslation();
   const { settings } = useSettings();
@@ -31,7 +34,9 @@ export function Sidebar() {
                 {item.key === 'notifications' && count > 0 && (
                   // Keyed by the count, so the soft pulse plays once each time it changes.
                   <span key={count} className={styles.badge} aria-hidden="true">
-                    {formatPlain(count, settings.digitStyle)}
+                    {count > BADGE_MAX
+                      ? `${formatPlain(BADGE_MAX, settings.digitStyle)}+`
+                      : formatPlain(count, settings.digitStyle)}
                   </span>
                 )}
               </span>

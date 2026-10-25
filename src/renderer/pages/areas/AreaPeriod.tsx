@@ -1,12 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import type { AreaDetails } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
+import type { MonthBox } from '@shared/months';
 import type { Receipt } from '@shared/payments';
 import { useSettings } from '../../app/SettingsContext';
 import { FigureCards } from '../../components/FigureCards';
 import { MoneyText } from '../../components/MoneyText';
 import { MonthBoxes } from '../../components/MonthBoxes';
-import { Notice } from '../../components/Notice';
+import { LoadError } from '../../components/LoadError';
 import styles from './AreaPage.module.css';
 import { ReportOutputButtons } from '../../print/ReportOutputButtons';
 import { areaYears, PeriodFilter } from './PeriodFilter';
@@ -22,6 +23,8 @@ interface AreaPeriodProps {
   onCancel: (receipt: Receipt) => void;
   onPrint: (receipt: Receipt) => void;
   printing: boolean;
+  /** A click on a month box: mark it paid, or not paid (ARCHITECTURE.md section 7.4). */
+  onPickMonth: (box: MonthBox) => void;
 }
 
 /** The chosen year (or month): the filter, the four figures, the 12 boxes and the receipts. */
@@ -33,6 +36,7 @@ export function AreaPeriod({
   onCancel,
   onPrint,
   printing,
+  onPickMonth,
 }: AreaPeriodProps) {
   const { t } = useTranslation();
   const { settings } = useSettings();
@@ -48,7 +52,7 @@ export function AreaPeriod({
         onYear={period.setYear}
         onMonth={period.setMonth}
       />
-      {months.state.status === 'error' && <Notice tone="error">{t('errors.unexpected')}</Notice>}
+      {months.state.status === 'error' && <LoadError onRetry={months.reload} />}
       {months.state.status === 'ready' && months.state.data && (
         <>
           <FigureCards
@@ -81,6 +85,7 @@ export function AreaPeriod({
               year={year}
               currency={area.currency}
               selected={month}
+              onPick={onPickMonth}
             />
             <p className={styles.footnote}>{t('area.figures.remainingHint')}</p>
           </section>
@@ -88,7 +93,7 @@ export function AreaPeriod({
       )}
 
       <ReportOutputButtons
-        printLabel={t('print.actions.printArea')}
+        withPrint={false}
         query={{
           year,
           month,
@@ -102,9 +107,7 @@ export function AreaPeriod({
 
       <section className={styles.card}>
         <h2 className={styles.heading}>{t('receipts.title')}</h2>
-        {receipts.state.status === 'error' && (
-          <Notice tone="error">{t('errors.unexpected')}</Notice>
-        )}
+        {receipts.state.status === 'error' && <LoadError onRetry={receipts.reload} />}
         {receipts.state.status === 'ready' && (
           <ReceiptList
             receipts={receipts.state.data}

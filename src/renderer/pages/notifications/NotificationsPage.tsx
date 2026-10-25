@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { isAreaReminder, type AreaReminder } from '@shared/notifications';
 import { useBackupNow } from '../../app/useBackupNow';
 import { useReminders } from '../../app/useReminders';
+import { LoadError } from '../../components/LoadError';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import styles from './Notifications.module.css';
@@ -20,7 +21,7 @@ export function NotificationsPage() {
     return (
       <>
         {header}
-        <Notice tone="error">{t('errors.unexpected')}</Notice>
+        <LoadError onRetry={reminders.reload} />
       </>
     );
   }

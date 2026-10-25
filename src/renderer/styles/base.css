@@ -6,6 +6,13 @@
 
 html {
   font-size: var(--font-size-root);
+  /* Room for the scrollbar is always kept, so the page never jumps sideways when it hides. */
+  scrollbar-gutter: stable;
+}
+
+/* While any dialog is open the page behind it stays still; it scrolls again when the dialog closes. */
+html:has(dialog[open]) {
+  overflow: hidden;
 }
 
 body {

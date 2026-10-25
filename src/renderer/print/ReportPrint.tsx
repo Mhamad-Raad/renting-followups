@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { dateStringFromLocal, formatDate } from '@shared/dates';
 import { formatPlain } from '@shared/formatNumber';
-import { reportFilterParts } from '@shared/reportText';
+import { PART_SEPARATOR, reportFilterParts } from '@shared/reportText';
 import { reportQuerySchema, type ReportQuery } from '@shared/reports';
 import { useIpcQuery } from '../app/ipc';
 import { useSettings } from '../app/SettingsContext';
+import { useAreaLabel } from '../app/useAreaLabel';
 import { MoneyText } from '../components/MoneyText';
 import { MonthBoxes, monthWord } from '../components/MonthBoxes';
 import { PhoneText } from '../components/PhoneText';
@@ -45,6 +46,7 @@ function ReportNotReadable() {
 
 function ReportPaper({ query }: { query: ReportQuery }) {
   const { t } = useTranslation();
+  const label = useAreaLabel();
   const { settings } = useSettings();
   const digits = settings.digitStyle;
   const report = useIpcQuery('reports:build', query);
@@ -63,7 +65,7 @@ function ReportPaper({ query }: { query: ReportQuery }) {
       (part) =>
         `${t(part.labelKey)}: ${'text' in part.value ? part.value.text : t(part.value.key)}`,
     )
-    .join(' · ');
+    .join(PART_SEPARATOR);
 
   return (
     <PrintFrame
@@ -94,7 +96,7 @@ function ReportPaper({ query }: { query: ReportQuery }) {
               query.month === null ? null : row.boxes.find((box) => box.month === query.month);
             return (
               <tr key={row.id}>
-                <td className={styles.strong}>{row.name}</td>
+                <td className={styles.strong}>{label(row)}</td>
                 <td>{row.categoryName}</td>
                 <td>{row.renterName ?? '—'}</td>
                 <td className={styles.number}>

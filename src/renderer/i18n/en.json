@@ -36,6 +36,7 @@
     "dark": "Dark",
     "themeColor": "Theme colour",
     "themeColors": {
+      "green": "Green",
       "blue": "Blue",
       "teal": "Teal",
       "indigo": "Indigo",
@@ -46,6 +47,7 @@
     "font": "Font",
     "fontSize": "Text size",
     "fontSizes": {
+      "extraSmall": "Very small",
       "small": "Small",
       "normal": "Normal",
       "large": "Large",
@@ -70,7 +72,6 @@
     },
     "pictures": "Pictures",
     "preview": "How the top of a printed receipt will look",
-    "saved": "Saved.",
     "saveFailed": "The setting could not be saved. Please try again.",
     "security": "Security",
     "changePassword": "Change password",
@@ -78,15 +79,13 @@
     "passwordChanged": "Password changed.",
     "phraseChanged": "Recovery phrase changed.",
     "reminders": "Reminders",
-    "remindDays": "Days before the month ends to start the reminder",
+    "remindDays": "Start reminding this many days before the month ends",
     "remindDaysHint": "In the last {{number}} days of a month the reminder always shows.",
     "data": "Data"
   },
   "common": {
     "ok": "OK",
     "cancel": "Cancel",
-    "close": "Close",
-    "yes": "Yes",
     "loading": "Loading…",
     "tryAgain": "Try again",
     "save": "Save",
@@ -98,8 +97,7 @@
     "requiredField": "Please fill this in.",
     "month": "Month",
     "year": "Year",
-    "day": "Day",
-    "noResults": "Nothing found."
+    "day": "Day"
   },
   "currency": {
     "IQD": "IQD",
@@ -128,8 +126,8 @@
     "newRecoveryPhrase": "New recovery phrase",
     "recoveryPhraseHint": "A sentence only you know, for example the name of your first school and your street. At least {{min}} letters.",
     "writeItDown": "Write down your recovery phrase and keep it safe. If you lose both the password and the recovery phrase, nobody can open your data.",
-    "show": "Show",
-    "hide": "Hide",
+    "show": "Show password",
+    "hide": "Hide password",
     "capsLock": "Caps Lock is on.",
     "forgot": "Forgot password?",
     "setup": {
@@ -147,7 +145,7 @@
       "submit": "Set new password and open"
     },
     "problems": {
-      "passwordTooShort": "The password needs at least {{min}} characters.",
+      "passwordTooShort": "The password needs at least {{min}} letters or numbers.",
       "passwordsDiffer": "The two passwords are not the same. Please type them again.",
       "phraseTooShort": "The recovery phrase needs at least {{min}} letters.",
       "phraseSameAsPassword": "The recovery phrase must be different from the password."
@@ -178,6 +176,7 @@
     "vacant": "Vacant",
     "notStarted": "Rent not started yet",
     "noRenter": "No renter",
+    "noName": "No name",
     "deleted": "The area was moved to Deleted items. You can restore it from Settings.",
     "import": "Import from Excel"
   },
@@ -185,18 +184,18 @@
     "title": "Import areas from Excel",
     "intro": "Bring in many areas at once. You will see what will be added before anything is saved.",
     "step1": "Download the template and fill in one area per row in Excel.",
-    "step2": "Save it, then choose the file here (Excel .xlsx, or CSV saved as UTF-8).",
+    "step2": "Save it, then choose the file here: an Excel file, or a CSV file saved as \"CSV UTF-8\".",
     "downloadTemplate": "Download template…",
     "chooseFile": "Choose file…",
     "chooseAnother": "Choose another file…",
     "templateSaved": "The template was saved.",
-    "templateFailed": "The template could not be saved. Please try again.",
+    "templateFailed": "The template could not be saved. If a file of that name is open in Excel, close it and try again.",
     "fileLabel": "File: {{name}}",
     "readyCount": "Areas to import: {{number}}",
     "skippedCount": "Rows that will be skipped: {{number}}",
     "newCategories": "New categories that will be made: {{names}}",
     "problemsTitle": "Rows that will be skipped",
-    "problemsHint": "Fix these rows in the file and choose it again, or import the other areas now. Areas already imported are skipped the next time.",
+    "problemsHint": "Fix these rows in the file and choose it again, or import the other areas now. Areas with a name that were already imported are skipped the next time.",
     "rowProblem": "Row {{row}}: {{problems}}",
     "previewTitle": "Areas to import",
     "moreRows": "…and {{number}} more",
@@ -221,10 +220,10 @@
       "missing": "{{column}} is empty",
       "too_long": "{{column}} is longer than {{max}} letters",
       "bad_currency": "currency must be IQD or USD",
-      "bad_price": "monthly rent must be a number, like 250000",
-      "bad_price_IQD": "monthly rent must be a whole number of dinars, like 250000",
-      "bad_price_USD": "monthly rent must be a number of dollars, like 300 or 299.50",
-      "bad_month": "the month must be a number from 1 to 12",
+      "bad_price": "monthly rent must be a number, like {{example}}",
+      "bad_price_IQD": "monthly rent must be a whole number of dinars, like {{example}}",
+      "bad_price_USD": "monthly rent must be a number of dollars, like {{example}} or {{example2}}",
+      "bad_month": "the month must be a number from {{min}} to {{max}}",
       "bad_year": "the year must be from {{min}} to {{max}}",
       "bad_phone": "the phone may only have digits, spaces, + and -",
       "phone_without_renter": "there is a phone number but no renter name",
@@ -234,7 +233,7 @@
     },
     "file": {
       "not_readable": "This file could not be read. Please choose an Excel file (.xlsx), or a CSV file saved as \"CSV UTF-8\".",
-      "too_large": "This file is too large. Please choose a file smaller than 10 MB.",
+      "too_large": "This file is too large. Please choose a file smaller than {{size}} MB.",
       "empty": "This file has no areas in it.",
       "too_many_rows": "This file has more than {{max}} rows. Please split it into smaller files.",
       "missing_columns": "The first row must have the column names from the template. Missing: {{columns}}."
@@ -246,9 +245,9 @@
       "sheet": "Areas",
       "helpSheet": "How to fill in",
       "help1": "How to fill in the template",
-      "help2": "One area per row. Area name, category, currency, monthly rent, and the month and year the rent starts must be filled in; the rest may be left empty.",
+      "help2": "One area per row. Category, currency, monthly rent, and the month and year the rent starts must be filled in; the rest, including the area name, may be left empty. An area without a name is shown by its renter's name.",
       "help3": "Currency is IQD or USD. Monthly rent is a number: dinars, or dollars with cents like 299.50. The month is 1 to 12.",
-      "help4": "A category that does not exist yet is made automatically. A row whose area name is already in the same category is skipped.",
+      "help4": "A category that does not exist yet is made automatically. A row whose area name is already in the same category is skipped. Rows without an area name are always imported, so import such a file only once.",
       "example": "Example: Shop 1 | Shops | IQD | 250000 | 1 | {{year}} | Ahmad Ali | 0750 123 4567 | Main street | (notes)"
     },
     "listSeparator": ", "
@@ -257,6 +256,7 @@
     "newTitle": "Add area",
     "editTitle": "Edit area",
     "name": "Area name",
+    "nameHint": "Leave empty if the place has no name. It is then shown by its renter's name.",
     "category": "Category",
     "chooseCategory": "Choose a category",
     "newCategory": "New category…",
@@ -321,7 +321,7 @@
       "expectedMonth": "Total for the month",
       "received": "Received",
       "remaining": "Still owed",
-      "remainingHint": "Still owed counts rent up to this month. \"Received\" counts money by the rent month it paid, not the day it arrived."
+      "remainingHint": "\"Still owed\" counts rent up to this month. \"Received\" counts each payment under the month it pays for, not the day it arrived."
     }
   },
   "priceDialog": {
@@ -335,7 +335,7 @@
     "before_rent_start": "This month is before the rent started ({{month}}). Please choose a later month.",
     "priceSaved": "New price saved.",
     "vacantSaved": "The area is marked as vacant.",
-    "warning": "Saving shares the money already paid out again with the new rent:",
+    "warning": "If you save, the money already paid is spread over the months again using the new rent:",
     "statusChange": "Month {{month}}: {{before}} {{paidBefore}} → {{after}} {{paidAfter}}",
     "saveAnyway": "Save anyway",
     "no_room": "The money already paid from this month would have no month to go to (for example, the area stays vacant). Please cancel or edit those receipts first."
@@ -441,10 +441,10 @@
       "damaged": "This backup file is damaged and cannot be used. Please try another backup.",
       "too_new": "This backup was made by a newer version of the app, so this version cannot open it.",
       "failed": "The backup could not be read. Please try again.",
-      "cannot_upgrade": "This backup could not be brought up to date for this version of the app, so it cannot be used. Your data was not changed."
+      "cannot_upgrade": "This backup cannot be used with this app. Your data was not changed."
     },
     "restoredNotice": "Your data was restored from the backup of {{date}}. Open the app with the password that was in use then.",
-    "restoreFailed": "The backup could not be put in place. Your data was not changed.",
+    "restoreFailed": "The backup could not be restored. Your data was not changed.",
     "damaged": {
       "title": "Your data cannot be opened",
       "intro": "The data file is damaged. Nothing has been changed or deleted. You can bring your data back from a backup.",
@@ -471,6 +471,22 @@
       "nothing_due": "Nothing due"
     }
   },
+  "monthPick": {
+    "payTitle": "Mark month {{month}} of {{year}} as paid?",
+    "alreadyPaid": "{{amount}} is already paid.",
+    "payBody": "{{amount}} will be recorded as a payment dated today, with a receipt number.",
+    "payButton": "Mark as paid",
+    "paid": "Month {{month}} is paid. Receipt No. {{number}}",
+    "takeOutTitle": "Mark month {{month}} of {{year}} as not paid?",
+    "cancels": "{{receipt}} is cancelled ({{amount}}).",
+    "lowers": "{{receipt}}: {{amount}} is taken off. Its other months stay paid.",
+    "takeOutButton": "Mark as not paid",
+    "takenOut": "Month {{month}} is marked as not paid.",
+    "pay": "Mark as paid",
+    "takeOut": "Mark as not paid",
+    "noUndo": "This cannot be undone.",
+    "notPaid": "This month is no longer paid. The screen has been updated."
+  },
   "paymentDialog": {
     "newTitle": "Record payment",
     "pastTitle": "Record past payment",
@@ -490,7 +506,7 @@
     "future_date": "The date received cannot be after today.",
     "cancelled": "This receipt was cancelled and can no longer be changed.",
     "saved": "Payment saved. Receipt No. {{number}}",
-    "pastSaved": "Past payment saved.",
+    "pastSaved": "Past record saved.",
     "updated": "Receipt saved.",
     "nothing_open": "There is no rent to fill from this month: it is vacant, or more than two years ahead. Please choose another month."
   },
@@ -508,7 +524,7 @@
     "cancelDone": "The receipt was cancelled.",
     "undo": "Undo",
     "undone": "The payment was undone. Receipt No. {{number}} is kept as cancelled.",
-    "pastUndone": "The past payment was undone.",
+    "pastUndone": "The past record was removed.",
     "separator": ", "
   },
   "clock": {
@@ -549,15 +565,14 @@
       "remaining": "Still owed",
       "money": "Money"
     },
-    "total": "Total {{currency}} · Areas: {{number}}",
+    "total": "Total {{currency}} | Areas: {{number}}",
     "empty": "No areas match these filters.",
-    "footer": "\"Received\" counts money by the rent month it paid, not the day it arrived: rent for month {{december}} paid in month {{november}} counts toward that month {{december}}. \"Still owed\" counts rent up to this month.",
+    "footer": "\"Received\" counts each payment under the month it pays for, not the day it arrived: rent for month {{december}} paid in month {{november}} counts under month {{december}}. \"Still owed\" counts rent up to this month.",
     "caption": "Report: one row per area, then the totals per currency"
   },
   "print": {
     "reportTitle": "Rent report",
     "printedOn": "Printed on {{date}}",
-    "receiptTitle": "Receipt",
     "receiptNumber": "Receipt No. {{number}}",
     "copy": "Copy",
     "date": "Date",
@@ -582,8 +597,7 @@
       "printSelected": "Print selected",
       "printReport": "Print report",
       "select": "Select {{name}}",
-      "selectAll": "Select all shown",
-      "printArea": "Print this area"
+      "selectAll": "Select all shown"
     },
     "results": {
       "printed": "Sent to the printer.",
@@ -592,7 +606,8 @@
       "busy": "Another print is still being prepared. Please wait a moment and try again.",
       "failed": "Printing did not work. Please check the printer and try again.",
       "past_record": "A past record has no receipt number, so it cannot be printed as a receipt.",
-      "not_found": "This receipt could not be found. It may have been cancelled."
+      "not_found": "This receipt could not be found. It may have been cancelled.",
+      "save_failed": "The file could not be saved. If it is open in another program, such as Excel, close it and try again."
     },
     "selectedCount": "Selected: {{number}}"
   },
@@ -600,14 +615,15 @@
     "count": "Reminders: {{number}}",
     "late": "Late rent",
     "monthEnd": "This month ends soon",
-    "lastDay": "Month {{month}} is not fully paid and ends today",
+    "lastDay": "Month {{month}} is not fully paid and ends today.",
     "owes": "Still owes",
     "none": "Nothing needs attention. All rent is paid up to this month.",
-    "popupTitle": "Things that need attention",
+    "popupTitle": "Areas that need attention",
     "goTo": "Go to Notifications",
     "more": "… and {{number}} more",
     "toastBody": "Reminders that need attention: {{number}}. Open the app to see them.",
     "endsOn": "Month {{month}} is not fully paid. It ends on {{date}}.",
-    "backupDue": "No backup has been made this month."
+    "backupDue": "No backup has been made this month.",
+    "popupSummary": "Number of areas: {{number}}. You can see all of them on the Notifications page."
   }
 }

@@ -110,6 +110,16 @@ export async function askWhereToSave(
   return result.canceled || !result.filePath ? null : result.filePath;
 }
 
-export async function saveFile(path: string, data: Buffer | Uint8Array): Promise<void> {
-  await writeFile(path, data);
+/**
+ * Writes a file the owner chose to save. False when it cannot be written, for
+ * example because Windows keeps it locked while it is open in Excel.
+ */
+export async function saveFile(path: string, data: Buffer | Uint8Array): Promise<boolean> {
+  try {
+    await writeFile(path, data);
+    return true;
+  } catch (error) {
+    logger.error('file.save_failed', describeError(error));
+    return false;
+  }
 }

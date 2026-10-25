@@ -6,10 +6,12 @@ import { DEFAULT_REPORT_FILTERS } from '@shared/reports';
 import { flash } from '../../app/flash';
 import { useIpcQuery } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
+import { useAreaLabel } from '../../app/useAreaLabel';
 import { BigButton } from '../../components/BigButton';
 import { CategoryDot } from '../../components/CategoryDot';
-import { EmptyState } from '../../components/EmptyState';
 import { FigureCards } from '../../components/FigureCards';
+import { LoadError } from '../../components/LoadError';
+import { NoAreasYet } from '../areas/NoAreasYet';
 import { LinkButton } from '../../components/LinkButton';
 import { MoneyText } from '../../components/MoneyText';
 import { StatusPill } from '../../components/MonthBoxes';
@@ -66,7 +68,7 @@ export function HomePage() {
     return (
       <>
         {header}
-        <Notice tone="error">{t('errors.unexpected')}</Notice>
+        <LoadError onRetry={summary.reload} />
       </>
     );
   }
@@ -75,15 +77,7 @@ export function HomePage() {
     return (
       <>
         {header}
-        <EmptyState
-          title={t('areas.empty.title')}
-          body={t('areas.empty.body')}
-          action={
-            <LinkButton to="/areas/new" variant="primary">
-              {t('areas.empty.button')}
-            </LinkButton>
-          }
-        />
+        <NoAreasYet />
       </>
     );
   }
@@ -152,12 +146,13 @@ function AttentionRow({ item }: { item: AttentionItem }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const navigate = useNavigate();
+  const label = useAreaLabel();
   const { standing } = item;
   return (
     <li className={styles.row}>
       <div className={styles.who}>
         <Link to={areaLink(item.id)} className={styles.name}>
-          {item.name}
+          {label(item)}
         </Link>
         <span className={styles.second}>
           <CategoryDot color={item.categoryColor} />

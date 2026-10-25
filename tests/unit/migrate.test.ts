@@ -169,6 +169,27 @@ describe('real schema upgrades keep existing data', () => {
     expect(db.prepare('SELECT COUNT(*) AS n FROM receipts').get()).toEqual({ n: 0 });
     expect(db.prepare('SELECT COUNT(*) AS n FROM payment_allocations').get()).toEqual({ n: 0 });
   });
+
+  it('4: several areas without a name fit in one category; named ones stay unique', () => {
+    const db = memoryDb();
+    migrate(db, MIGRATIONS.slice(0, 3));
+    db.prepare(
+      "INSERT INTO categories (id, name, name_normalized) VALUES (1, 'Shops', 'shops')",
+    ).run();
+    const addArea = db.prepare(
+      `INSERT INTO areas (category_id, name, name_normalized, currency)
+       VALUES (1, ?, ?, 'IQD')`,
+    );
+    addArea.run('Shop 1', 'shop 1');
+    const before = db.prepare('SELECT * FROM areas').all();
+
+    migrate(db, MIGRATIONS.slice(0, 4));
+    expect(db.prepare('SELECT * FROM areas').all()).toEqual(before);
+    addArea.run('', '');
+    addArea.run('', '');
+    expect(() => addArea.run('Shop 1', 'shop 1')).toThrow(/UNIQUE/);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM areas').get()).toEqual({ n: 3 });
+  });
 });
 
 describe('writeSafetySnapshot', () => {

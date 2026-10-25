@@ -12,6 +12,9 @@ const ICONS = {
   alert: 'M12 3 2 20h20zM12 9v5M12 17h.01',
   check: 'M5 12.5l4.5 4.5L19 7',
   download: 'M12 4v11M7 10l5 5 5-5M5 20h14',
+  eye: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
+  eyeOff:
+    'M3 3l18 18M10.6 5.1A11 11 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7c1.9 0 3.6-.6 5-1.5M9.9 9.9a3 3 0 0 0 4.2 4.2',
 } as const;
 
 export type IconName = keyof typeof ICONS;

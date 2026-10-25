@@ -11,6 +11,7 @@ import {
   PERSON_NAME_MAX,
   PHONE_MAX,
   PHONE_PATTERN,
+  cleanAreaName,
 } from '@shared/areas';
 import { CATEGORY_NAME_MAX } from '@shared/categories';
 import { FRACTION_DIGITS, type Currency } from '@shared/currency';
@@ -263,7 +264,8 @@ function checkRow(
       problems.push({ kind: 'too_long', column, max });
     }
   }
-  for (const column of ['name', 'category', 'currency', 'monthlyPrice'] as const) {
+  // The area name is optional: an area may be known only by its category and renter.
+  for (const column of ['category', 'currency', 'monthlyPrice'] as const) {
     if (value(column) === '') problems.push({ kind: 'missing', column });
   }
 
@@ -300,7 +302,7 @@ function checkRow(
   }
   return {
     area: {
-      name: value('name'),
+      name: cleanAreaName(value('name')),
       category: value('category'),
       currency,
       monthlyPrice,
@@ -349,7 +351,7 @@ export function checkTable(
     const key = `${normalizeText(value('category'))}\u0000${normalizeText(value('name'))}`;
     const problems = 'problems' in checked ? [...checked.problems] : [];
     const earlier = firstRowOf.get(key);
-    if (value('name') !== '' && value('category') !== '') {
+    if (cleanAreaName(value('name')) !== '' && value('category') !== '') {
       if (earlier !== undefined) problems.push({ kind: 'same_as_row', otherRow: earlier });
       else if (context.areaExists(value('category'), value('name'))) {
         problems.push({ kind: 'already_exists' });
@@ -478,7 +480,7 @@ export function buildImportTemplate(language: Language, currentYear: number): Ex
     allowBlank: true,
     formulae: [1, 12],
     showErrorMessage: true,
-    error: t('import.problem.bad_month'),
+    error: t('import.problem.bad_month', { min: '1', max: '12' }),
   });
 
   const help = workbook.addWorksheet(t('import.template.helpSheet'), {

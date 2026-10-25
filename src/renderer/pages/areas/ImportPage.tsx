@@ -3,8 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { formatYearMonth } from '@shared/dates';
 import { toDigitStyle, type DigitStyle } from '@shared/digits';
-import { formatPlain } from '@shared/formatNumber';
-import type { ImportChoice, ImportPreview, RowProblem } from '@shared/import';
+import { formatAmount, formatPlain } from '@shared/formatNumber';
+import { FRACTION_DIGITS } from '@shared/currency';
+import {
+  IMPORT_MAX_BYTES,
+  type ImportChoice,
+  type ImportPreview,
+  type RowProblem,
+} from '@shared/import';
 import { flash } from '../../app/flash';
 import { callIpc } from '../../app/ipc';
 import { useMountedRef } from '../../app/useMountedRef';
@@ -44,7 +50,13 @@ function problemText(problem: RowProblem, t: Translate, digits: DigitStyle): str
         problem.currency
           ? `import.problem.bad_price_${problem.currency}`
           : 'import.problem.bad_price',
+        {
+          example: problem.currency === 'USD' ? number(300) : formatAmount(250_000, 0, digits),
+          example2: formatAmount(29_950, FRACTION_DIGITS.USD, digits),
+        },
       );
+    case 'bad_month':
+      return t('import.problem.bad_month', { min: number(1), max: number(12) });
     case 'bad_year':
       return t('import.problem.bad_year', {
         min: toDigitStyle(String(problem.min), digits),
@@ -66,6 +78,10 @@ function fileProblemText(
   switch (choice.reason) {
     case 'too_many_rows':
       return t('import.file.too_many_rows', { max: formatPlain(choice.max, digits) });
+    case 'too_large':
+      return t('import.file.too_large', {
+        size: formatPlain(IMPORT_MAX_BYTES / 1024 / 1024, digits),
+      });
     case 'missing_columns':
       return t('import.file.missing_columns', {
         columns: choice.columns
@@ -144,7 +160,9 @@ function PreviewDetails({ preview }: { preview: ImportPreview }) {
               <tbody>
                 {shown.map((row) => (
                   <tr key={row.row}>
-                    <td className={styles.strong}>{row.name}</td>
+                    <td className={styles.strong}>
+                      {row.name || <span className={styles.muted}>—</span>}
+                    </td>
                     <td>{row.category}</td>
                     <td className={styles.nowrap}>
                       <MoneyText amount={row.monthlyPrice} currency={row.currency} />

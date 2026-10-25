@@ -141,12 +141,28 @@ test('saying no to a checked backup changes nothing and leaves no copy behind', 
     await answerOpenDialog(app, backup);
     await page.getByRole('button', { name: en.backup.restore }).click();
     const dialog = page.getByRole('dialog', { name: en.backup.confirmTitle });
+    // The keyboard starts on Cancel: a stray Enter must never replace the data.
+    await expect(dialog.getByRole('button', { name: en.common.cancel })).toBeFocused();
     await dialog.getByRole('button', { name: en.common.cancel }).click();
     await expect(dialog).toHaveCount(0);
     await expect.poll(() => readdirSync(join(dataDir, 'restore'))).toEqual([]);
     expect(await areaNames(page)).toEqual(['Shop 1']);
   } finally {
     await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
+test('a backup checked but never confirmed is not kept after the app is closed', async () => {
+  const dataDir = createDataDir();
+  try {
+    // What closing the app on the Restore question leaves behind.
+    mkdirSync(join(dataDir, 'restore'));
+    writeFileSync(join(dataDir, 'restore', 'pending.db'), 'a full copy of some data');
+    const { app } = await launchUnlocked(dataDir);
+    expect(readdirSync(join(dataDir, 'restore'))).toEqual([]);
+    await app.close();
+  } finally {
     removeDataDir(dataDir);
   }
 });

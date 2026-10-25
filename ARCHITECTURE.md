@@ -32,7 +32,7 @@ UX matters more than anything else in this project.
    - After saving a payment, show an **Undo** option for it for as long as the screen is open, and the payment can be edited or removed later from the area's payment list.
    - Edits and cancellations are recorded in an audit log (section 5).
 6. **Always show the result of an action** with a clear message ("Payment saved. Receipt No. 0042").
-7. **Colour is never the only signal.** Month boxes show the month number and a small status word or symbol as well as the colour.
+7. **Colour is never the only signal.** Month boxes show the month number on the status colour; the large boxes also show the amount and a status word, and every box has a spoken label. *(Owner's decision, 2026-10-25: numbers instead of symbols in the small strips too.)*
 8. **No modal chains.** At most one dialog open at a time.
 9. **The app stays unlocked** once the password is entered (see section 10). No timeouts, no surprise lock screens.
 10. **Keyboard friendly:** logical tab order, **Enter** submits the main action, **Esc** closes dialogs, visible focus outline. Amount fields select their content on focus and show thousands separators while typing.
@@ -120,7 +120,8 @@ Database settings: WAL mode, `foreign_keys = ON`, all multi-row writes inside tr
 `id, category_id → categories, name, name_normalized, currency ('IQD' | 'USD'), address (nullable), contract_start (nullable date, informational only), notes (text), deleted_at`
 - `currency` is chosen when the area is created and **cannot be changed afterwards**.
 - The area form requires **"Rent starts from" (month number + year, default current month)**. It becomes the first `area_prices` row and decides which months count as applicable.
-- Area names are unique within a category (warn, do not crash).
+- The area name is **optional**: many owners know a place only by its category and its renter. An area without a name is shown everywhere by its current renter's name, and as "No name" when it has no renter. On a receipt, which already shows the renter, its area line shows the category instead. *(Owner's decision, iteration 13.)*
+- Area names that are filled in are unique within a category (warn, do not crash). Areas without a name never clash.
 - `name_normalized` supports search (section 9).
 
 ### area_prices (rent price history)
@@ -225,6 +226,14 @@ Each receipt in the area's payment list has **Edit** and **Cancel receipt** (con
 
 A second button on the area page, **Record past payment**, lets the user mark months as paid for earlier dates **without** a numbered receipt (`is_backfill = true`, `receipt_number = NULL`). This is how the user catches up on existing data. These entries are marked "Past record" in lists and cannot be printed as numbered receipts. They count in all totals exactly like normal payments.
 
+### 7.4 Click a month box (owner's decision, 2026-10-25)
+
+On the area page and in the Areas list, every month box that has rent is a button:
+- **A month not fully paid** (late, due, partial or upcoming): after a short question ("Mark month 5 of 2026 as paid? 825,000 IQD"), the rest of that month's rent is recorded as a normal payment dated today, **with a receipt number**, filling only that month.
+- **A paid month**: after a short question that lists what will change, that month is taken out of the receipts that paid it. A receipt that paid only this month is cancelled; a receipt that paid other months too keeps its number and its other months, and its amount goes down by this month's share. Its months may then have a gap (for example 1-2 and 4-8). The change is in the Activity log.
+- A month marked as paid can be undone like any new payment. Editing a receipt with a gap only for its date or note keeps its months; changing its amount or start month, or a price change from an earlier month, shares its money out again oldest month first (with the usual preview or warning), which fills the gap.
+- Vacant and not-started months are not buttons. Report screens and prints are not clickable.
+
 ---
 
 ## 8. Screens
@@ -257,7 +266,7 @@ Then, for the selected year:
 - Notes field.
 - List of receipts for the year (number or "Past record", date, amount, months covered) with Print / Edit / Cancel.
 - Price history and renter history (collapsible, plain).
-- Buttons: **Print this area**, **Export to PDF**, **Export to Excel**.
+- Buttons: **Export to PDF**, **Export to Excel**. *(Owner's decision, 2026-10-25: no direct Print button here.)*
 
 ### 8.5 Reports
 Filter container at the top:
@@ -366,7 +375,7 @@ Light and dark themes must both have adequate contrast, and the month status col
 
 - Paper: **A4**. Reports use landscape; receipts portrait.
 - The print layout is separate from the screen layout (`print.css` / `src/renderer/print/`). It must be RTL/LTR aware and use the chosen font.
-- Month boxes print with colours **and** a symbol/word so a black-and-white printer still works (paid = ✓, partial = ½, late = ✗, upcoming = blank, vacant/not applicable = dash).
+- Month boxes print with their colours and the month number, as on screen (owner's decision, 2026-10-25). Vacant and not-started months stay hatched. A black-and-white printer no longer tells the statuses apart; the Received and Still owed figures on every row still do.
 - Every printed report has: logo + title (if set), report title, filters used (year, month, category), generated date, the table, and the **totals per currency at the bottom**. Long tables repeat the header row on every page and add page numbers.
 - **PDF:** the same print HTML rendered to PDF; the user picks the save location.
 - **Excel:** one sheet with the same columns and totals rows; month columns contain the paid amount with the same colours as cell fills; the sheet is set right-to-left for Sorani and Arabic.
@@ -386,7 +395,7 @@ Light and dark themes must both have adequate contrast, and the month status col
 
 ## 16. Getting existing data in (critical: the owner already has 100-200 areas)
 
-- **Excel/CSV import of areas:** the app provides a downloadable template (area name, category, currency, monthly price, rent start month/year, renter name, renter phone, address, notes). The import shows a preview with row-level errors in plain wording (e.g. "Row 12: currency must be IQD or USD") and only commits when the user confirms. Unknown categories are created automatically. Duplicate names inside a category are flagged, not silently merged.
+- **Excel/CSV import of areas:** the app provides a downloadable template (area name (optional), category, currency, monthly price, rent start month/year, renter name, renter phone, address, notes). The import shows a preview with row-level errors in plain wording (e.g. "Row 12: currency must be IQD or USD") and only commits when the user confirms. Unknown categories are created automatically. Duplicate names inside a category are flagged, not silently merged.
 - **Record past payment (backfill):** section 7.3.
 - **Demo data generator:** `npm run seed` (dev only) creates 200 areas with 3 years of mixed payments, for performance and UI testing. It is never included in the installer.
 

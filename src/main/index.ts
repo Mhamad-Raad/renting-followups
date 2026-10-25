@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { app, BrowserWindow, dialog, Menu } from 'electron';
+import { formatPlain } from '@shared/formatNumber';
 import { DEFAULT_SETTINGS, LANGUAGES, type Language, type ThemeMode } from '@shared/settings';
 import {
   closeDatabase,
@@ -22,10 +23,11 @@ import { writeSafetySnapshot } from './services/backup';
 import { startDailyToast, stopDailyToast } from './services/dailyToast';
 import { describeError, initLogger, logger } from './services/logger';
 import { createLogoStore } from './services/logo';
-import { applyReadyRestore } from './services/restore';
+import { applyReadyRestore, clearStep } from './services/restore';
 import { startupFailureMessage } from './services/messages';
 import { translate } from './services/translate';
 import { appWebPreferences, loadRenderer, RENDERER_DIRECTORY } from './windows';
+import appIcon from '../../resources/icon.png?asset';
 
 const APP_NAME = 'Rent Tracker';
 const MIN_WIDTH = 1100;
@@ -92,6 +94,8 @@ function startServices(): { themeMode: ThemeMode } {
     safetyFolder,
   };
   const outcome = applyReadyRestore(restorePaths, new Date());
+  // A backup checked but never confirmed (the app was closed on the question) is not kept.
+  clearStep(restorePaths, 'pending');
   if (outcome) logger.info('restore.applied', { ok: outcome.ok });
   const restore = (language: () => Language): RestoreDependencies => ({
     paths: restorePaths,
@@ -130,10 +134,12 @@ function startServices(): { themeMode: ThemeMode } {
     startDailyToast({
       countReminders: () => currentReminders(repos).length,
       texts: (count) => {
-        const { language } = repos.settings.getAll();
+        const { language, digitStyle } = repos.settings.getAll();
         return {
           title: translate(language, 'app.name'),
-          body: translate(language, 'notifications.toastBody', { number: String(count) }),
+          body: translate(language, 'notifications.toastBody', {
+            number: formatPlain(count, digitStyle),
+          }),
         };
       },
       onClick: focusMainWindow,
@@ -154,6 +160,8 @@ function startMemoryLog(): void {
 function createMainWindow(themeMode: ThemeMode): void {
   const window = new BrowserWindow({
     title: APP_NAME,
+    // The app's own icon in the title bar and on the taskbar; the installer uses build/icon.ico.
+    icon: appIcon,
     backgroundColor: WINDOW_BACKGROUND[themeMode],
     minWidth: MIN_WIDTH,
     minHeight: MIN_HEIGHT,

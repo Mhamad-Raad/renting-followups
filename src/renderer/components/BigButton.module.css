@@ -17,7 +17,7 @@
 }
 
 .button:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: scale(var(--scale-press));
 }
 
 .button:disabled {
@@ -35,7 +35,7 @@
 
 .secondary {
   background: var(--color-surface);
-  border-color: var(--color-border);
+  border-color: var(--color-control-border);
   color: var(--color-text);
 }
 .secondary:hover:not(:disabled) {

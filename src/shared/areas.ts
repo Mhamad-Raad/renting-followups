@@ -10,6 +10,7 @@ import {
 } from './dates';
 import type { CategoryColor } from './categories';
 import type { MonthBox, StatusChange, YearSummary } from './months';
+import { normalizeText } from './normalizeText';
 import { priceForMonth, type PriceRow } from './prices';
 
 export const AREA_NAME_MAX = 120;
@@ -22,7 +23,17 @@ export const SEARCH_MAX = 200;
 export const MAX_MONTHLY_PRICE = 10_000_000_000_000;
 
 const id = z.number().int().positive();
-const areaName = z.string().trim().min(1).max(AREA_NAME_MAX);
+/**
+ * The area name is optional: an area may be known only by its category and
+ * renter. A name of only marks that search ignores (a lone tatweel or ZWNJ)
+ * counts as no name, so it is never shown as an invisible label or taken for
+ * a duplicate.
+ */
+export function cleanAreaName(name: string): string {
+  const trimmed = name.trim();
+  return normalizeText(trimmed) === '' ? '' : trimmed;
+}
+const areaName = z.string().trim().max(AREA_NAME_MAX).transform(cleanAreaName);
 const monthlyPrice = z.number().int().min(0).max(MAX_MONTHLY_PRICE);
 /** Digits of any style, spaces, +, - and brackets: how people write phone numbers. */
 export const PHONE_PATTERN = /^[0-9\u0660-\u0669\u06F0-\u06F9+\-()\s]*$/;
@@ -30,6 +41,33 @@ const phone = z.string().trim().max(PHONE_MAX).regex(PHONE_PATTERN);
 const renterDetails = z
   .object({ fullName: z.string().trim().min(1).max(PERSON_NAME_MAX), phone })
   .strict();
+
+/**
+ * What an area is called on screen and on paper: its own name, or, when it
+ * has none, its current renter's name. Null when it has neither, so the
+ * caller shows its "No name" text in the reader's language.
+ */
+export function areaLabel(name: string, renterName: string | null): string | null {
+  return name !== '' ? name : renterName || null;
+}
+
+/** What `areaLabel` needs: the area's own name and its current renter's name. */
+export interface AreaNaming {
+  name: string;
+  renterName: string | null;
+}
+
+/**
+ * Orders areas by what they are called on screen (areas with no name at all
+ * come first); the same label keeps the order the areas were added in, so
+ * every list, print and export agrees.
+ */
+export function compareAreaLabels(
+  collator: Intl.Collator,
+): (a: AreaNaming & { id: number }, b: AreaNaming & { id: number }) => number {
+  const label = (area: AreaNaming) => areaLabel(area.name, area.renterName) ?? '';
+  return (a, b) => collator.compare(label(a), label(b)) || a.id - b.id;
+}
 
 export const areaCreateSchema = z
   .object({
@@ -108,6 +146,11 @@ export interface AreaListItem {
   summary: YearSummary;
 }
 
+/** The renter with no end date, if anyone rents the area now. */
+export function currentRenter(renters: readonly Renter[]): Renter | null {
+  return renters.find((renter) => renter.endedOn === null) ?? null;
+}
+
 export interface AreaDetails {
   id: number;
   name: string;
@@ -123,7 +166,7 @@ export interface AreaDetails {
 }
 
 export interface DeletedItems {
-  areas: { id: number; name: string; categoryName: string; deletedAt: string }[];
+  areas: ({ id: number; categoryName: string; deletedAt: string } & AreaNaming)[];
   categories: { id: number; name: string; deletedAt: string }[];
 }
 

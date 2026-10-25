@@ -1,10 +1,11 @@
 import ExcelJS from 'exceljs';
+import { areaLabel } from '@shared/areas';
 import { FRACTION_DIGITS, type Currency } from '@shared/currency';
 import { formatDate, type DateString } from '@shared/dates';
 import type { DigitStyle } from '@shared/digits';
 import { formatPlain } from '@shared/formatNumber';
 import type { MonthStatus } from '@shared/months';
-import { reportFilterParts } from '@shared/reportText';
+import { PART_SEPARATOR, reportFilterParts } from '@shared/reportText';
 import type { Report, ReportQuery } from '@shared/reports';
 import type { Language } from '@shared/settings';
 import { translate } from './translate';
@@ -67,7 +68,7 @@ export function buildReportWorkbook(
         (part) =>
           `${t(part.labelKey)}: ${'text' in part.value ? part.value.text : t(part.value.key)}`,
       )
-      .join(' · '),
+      .join(PART_SEPARATOR),
   ]);
   sheet.addRow([t('print.printedOn', { date: formatDate(printedOn, digitStyle) })]);
 
@@ -88,7 +89,7 @@ export function buildReportWorkbook(
 
   for (const row of report.rows) {
     const line = sheet.addRow([
-      row.name,
+      areaLabel(row.name, row.renterName) ?? t('areas.noName'),
       row.categoryName,
       row.renterName ?? '',
       row.renterPhone ?? '',

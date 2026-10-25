@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import type { AreaDetails } from '@shared/areas';
+import { currentRenter, type AreaDetails } from '@shared/areas';
 import { yearMonthOf } from '@shared/dates';
 import { formatReceiptNumber, type Receipt } from '@shared/payments';
 import { priceForMonth } from '@shared/prices';
 import { callIpc, useIpcQuery } from '../../app/ipc';
+import { useMountedRef } from '../../app/useMountedRef';
 import { flash, useFlashNotice } from '../../app/flash';
 import { useSettings } from '../../app/SettingsContext';
+import { useAreaLabel } from '../../app/useAreaLabel';
 import { BigButton } from '../../components/BigButton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { LoadError } from '../../components/LoadError';
 import { LinkButton } from '../../components/LinkButton';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
@@ -24,6 +27,7 @@ import { PaymentDialog, type PaymentMode, type PaymentSaved } from './PaymentDia
 import { PriceDialog, type PriceMode } from './PriceDialog';
 import { RenterDialog } from './RenterDialog';
 import { useAreaPeriod } from './useAreaPeriod';
+import { useMonthPick } from './useMonthPick';
 
 type OpenDialog =
   | { kind: 'price'; mode: PriceMode }
@@ -40,7 +44,8 @@ export function AreaPage() {
   const area = useIpcQuery('areas:get', { id: areaId ?? 0 });
 
   if (area.state.status === 'loading') return null;
-  if (areaId === null || area.state.status === 'error' || area.state.data === null) {
+  if (area.state.status === 'error') return <LoadError onRetry={area.reload} />;
+  if (areaId === null || area.state.data === null) {
     return (
       <>
         <Notice tone="error">{t('areaForm.problems.not_found')}</Notice>
@@ -57,7 +62,9 @@ export function AreaPage() {
 
 function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => void }) {
   const { t } = useTranslation();
+  const mounted = useMountedRef();
   const { settings } = useSettings();
+  const label = useAreaLabel();
   const navigate = useNavigate();
   const flashed = useFlashNotice();
   const [notice, setNotice] = useState<string | null>(flashed);
@@ -86,6 +93,17 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
     period.refresh();
   };
 
+  const monthPick = useMonthPick((outcome) => {
+    if (outcome.tone === 'error') {
+      setProblem(outcome.text);
+      period.refresh();
+      return;
+    }
+    done(outcome.text);
+    // A month marked as paid can be undone, like any new payment.
+    setUndoable(outcome.undo ?? null);
+  });
+
   const printing = usePrint();
   const printReceipt = (id: number) =>
     void printing.run({ kind: 'receipt', id, output: 'printer' });
@@ -100,6 +118,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
   const cancelReceipt = async (id: number, message: string) => {
     setDialog(null);
     const result = await callIpc('payments:void', { id });
+    if (!mounted.current) return;
     if (result.ok && result.data.ok) done(message);
     else setProblem(t('errors.unexpected'));
   };
@@ -118,6 +137,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
   const remove = async () => {
     setDialog(null);
     const result = await callIpc('areas:delete', { id: area.id });
+    if (!mounted.current) return;
     if (result.ok && result.data.ok) {
       void navigate('/areas', { state: flash(t('areas.deleted')) });
     } else {
@@ -128,7 +148,10 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
   return (
     <>
       <PageHeader
-        title={area.name}
+        title={label({
+          name: area.name,
+          renterName: currentRenter(area.renters)?.fullName ?? null,
+        })}
         actions={
           <>
             <BigButton
@@ -192,6 +215,14 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
           onCancel={(receipt) => setDialog({ kind: 'cancelReceipt', receipt })}
           onPrint={(receipt) => printReceipt(receipt.id)}
           printing={printing.busy}
+          onPickMonth={(box) =>
+            void monthPick.pick({
+              areaId: area.id,
+              currency: area.currency,
+              year: period.year,
+              box,
+            })
+          }
         />
 
         <AreaHistory area={area} />
@@ -203,6 +234,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
         </div>
       </div>
 
+      {monthPick.dialog}
       <PriceDialog
         area={area}
         mode={dialog?.kind === 'price' ? dialog.mode : null}

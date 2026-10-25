@@ -35,8 +35,8 @@ export function registerImportIpc(db: Db, repos: Repositories): void {
     if (!path) return { ok: true, done: 'cancelled' };
     try {
       const workbook = buildImportTemplate(language(), currentYearMonth().year);
-      await saveFile(path, new Uint8Array(await workbook.xlsx.writeBuffer()));
-      return { ok: true, done: 'saved' };
+      const saved = await saveFile(path, new Uint8Array(await workbook.xlsx.writeBuffer()));
+      return saved ? { ok: true, done: 'saved' } : { ok: false };
     } catch (error) {
       logger.error('import.template_failed', describeError(error));
       return { ok: false };

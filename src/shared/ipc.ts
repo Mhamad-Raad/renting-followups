@@ -46,6 +46,7 @@ import type { AreaYear } from './months';
 import type { Reminder } from './notifications';
 import type {
   AllocationResult,
+  AreaMonth,
   AreaPaymentsQuery,
   AreaReceiptsQuery,
   PaymentCreate,
@@ -53,6 +54,7 @@ import type {
   PaymentPreviewQuery,
   PaymentUpdate,
   PaymentUpdateResult,
+  MonthTakeOutResult,
   PaymentVoidResult,
   Receipt,
 } from './payments';
@@ -130,6 +132,8 @@ export interface IpcContract {
   'payments:create': { input: PaymentCreate; output: PaymentCreateResult };
   'payments:update': { input: PaymentUpdate; output: PaymentUpdateResult };
   'payments:void': { input: IdInput; output: PaymentVoidResult };
+  'payments:monthTakeOutPreview': { input: AreaMonth; output: MonthTakeOutResult };
+  'payments:monthTakeOut': { input: AreaMonth; output: MonthTakeOutResult };
   'clock:check': { input: undefined; output: { looksWrong: boolean } };
   'home:summary': { input: undefined; output: HomeSummary };
   'reports:build': { input: ReportQuery; output: Report };
@@ -198,6 +202,8 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'payments:create': false,
   'payments:update': false,
   'payments:void': false,
+  'payments:monthTakeOutPreview': false,
+  'payments:monthTakeOut': false,
   'clock:check': false,
   'home:summary': false,
   'reports:build': false,
@@ -261,6 +267,8 @@ export const CHANGES_DATA: Record<IpcChannel, boolean> = {
   'payments:create': true,
   'payments:update': true,
   'payments:void': true,
+  'payments:monthTakeOutPreview': false,
+  'payments:monthTakeOut': true,
   'clock:check': false,
   'home:summary': false,
   'reports:build': false,

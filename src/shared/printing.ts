@@ -25,7 +25,8 @@ export type PrintReady = z.infer<typeof printReadySchema>;
 
 export type PrintResult =
   | { ok: true; done: 'printed' | 'saved' | 'cancelled' }
-  | { ok: false; reason: 'not_found' | 'past_record' | 'busy' | 'failed' };
+  /** `save_failed`: the PDF or Excel file could not be written (for example, it is open in Excel). */
+  | { ok: false; reason: 'not_found' | 'past_record' | 'busy' | 'failed' | 'save_failed' };
 
 /** Everything a receipt page shows. */
 export interface ReceiptPrintData {

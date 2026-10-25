@@ -4,6 +4,12 @@ import type { Currency } from './currency';
 import type { ReportQuery, ReportStatus } from './reports';
 
 /**
+ * Separates short pieces of text on one line. A bar, not a middle dot: next to
+ * Arabic-Indic digits a dot looks just like the zero (٠).
+ */
+export const PART_SEPARATOR = ' | ';
+
+/**
  * The filters a printed or exported report names in its heading, as
  * translation keys and plain values, so the print page and the Excel file
  * describe a report the same way (each translates them with its own `t`).

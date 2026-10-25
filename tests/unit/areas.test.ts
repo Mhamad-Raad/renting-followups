@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Db } from '../../src/main/db/connection';
 import type { Repositories } from '../../src/main/db/repositories';
+import { areaCreateSchema, areaLabel, compareAreaLabels } from '@shared/areas';
 import { areaInput, createTestDatabase } from './helpers';
 
 const TODAY = { year: 2026, month: 10 };
@@ -72,6 +73,52 @@ describe('creating areas', () => {
     const other = repos.categories.create({ name: 'Houses', color: null });
     if (!other.ok) throw new Error('category failed');
     expect(repos.areas.create(areaInput(other.id, { name: 'Shop 1' }))).toMatchObject({ ok: true });
+  });
+
+  it('allows any number of areas without a name in one category', () => {
+    const first = createArea({ name: '' });
+    const second = createArea({ name: '' });
+    expect(repos.areas.get(second)?.name).toBe('');
+    repos.areas.softDelete(first);
+    expect(repos.areas.listDeleted()).toEqual([
+      expect.objectContaining({ id: first, name: '', renterName: 'Karwan Ahmed' }),
+    ]);
+    expect(repos.areas.restore(first)).toEqual({ ok: true });
+    expect(
+      repos.areas.update({
+        id: first,
+        categoryId,
+        name: '',
+        address: '',
+        contractStart: null,
+        notes: '',
+      }),
+    ).toMatchObject({ ok: true });
+  });
+
+  it('accepts a blank name, or one of only invisible marks, as no name', () => {
+    expect(areaCreateSchema.parse(areaInput(categoryId, { name: '   ' })).name).toBe('');
+    expect(areaCreateSchema.parse(areaInput(categoryId, { name: '\u0640\u200c' })).name).toBe('');
+    createArea({ name: '' });
+    const input = areaCreateSchema.parse(areaInput(categoryId, { name: '\u200c' }));
+    expect(repos.areas.create(input)).toMatchObject({ ok: true });
+  });
+
+  it('sorts areas by their shown name, then in the order they were added', () => {
+    const areas = [
+      { id: 3, name: '', renterName: 'Aram' },
+      { id: 1, name: 'Shop B', renterName: null },
+      { id: 2, name: '', renterName: 'Aram' },
+      { id: 4, name: '', renterName: null },
+    ];
+    const sorted = [...areas].sort(compareAreaLabels(new Intl.Collator('en')));
+    expect(sorted.map((area) => area.id)).toEqual([4, 2, 3, 1]);
+  });
+
+  it('shows an area by its name, else its renter, else nothing', () => {
+    expect(areaLabel('Shop 1', 'Aram')).toBe('Shop 1');
+    expect(areaLabel('', 'Aram')).toBe('Aram');
+    expect(areaLabel('', null)).toBeNull();
   });
 
   it('refuses a missing or deleted category', () => {

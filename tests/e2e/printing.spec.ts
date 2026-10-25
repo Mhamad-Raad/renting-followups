@@ -117,6 +117,29 @@ test('the report saves as PDF and as an Excel sheet that reads right to left', a
   }
 });
 
+test('a PDF that cannot be written says so plainly and does not count as printed', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    const receiptId = await seed(page);
+    // A folder that does not exist stands in for a file locked by another program.
+    await chooseSavePath(app, join(dataDir, 'missing', 'receipt.pdf'));
+    const result = await page.evaluate(
+      (id) => window.api.invoke('print:receipt', { id, output: 'pdf' }),
+      receiptId,
+    );
+    expect(result).toEqual({ ok: true, data: { ok: false, reason: 'save_failed' } });
+    const data = await page.evaluate(
+      (id) => window.api.invoke('print:receiptData', { id }),
+      receiptId,
+    );
+    expect(data.ok && data.data?.printCount).toBe(0);
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
 test('cancelling the Save dialog changes nothing; past records cannot print as receipts', async () => {
   const dataDir = createDataDir();
   const { app, page } = await launchUnlocked(dataDir);

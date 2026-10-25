@@ -4,30 +4,50 @@ import { mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { createDataDir, launchUnlocked, removeDataDir } from './launch';
 
-/** One area that has paid nothing since January last year, and one that is vacant. */
+/**
+ * One area that has paid nothing from January last year until this month, and
+ * one that is vacant. This month is paid, so the late area never also gets a
+ * month-end reminder: the tests give the same counts on any day of the month.
+ */
 async function seed(page: Page) {
-  const lastYear = new Date().getFullYear() - 1;
-  await page.evaluate(async (year) => {
-    await window.api.invoke('settings:update', { language: 'en' });
-    const category = await window.api.invoke('categories:create', { name: 'Shops', color: null });
-    if (!category.ok || !category.data.ok) throw new Error('category failed');
-    for (const [name, monthlyPrice] of [
-      ['Shop late', 100_000],
-      ['Shop vacant', 0],
-    ] as const) {
-      await window.api.invoke('areas:create', {
-        categoryId: category.data.id,
-        name,
-        currency: 'IQD',
-        monthlyPrice,
-        rentStartsFrom: { year, month: 1 },
-        renter: { fullName: 'Karwan Ahmed', phone: '0750 123 4567', startedOn: `${year}-01-01` },
-        address: '',
-        contractStart: null,
-        notes: '',
-      });
-    }
-  }, lastYear);
+  const now = new Date();
+  const lastYear = now.getFullYear() - 1;
+  const thisMonth = { year: now.getFullYear(), month: now.getMonth() + 1 };
+  await page.evaluate(
+    async ([year, current]) => {
+      await window.api.invoke('settings:update', { language: 'en' });
+      const category = await window.api.invoke('categories:create', { name: 'Shops', color: null });
+      if (!category.ok || !category.data.ok) throw new Error('category failed');
+      for (const [name, monthlyPrice] of [
+        ['Shop late', 100_000],
+        ['Shop vacant', 0],
+      ] as const) {
+        const area = await window.api.invoke('areas:create', {
+          categoryId: category.data.id,
+          name,
+          currency: 'IQD',
+          monthlyPrice,
+          rentStartsFrom: { year, month: 1 },
+          renter: { fullName: 'Karwan Ahmed', phone: '0750 123 4567', startedOn: `${year}-01-01` },
+          address: '',
+          contractStart: null,
+          notes: '',
+        });
+        if (!area.ok || !area.data.ok) throw new Error('area failed');
+        if (monthlyPrice === 0) continue;
+        const paid = await window.api.invoke('payments:create', {
+          areaId: area.data.id,
+          isBackfill: true,
+          amount: monthlyPrice,
+          from: current,
+          paidOn: `${current.year}-${String(current.month).padStart(2, '0')}-01`,
+          note: '',
+        });
+        if (!paid.ok || !paid.data.ok) throw new Error('payment failed');
+      }
+    },
+    [lastYear, thisMonth] as const,
+  );
 }
 
 test('the popup on opening and the Notifications page show the same reminders', async () => {
@@ -39,12 +59,19 @@ test('the popup on opening and the Notifications page show the same reminders', 
     await page.reload();
     const popup = page.getByRole('dialog', { name: en.notifications.popupTitle });
     await expect(popup).toBeVisible();
+    // The keyboard starts on OK, so Enter simply closes the popup.
+    await expect(popup.getByRole('button', { name: en.common.ok })).toBeFocused();
+    // The page behind the popup does not scroll while it is open.
+    const pageScroll = () =>
+      page.evaluate(() => getComputedStyle(document.documentElement).overflowY);
+    expect(await pageScroll()).toBe('hidden');
     await expect(popup.getByText('Shop late')).toBeVisible();
     await expect(popup.getByText('Shop vacant')).toHaveCount(0);
     // No backup has been made yet this month.
     await expect(popup.getByText(en.notifications.backupDue)).toBeVisible();
     await popup.getByRole('button', { name: en.notifications.goTo }).click();
     await expect(popup).toBeHidden();
+    expect(await pageScroll()).not.toBe('hidden');
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(en.pages.notifications.title);
     const late = page.getByRole('list', { name: en.notifications.late });
@@ -78,7 +105,8 @@ test('paying everything owed clears the bell at once', async () => {
     // Record payment from the Notifications page opens the area with the form ready.
     await page.getByRole('link', { name: new RegExp(`^${en.nav.notifications}`) }).click();
     await page.getByRole('button', { name: en.area.recordPayment }).first().click();
-    const months = 12 + new Date().getMonth() + 1;
+    // Every month from January last year up to last month (this month is already paid).
+    const months = 12 + new Date().getMonth();
     await page
       .getByRole('dialog')
       .getByLabel(en.paymentDialog.amount)

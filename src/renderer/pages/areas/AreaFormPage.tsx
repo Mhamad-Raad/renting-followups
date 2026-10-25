@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router';
 import {
   ADDRESS_MAX,
   AREA_NAME_MAX,
+  currentRenter,
   NOTES_MAX,
   PHONE_PATTERN,
   type AreaDetails,
@@ -11,11 +12,13 @@ import {
 import { CATEGORY_NAME_MAX } from '@shared/categories';
 import { dateStringFromLocal, yearMonthOf, type DateString } from '@shared/dates';
 import { callIpc, useIpcQuery } from '../../app/ipc';
+import { useMountedRef } from '../../app/useMountedRef';
 import { flash } from '../../app/flash';
 import { BigButton } from '../../components/BigButton';
 import { Checkbox } from '../../components/Checkbox';
 import { DateField } from '../../components/DateField';
 import { Form } from '../../components/Form';
+import { LoadError } from '../../components/LoadError';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { SelectField } from '../../components/SelectField';
@@ -42,7 +45,8 @@ function EditAreaLoader({ areaId }: { areaId: number }) {
   const { t } = useTranslation();
   const area = useIpcQuery('areas:get', { id: areaId });
   if (area.state.status === 'loading') return null;
-  if (area.state.status === 'error' || area.state.data === null) {
+  if (area.state.status === 'error') return <LoadError onRetry={area.reload} />;
+  if (area.state.data === null) {
     return <Notice tone="error">{t('areaForm.problems.not_found')}</Notice>;
   }
   return <AreaForm area={area.state.data} />;
@@ -50,10 +54,11 @@ function EditAreaLoader({ areaId }: { areaId: number }) {
 
 function AreaForm({ area }: { area: AreaDetails | null }) {
   const { t } = useTranslation();
+  const mounted = useMountedRef();
   const navigate = useNavigate();
   const categories = useIpcQuery('categories:list');
   const today = new Date();
-  const currentRenter = area?.renters.find((renter) => renter.endedOn === null) ?? null;
+  const renterNow = area ? currentRenter(area.renters) : null;
 
   const [name, setName] = useState(area?.name ?? '');
   const [categoryChoice, setCategoryChoice] = useState(area ? String(area.category.id) : '');
@@ -65,8 +70,8 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
     startsFrom: yearMonthOf(today),
   });
   const [renter, setRenter] = useState<RenterInput>({
-    name: currentRenter?.fullName ?? '',
-    phone: currentRenter?.phone ?? '',
+    name: renterNow?.fullName ?? '',
+    phone: renterNow?.phone ?? '',
     since: dateStringFromLocal(today),
   });
   const [address, setAddress] = useState(area?.address ?? '');
@@ -82,7 +87,6 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
   // Mistakes the owner can fix before anything is sent.
   const required = t('common.requiredField');
   const fieldProblems = {
-    name: name.trim() === '' ? required : null,
     category:
       categoryChoice === ''
         ? t('areaForm.problems.chooseCategory')
@@ -95,7 +99,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
         : null,
     phone: PHONE_PATTERN.test(renter.phone) ? null : t('areaForm.problems.phone'),
     renterName:
-      currentRenter && renter.name.trim() === ''
+      renterNow && renter.name.trim() === ''
         ? t('areaForm.problems.renterNameKept')
         : renter.name.trim() === '' && renter.phone.trim() !== ''
           ? t('areaForm.problems.renterNameNeeded')
@@ -106,6 +110,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
   async function resolveCategoryId(): Promise<number | null> {
     if (categoryChoice !== NEW_CATEGORY) return Number(categoryChoice);
     const created = await callIpc('categories:create', { name: newCategoryName, color: null });
+    if (!mounted.current) return null;
     if (!created.ok) {
       setProblem('unexpected');
       return null;
@@ -126,6 +131,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
     if (Object.values(fieldProblems).some(Boolean) || busy) return;
     setBusy(true);
     const categoryId = await resolveCategoryId();
+    if (!mounted.current) return;
     if (categoryId === null) {
       setBusy(false);
       return;
@@ -143,7 +149,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
       ? await callIpc('areas:update', {
           id: area.id,
           ...common,
-          ...(renterDetails && currentRenter ? { renter: renterDetails } : {}),
+          ...(renterDetails && renterNow ? { renter: renterDetails } : {}),
         })
       : await callIpc('areas:create', {
           ...common,
@@ -152,6 +158,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
           rentStartsFrom: rent.startsFrom,
           renter: renterDetails && { ...renterDetails, startedOn: renter.since },
         });
+    if (!mounted.current) return;
     setBusy(false);
     if (!result.ok) setProblem('unexpected');
     else if (!result.data.ok) setProblem(result.data.reason);
@@ -164,10 +171,10 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
       <Form className={styles.form} onSubmit={() => void submit()}>
         <section className={styles.section}>
           <TextField
-            label={t('areaForm.name')}
+            label={`${t('areaForm.name')} ${t('common.optional')}`}
+            hint={t('areaForm.nameHint')}
             value={name}
             onChange={setName}
-            error={shown(fieldProblems.name)}
             maxLength={AREA_NAME_MAX}
             autoFocus
             dir="auto"
@@ -189,6 +196,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
               ))}
             <option value={NEW_CATEGORY}>{t('areaForm.newCategory')}</option>
           </SelectField>
+          {categories.state.status === 'error' && <LoadError onRetry={categories.reload} />}
           {categoryChoice === NEW_CATEGORY && (
             <TextField
               label={t('areaForm.newCategoryName')}
@@ -210,7 +218,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
           />
         </section>
 
-        {(!area || currentRenter) && (
+        {(!area || renterNow) && (
           <RenterFields
             editing={area !== null}
             renter={renter}

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { AreaNaming } from './areas';
 import type { CategoryColor } from './categories';
 import { CURRENCIES, type Currency } from './currency';
 import { monthSchema, yearSchema } from './dates';
@@ -66,7 +67,7 @@ export interface ReportTotal {
 
 export interface Report {
   /** Areas the picker offers: those matching the category and currency filters. */
-  candidates: { id: number; name: string }[];
+  candidates: ({ id: number; categoryName: string } & AreaNaming)[];
   rows: ReportRow[];
   totals: ReportTotal[];
 }

@@ -1,15 +1,19 @@
-import { useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
-import { SEARCH_MAX, type AreaListItem } from '@shared/areas';
+import { compareAreaLabels, SEARCH_MAX, type AreaListItem } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
+import type { MonthBox } from '@shared/months';
+import { PART_SEPARATOR } from '@shared/reportText';
 import { useIpcQuery, type QueryState } from '../../app/ipc';
 import { useFlashNotice } from '../../app/flash';
 import { useSettings } from '../../app/SettingsContext';
+import { useAreaLabel } from '../../app/useAreaLabel';
 import { useDebouncedValue } from '../../app/useDebouncedValue';
 import { CategoryDot } from '../../components/CategoryDot';
 import { Checkbox } from '../../components/Checkbox';
 import { EmptyState } from '../../components/EmptyState';
+import { LoadError } from '../../components/LoadError';
 import { LinkButton } from '../../components/LinkButton';
 import { MonthBoxes, YearSummaryText } from '../../components/MonthBoxes';
 import { Notice } from '../../components/Notice';
@@ -18,7 +22,9 @@ import { PhoneText } from '../../components/PhoneText';
 import { SearchField } from '../../components/SearchField';
 import styles from './AreasPage.module.css';
 import { ReportOutputButtons } from '../../print/ReportOutputButtons';
+import { NoAreasYet } from './NoAreasYet';
 import { RentText } from './RentText';
+import { useMonthPick, type MonthPickOutcome } from './useMonthPick';
 
 const SEARCH_DELAY_MS = 150;
 
@@ -27,11 +33,26 @@ function sortedIds(state: QueryState<AreaListItem[]>): number[] {
   return state.status === 'ready' ? state.data.map((area) => area.id) : [];
 }
 
+interface AreaStripProps {
+  area: AreaListItem;
+  year: number;
+  onPick: (area: AreaListItem, box: MonthBox) => void;
+}
+
+/** One row's month strip, drawn again only when that area's months change (not on every key press). */
+const AreaStrip = memo(function AreaStrip({ area, year, onPick }: AreaStripProps) {
+  const pick = useCallback((box: MonthBox) => onPick(area, box), [area, onPick]);
+  return (
+    <MonthBoxes boxes={area.months} year={year} currency={area.currency} compact onPick={pick} />
+  );
+});
+
 /** The list of all areas: filter by category, search, and open one. */
 export function AreasPage() {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const navigate = useNavigate();
+  const label = useAreaLabel();
   const notice = useFlashNotice();
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<number | null>(null);
@@ -40,21 +61,33 @@ export function AreasPage() {
   const query = useDebouncedValue(search, SEARCH_DELAY_MS);
   const categories = useIpcQuery('categories:list');
   const areas = useIpcQuery('areas:list', { search: query, categoryId });
-
   // The list shows the current year; the main process decides each month's status.
   const year = new Date().getFullYear();
+  const [pickOutcome, setPickOutcome] = useState<MonthPickOutcome | null>(null);
+  const { refresh: refreshAreas } = areas;
+  const monthPick = useMonthPick((outcome) => {
+    setPickOutcome(outcome);
+    refreshAreas();
+  });
+  const { pick } = monthPick;
+  const pickMonth = useCallback(
+    (area: AreaListItem, box: MonthBox) =>
+      void pick({ areaId: area.id, currency: area.currency, year, box }),
+    [pick, year],
+  );
+
   // Only ticked areas that are still shown count, so a search never prints hidden areas.
   const chosen = useMemo(
     () => sortedIds(areas.state).filter((id) => selected.has(id)),
     [areas.state, selected],
   );
-  const collator = useMemo(() => new Intl.Collator(settings.language), [settings.language]);
+  const byLabel = useMemo(
+    () => compareAreaLabels(new Intl.Collator(settings.language)),
+    [settings.language],
+  );
   const sorted = useMemo<AreaListItem[]>(
-    () =>
-      areas.state.status === 'ready'
-        ? [...areas.state.data].sort((a, b) => collator.compare(a.name, b.name))
-        : [],
-    [areas.state, collator],
+    () => (areas.state.status === 'ready' ? [...areas.state.data].sort(byLabel) : []),
+    [areas.state, byLabel],
   );
 
   const header = (
@@ -78,7 +111,12 @@ export function AreasPage() {
     return (
       <>
         {header}
-        <Notice tone="error">{t('errors.unexpected')}</Notice>
+        <LoadError
+          onRetry={() => {
+            areas.reload();
+            categories.reload();
+          }}
+        />
       </>
     );
   }
@@ -90,20 +128,7 @@ export function AreasPage() {
       <>
         {header}
         {notice && <Notice tone="success">{notice}</Notice>}
-        <EmptyState
-          title={t('areas.empty.title')}
-          body={t('areas.empty.body')}
-          action={
-            <>
-              <LinkButton to="/areas/new" variant="primary">
-                {t('areas.empty.button')}
-              </LinkButton>
-              <LinkButton to="/areas/import" icon="download">
-                {t('areas.empty.importButton')}
-              </LinkButton>
-            </>
-          }
-        />
+        <NoAreasYet />
       </>
     );
   }
@@ -113,6 +138,7 @@ export function AreasPage() {
       {header}
       <div className={styles.stack}>
         {notice && <Notice tone="success">{notice}</Notice>}
+        {pickOutcome && <Notice tone={pickOutcome.tone}>{pickOutcome.text}</Notice>}
         <div className={styles.chips} role="group" aria-label={t('areas.categories')}>
           {[{ id: null, name: t('areas.all'), color: null }, ...categories.state.data].map(
             (category) => (
@@ -138,7 +164,7 @@ export function AreasPage() {
         <p className={styles.count} aria-live="polite">
           {t('areas.count', { number: formatPlain(sorted.length, settings.digitStyle) })}
           {chosen.length > 0 &&
-            ` · ${t('print.selectedCount', { number: formatPlain(chosen.length, settings.digitStyle) })}`}
+            `${PART_SEPARATOR}${t('print.selectedCount', { number: formatPlain(chosen.length, settings.digitStyle) })}`}
         </p>
         {chosen.length > 0 && (
           <ReportOutputButtons
@@ -190,7 +216,9 @@ export function AreasPage() {
                     <td className={styles.tick} onClick={(event) => event.stopPropagation()}>
                       <Checkbox
                         hideLabel
-                        label={t('print.actions.select', { name: area.name })}
+                        label={t('print.actions.select', {
+                          name: `${label(area)}${PART_SEPARATOR}${area.categoryName}`,
+                        })}
                         checked={selected.has(area.id)}
                         onChange={(checked) =>
                           setSelected((current) => {
@@ -208,7 +236,7 @@ export function AreasPage() {
                         className={styles.name}
                         onClick={(event) => event.stopPropagation()}
                       >
-                        {area.name}
+                        {label(area)}
                       </Link>
                       <span className={`${styles.second} ${styles.category}`}>
                         <CategoryDot color={area.categoryColor} />
@@ -230,12 +258,7 @@ export function AreasPage() {
                     </td>
                     <td>
                       <div className={styles.year}>
-                        <MonthBoxes
-                          boxes={area.months}
-                          year={year}
-                          currency={area.currency}
-                          compact
-                        />
+                        <AreaStrip area={area} year={year} onPick={pickMonth} />
                         <YearSummaryText summary={area.summary} />
                       </div>
                     </td>
@@ -246,6 +269,7 @@ export function AreasPage() {
           </div>
         )}
       </div>
+      {monthPick.dialog}
     </>
   );
 }

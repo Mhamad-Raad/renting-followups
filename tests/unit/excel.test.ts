@@ -95,6 +95,21 @@ describe('Excel report', () => {
     expect(sheet?.getRow(6).getCell(5).numFmt).toBe('#,##0.00 "USD"');
   });
 
+  it('names an area without a name by its renter, or as having no name', () => {
+    const [shop, office] = REPORT.rows;
+    if (!shop || !office) throw new Error('fixture changed');
+    const report = {
+      ...REPORT,
+      rows: [
+        { ...shop, name: '' },
+        { ...office, name: '' },
+      ],
+    };
+    const sheet = buildReportWorkbook(report, QUERY, { ...OPTIONS, language: 'en' }).worksheets[0];
+    expect(sheet?.getRow(5).getCell(1).value).toBe('Karwan Ahmed');
+    expect(sheet?.getRow(6).getCell(1).value).toBe('No name');
+  });
+
   it('colours month cells by status', () => {
     const sheet = buildReportWorkbook(REPORT, QUERY, { ...OPTIONS, language: 'en' }).worksheets[0];
     const fill = (column: number) => {
@@ -108,9 +123,9 @@ describe('Excel report', () => {
 
   it('ends with one total row per currency and the footer sentence', () => {
     const sheet = buildReportWorkbook(REPORT, QUERY, { ...OPTIONS, language: 'en' }).worksheets[0];
-    expect(sheet?.getRow(7).getCell(1).value).toBe('Total IQD · Areas: 1');
+    expect(sheet?.getRow(7).getCell(1).value).toBe('Total IQD | Areas: 1');
     expect(sheet?.getRow(7).getCell(6).value).toBe(500_000);
-    expect(sheet?.getRow(8).getCell(1).value).toBe('Total USD · Areas: 1');
+    expect(sheet?.getRow(8).getCell(1).value).toBe('Total USD | Areas: 1');
     expect(String(sheet?.getRow(10).getCell(1).value)).toContain('Received');
   });
 

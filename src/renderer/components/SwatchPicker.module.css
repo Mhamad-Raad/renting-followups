@@ -30,7 +30,7 @@
 }
 
 .swatch:hover {
-  transform: scale(1.06);
+  transform: scale(var(--scale-hover));
 }
 
 .none {

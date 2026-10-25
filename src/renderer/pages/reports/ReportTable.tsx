@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { formatPlain } from '@shared/formatNumber';
 import type { ReportRow, ReportTotal } from '@shared/reports';
 import { useSettings } from '../../app/SettingsContext';
+import { useAreaLabel } from '../../app/useAreaLabel';
 import { CategoryDot } from '../../components/CategoryDot';
 import { EmptyState } from '../../components/EmptyState';
 import { MoneyText } from '../../components/MoneyText';
@@ -108,11 +109,12 @@ function ReportTableRow({
   month: number | null;
 }) {
   const { t } = useTranslation();
+  const label = useAreaLabel();
   const chosen = month === null ? null : row.boxes.find((box) => box.month === month);
   return (
     <tr>
       <td>
-        <span className={styles.name}>{row.name}</span>
+        <span className={styles.name}>{label(row)}</span>
         <span className={`${styles.second} ${styles.category}`}>
           <CategoryDot color={row.categoryColor} />
           {row.categoryName}
