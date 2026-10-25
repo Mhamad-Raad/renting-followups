@@ -60,6 +60,8 @@ export const MonthBoxes = memo(function MonthBoxes({
       status: t(`months.status.${monthWord(box)}`),
     });
   const canPick = (box: MonthBox) => onPick !== undefined && box.status !== 'not_applicable';
+  // A click that just misses a box (a gap, a vacant month) must not open the area behind it either.
+  const keepClick = onPick && { onClick: (event: MouseEvent) => event.stopPropagation() };
   // A month with rent becomes a button; it says what a click does, and keeps a row click from opening the area.
   const pickProps = (box: MonthBox) => ({
     type: 'button' as const,
@@ -75,6 +77,7 @@ export const MonthBoxes = memo(function MonthBoxes({
       <ol
         className={styles.strip}
         aria-label={t('months.title', { year: formatPlain(year, digits) })}
+        {...keepClick}
       >
         {boxes.map((box) => {
           const cell = {
