@@ -1,5 +1,5 @@
 import type { Currency } from '@shared/currency';
-import type { BusinessToday, DateString, YearMonth } from '@shared/dates';
+import { monthIndex, type BusinessToday, type DateString, type YearMonth } from '@shared/dates';
 import type { ReceiptPrintData } from '@shared/printing';
 import type {
   Allocation,
@@ -12,6 +12,7 @@ import type {
   PaymentVoidResult,
   Receipt,
 } from '@shared/payments';
+import { priceForMonth } from '@shared/prices';
 import { allocate, oldestOpenMonth } from '../../services/allocation';
 import type { Db } from '../connection';
 import type { AllocationRepository } from './allocations';
@@ -111,6 +112,21 @@ export function createPaymentRepository(
   const plan = (areaId: number, amount: number, from: YearMonth, today: YearMonth, except = 0) =>
     allocate(amount, from, prices.forArea(areaId), paid.history(areaId, except), today);
 
+  /**
+   * A receipt's own months, when an edit keeps its amount and start month (only the date or
+   * note change): they stay exactly as they are, so a month taken out of the receipt
+   * (ARCHITECTURE.md section 7.4) is not quietly filled again. Null when the money changes.
+   */
+  const keptMonths = (receiptId: number, amount: number, from: YearMonth) => {
+    const months = selectAllocationsForReceipt.all(receiptId);
+    const first = months[0];
+    const same =
+      selectReceipt.get(receiptId)?.total_amount === amount &&
+      first?.year === from.year &&
+      first.month === from.month;
+    return same ? months : null;
+  };
+
   // Numbers only ever go up: the stored counter survives even if a receipt row were lost.
   const nextReceiptNumber = () => {
     const stored = Number(store.read(LAST_NUMBER_KEY) ?? 0);
@@ -133,7 +149,18 @@ export function createPaymentRepository(
       receiptId: number | null,
     ): AllocationResult | null {
       if (!selectAreaCurrency.get(areaId)) return null;
-      return plan(areaId, amount, from, today, receiptId ?? 0);
+      const kept = receiptId === null ? null : keptMonths(receiptId, amount, from);
+      if (!kept) return plan(areaId, amount, from, today, receiptId ?? 0);
+      const history = paid.history(areaId, receiptId ?? 0);
+      const rents = prices.forArea(areaId);
+      return {
+        ok: true,
+        months: kept.map((paidMonth) => ({
+          ...paidMonth,
+          expected: priceForMonth(rents, paidMonth) ?? 0,
+          paidBefore: history.get(monthIndex(paidMonth)) ?? 0,
+        })),
+      };
     },
 
     /** The month the payment form suggests: the oldest one not fully paid. */
@@ -182,10 +209,14 @@ export function createPaymentRepository(
       if (!before) return { ok: false, reason: 'not_found' };
       if (before.voided_at !== null) return { ok: false, reason: 'cancelled' };
       if (input.paidOn > today.date) return { ok: false, reason: 'future_date' };
-      const planned = plan(before.area_id, input.amount, input.from, today.month, input.id);
-      if (!planned.ok) return planned;
       const previousMonths = selectAllocationsForReceipt.all(input.id);
-      allocations.replace(input.id, before.area_id, planned.months);
+      let months: readonly Allocation[] = previousMonths;
+      if (!keptMonths(input.id, input.amount, input.from)) {
+        const planned = plan(before.area_id, input.amount, input.from, today.month, input.id);
+        if (!planned.ok) return planned;
+        months = planned.months;
+        allocations.replace(input.id, before.area_id, months);
+      }
       updateReceipt.run(input.amount, input.paidOn, input.note, input.id);
       audit.record('update', 'receipt', input.id, {
         before: {
@@ -198,7 +229,7 @@ export function createPaymentRepository(
           amount: input.amount,
           paidOn: input.paidOn,
           note: input.note,
-          months: monthsOf(planned.months),
+          months: monthsOf(months),
         },
       });
       return { ok: true };
