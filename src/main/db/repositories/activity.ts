@@ -18,6 +18,8 @@ interface ActivityRow {
   entity: AuditEntity;
   details_json: string;
   name: string | null;
+  /** The current renter of an area without a name, for entries that do not record a renter. */
+  renter_now: string | null;
   currency: Currency | null;
   receipt_number: number | null;
 }
@@ -56,7 +58,10 @@ function toEntry(row: ActivityRow): ActivityEntry {
     at: row.at,
     action: row.action,
     entity: row.entity,
-    name: row.name ?? (details.name || details.after?.name || null),
+    // An area without a name is shown by its renter: the one recorded with the
+    // entry when there is one (so history keeps the renter of that time), else today's.
+    name:
+      row.name ?? details.renter ?? row.renter_now ?? (details.name || details.after?.name || null),
     currency: row.currency,
     amount: details.after?.amount ?? details.amount ?? details.monthlyPrice ?? null,
     previousAmount: details.before?.amount ?? details.previousPrice ?? null,
@@ -70,9 +75,11 @@ function toEntry(row: ActivityRow): ActivityEntry {
 export function createActivityRepository(db: Db) {
   const selectPage = db.prepare<[number | null, number | null, number], ActivityRow>(
     `SELECT l.id, l.at, l.action, l.entity, l.details_json,
-            -- An area without a name is shown by its renter, as everywhere else.
-            COALESCE(NULLIF(a.name, ''), area_renter.full_name,
-                     NULLIF(receipt_area.name, ''), r.renter_name_snapshot, c.name) AS name,
+            -- An area without a name is shown by its renter, as everywhere else;
+            -- a receipt by the renter it was written for.
+            COALESCE(NULLIF(a.name, ''), NULLIF(receipt_area.name, ''), r.renter_name_snapshot,
+                     c.name) AS name,
+            area_renter.full_name AS renter_now,
             COALESCE(a.currency, receipt_area.currency) AS currency,
             r.receipt_number
        FROM audit_log l

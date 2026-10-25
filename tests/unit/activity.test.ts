@@ -91,6 +91,25 @@ describe('activity log', () => {
       ['area', 'Aram'],
     ]);
     expect(repos.payments.printData(paid.id, '2026-05-10')).toMatchObject({ areaName: 'Shops' });
+
+    // A new renter later does not rename the old entries.
+    repos.areas.changeRenter({
+      kind: 'new',
+      areaId: area.id,
+      fullName: 'Bakhtiar',
+      phone: '',
+      startedOn: '2026-06-01',
+    });
+    expect(
+      firstPage()
+        .slice(0, 4)
+        .map((entry) => [entry.action, entry.name]),
+    ).toEqual([
+      ['change_renter', 'Bakhtiar'],
+      ['create', 'Aram'],
+      ['create', 'Aram'],
+      ['create', 'Shop 1'],
+    ]);
   });
 
   it('shows the name kept in the log when details cannot be read', () => {
