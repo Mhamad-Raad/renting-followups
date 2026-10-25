@@ -57,6 +57,26 @@ export const areaReceiptsQuerySchema = z
   .strict();
 export type AreaReceiptsQuery = z.infer<typeof areaReceiptsQuerySchema>;
 
+/** One month of one area: the month box that was clicked. */
+export const areaMonthSchema = z
+  .object({ areaId: id, year: yearSchema, month: monthSchema })
+  .strict();
+export type AreaMonth = z.infer<typeof areaMonthSchema>;
+
+/** What taking a paid month out does to one receipt that paid it (ARCHITECTURE.md section 7.4). */
+export interface MonthTakeOut {
+  receiptId: number;
+  /** Null for a past record. */
+  receiptNumber: number | null;
+  /** This month's share of the receipt. */
+  amount: number;
+  /** True when the receipt paid only this month, so it is cancelled. */
+  cancels: boolean;
+}
+
+export type MonthTakeOutResult =
+  { ok: true; changes: MonthTakeOut[] } | { ok: false; reason: 'not_found' | 'not_paid' };
+
 /** The part of a payment that goes to one month. */
 export interface Allocation extends YearMonth {
   amount: number;
