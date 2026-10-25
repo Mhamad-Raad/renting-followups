@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FRACTION_DIGITS, type Currency } from '@shared/currency';
 import { dateStringFromLocal } from '@shared/dates';
@@ -43,6 +43,12 @@ export function useMonthPick(onDone: (outcome: MonthPickOutcome) => void) {
   const mounted = useMountedRef();
   const [question, setQuestion] = useState<Question | null>(null);
   const [busy, setBusy] = useState(false);
+  // Refs keep `pick` the same function between renders, so 200 month strips are not drawn again.
+  const working = useRef(false);
+  const latestOnDone = useRef(onDone);
+  useEffect(() => {
+    latestOnDone.current = onDone;
+  });
   const digits = settings.digitStyle;
   const money = (amount: number, currency: Currency) =>
     `${isolateNumber(formatAmount(amount, FRACTION_DIGITS[currency], digits), digits)} ${t(`currency.${currency}`)}`;
@@ -50,38 +56,54 @@ export function useMonthPick(onDone: (outcome: MonthPickOutcome) => void) {
     change.receiptNumber === null
       ? t('receipts.pastRecord')
       : t('receipts.number', { number: formatReceiptNumber(change.receiptNumber, digits) });
-  const failed = () => onDone({ tone: 'error', text: t('errors.unexpected') });
+  const finish = useCallback((outcome: MonthPickOutcome) => latestOnDone.current(outcome), []);
+  const failed = useCallback(
+    (reason?: 'not_paid' | 'not_found') =>
+      finish({
+        tone: 'error',
+        text: t(reason === 'not_paid' ? 'monthPick.notPaid' : 'errors.unexpected'),
+      }),
+    [finish, t],
+  );
 
-  const pick = async (picked: PickedMonth) => {
-    if (busy || picked.box.status === 'not_applicable') return;
-    if (picked.box.status !== 'paid') {
-      setQuestion({ picked, takeOut: null });
-      return;
-    }
-    const preview = await callIpc('payments:monthTakeOutPreview', {
-      areaId: picked.areaId,
-      year: picked.year,
-      month: picked.box.month,
-    });
-    if (!mounted.current) return;
-    if (preview.ok && preview.data.ok) setQuestion({ picked, takeOut: preview.data.changes });
-    else failed();
-  };
+  const pick = useCallback(
+    async (picked: PickedMonth) => {
+      if (working.current || picked.box.status === 'not_applicable') return;
+      if (picked.box.status !== 'paid') {
+        setQuestion({ picked, takeOut: null });
+        return;
+      }
+      working.current = true;
+      const preview = await callIpc('payments:monthTakeOutPreview', {
+        areaId: picked.areaId,
+        year: picked.year,
+        month: picked.box.month,
+      });
+      working.current = false;
+      if (!mounted.current) return;
+      if (!preview.ok) failed();
+      else if (!preview.data.ok) failed(preview.data.reason);
+      else setQuestion({ picked, takeOut: preview.data.changes });
+    },
+    [failed, mounted],
+  );
 
   const confirm = async () => {
-    if (!question || busy) return;
+    if (!question || working.current) return;
+    working.current = true;
     const { picked, takeOut } = question;
     const where = { areaId: picked.areaId, year: picked.year, month: picked.box.month };
     const month = formatPlain(picked.box.month, digits);
     setBusy(true);
     if (takeOut) {
       const result = await callIpc('payments:monthTakeOut', where);
+      working.current = false;
       if (!mounted.current) return;
       setBusy(false);
       setQuestion(null);
-      if (result.ok && result.data.ok)
-        onDone({ tone: 'success', text: t('monthPick.takenOut', { month }) });
-      else failed();
+      if (!result.ok) failed();
+      else if (!result.data.ok) failed(result.data.reason);
+      else finish({ tone: 'success', text: t('monthPick.takenOut', { month }) });
       return;
     }
     const result = await callIpc('payments:create', {
@@ -92,6 +114,7 @@ export function useMonthPick(onDone: (outcome: MonthPickOutcome) => void) {
       paidOn: dateStringFromLocal(new Date()),
       note: '',
     });
+    working.current = false;
     if (!mounted.current) return;
     setBusy(false);
     setQuestion(null);
@@ -100,9 +123,9 @@ export function useMonthPick(onDone: (outcome: MonthPickOutcome) => void) {
       const { reason } = result.data;
       const text =
         reason === 'not_found' ? t('areaForm.problems.not_found') : t(`paymentDialog.${reason}`);
-      onDone({ tone: 'error', text });
+      finish({ tone: 'error', text });
     } else
-      onDone({
+      finish({
         tone: 'success',
         text: t('monthPick.paid', {
           month,
@@ -121,6 +144,9 @@ export function useMonthPick(onDone: (outcome: MonthPickOutcome) => void) {
       })}
       confirmLabel={t(question.takeOut ? 'monthPick.takeOutButton' : 'monthPick.payButton')}
       tone={question.takeOut ? 'danger' : 'normal'}
+      // Taking a month out can cancel receipts: the keyboard starts on Cancel.
+      focusCancel={question.takeOut !== null}
+      busy={busy}
       onConfirm={() => void confirm()}
       onCancel={() => setQuestion(null)}
     >
@@ -134,6 +160,7 @@ export function useMonthPick(onDone: (outcome: MonthPickOutcome) => void) {
               })}
             </li>
           ))}
+          <li>{t('monthPick.noUndo')}</li>
         </ul>
       ) : (
         <p>

@@ -483,7 +483,9 @@
     "takeOutButton": "Mark as not paid",
     "takenOut": "Month {{month}} is marked as not paid.",
     "pay": "Mark as paid",
-    "takeOut": "Mark as not paid"
+    "takeOut": "Mark as not paid",
+    "noUndo": "This cannot be undone.",
+    "notPaid": "This month is no longer paid. The screen has been updated."
   },
   "paymentDialog": {
     "newTitle": "Record payment",

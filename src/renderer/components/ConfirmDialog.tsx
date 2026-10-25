@@ -15,6 +15,8 @@ interface ConfirmDialogProps {
   tone?: 'normal' | 'danger';
   /** Puts the keyboard on Cancel, so a stray Enter changes nothing (for the weightiest actions). */
   focusCancel?: boolean;
+  /** While the answer is being saved: both buttons wait, and the question cannot be closed. */
+  busy?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -28,22 +30,24 @@ export function ConfirmDialog({
   cancelLabel,
   tone = 'normal',
   focusCancel = false,
+  busy = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
   const { t } = useTranslation();
   return (
-    <Dialog open={open} title={title} onClose={onCancel}>
+    <Dialog open={open} title={title} onClose={busy ? () => undefined : onCancel}>
       <div className={styles.body}>{children}</div>
       <DialogActions>
         <BigButton
           variant={tone === 'danger' ? 'danger' : 'primary'}
           onClick={onConfirm}
           autoFocus={!focusCancel}
+          disabled={busy}
         >
           {confirmLabel}
         </BigButton>
-        <BigButton onClick={onCancel} autoFocus={focusCancel}>
+        <BigButton onClick={onCancel} autoFocus={focusCancel} disabled={busy}>
           {cancelLabel ?? t('common.cancel')}
         </BigButton>
       </DialogActions>

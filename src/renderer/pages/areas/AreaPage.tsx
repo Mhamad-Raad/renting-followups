@@ -94,7 +94,11 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
   };
 
   const monthPick = useMonthPick((outcome) => {
-    if (outcome.tone === 'error') return setProblem(outcome.text);
+    if (outcome.tone === 'error') {
+      setProblem(outcome.text);
+      period.refresh();
+      return;
+    }
     done(outcome.text);
     // A month marked as paid can be undone, like any new payment.
     setUndoable(outcome.undo ?? null);

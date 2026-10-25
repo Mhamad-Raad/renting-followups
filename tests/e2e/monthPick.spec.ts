@@ -49,9 +49,13 @@ test('a click on a month box asks first, then marks it paid or not paid', async 
     await question.getByRole('button', { name: en.monthPick.payButton }).click();
     await expect(page.getByText('Month 1 is paid. Receipt No. 0001')).toBeVisible();
     await expect(monthButton(page, en.months.status.paid)).toBeVisible();
+    await expect(page.getByRole('button', { name: en.receipts.undo })).toBeVisible();
 
     await monthButton(page, en.months.status.paid).click();
     await expect(question).toContainText('Receipt No. 0001 is cancelled');
+    await expect(question).toContainText(en.monthPick.noUndo);
+    // The keyboard starts on Cancel, as this can cancel receipts.
+    await expect(question.getByRole('button', { name: en.common.cancel })).toBeFocused();
     await question.getByRole('button', { name: en.monthPick.takeOutButton }).click();
     await expect(page.getByText('Month 1 is marked as not paid.')).toBeVisible();
     await expect(monthButton(page, en.months.status.late)).toBeVisible();

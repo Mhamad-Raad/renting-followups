@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { compareAreaLabels, SEARCH_MAX, type AreaListItem } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
+import type { MonthBox } from '@shared/months';
 import { PART_SEPARATOR } from '@shared/reportText';
 import { useIpcQuery, type QueryState } from '../../app/ipc';
 import { useFlashNotice } from '../../app/flash';
@@ -32,6 +33,20 @@ function sortedIds(state: QueryState<AreaListItem[]>): number[] {
   return state.status === 'ready' ? state.data.map((area) => area.id) : [];
 }
 
+interface AreaStripProps {
+  area: AreaListItem;
+  year: number;
+  onPick: (area: AreaListItem, box: MonthBox) => void;
+}
+
+/** One row's month strip, drawn again only when that area's months change (not on every key press). */
+const AreaStrip = memo(function AreaStrip({ area, year, onPick }: AreaStripProps) {
+  const pick = useCallback((box: MonthBox) => onPick(area, box), [area, onPick]);
+  return (
+    <MonthBoxes boxes={area.months} year={year} currency={area.currency} compact onPick={pick} />
+  );
+});
+
 /** The list of all areas: filter by category, search, and open one. */
 export function AreasPage() {
   const { t } = useTranslation();
@@ -46,15 +61,21 @@ export function AreasPage() {
   const query = useDebouncedValue(search, SEARCH_DELAY_MS);
   const categories = useIpcQuery('categories:list');
   const areas = useIpcQuery('areas:list', { search: query, categoryId });
+  // The list shows the current year; the main process decides each month's status.
+  const year = new Date().getFullYear();
   const [pickOutcome, setPickOutcome] = useState<MonthPickOutcome | null>(null);
   const { refresh: refreshAreas } = areas;
   const monthPick = useMonthPick((outcome) => {
     setPickOutcome(outcome);
     refreshAreas();
   });
+  const { pick } = monthPick;
+  const pickMonth = useCallback(
+    (area: AreaListItem, box: MonthBox) =>
+      void pick({ areaId: area.id, currency: area.currency, year, box }),
+    [pick, year],
+  );
 
-  // The list shows the current year; the main process decides each month's status.
-  const year = new Date().getFullYear();
   // Only ticked areas that are still shown count, so a search never prints hidden areas.
   const chosen = useMemo(
     () => sortedIds(areas.state).filter((id) => selected.has(id)),
@@ -237,20 +258,7 @@ export function AreasPage() {
                     </td>
                     <td>
                       <div className={styles.year}>
-                        <MonthBoxes
-                          boxes={area.months}
-                          year={year}
-                          currency={area.currency}
-                          compact
-                          onPick={(box) =>
-                            void monthPick.pick({
-                              areaId: area.id,
-                              currency: area.currency,
-                              year,
-                              box,
-                            })
-                          }
-                        />
+                        <AreaStrip area={area} year={year} onPick={pickMonth} />
                         <YearSummaryText summary={area.summary} />
                       </div>
                     </td>
