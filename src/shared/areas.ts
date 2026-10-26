@@ -51,6 +51,14 @@ export function areaLabel(name: string, renterName: string | null): string | nul
   return name !== '' ? name : renterName || null;
 }
 
+/**
+ * True when the area is called by its renter's name, so a renter column
+ * beside the label shows only the phone instead of the same name again.
+ */
+export function labelIsRenter(area: AreaNaming): boolean {
+  return area.name === '' && !!area.renterName;
+}
+
 /** What `areaLabel` needs: the area's own name and its current renter's name. */
 export interface AreaNaming {
   name: string;

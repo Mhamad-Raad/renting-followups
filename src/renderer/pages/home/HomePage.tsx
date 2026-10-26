@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
+import { labelIsRenter } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
 import type { AttentionItem, CurrencyTotals } from '@shared/home';
 import { DEFAULT_REPORT_FILTERS } from '@shared/reports';
@@ -160,7 +161,7 @@ function AttentionRow({ item }: { item: AttentionItem }) {
         </span>
       </div>
       <div className={styles.who}>
-        <span>{item.renterName ?? t('areas.noRenter')}</span>
+        {!labelIsRenter(item) && <span>{item.renterName ?? t('areas.noRenter')}</span>}
         {item.renterPhone && (
           <span className={styles.second}>
             <PhoneText phone={item.renterPhone} />

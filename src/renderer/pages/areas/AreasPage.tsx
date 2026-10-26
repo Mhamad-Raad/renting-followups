@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
-import { compareAreaLabels, SEARCH_MAX, type AreaListItem } from '@shared/areas';
+import { compareAreaLabels, labelIsRenter, SEARCH_MAX, type AreaListItem } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
 import type { MonthBox } from '@shared/months';
 import { PART_SEPARATOR } from '@shared/reportText';
@@ -244,9 +244,10 @@ export function AreasPage() {
                       </span>
                     </td>
                     <td>
-                      {area.renterName ?? (
-                        <span className={styles.muted}>{t('areas.noRenter')}</span>
-                      )}
+                      {!labelIsRenter(area) &&
+                        (area.renterName ?? (
+                          <span className={styles.muted}>{t('areas.noRenter')}</span>
+                        ))}
                       {area.renterPhone && (
                         <span className={`${styles.second} ${styles.number}`}>
                           <PhoneText phone={area.renterPhone} />

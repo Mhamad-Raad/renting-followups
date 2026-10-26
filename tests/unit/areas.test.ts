@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Db } from '../../src/main/db/connection';
 import type { Repositories } from '../../src/main/db/repositories';
-import { areaCreateSchema, areaLabel, compareAreaLabels } from '@shared/areas';
+import { areaCreateSchema, areaLabel, compareAreaLabels, labelIsRenter } from '@shared/areas';
 import { areaInput, createTestDatabase } from './helpers';
 
 const TODAY = { year: 2026, month: 10 };
@@ -119,6 +119,12 @@ describe('creating areas', () => {
     expect(areaLabel('Shop 1', 'Aram')).toBe('Shop 1');
     expect(areaLabel('', 'Aram')).toBe('Aram');
     expect(areaLabel('', null)).toBeNull();
+  });
+
+  it('knows when an area is shown by its renter, so the renter is not repeated', () => {
+    expect(labelIsRenter({ name: '', renterName: 'Aram' })).toBe(true);
+    expect(labelIsRenter({ name: 'Shop 1', renterName: 'Aram' })).toBe(false);
+    expect(labelIsRenter({ name: '', renterName: null })).toBe(false);
   });
 
   it('refuses a missing or deleted category', () => {
