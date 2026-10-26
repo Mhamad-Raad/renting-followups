@@ -41,6 +41,35 @@ async function createAreasThroughIpc(page: Page, names: string[], categoryName =
   );
 }
 
+test('with one category chosen, the table leaves the category out', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    await createAreasThroughIpc(page, ['', 'Shop 7']);
+    await createAreasThroughIpc(page, ['', ''], 'Plots');
+    await reloadApp(page);
+    await page.getByRole('link', { name: en.nav.areas }).click();
+    const table = page.getByRole('table');
+
+    await page.getByRole('button', { name: 'Shops' }).click();
+    await expect(table.getByRole('row')).toHaveCount(3);
+    // The name cell holds the own name alone, or a dash, never the category again.
+    const nameCell = (renter: string) =>
+      table.getByRole('row', { name: renter }).getByRole('cell').nth(1);
+    await expect(nameCell('Renter 0')).toHaveText('—');
+    await expect(nameCell('Renter 1')).toHaveText('Shop 7');
+
+    // No place here has a name of its own, so the name column goes and the renter opens the area.
+    await page.getByRole('button', { name: 'Plots' }).click();
+    await expect(table.getByRole('columnheader', { name: en.areas.columns.name })).toHaveCount(0);
+    await table.getByRole('link', { name: 'Renter 1' }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Plots');
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
 test('the first area is added from the empty screen and shows on the list', async () => {
   const dataDir = createDataDir();
   const { app, page } = await openAreas(dataDir);

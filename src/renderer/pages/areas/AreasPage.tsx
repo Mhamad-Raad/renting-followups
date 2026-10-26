@@ -34,6 +34,8 @@ import { RentText } from './RentText';
 import { useMonthPick, type MonthPickOutcome } from './useMonthPick';
 
 const SEARCH_DELAY_MS = 150;
+/** Shown in the name column, under one chosen category, for an area with no name of its own. */
+const NO_NAME_MARK = '—';
 
 /** The ids of the areas on screen right now. */
 function sortedIds(state: QueryState<AreaListItem[]>): number[] {
@@ -95,6 +97,10 @@ export function AreasPage() {
     () => (areas.state.status === 'ready' ? [...areas.state.data].sort(byLabel) : []),
     [areas.state, byLabel],
   );
+  // With one category chosen, every row shares it, so the table leaves it out; the name
+  // column stays only while some shown area has a name of its own.
+  const oneCategory = categoryId !== null;
+  const nameColumn = !oneCategory || sorted.some(hasOwnName);
 
   const header = (
     <PageHeader
@@ -210,7 +216,7 @@ export function AreasPage() {
                       }
                     />
                   </th>
-                  <th>{t('areas.columns.name')}</th>
+                  {nameColumn && <th>{t('areas.columns.name')}</th>}
                   <th>{t('areas.columns.renter')}</th>
                   <th>{t('areas.columns.rent')}</th>
                   <th>{t('areas.columns.thisYear')}</th>
@@ -238,25 +244,47 @@ export function AreasPage() {
                         }
                       />
                     </td>
+                    {nameColumn && (
+                      <td>
+                        <Link
+                          to={`/areas/${area.id}`}
+                          className={styles.name}
+                          aria-label={oneCategory ? areaLabel(area) : undefined}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          {!oneCategory && !hasOwnName(area) && (
+                            <CategoryDot color={area.categoryColor} />
+                          )}
+                          {oneCategory && !hasOwnName(area) ? (
+                            <span className={styles.muted} aria-hidden="true">
+                              {NO_NAME_MARK}
+                            </span>
+                          ) : (
+                            areaLabel(area)
+                          )}
+                        </Link>
+                        {!oneCategory && hasOwnName(area) && (
+                          <span className={`${styles.second} ${styles.category}`}>
+                            <CategoryDot color={area.categoryColor} />
+                            {area.categoryName}
+                          </span>
+                        )}
+                      </td>
+                    )}
                     <td>
-                      <Link
-                        to={`/areas/${area.id}`}
-                        className={styles.name}
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        {!hasOwnName(area) && <CategoryDot color={area.categoryColor} />}
-                        {areaLabel(area)}
-                      </Link>
-                      {hasOwnName(area) && (
-                        <span className={`${styles.second} ${styles.category}`}>
-                          <CategoryDot color={area.categoryColor} />
-                          {area.categoryName}
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      {area.renterName ?? (
-                        <span className={styles.muted}>{t('areas.noRenter')}</span>
+                      {nameColumn ? (
+                        (area.renterName ?? (
+                          <span className={styles.muted}>{t('areas.noRenter')}</span>
+                        ))
+                      ) : (
+                        // Without a name column, the renter is the way into the area.
+                        <Link
+                          to={`/areas/${area.id}`}
+                          className={styles.name}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          {area.renterName ?? t('areas.noRenter')}
+                        </Link>
                       )}
                       {area.renterPhone && (
                         <span className={`${styles.second} ${styles.number}`}>
