@@ -1,10 +1,13 @@
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AreaNaming } from '@shared/areas';
+import { SEARCH_MAX, type AreaNaming } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
+import { normalizeText } from '@shared/normalizeText';
 import { useSettings } from '../../app/SettingsContext';
 import { useAreaLabel } from '../../app/useAreaLabel';
 import { BigButton } from '../../components/BigButton';
 import { Icon } from '../../components/Icon';
+import { SearchField } from '../../components/SearchField';
 import styles from './ReportsPage.module.css';
 
 interface AreaPickerProps {
@@ -23,6 +26,25 @@ export function AreaPicker({ candidates, excludedIds, onChange }: AreaPickerProp
   const toggle = (id: number, include: boolean) =>
     onChange(include ? excludedIds.filter((other) => other !== id) : [...excludedIds, id]);
 
+  // With many areas a search narrows the tiles; the buttons then act on the ones shown only.
+  const [search, setSearch] = useState('');
+  const query = normalizeText(search);
+  const shown = useMemo(
+    () =>
+      query === ''
+        ? candidates
+        : candidates.filter((area) =>
+            normalizeText(`${label(area)} ${area.renterName ?? ''} ${area.categoryName}`).includes(
+              query,
+            ),
+          ),
+    [candidates, query, label],
+  );
+  const shownIds = new Set(shown.map((area) => area.id));
+  const includeShown = () => onChange(excludedIds.filter((id) => !shownIds.has(id)));
+  const leaveOutShown = () =>
+    onChange([...excludedIds.filter((id) => !shownIds.has(id)), ...shownIds]);
+
   return (
     <details className={styles.picker}>
       <summary className={styles.pickerTitle}>
@@ -36,13 +58,22 @@ export function AreaPicker({ candidates, excludedIds, onChange }: AreaPickerProp
       </summary>
       <div className={styles.pickerBody}>
         <div className={styles.pickerActions}>
-          <BigButton onClick={() => onChange([])}>{t('reports.picker.all')}</BigButton>
-          <BigButton onClick={() => onChange(candidates.map((area) => area.id))}>
-            {t('reports.picker.none')}
+          <SearchField
+            label={t('reports.picker.search')}
+            value={search}
+            onChange={setSearch}
+            maxLength={SEARCH_MAX}
+          />
+          <BigButton onClick={includeShown} disabled={shown.length === 0}>
+            {t(query === '' ? 'reports.picker.all' : 'reports.picker.allShown')}
+          </BigButton>
+          <BigButton onClick={leaveOutShown} disabled={shown.length === 0}>
+            {t(query === '' ? 'reports.picker.none' : 'reports.picker.noneShown')}
           </BigButton>
         </div>
+        {shown.length === 0 && <p className={styles.pickerEmpty}>{t('reports.picker.noMatch')}</p>}
         <ul className={styles.pickerList}>
-          {candidates.map((area) => {
+          {shown.map((area) => {
             const included = !excluded.has(area.id);
             return (
               <li key={area.id}>

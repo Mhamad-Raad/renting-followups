@@ -555,7 +555,11 @@
     "picker": {
       "title": "Areas to include: {{chosen}} of {{total}}",
       "all": "Select all",
-      "none": "Select none"
+      "none": "Select none",
+      "search": "Search by area or renter",
+      "allShown": "Select the ones shown",
+      "noneShown": "Unselect the ones shown",
+      "noMatch": "No area matches this search."
     },
     "columns": {
       "area": "Area",

@@ -63,8 +63,19 @@
 .pickerActions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-3);
   padding-block-start: var(--space-3);
+}
+
+/* The search takes the free room beside the two buttons, and its own line when there is none. */
+.pickerActions > input {
+  flex: 1 1 16rem;
+  width: auto;
+}
+
+.pickerEmpty {
+  color: var(--color-text-muted);
 }
 
 .pickerList {
