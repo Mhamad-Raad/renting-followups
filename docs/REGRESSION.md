@@ -200,11 +200,11 @@ Automated (`npm run test:e2e` and unit tests) unless marked _manual_.
 
 ### Optional area name (2026-10-25)
 
-- [ ] An area can be saved without a name; the list, the area page and Reports show it by its renter's name, or "No name" with no renter (end-to-end and unit tests).
+- [ ] An area can be saved without a name; the list, the area page and Reports show it by its category, with the renter in its own column (end-to-end and unit tests; changed 2026-10-26).
 - [ ] Two areas without a name fit in one category; two with the same filled-in name do not (unit tests).
 - [ ] The receipt of an area without a name shows its category on the Area line (unit test).
 - [ ] An Excel file without the area name column imports (unit test).
-- [ ] _manual_ In Sorani, the form says the name is optional and explains that the renter's name is shown instead.
+- [ ] _manual_ In Sorani, the form says the name is optional and explains that the category is shown instead.
 
 ### Month boxes: numbers and clicks (2026-10-25)
 

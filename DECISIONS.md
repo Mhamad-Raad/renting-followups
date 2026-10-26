@@ -440,6 +440,15 @@ Named in ARCHITECTURE.md for Excel export; pure JavaScript, runs in the main pro
 - **Import:** the name column may be left out or empty. Rows without a name are never flagged as already imported, so the template help asks to import such a file only once. In the preview an empty name shows a dash.
 - **Tests:** the three reminder end-to-end tests failed in the last week of every month (the late test area also got a month-end reminder). The test now pays the current month, so it gives the same counts on any day.
 
+### The category is the name (client's decision, 2026-10-26)
+
+- The client treats the category as the name of a place that has none, so `areaLabel` now returns the area's own name, else its category (it never needs "No name": every area has a category). This replaces "shown by its renter's name" above.
+- **Tables** (Home, Areas, Reports): the place column shows the category with its colour dot; the renter keeps its own column, so nothing is repeated. An area with its own name still shows its category under the name.
+- **Where there is no renter column** (Reports area picker, Deleted items): the line under the label shows the category under an own name, else the renter (`areaSubline`).
+- **Printed report:** the Category column is left empty when the category is already the label. The Excel export keeps the Category column filled, as it is data people filter on.
+- **Activity log:** an area without a name is written as "category | renter", the renter of that time when the entry recorded one.
+- **Sorting:** by the shown name, then renter, then the order added, everywhere (lists, reports, reminders). Numbers in names sort in number order ("House 9" before "House 10").
+
 ### Month boxes: numbers and clicks (owner's decisions, 2026-10-25)
 
 - **Numbers instead of symbols:** the small strips (Areas list, Reports, the printed and PDF report) show the month number on its status colour, like the large boxes. The black-and-white rule (✓ ✗ ½) is set aside at the business's request; the Received and Still owed figures still read in black and white.
