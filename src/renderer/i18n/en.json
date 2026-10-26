@@ -417,7 +417,7 @@
     "sameDrive": "A copy on the same drive is lost if the drive fails. Please also copy backups to a USB drive.",
     "lastBackup": "Last backup: {{date}}",
     "never": "No backup has been made yet.",
-    "now": "Back up now",
+    "now": "Save a copy now",
     "saved": "Backup saved: {{file}}",
     "problems": {
       "folder_missing": "The backup folder cannot be found. If it is on a USB drive, plug the drive in, or choose another folder.",
@@ -626,7 +626,7 @@
     "more": "… and {{number}} more",
     "toastBody": "Reminders that need attention: {{number}}. Open the app to see them.",
     "endsOn": "Month {{month}} is not fully paid. It ends on {{date}}.",
-    "backupDue": "No backup has been made this month.",
+    "backupDue": "Save a safety copy of your data for this month, so nothing is lost if the computer breaks.",
     "popupSummary": "Number of areas: {{number}}. You can see all of them on the Notifications page."
   }
 }
