@@ -1,4 +1,5 @@
 import { useId, type ReactNode, type SelectHTMLAttributes } from 'react';
+import { Icon } from './Icon';
 import styles from './TextField.module.css';
 
 interface SelectFieldProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
@@ -28,17 +29,20 @@ export function SelectField({
       <label htmlFor={id} className={styles.label}>
         {label}
       </label>
-      <select
-        id={id}
-        className={styles.input}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={note ? noteId : undefined}
-        {...props}
-      >
-        {children}
-      </select>
+      <div className={styles.box}>
+        <select
+          id={id}
+          className={`${styles.input} ${styles.select}`}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={note ? noteId : undefined}
+          {...props}
+        >
+          {children}
+        </select>
+        <Icon name="chevronDown" className={styles.chevron} />
+      </div>
       {note && (
         <p id={noteId} className={error ? styles.error : styles.hint}>
           {note}

@@ -9,6 +9,7 @@ const ICONS = {
   notifications: 'M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0',
   settings: 'M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M16 4v4M10 10v4M18 16v4',
   back: 'M19 12H5M11 6l-6 6 6 6',
+  chevronDown: 'M6 9l6 6 6-6',
   alert: 'M12 3 2 20h20zM12 9v5M12 17h.01',
   check: 'M5 12.5l4.5 4.5L19 7',
   download: 'M12 4v11M7 10l5 5 5-5M5 20h14',
