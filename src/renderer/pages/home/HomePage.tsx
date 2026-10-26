@@ -103,11 +103,19 @@ export function HomePage() {
           {attention.length === 0 ? (
             <Notice tone="success">{t('home.attentionNone')}</Notice>
           ) : (
-            <ul className={styles.list} aria-label={t('home.attention')}>
-              {attention.map((item) => (
-                <AttentionRow key={item.id} item={item} />
-              ))}
-            </ul>
+            <div className={styles.card}>
+              {/* Column names for the eye; each row already reads in full to a screen reader. */}
+              <div className={`${styles.row} ${styles.head}`} aria-hidden="true">
+                <span>{t('areas.columns.name')}</span>
+                <span>{t('areas.columns.renter')}</span>
+                <span>{t('home.owes')}</span>
+              </div>
+              <ul className={styles.list} aria-label={t('home.attention')}>
+                {attention.map((item) => (
+                  <AttentionRow key={item.id} item={item} />
+                ))}
+              </ul>
+            </div>
           )}
         </section>
       </div>
@@ -150,7 +158,7 @@ function AttentionRow({ item }: { item: AttentionItem }) {
   const label = useAreaLabel();
   const { standing } = item;
   return (
-    <li className={styles.row}>
+    <li className={styles.row} data-status={standing.lateMonths > 0 ? 'late' : 'due'}>
       <div className={styles.who}>
         <Link to={areaLink(item.id)} className={styles.name}>
           {label(item)}
@@ -169,9 +177,8 @@ function AttentionRow({ item }: { item: AttentionItem }) {
         )}
       </div>
       <div className={styles.owed}>
-        {/* A label above the amount reads correctly in every language's word order. */}
-        <span className={styles.second}>{t('home.owes')}</span>
-        <strong>
+        <span className={styles.srOnly}>{t('home.owes')}</span>
+        <strong className={styles.amount}>
           <MoneyText amount={standing.owed} currency={item.currency} />
         </strong>
         {standing.lateMonths > 0 ? (
@@ -184,7 +191,7 @@ function AttentionRow({ item }: { item: AttentionItem }) {
           <StatusPill status="due">{t('home.dueNow')}</StatusPill>
         )}
       </div>
-      <BigButton variant="primary" onClick={() => void navigate(recordPaymentLink(item.id))}>
+      <BigButton onClick={() => void navigate(recordPaymentLink(item.id))}>
         {t('area.recordPayment')}
       </BigButton>
     </li>
