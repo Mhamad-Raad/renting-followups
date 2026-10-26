@@ -13,7 +13,12 @@
   transition:
     background-color var(--duration-fast) var(--ease),
     border-color var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease),
     transform var(--duration-fast) var(--ease);
+}
+
+.button:hover:not(:disabled) {
+  box-shadow: var(--shadow-card);
 }
 
 .button:active:not(:disabled) {
@@ -33,12 +38,14 @@
   background: var(--color-accent-hover);
 }
 
+/* Softly tinted in the theme colour, so the screen feels warm rather than a wall of grey outlines. */
 .secondary {
-  background: var(--color-surface);
-  border-color: var(--color-control-border);
-  color: var(--color-text);
+  background: var(--color-accent-soft);
+  border-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  color: var(--color-accent-hover);
 }
 .secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
   border-color: var(--color-accent);
 }
 
