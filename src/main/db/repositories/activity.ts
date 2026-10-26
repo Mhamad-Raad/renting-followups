@@ -9,6 +9,7 @@ import {
 } from '@shared/audit';
 import type { Currency } from '@shared/currency';
 import { yearMonthSchema } from '@shared/dates';
+import { PART_SEPARATOR } from '@shared/reportText';
 import type { Db } from '../connection';
 
 interface ActivityRow {
@@ -17,8 +18,13 @@ interface ActivityRow {
   action: AuditAction;
   entity: AuditEntity;
   details_json: string;
+  /** The area's own name, or the category's name for a category entry. */
   name: string | null;
-  /** The current renter of an area without a name, for entries that do not record a renter. */
+  /** The category of the entry's area, which names an area without a name of its own. */
+  area_category: string | null;
+  /** The renter a receipt was written for. */
+  receipt_renter: string | null;
+  /** The current renter of an area, for entries that do not record a renter. */
   renter_now: string | null;
   currency: Currency | null;
   receipt_number: number | null;
@@ -58,10 +64,17 @@ function toEntry(row: ActivityRow): ActivityEntry {
     at: row.at,
     action: row.action,
     entity: row.entity,
-    // An area without a name is shown by its renter: the one recorded with the
-    // entry when there is one (so history keeps the renter of that time), else today's.
+    // An area without a name is shown by its category and its renter: the one
+    // recorded with the entry when there is one (so history keeps the renter of
+    // that time), else today's.
     name:
-      row.name ?? details.renter ?? row.renter_now ?? (details.name || details.after?.name || null),
+      row.name ??
+      (row.area_category === null
+        ? null
+        : [row.area_category, details.renter ?? row.receipt_renter ?? row.renter_now]
+            .filter(Boolean)
+            .join(PART_SEPARATOR)) ??
+      (details.name || details.after?.name || null),
     currency: row.currency,
     amount: details.after?.amount ?? details.amount ?? details.monthlyPrice ?? null,
     previousAmount: details.before?.amount ?? details.previousPrice ?? null,
@@ -75,10 +88,11 @@ function toEntry(row: ActivityRow): ActivityEntry {
 export function createActivityRepository(db: Db) {
   const selectPage = db.prepare<[number | null, number | null, number], ActivityRow>(
     `SELECT l.id, l.at, l.action, l.entity, l.details_json,
-            -- An area without a name is shown by its renter, as everywhere else;
+            -- An area without a name is shown by its category and renter (see toEntry);
             -- a receipt by the renter it was written for.
-            COALESCE(NULLIF(a.name, ''), NULLIF(receipt_area.name, ''), r.renter_name_snapshot,
-                     c.name) AS name,
+            COALESCE(NULLIF(a.name, ''), NULLIF(receipt_area.name, ''), c.name) AS name,
+            area_category.name AS area_category,
+            r.renter_name_snapshot AS receipt_renter,
             area_renter.full_name AS renter_now,
             COALESCE(a.currency, receipt_area.currency) AS currency,
             r.receipt_number
@@ -87,6 +101,8 @@ export function createActivityRepository(db: Db) {
        LEFT JOIN categories c ON l.entity = 'category' AND c.id = l.entity_id
        LEFT JOIN receipts r ON l.entity = 'receipt' AND r.id = l.entity_id
        LEFT JOIN areas receipt_area ON receipt_area.id = r.area_id
+       LEFT JOIN categories area_category
+              ON area_category.id = COALESCE(a.category_id, receipt_area.category_id)
        LEFT JOIN renters area_renter ON area_renter.area_id = a.id AND area_renter.ended_on IS NULL
       WHERE ? IS NULL OR l.id < ?
       ORDER BY l.id DESC

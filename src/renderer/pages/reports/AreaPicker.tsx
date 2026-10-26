@@ -1,17 +1,16 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SEARCH_MAX, type AreaNaming } from '@shared/areas';
+import { areaLabel, areaSubline, SEARCH_MAX, type AreaNaming } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
 import { normalizeText } from '@shared/normalizeText';
 import { useSettings } from '../../app/SettingsContext';
-import { useAreaLabel } from '../../app/useAreaLabel';
 import { BigButton } from '../../components/BigButton';
 import { Icon } from '../../components/Icon';
 import { SearchField } from '../../components/SearchField';
 import styles from './ReportsPage.module.css';
 
 interface AreaPickerProps {
-  candidates: readonly ({ id: number; categoryName: string } & AreaNaming)[];
+  candidates: readonly ({ id: number } & AreaNaming)[];
   excludedIds: readonly number[];
   onChange: (excludedIds: readonly number[]) => void;
 }
@@ -19,7 +18,6 @@ interface AreaPickerProps {
 /** Ticks which areas go into the report. Folded away by default: usually all of them do. */
 export function AreaPicker({ candidates, excludedIds, onChange }: AreaPickerProps) {
   const { t } = useTranslation();
-  const label = useAreaLabel();
   const { settings } = useSettings();
   const excluded = new Set(excludedIds);
   const chosen = candidates.filter((area) => !excluded.has(area.id)).length;
@@ -34,11 +32,11 @@ export function AreaPicker({ candidates, excludedIds, onChange }: AreaPickerProp
       query === ''
         ? candidates
         : candidates.filter((area) =>
-            normalizeText(`${label(area)} ${area.renterName ?? ''} ${area.categoryName}`).includes(
+            normalizeText(`${area.name} ${area.categoryName} ${area.renterName ?? ''}`).includes(
               query,
             ),
           ),
-    [candidates, query, label],
+    [candidates, query],
   );
   const shownIds = new Set(shown.map((area) => area.id));
   const includeShown = () => onChange(excludedIds.filter((id) => !shownIds.has(id)));
@@ -85,8 +83,8 @@ export function AreaPicker({ candidates, excludedIds, onChange }: AreaPickerProp
                   />
                   {/* The category tells apart areas shown by the same renter, or with no name. */}
                   <span className={styles.pickerText}>
-                    <span className={styles.pickerName}>{label(area)}</span>
-                    <span className={styles.pickerCategory}>{area.categoryName}</span>
+                    <span className={styles.pickerName}>{areaLabel(area)}</span>
+                    <span className={styles.pickerCategory}>{areaSubline(area)}</span>
                   </span>
                 </label>
               </li>

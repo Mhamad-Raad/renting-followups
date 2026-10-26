@@ -42,21 +42,34 @@ const renterDetails = z
   .object({ fullName: z.string().trim().min(1).max(PERSON_NAME_MAX), phone })
   .strict();
 
-/**
- * What an area is called on screen and on paper: its own name, or, when it
- * has none, its current renter's name. Null when it has neither, so the
- * caller shows its "No name" text in the reader's language.
- */
-export function areaLabel(name: string, renterName: string | null): string | null {
-  return name !== '' ? name : renterName || null;
+/** What an area's label needs: its own name, its category and its current renter's name. */
+export interface AreaNaming {
+  name: string;
+  categoryName: string;
+  renterName: string | null;
 }
 
 /**
- * True when the area is called by its renter's name, so a renter column
- * beside the label shows only the phone instead of the same name again.
+ * What an area is called on screen and on paper: its own name, or, when it
+ * has none, its category, as the owner's clients know a place by its group
+ * and its renter (ARCHITECTURE.md section 5).
  */
-export function labelIsRenter(area: AreaNaming): boolean {
-  return area.name === '' && !!area.renterName;
+export function areaLabel(area: Pick<AreaNaming, 'name' | 'categoryName'>): string {
+  return area.name !== '' ? area.name : area.categoryName;
+}
+
+/**
+ * The small line under an area's label where there is no renter column
+ * beside it: the category under an own name, else the renter, so two places
+ * of the same category can be told apart.
+ */
+export function areaSubline(area: AreaNaming): string | null {
+  return area.name !== '' ? area.categoryName : area.renterName;
+}
+
+/** True when the area has its own name, so its category is worth showing under it. */
+export function hasOwnName(area: Pick<AreaNaming, 'name'>): boolean {
+  return area.name !== '';
 }
 
 /** Compares names in the reader's language, with numbers in number order: "Shop 2" before "Shop 10". */
@@ -64,22 +77,19 @@ export function nameCollator(language: string): Intl.Collator {
   return new Intl.Collator(language, { numeric: true });
 }
 
-/** What `areaLabel` needs: the area's own name and its current renter's name. */
-export interface AreaNaming {
-  name: string;
-  renterName: string | null;
-}
-
 /**
- * Orders areas by what they are called on screen (areas with no name at all
- * come first); the same label keeps the order the areas were added in, so
- * every list, print and export agrees.
+ * Orders areas by what they are called on screen, then by renter, so the
+ * places of one category stand together in renter order; the same label and
+ * renter keep the order the areas were added in, so every list, print and
+ * export agrees.
  */
 export function compareAreaLabels(
   collator: Intl.Collator,
 ): (a: AreaNaming & { id: number }, b: AreaNaming & { id: number }) => number {
-  const label = (area: AreaNaming) => areaLabel(area.name, area.renterName) ?? '';
-  return (a, b) => collator.compare(label(a), label(b)) || a.id - b.id;
+  return (a, b) =>
+    collator.compare(areaLabel(a), areaLabel(b)) ||
+    collator.compare(a.renterName ?? '', b.renterName ?? '') ||
+    a.id - b.id;
 }
 
 export const areaCreateSchema = z
@@ -179,7 +189,7 @@ export interface AreaDetails {
 }
 
 export interface DeletedItems {
-  areas: ({ id: number; categoryName: string; deletedAt: string } & AreaNaming)[];
+  areas: ({ id: number; deletedAt: string } & AreaNaming)[];
   categories: { id: number; name: string; deletedAt: string }[];
 }
 

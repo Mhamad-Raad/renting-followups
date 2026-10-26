@@ -61,7 +61,7 @@ describe('activity log', () => {
     expect(voided).toMatchObject({ action: 'void', amount: 500_000, currency: 'IQD' });
   });
 
-  it('names an area without a name, and its receipts, by the renter', () => {
+  it('names an area without a name, and its receipts, by its category and renter', () => {
     const shops = repos.categories.list()[0]?.id ?? 0;
     const area = repos.areas.create(
       areaInput(shops, {
@@ -87,8 +87,8 @@ describe('activity log', () => {
         .slice(0, 2)
         .map((entry) => [entry.entity, entry.name]),
     ).toEqual([
-      ['receipt', 'Aram'],
-      ['area', 'Aram'],
+      ['receipt', 'Shops | Aram'],
+      ['area', 'Shops | Aram'],
     ]);
     expect(repos.payments.printData(paid.id, '2026-05-10')).toMatchObject({ areaName: 'Shops' });
 
@@ -105,9 +105,9 @@ describe('activity log', () => {
         .slice(0, 4)
         .map((entry) => [entry.action, entry.name]),
     ).toEqual([
-      ['change_renter', 'Bakhtiar'],
-      ['create', 'Aram'],
-      ['create', 'Aram'],
+      ['change_renter', 'Shops | Bakhtiar'],
+      ['create', 'Shops | Aram'],
+      ['create', 'Shops | Aram'],
       ['create', 'Shop 1'],
     ]);
   });

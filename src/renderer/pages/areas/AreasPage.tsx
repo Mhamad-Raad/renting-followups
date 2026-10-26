@@ -2,8 +2,10 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import {
+  areaLabel,
+  areaSubline,
   compareAreaLabels,
-  labelIsRenter,
+  hasOwnName,
   nameCollator,
   SEARCH_MAX,
   type AreaListItem,
@@ -14,7 +16,6 @@ import { PART_SEPARATOR } from '@shared/reportText';
 import { useIpcQuery, type QueryState } from '../../app/ipc';
 import { useFlashNotice } from '../../app/flash';
 import { useSettings } from '../../app/SettingsContext';
-import { useAreaLabel } from '../../app/useAreaLabel';
 import { useDebouncedValue } from '../../app/useDebouncedValue';
 import { CategoryDot } from '../../components/CategoryDot';
 import { Checkbox } from '../../components/Checkbox';
@@ -58,7 +59,6 @@ export function AreasPage() {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const navigate = useNavigate();
-  const label = useAreaLabel();
   const notice = useFlashNotice();
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<number | null>(null);
@@ -223,7 +223,9 @@ export function AreasPage() {
                       <Checkbox
                         hideLabel
                         label={t('print.actions.select', {
-                          name: `${label(area)}${PART_SEPARATOR}${area.categoryName}`,
+                          name: [areaLabel(area), areaSubline(area)]
+                            .filter(Boolean)
+                            .join(PART_SEPARATOR),
                         })}
                         checked={selected.has(area.id)}
                         onChange={(checked) =>
@@ -242,18 +244,20 @@ export function AreasPage() {
                         className={styles.name}
                         onClick={(event) => event.stopPropagation()}
                       >
-                        {label(area)}
+                        {!hasOwnName(area) && <CategoryDot color={area.categoryColor} />}
+                        {areaLabel(area)}
                       </Link>
-                      <span className={`${styles.second} ${styles.category}`}>
-                        <CategoryDot color={area.categoryColor} />
-                        {area.categoryName}
-                      </span>
+                      {hasOwnName(area) && (
+                        <span className={`${styles.second} ${styles.category}`}>
+                          <CategoryDot color={area.categoryColor} />
+                          {area.categoryName}
+                        </span>
+                      )}
                     </td>
                     <td>
-                      {!labelIsRenter(area) &&
-                        (area.renterName ?? (
-                          <span className={styles.muted}>{t('areas.noRenter')}</span>
-                        ))}
+                      {area.renterName ?? (
+                        <span className={styles.muted}>{t('areas.noRenter')}</span>
+                      )}
                       {area.renterPhone && (
                         <span className={`${styles.second} ${styles.number}`}>
                           <PhoneText phone={area.renterPhone} />

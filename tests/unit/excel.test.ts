@@ -95,7 +95,7 @@ describe('Excel report', () => {
     expect(sheet?.getRow(6).getCell(5).numFmt).toBe('#,##0.00 "USD"');
   });
 
-  it('names an area without a name by its renter, or as having no name', () => {
+  it('names an area without a name by its category', () => {
     const [shop, office] = REPORT.rows;
     if (!shop || !office) throw new Error('fixture changed');
     const report = {
@@ -106,8 +106,8 @@ describe('Excel report', () => {
       ],
     };
     const sheet = buildReportWorkbook(report, QUERY, { ...OPTIONS, language: 'en' }).worksheets[0];
-    expect(sheet?.getRow(5).getCell(1).value).toBe('Karwan Ahmed');
-    expect(sheet?.getRow(6).getCell(1).value).toBe('No name');
+    expect(sheet?.getRow(5).getCell(1).value).toBe('Shops');
+    expect(sheet?.getRow(6).getCell(1).value).toBe('Offices');
   });
 
   it('colours month cells by status', () => {

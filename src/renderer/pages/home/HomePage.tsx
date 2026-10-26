@@ -1,13 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
-import { labelIsRenter } from '@shared/areas';
+import { areaLabel, hasOwnName } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
 import type { AttentionItem, CurrencyTotals } from '@shared/home';
 import { DEFAULT_REPORT_FILTERS } from '@shared/reports';
 import { flash } from '../../app/flash';
 import { useIpcQuery } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
-import { useAreaLabel } from '../../app/useAreaLabel';
 import { BigButton } from '../../components/BigButton';
 import { CategoryDot } from '../../components/CategoryDot';
 import { FigureCards } from '../../components/FigureCards';
@@ -155,21 +154,23 @@ function AttentionRow({ item }: { item: AttentionItem }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const navigate = useNavigate();
-  const label = useAreaLabel();
   const { standing } = item;
   return (
     <li className={styles.row} data-status={standing.lateMonths > 0 ? 'late' : 'due'}>
       <div className={styles.who}>
         <Link to={areaLink(item.id)} className={styles.name}>
-          {label(item)}
+          {!hasOwnName(item) && <CategoryDot color={item.categoryColor} />}
+          {areaLabel(item)}
         </Link>
-        <span className={styles.second}>
-          <CategoryDot color={item.categoryColor} />
-          {item.categoryName}
-        </span>
+        {hasOwnName(item) && (
+          <span className={styles.second}>
+            <CategoryDot color={item.categoryColor} />
+            {item.categoryName}
+          </span>
+        )}
       </div>
       <div className={styles.who}>
-        {!labelIsRenter(item) && <span>{item.renterName ?? t('areas.noRenter')}</span>}
+        <span>{item.renterName ?? t('areas.noRenter')}</span>
         {item.renterPhone && (
           <span className={styles.second}>
             <PhoneText phone={item.renterPhone} />

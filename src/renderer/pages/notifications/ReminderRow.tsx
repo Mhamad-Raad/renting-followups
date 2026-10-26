@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
+import { areaLabel } from '@shared/areas';
 import { PART_SEPARATOR } from '@shared/reportText';
 import { formatDate, formatMonthRuns, formatYearMonth } from '@shared/dates';
 import { formatPlain } from '@shared/formatNumber';
 import type { AreaReminder } from '@shared/notifications';
 import { useSettings } from '../../app/SettingsContext';
-import { useAreaLabel } from '../../app/useAreaLabel';
 import { BigButton } from '../../components/BigButton';
 import { MoneyText } from '../../components/MoneyText';
 import { StatusPill } from '../../components/MonthBoxes';
@@ -70,13 +70,12 @@ interface ReminderRowProps {
 /** One reminder: the area, its renter, what is wrong and owed, and Record payment. */
 export function ReminderRow({ reminder, onOpen, compact = false }: ReminderRowProps) {
   const { t } = useTranslation();
-  const label = useAreaLabel();
   const navigate = useNavigate();
   return (
     <li className={compact ? `${styles.row} ${styles.compact}` : styles.row}>
       <div className={styles.who}>
         <Link to={areaLink(reminder.areaId)} className={styles.name} onClick={onOpen}>
-          {label({ name: reminder.areaName, renterName: reminder.renterName })}
+          {areaLabel({ name: reminder.areaName, categoryName: reminder.categoryName })}
         </Link>
         <span className={styles.second}>
           {reminder.renterName ?? t('areas.noRenter')}

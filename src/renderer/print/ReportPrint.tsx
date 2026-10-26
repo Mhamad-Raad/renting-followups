@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
+import { areaLabel, hasOwnName } from '@shared/areas';
 import { dateStringFromLocal, formatDate } from '@shared/dates';
 import { formatPlain } from '@shared/formatNumber';
 import { PART_SEPARATOR, reportFilterParts } from '@shared/reportText';
 import { reportQuerySchema, type ReportQuery } from '@shared/reports';
 import { useIpcQuery } from '../app/ipc';
 import { useSettings } from '../app/SettingsContext';
-import { useAreaLabel } from '../app/useAreaLabel';
 import { MoneyText } from '../components/MoneyText';
 import { MonthBoxes, monthWord } from '../components/MonthBoxes';
 import { PhoneText } from '../components/PhoneText';
@@ -46,7 +46,6 @@ function ReportNotReadable() {
 
 function ReportPaper({ query }: { query: ReportQuery }) {
   const { t } = useTranslation();
-  const label = useAreaLabel();
   const { settings } = useSettings();
   const digits = settings.digitStyle;
   const report = useIpcQuery('reports:build', query);
@@ -96,8 +95,9 @@ function ReportPaper({ query }: { query: ReportQuery }) {
               query.month === null ? null : row.boxes.find((box) => box.month === query.month);
             return (
               <tr key={row.id}>
-                <td className={styles.strong}>{label(row)}</td>
-                <td>{row.categoryName}</td>
+                <td className={styles.strong}>{areaLabel(row)}</td>
+                {/* Already the label when the place has no name of its own. */}
+                <td>{hasOwnName(row) ? row.categoryName : ''}</td>
                 <td>{row.renterName ?? '—'}</td>
                 <td className={styles.number}>
                   {row.renterPhone && <PhoneText phone={row.renterPhone} />}

@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { areaLabel, hasOwnName } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
 import type { ReportRow, ReportTotal } from '@shared/reports';
 import { useSettings } from '../../app/SettingsContext';
-import { useAreaLabel } from '../../app/useAreaLabel';
 import { CategoryDot } from '../../components/CategoryDot';
 import { EmptyState } from '../../components/EmptyState';
 import { MoneyText } from '../../components/MoneyText';
@@ -109,16 +109,20 @@ function ReportTableRow({
   month: number | null;
 }) {
   const { t } = useTranslation();
-  const label = useAreaLabel();
   const chosen = month === null ? null : row.boxes.find((box) => box.month === month);
   return (
     <tr>
       <td>
-        <span className={styles.name}>{label(row)}</span>
-        <span className={`${styles.second} ${styles.category}`}>
-          <CategoryDot color={row.categoryColor} />
-          {row.categoryName}
+        <span className={styles.name}>
+          {!hasOwnName(row) && <CategoryDot color={row.categoryColor} />}
+          {areaLabel(row)}
         </span>
+        {hasOwnName(row) && (
+          <span className={`${styles.second} ${styles.category}`}>
+            <CategoryDot color={row.categoryColor} />
+            {row.categoryName}
+          </span>
+        )}
         {row.notes && (
           <span className={styles.notes} title={row.notes} dir="auto">
             {row.notes}

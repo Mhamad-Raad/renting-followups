@@ -46,6 +46,8 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
      WHERE a.deleted_at IS NULL
        AND (@categoryId IS NULL OR a.category_id = @categoryId)
        AND (a.name_normalized LIKE @namePattern ESCAPE '\\'
+         -- The category is the name of a place without one, so it is searched too.
+         OR c.name_normalized LIKE @namePattern ESCAPE '\\'
          OR r.full_name_normalized LIKE @namePattern ESCAPE '\\'
          OR (@phonePattern IS NOT NULL AND r.phone_digits LIKE @phonePattern ESCAPE '\\'))`,
   );
@@ -98,6 +100,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
         .map((row) => ({
           id: row.id,
           name: row.name,
+          categoryName: row.category_name,
           currency: row.currency,
           renterName: row.renter_name,
           renterPhone: row.renter_phone,

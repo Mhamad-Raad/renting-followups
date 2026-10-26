@@ -5,7 +5,8 @@ import {
   areaCreateSchema,
   areaLabel,
   compareAreaLabels,
-  labelIsRenter,
+  areaSubline,
+  hasOwnName,
   nameCollator,
 } from '@shared/areas';
 import { areaInput, createTestDatabase } from './helpers';
@@ -110,21 +111,27 @@ describe('creating areas', () => {
     expect(repos.areas.create(input)).toMatchObject({ ok: true });
   });
 
-  it('sorts areas by their shown name, then in the order they were added', () => {
-    const areas = [
-      { id: 3, name: '', renterName: 'Aram' },
-      { id: 1, name: 'Shop B', renterName: null },
-      { id: 2, name: '', renterName: 'Aram' },
-      { id: 4, name: '', renterName: null },
-    ];
-    const sorted = [...areas].sort(compareAreaLabels(new Intl.Collator('en')));
-    expect(sorted.map((area) => area.id)).toEqual([4, 2, 3, 1]);
+  it('finds areas by their category, which names a place without a name', () => {
+    createArea({ name: '' });
+    expect(repos.areaViews.list({ search: 'shop', categoryId: null }, TODAY)).toHaveLength(1);
+    expect(repos.areaViews.list({ search: 'offices', categoryId: null }, TODAY)).toEqual([]);
   });
 
-  it('shows an area by its name, else its renter, else nothing', () => {
-    expect(areaLabel('Shop 1', 'Aram')).toBe('Shop 1');
-    expect(areaLabel('', 'Aram')).toBe('Aram');
-    expect(areaLabel('', null)).toBeNull();
+  it('sorts areas by their shown name, then renter, then in the order they were added', () => {
+    const areas = [
+      { id: 3, name: '', categoryName: 'Lands', renterName: 'Karwan' },
+      { id: 1, name: 'Shop B', categoryName: 'Shops', renterName: null },
+      { id: 2, name: '', categoryName: 'Lands', renterName: 'Aram' },
+      { id: 5, name: '', categoryName: 'Lands', renterName: 'Aram' },
+      { id: 4, name: 'Kiosk', categoryName: 'Shops', renterName: null },
+    ];
+    const sorted = [...areas].sort(compareAreaLabels(nameCollator('en')));
+    expect(sorted.map((area) => area.id)).toEqual([4, 2, 5, 3, 1]);
+  });
+
+  it('shows an area by its name, else its category', () => {
+    expect(areaLabel({ name: 'Shop 1', categoryName: 'Shops' })).toBe('Shop 1');
+    expect(areaLabel({ name: '', categoryName: 'Lands' })).toBe('Lands');
   });
 
   it('puts numbers in names in number order', () => {
@@ -132,10 +139,14 @@ describe('creating areas', () => {
     expect(names.sort(nameCollator('en').compare)).toEqual(['Shop 1', 'Shop 9', 'Shop 10']);
   });
 
-  it('knows when an area is shown by its renter, so the renter is not repeated', () => {
-    expect(labelIsRenter({ name: '', renterName: 'Aram' })).toBe(true);
-    expect(labelIsRenter({ name: 'Shop 1', renterName: 'Aram' })).toBe(false);
-    expect(labelIsRenter({ name: '', renterName: null })).toBe(false);
+  it('shows the category under an own name, else the renter, and never the label twice', () => {
+    expect(areaSubline({ name: 'Shop 1', categoryName: 'Shops', renterName: 'Aram' })).toBe(
+      'Shops',
+    );
+    expect(areaSubline({ name: '', categoryName: 'Lands', renterName: 'Aram' })).toBe('Aram');
+    expect(areaSubline({ name: '', categoryName: 'Lands', renterName: null })).toBeNull();
+    expect(hasOwnName({ name: 'Shop 1' })).toBe(true);
+    expect(hasOwnName({ name: '' })).toBe(false);
   });
 
   it('refuses a missing or deleted category', () => {
@@ -399,7 +410,7 @@ describe('searching and filtering', () => {
     expect(search('هه‌ولێر')).toEqual(['خانووی هەولێر']);
     expect(search('علي كريم'.replace('كريم', 'كەريم'))).toEqual(['خانووی هەولێر']);
     expect(search('0750999')).toEqual(['خانووی هەولێر']);
-    expect(search('shop')).toEqual(['Shop 2']);
+    expect(search('shop 2')).toEqual(['Shop 2']);
     expect(search('')).toHaveLength(2);
     expect(search('nothing like this')).toEqual([]);
   });

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { currentRenter, type AreaDetails } from '@shared/areas';
+import { areaLabel, type AreaDetails } from '@shared/areas';
 import { yearMonthOf } from '@shared/dates';
 import { formatReceiptNumber, type Receipt } from '@shared/payments';
 import { priceForMonth } from '@shared/prices';
@@ -9,7 +9,6 @@ import { callIpc, useIpcQuery } from '../../app/ipc';
 import { useMountedRef } from '../../app/useMountedRef';
 import { flash, useFlashNotice } from '../../app/flash';
 import { useSettings } from '../../app/SettingsContext';
-import { useAreaLabel } from '../../app/useAreaLabel';
 import { BigButton } from '../../components/BigButton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { LoadError } from '../../components/LoadError';
@@ -64,7 +63,6 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
   const { t } = useTranslation();
   const mounted = useMountedRef();
   const { settings } = useSettings();
-  const label = useAreaLabel();
   const navigate = useNavigate();
   const flashed = useFlashNotice();
   const [notice, setNotice] = useState<string | null>(flashed);
@@ -149,10 +147,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
     <>
       <PageHeader
         back={{ to: '/areas', label: t('area.back') }}
-        title={label({
-          name: area.name,
-          renterName: currentRenter(area.renters)?.fullName ?? null,
-        })}
+        title={areaLabel({ name: area.name, categoryName: area.category.name })}
         actions={
           <>
             <BigButton

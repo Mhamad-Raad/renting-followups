@@ -89,7 +89,7 @@ export function buildReportWorkbook(
 
   for (const row of report.rows) {
     const line = sheet.addRow([
-      areaLabel(row.name, row.renterName) ?? t('areas.noName'),
+      areaLabel(row),
       row.categoryName,
       row.renterName ?? '',
       row.renterPhone ?? '',
