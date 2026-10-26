@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { nameCollator } from '@shared/areas';
 import type { Reminder } from '@shared/notifications';
 import type { Repositories } from '../db/repositories';
 import { businessToday } from '../services/clock';
@@ -12,7 +13,7 @@ export function currentReminders({
   backupSettings,
 }: Repositories): Reminder[] {
   const { language, remindDays } = settings.getAll();
-  const collator = new Intl.Collator(language);
+  const collator = nameCollator(language);
   const today = businessToday();
   const areas = areaViews.reminderAreas();
   const backup = buildBackupReminder(backupSettings.lastBackupOn(), today, areas.length > 0);

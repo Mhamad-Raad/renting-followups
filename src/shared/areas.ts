@@ -59,6 +59,11 @@ export function labelIsRenter(area: AreaNaming): boolean {
   return area.name === '' && !!area.renterName;
 }
 
+/** Compares names in the reader's language, with numbers in number order: "Shop 2" before "Shop 10". */
+export function nameCollator(language: string): Intl.Collator {
+  return new Intl.Collator(language, { numeric: true });
+}
+
 /** What `areaLabel` needs: the area's own name and its current renter's name. */
 export interface AreaNaming {
   name: string;

@@ -1,4 +1,4 @@
-import { compareAreaLabels } from '@shared/areas';
+import { compareAreaLabels, nameCollator } from '@shared/areas';
 import type { CategoryColor } from '@shared/categories';
 import type { Currency } from '@shared/currency';
 import type { YearMonth } from '@shared/dates';
@@ -96,7 +96,7 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
         });
       }
       // Sorted here, once, so the screen, the printed report and Excel list areas in the same order.
-      const byName = compareAreaLabels(new Intl.Collator(language));
+      const byName = compareAreaLabels(nameCollator(language));
       return {
         candidates: areas
           .map((area) => ({

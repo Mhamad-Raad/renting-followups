@@ -1,7 +1,13 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
-import { compareAreaLabels, labelIsRenter, SEARCH_MAX, type AreaListItem } from '@shared/areas';
+import {
+  compareAreaLabels,
+  labelIsRenter,
+  nameCollator,
+  SEARCH_MAX,
+  type AreaListItem,
+} from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
 import type { MonthBox } from '@shared/months';
 import { PART_SEPARATOR } from '@shared/reportText';
@@ -82,7 +88,7 @@ export function AreasPage() {
     [areas.state, selected],
   );
   const byLabel = useMemo(
-    () => compareAreaLabels(new Intl.Collator(settings.language)),
+    () => compareAreaLabels(nameCollator(settings.language)),
     [settings.language],
   );
   const sorted = useMemo<AreaListItem[]>(

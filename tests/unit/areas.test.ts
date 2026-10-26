@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Db } from '../../src/main/db/connection';
 import type { Repositories } from '../../src/main/db/repositories';
-import { areaCreateSchema, areaLabel, compareAreaLabels, labelIsRenter } from '@shared/areas';
+import {
+  areaCreateSchema,
+  areaLabel,
+  compareAreaLabels,
+  labelIsRenter,
+  nameCollator,
+} from '@shared/areas';
 import { areaInput, createTestDatabase } from './helpers';
 
 const TODAY = { year: 2026, month: 10 };
@@ -119,6 +125,11 @@ describe('creating areas', () => {
     expect(areaLabel('Shop 1', 'Aram')).toBe('Shop 1');
     expect(areaLabel('', 'Aram')).toBe('Aram');
     expect(areaLabel('', null)).toBeNull();
+  });
+
+  it('puts numbers in names in number order', () => {
+    const names = ['Shop 10', 'Shop 9', 'Shop 1'];
+    expect(names.sort(nameCollator('en').compare)).toEqual(['Shop 1', 'Shop 9', 'Shop 10']);
   });
 
   it('knows when an area is shown by its renter, so the renter is not repeated', () => {
