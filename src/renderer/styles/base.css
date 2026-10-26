@@ -41,6 +41,21 @@ textarea {
   color: inherit;
 }
 
+/* Everything that can be clicked shows the hand cursor; something switched off shows it cannot. */
+:is(
+  button,
+  select,
+  summary,
+  [role='button'],
+  input:is([type='checkbox'], [type='radio'], [type='file'])
+):not(:disabled) {
+  cursor: pointer;
+}
+
+:is(button, select, input):disabled {
+  cursor: not-allowed;
+}
+
 /* A clearly visible focus outline for keyboard users, never removed. */
 :focus-visible {
   outline: none;
