@@ -16,7 +16,6 @@ import { callIpc } from '../../app/ipc';
 import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
-import { LinkButton } from '../../components/LinkButton';
 import { MoneyText } from '../../components/MoneyText';
 import { Notice, type NoticeMessage } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
@@ -274,7 +273,7 @@ export function ImportPage() {
 
   return (
     <>
-      <PageHeader title={t('import.title')} />
+      <PageHeader title={t('import.title')} back={{ to: '/areas', label: t('area.back') }} />
       <div className={styles.stack}>
         <p className={styles.muted}>{t('import.intro')}</p>
         <div className={styles.steps}>
@@ -301,16 +300,13 @@ export function ImportPage() {
         </div>
         {message && <Notice tone={message.tone}>{message.text}</Notice>}
         {preview && <PreviewDetails preview={preview} />}
-        <div className={styles.buttonRow}>
-          {canImport && (
+        {canImport && (
+          <div className={styles.buttonRow}>
             <BigButton variant="primary" onClick={() => void importAreas()} disabled={busy}>
               {t('import.importButton')}
             </BigButton>
-          )}
-          <LinkButton to="/areas" icon="back">
-            {t('pages.areas.title')}
-          </LinkButton>
-        </div>
+          </div>
+        )}
       </div>
     </>
   );

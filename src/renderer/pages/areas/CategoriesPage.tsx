@@ -18,7 +18,6 @@ import { Dialog, DialogActions } from '../../components/Dialog';
 import { EmptyState } from '../../components/EmptyState';
 import { Form } from '../../components/Form';
 import { LoadError } from '../../components/LoadError';
-import { LinkButton } from '../../components/LinkButton';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { TextField } from '../../components/TextField';
@@ -65,6 +64,7 @@ export function CategoriesPage() {
     <>
       <PageHeader
         title={t('categories.title')}
+        back={{ to: '/areas', label: t('area.back') }}
         actions={
           <BigButton variant="primary" onClick={() => setEditing({ category: null })}>
             {t('categories.add')}
@@ -94,11 +94,6 @@ export function CategoriesPage() {
               ))}
             </ul>
           ))}
-        <div>
-          <LinkButton to="/areas" icon="back">
-            {t('area.back')}
-          </LinkButton>
-        </div>
       </div>
 
       <Dialog

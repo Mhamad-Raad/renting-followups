@@ -1,11 +1,22 @@
 .header {
   display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-block-end: var(--space-6);
+}
+
+/* The back button always sits in the same place, above the title on the start side. */
+.back {
+  display: flex;
+}
+
+.row {
+  display: flex;
   /* With large text the buttons move under the title instead of squeezing their words. */
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  margin-block-end: var(--space-6);
 }
 
 .title {

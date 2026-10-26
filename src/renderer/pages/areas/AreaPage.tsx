@@ -148,6 +148,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
   return (
     <>
       <PageHeader
+        back={{ to: '/areas', label: t('area.back') }}
         title={label({
           name: area.name,
           renterName: currentRenter(area.renters)?.fullName ?? null,
@@ -226,12 +227,6 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
         />
 
         <AreaHistory area={area} />
-
-        <div className={styles.back}>
-          <LinkButton to="/areas" icon="back">
-            {t('area.back')}
-          </LinkButton>
-        </div>
       </div>
 
       {monthPick.dialog}

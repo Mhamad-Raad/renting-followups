@@ -8,7 +8,6 @@ import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { EmptyState } from '../../components/EmptyState';
-import { LinkButton } from '../../components/LinkButton';
 import { LoadError } from '../../components/LoadError';
 import { MoneyText } from '../../components/MoneyText';
 import { Notice } from '../../components/Notice';
@@ -128,7 +127,10 @@ export function ActivityLogPage() {
 
   return (
     <>
-      <PageHeader title={t('activity.title')} />
+      <PageHeader
+        title={t('activity.title')}
+        back={{ to: '/settings', label: t('pages.settings.title') }}
+      />
       <div className={styles.stack}>
         <p className={styles.muted}>{t('activity.intro')}</p>
         {first.state.status === 'error' && <LoadError onRetry={first.reload} />}
@@ -149,19 +151,16 @@ export function ActivityLogPage() {
             ))}
           </ul>
         )}
-        <div className={styles.buttonRow}>
-          {hasMore && oldest && (
+        {hasMore && oldest && (
+          <div className={styles.buttonRow}>
             <BigButton
               onClick={() => void showOlder(oldest.id)}
               disabled={older.status === 'loading'}
             >
               {t('activity.older')}
             </BigButton>
-          )}
-          <LinkButton to="/settings" icon="back">
-            {t('pages.settings.title')}
-          </LinkButton>
-        </div>
+          </div>
+        )}
       </div>
     </>
   );

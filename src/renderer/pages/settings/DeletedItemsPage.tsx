@@ -10,7 +10,6 @@ import { useAreaLabel } from '../../app/useAreaLabel';
 import { BigButton } from '../../components/BigButton';
 import { EmptyState } from '../../components/EmptyState';
 import { LoadError } from '../../components/LoadError';
-import { LinkButton } from '../../components/LinkButton';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import styles from './SettingsList.module.css';
@@ -75,7 +74,10 @@ export function DeletedItemsPage() {
 
   return (
     <>
-      <PageHeader title={t('deletedItems.title')} />
+      <PageHeader
+        title={t('deletedItems.title')}
+        back={{ to: '/settings', label: t('pages.settings.title') }}
+      />
       <div className={styles.stack}>
         <p className={styles.muted}>{t('deletedItems.intro')}</p>
         {message && <Notice tone={message.tone}>{message.text}</Notice>}
@@ -102,11 +104,6 @@ export function DeletedItemsPage() {
               )}
             </>
           ))}
-        <div>
-          <LinkButton to="/settings" icon="back">
-            {t('pages.settings.title')}
-          </LinkButton>
-        </div>
       </div>
     </>
   );

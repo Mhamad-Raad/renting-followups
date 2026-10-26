@@ -167,7 +167,10 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
 
   return (
     <>
-      <PageHeader title={t(area ? 'areaForm.editTitle' : 'areaForm.newTitle')} />
+      <PageHeader
+        title={t(area ? 'areaForm.editTitle' : 'areaForm.newTitle')}
+        back={{ to: '/areas', label: t('area.back') }}
+      />
       <Form className={styles.form} onSubmit={() => void submit()}>
         <section className={styles.section}>
           <TextField
