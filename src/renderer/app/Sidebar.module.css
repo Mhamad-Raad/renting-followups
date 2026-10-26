@@ -11,11 +11,22 @@
   overflow-y: auto;
 }
 
+/* The logo above the name, so a long name never squeezes beside it. */
 .appName {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
   padding-inline: var(--space-3);
   font-size: var(--text-lg);
   font-weight: 700;
   color: var(--color-accent);
+}
+
+.logo {
+  width: 3.5rem;
+  height: 3.5rem;
+  flex-shrink: 0;
 }
 
 .list {

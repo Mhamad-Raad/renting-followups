@@ -6,6 +6,7 @@ import { NAV_ITEMS } from './routes';
 import { useSettings } from './SettingsContext';
 import { useReminders } from './useReminders';
 import styles from './Sidebar.module.css';
+import logo from '../../../resources/icon.png';
 
 /** The fixed, always-visible main menu on the start side of the window. */
 /** Above this the bell shows "99+", so the number never covers the bell; the page shows the exact count. */
@@ -18,7 +19,10 @@ export function Sidebar() {
   const count = reminders.state.status === 'ready' ? reminders.state.data.length : 0;
   return (
     <nav className={styles.sidebar} aria-label={t('nav.label')}>
-      <p className={styles.appName}>{t('app.name')}</p>
+      <p className={styles.appName}>
+        <img src={logo} alt="" className={styles.logo} />
+        {t('app.name')}
+      </p>
       <ul className={styles.list}>
         {NAV_ITEMS.map((item) => (
           <li key={item.path}>
