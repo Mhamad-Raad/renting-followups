@@ -41,7 +41,7 @@ async function createAreasThroughIpc(page: Page, names: string[], categoryName =
   );
 }
 
-test('with one category chosen, the table leaves the category out', async () => {
+test('with one category chosen, the table looks the same as under All', async () => {
   const dataDir = createDataDir();
   const { app, page } = await openAreas(dataDir);
   try {
@@ -50,19 +50,18 @@ test('with one category chosen, the table leaves the category out', async () => 
     await reloadApp(page);
     await page.getByRole('link', { name: en.nav.areas }).click();
     const table = page.getByRole('table');
+    const nameCell = (renter: string) =>
+      table.getByRole('row', { name: renter }).getByRole('cell').nth(1);
 
     await page.getByRole('button', { name: 'Shops', exact: true }).click();
     await expect(table.getByRole('row')).toHaveCount(3);
-    // The name cell holds the own name alone, or a dash, never the category again.
-    const nameCell = (renter: string) =>
-      table.getByRole('row', { name: renter }).getByRole('cell').nth(1);
-    await expect(nameCell('Renter 0')).toHaveText('—');
-    await expect(nameCell('Renter 1')).toHaveText('Shop 7');
+    await expect(nameCell('Renter 0')).toHaveText('Shops');
+    await expect(nameCell('Renter 1')).toHaveText('Shop 7Shops');
 
-    // No place here has a name of its own, so the name column goes and the renter opens the area.
+    // Even when no place here has a name of its own, the name column stays.
     await page.getByRole('button', { name: 'Plots', exact: true }).click();
-    await expect(table.getByRole('columnheader', { name: en.areas.columns.name })).toHaveCount(0);
-    await table.getByRole('link', { name: 'Renter 1' }).click();
+    await expect(table.getByRole('columnheader', { name: en.areas.columns.name })).toHaveCount(1);
+    await table.getByRole('row', { name: 'Renter 1' }).getByRole('link', { name: 'Plots' }).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Plots');
   } finally {
     await app.close();
