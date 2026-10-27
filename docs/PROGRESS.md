@@ -24,6 +24,7 @@
 - Iteration 13 (merged, tag `iter-13`): whole-app polish. Dialogs start on the safe button (Cancel on Restore), clearer focus and edges, calmer motion, Try again on every screen that cannot load, plain messages when a file cannot be saved, month ranges and page numbers in the right order in every language, month boxes that fit any amount, clearer wording in all three languages. 200 areas with five years of payments: every screen opens in a quarter of a second or less; memory stays flat. 622 unit tests and 53 end-to-end tests pass.
 - Collapsible sidebar (2026-10-27, on `iter-14-packaging`, owner's request): opens collapsed to its icons every time; a button at its top shows or hides the names. 669 unit tests and 58 end-to-end tests pass.
 - Owner's UI updates (2026-10-27): slimmer page margins and wider pages; the dock icon on a Mac; the Areas table shows monthly rent, total for the year, received, still owed, the boxes, notes and a ⋯ menu with every area action (opens the area page with that action ready). 669 unit tests and 59 end-to-end tests pass.
+- Vacant ends the renter (2026-10-27, owner's decision): Mark as vacant also ends the current renter; Change renter only adds a new renter; a new area marked vacant takes no renter. 671 unit tests and 59 end-to-end tests pass.
 
 ## Next
 
@@ -32,7 +33,6 @@
 ## Open questions
 
 - A price change from an earlier month fills a gap left by taking a month out of a receipt (the warning lists it). Keep, or keep such a month closed for that receipt?
-- Should "Mark as vacant" also end the current renter? Today a place can show as vacant with a renter.
 - The window-size end-to-end test failed while the owner had the app open (also on older code): check again with the app closed.
 
 - Data from the client's old system (three 2023 sheets, typed up on the Desktop) is waiting on the client: IQD or USD for each place, three plots paid once a year, two phones written only as "770", and one shop whose total does not match its start month. Then it can become an import file.
