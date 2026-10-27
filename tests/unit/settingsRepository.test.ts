@@ -46,6 +46,16 @@ describe('settings repository', () => {
     ]);
   });
 
+  it('remembers the sidebar style, light by default', () => {
+    const settings = createSettingsRepository(db);
+    expect(settings.getAll().sidebarStyle).toBe('light');
+    settings.update({ sidebarStyle: 'dark' });
+    expect(createSettingsRepository(db).getAll().sidebarStyle).toBe('dark');
+    expect(db.prepare("SELECT value FROM settings WHERE key = 'sidebar_style'").get()).toEqual({
+      value: 'dark',
+    });
+  });
+
   it('keeps numbers and text as they were saved', () => {
     const settings = createSettingsRepository(db);
     settings.update({ remindDays: 10, printTitle: '  Kawa Rentals  ', themeColor: 'teal' });

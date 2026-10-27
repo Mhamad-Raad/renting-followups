@@ -9,6 +9,7 @@ async function rootAttributes(page: Page) {
       dir: root.dir,
       theme: root.dataset['theme'],
       fontSize: root.dataset['fontSize'],
+      sidebar: root.dataset['sidebar'],
     };
   });
 }
@@ -32,6 +33,7 @@ test('opens in Sorani, right to left, with the five sidebar items', async () => 
       dir: 'rtl',
       theme: 'light',
       fontSize: 'normal',
+      sidebar: 'light',
     });
     expect(await sidebarSide(page)).toBe('right');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('سەرەکی');
@@ -50,13 +52,21 @@ test('switching language, theme and text size applies at once and is remembered'
     await expect(first.page.getByRole('heading', { level: 1 })).toHaveText('Settings');
     expect(await sidebarSide(first.page)).toBe('left');
 
-    await first.page.getByRole('radio', { name: 'Dark', exact: true }).check();
+    await first.page
+      .getByRole('group', { name: 'Light or dark' })
+      .getByRole('radio', { name: 'Dark', exact: true })
+      .check();
+    await first.page
+      .getByRole('group', { name: 'Sidebar' })
+      .getByRole('radio', { name: 'Dark', exact: true })
+      .check();
     await first.page.getByRole('radio', { name: 'Extra large', exact: true }).check();
     expect(await rootAttributes(first.page)).toEqual({
       lang: 'en',
       dir: 'ltr',
       theme: 'dark',
       fontSize: 'extraLarge',
+      sidebar: 'dark',
     });
     await first.app.close();
 
@@ -67,6 +77,7 @@ test('switching language, theme and text size applies at once and is remembered'
       dir: 'ltr',
       theme: 'dark',
       fontSize: 'extraLarge',
+      sidebar: 'dark',
     });
     await second.app.close();
   } finally {

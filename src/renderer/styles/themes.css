@@ -21,9 +21,9 @@
   --shadow-dialog: 0 12px 40px rgb(0 0 0 / 22%);
 
   /* Theme colours (Settings → Theme colour), each with its hover, soft background and text on it. */
-  --accent-green: #107c01;
-  --accent-green-hover: #0d6601;
-  --accent-green-soft: #e1f0d8;
+  --accent-green: #17694a;
+  --accent-green-hover: #11553b;
+  --accent-green-soft: #e6f1ec;
   --accent-green-on: #ffffff;
   --accent-blue: #2457b7;
   --accent-blue-hover: #1c4796;
@@ -161,4 +161,15 @@
   --color-accent-hover: var(--accent-slate-hover);
   --color-accent-soft: var(--accent-slate-soft);
   --color-on-accent: var(--accent-slate-on);
+}
+
+/* Settings → Sidebar: Dark. Only the sidebar takes these colours; the page keeps its own. */
+:root[data-sidebar='dark'] .app-sidebar {
+  --color-surface: #18212e;
+  --color-surface-muted: #232e3d;
+  --color-border: #18212e;
+  --color-text: #e6ebf1;
+  --color-text-muted: #a9b4c2;
+  --color-accent: #8fb0ff;
+  --color-accent-soft: #2b3a52;
 }

@@ -37,6 +37,7 @@
     "light": "Light",
     "dark": "Dark",
     "themeColor": "Theme colour",
+    "sidebar": "Sidebar",
     "themeColors": {
       "green": "Green",
       "blue": "Blue",

@@ -26,7 +26,8 @@ export function Sidebar() {
   const nameClass = collapsed ? styles.hidden : undefined;
   return (
     <nav
-      className={collapsed ? `${styles.sidebar} ${styles.collapsed}` : styles.sidebar}
+      // `app-sidebar` lets Settings → Sidebar: Dark give it its own colours (themes.css).
+      className={`app-sidebar ${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}
       aria-label={t('nav.label')}
     >
       <p className={styles.appName}>

@@ -143,3 +143,26 @@ describe.each([
     }
   });
 });
+
+describe('dark sidebar (Settings → Sidebar: Dark)', () => {
+  const colors = themeColors(":root[data-sidebar='dark'] .app-sidebar");
+  const color = (name: string) => {
+    const value = colors.get(name);
+    if (!value) throw new Error(`Missing colour --${name}`);
+    return value;
+  };
+
+  it.each([
+    ['color-text', 'color-surface'],
+    ['color-text', 'color-surface-muted'],
+    ['color-text', 'color-accent-soft'],
+    ['color-text-muted', 'color-surface'],
+  ])('%s on %s is readable (at least 4.5:1)', (foreground, background) => {
+    expect(contrast(color(foreground), color(background))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('the current-page bar and focus ring are easy to see (at least 3:1)', () => {
+    expect(contrast(color('color-accent'), color('color-surface'))).toBeGreaterThanOrEqual(3);
+    expect(contrast(color('color-accent'), color('color-accent-soft'))).toBeGreaterThanOrEqual(3);
+  });
+});

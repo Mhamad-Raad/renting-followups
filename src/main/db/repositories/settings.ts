@@ -47,6 +47,7 @@ const STORAGE_KEYS: Record<keyof Settings, string> = {
   themeMode: 'theme_mode',
   fontSize: 'font_size',
   themeColor: 'theme_color',
+  sidebarStyle: 'sidebar_style',
   fontFamily: 'font_family',
   remindDays: 'remind_days_before_month_end',
   printTitle: 'print_title',
