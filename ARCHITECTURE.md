@@ -216,7 +216,7 @@ Form (large, single column):
 
 **Overpayment horizon:** allocation may run forward at most **24 months** past the current month. If the amount is larger than everything owed within that horizon, block saving and say so plainly ("This amount is more than 2 years of rent. Please check the number.").
 
-Buttons: **Save** and **Save and print receipt**. After saving, show "Payment saved. Receipt No. 0042" with **Print receipt**, **Undo**, and **Close**.
+Buttons: **Save** and **Save and make receipt PDF**. After saving, show "Payment saved. Receipt No. 0042" with **Save receipt as PDF**, **Undo**, and **Close**. Receipts are only ever saved as PDF, never sent straight to a printer; the owner prints from the PDF if needed. *(Owner's decision, 2026-10-27.)*
 
 ### 7.2 Editing and cancelling
 
@@ -264,7 +264,7 @@ Then, for the selected year:
 - Four figures: **Rent price**, **Total for the year** (expected), **Received**, **Still owed**.
 - **12 boxes** in a row/grid (2 rows of 6 on narrow widths). Each box shows the month number (1-12), the amount paid, and a status word. Colours per section 6: green / orange / red / grey / hatched.
 - Notes field.
-- List of receipts for the year (number or "Past record", date, amount, months covered) with Print / Edit / Cancel.
+- List of receipts for the year (number or "Past record", date, amount, months covered) with Save receipt as PDF / Edit / Cancel.
 - Price history and renter history (collapsible, plain).
 - Buttons: **Export to PDF**, **Export to Excel**. *(Owner's decision, 2026-10-25: no direct Print button here.)*
 
@@ -283,7 +283,7 @@ Buttons: **Print**, **Export PDF**, **Export Excel**. Print, PDF and Excel conta
 When a specific month is chosen in the filter, the table shows that month's status per area and totals for that month.
 
 ### 8.6 Receipt print
-A4 page: logo (if set), print title (if set), "Receipt No. 0042", date, area name, renter name and phone, months covered, amount (with currency), note, signature line. Prints one receipt per page. Reprints are stamped **"Copy"**.
+A4 page: logo (if set), print title (if set), "Receipt No. 0042", date, area name, renter name and phone, months covered, amount (with currency), note, signature line. One receipt per page, saved as PDF. Saving it again is stamped **"Copy"**.
 
 ### 8.7 Notifications (see section 11)
 
