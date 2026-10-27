@@ -90,7 +90,6 @@ describe('recording payments', () => {
   it('keeps the renter at the time of payment, even after the renter changes', () => {
     const { id } = payOk();
     repos.areas.changeRenter({
-      kind: 'new',
       areaId,
       fullName: 'Sara Ali',
       phone: '',

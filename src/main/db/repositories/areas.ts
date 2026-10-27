@@ -176,21 +176,10 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
       return { ok: true, id: input.id };
     }),
 
-    /** A new renter closes the current one on the day the new one starts; "left" just closes it. */
+    /** A new renter closes the current one on the day the new one starts. */
     changeRenter: db.transaction((change: RenterChange): RenterChangeResult => {
       if (!findActive(change.areaId)) return { ok: false, reason: 'not_found' };
       const current = renters.current(change.areaId);
-      if (change.kind === 'left') {
-        if (!current) return { ok: false, reason: 'no_current_renter' };
-        if (change.endedOn < current.startedOn)
-          return { ok: false, reason: 'before_current_renter' };
-        renters.end(current.id, change.endedOn);
-        audit.record('end_renter', 'area', change.areaId, {
-          renter: current.fullName,
-          endedOn: change.endedOn,
-        });
-        return { ok: true };
-      }
       if (current && change.startedOn < current.startedOn) {
         return { ok: false, reason: 'before_current_renter' };
       }

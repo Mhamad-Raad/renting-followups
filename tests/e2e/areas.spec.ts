@@ -172,8 +172,12 @@ test('price changes, vacant and renter changes are kept as history', async () =>
     await page.getByRole('dialog').getByRole('button', { name: en.common.save }).click();
     await expect(page.getByText(en.priceDialog.vacantSaved)).toBeVisible();
     await expect(page.getByRole('button', { name: en.area.setRentAgain })).toBeVisible();
+    // Vacant also ends the renter: the page says No renter, and the old one is in the history.
+    await expect(page.getByText(en.areas.noRenter)).toBeVisible();
 
+    // Change renter only adds a new renter; there is no "renter left" choice any more.
     await page.getByRole('button', { name: en.area.changeRenter }).click();
+    await expect(page.getByRole('dialog').getByRole('radio')).toHaveCount(0);
     await page.getByRole('dialog').getByLabel(en.renterDialog.name).fill('Sara Ali');
     await page.getByRole('dialog').getByRole('button', { name: en.common.save }).click();
     await expect(page.getByText(en.renterDialog.saved)).toBeVisible();

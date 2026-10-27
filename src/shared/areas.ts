@@ -127,12 +127,10 @@ export const priceChangeSchema = z
   .strict();
 export type PriceChange = z.infer<typeof priceChangeSchema>;
 
-export const renterChangeSchema = z.discriminatedUnion('kind', [
-  renterDetails
-    .extend({ kind: z.literal('new'), areaId: id, startedOn: dateStringSchema })
-    .strict(),
-  z.object({ kind: z.literal('left'), areaId: id, endedOn: dateStringSchema }).strict(),
-]);
+/** A new renter; a renter leaving is recorded by marking the area vacant (see `changePrice`). */
+export const renterChangeSchema = renterDetails
+  .extend({ areaId: id, startedOn: dateStringSchema })
+  .strict();
 export type RenterChange = z.infer<typeof renterChangeSchema>;
 
 export const areaListQuerySchema = z
@@ -210,7 +208,7 @@ export type PriceChangeImpact =
   | { ok: false; reason: 'no_room' };
 
 export type RenterChangeResult =
-  { ok: true } | { ok: false; reason: 'not_found' | 'no_current_renter' | 'before_current_renter' };
+  { ok: true } | { ok: false; reason: 'not_found' | 'before_current_renter' };
 
 export type RestoreResult = { ok: true } | { ok: false; reason: 'not_found' | 'duplicate_name' };
 

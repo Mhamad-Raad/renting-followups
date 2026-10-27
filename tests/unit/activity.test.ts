@@ -94,7 +94,6 @@ describe('activity log', () => {
 
     // A new renter later does not rename the old entries.
     repos.areas.changeRenter({
-      kind: 'new',
       areaId: area.id,
       fullName: 'Bakhtiar',
       phone: '',

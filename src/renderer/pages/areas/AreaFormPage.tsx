@@ -156,7 +156,8 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
           currency: rent.currency,
           monthlyPrice: rent.vacant ? 0 : (rent.monthlyPrice ?? 0),
           rentStartsFrom: rent.startsFrom,
-          renter: renterDetails && { ...renterDetails, startedOn: renter.since },
+          renter:
+            rent.vacant || !renterDetails ? null : { ...renterDetails, startedOn: renter.since },
         });
     if (!mounted.current) return;
     setBusy(false);
@@ -223,7 +224,8 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
           />
         </section>
 
-        {(!area || renterNow) && (
+        {/* A vacant place has no renter (see Mark as vacant). */}
+        {(area ? renterNow : !rent.vacant) && (
           <RenterFields
             editing={area !== null}
             renter={renter}

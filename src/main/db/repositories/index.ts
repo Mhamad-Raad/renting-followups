@@ -35,7 +35,7 @@ export function createRepositories(db: Db) {
     categories,
     areas,
     areaViews: createAreaViewRepository(db, { areas, paid, prices }),
-    priceChanges: createPriceChangeRepository(db, { allocations, areas, audit, prices }),
+    priceChanges: createPriceChangeRepository(db, { allocations, areas, audit, prices, renters }),
     paid,
     payments,
     monthPayments: createMonthPaymentRepository(db, { areas, audit, payments }),

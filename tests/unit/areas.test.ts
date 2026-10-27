@@ -359,7 +359,6 @@ describe('renters', () => {
     const id = createArea();
     expect(
       repos.areas.changeRenter({
-        kind: 'new',
         areaId: id,
         fullName: 'Sara Ali',
         phone: '0770 000 0000',
@@ -374,33 +373,62 @@ describe('renters', () => {
     expect(repos.areaViews.list({ search: 'sara', categoryId: null }, TODAY)).toHaveLength(1);
   });
 
-  it('records a renter leaving without a new one', () => {
+  it('marking the area vacant also ends its renter, from the first day of that month', () => {
     const id = createArea();
-    expect(repos.areas.changeRenter({ kind: 'left', areaId: id, endedOn: '2026-08-31' })).toEqual({
-      ok: true,
+    expect(
+      repos.priceChanges.changePrice(
+        { areaId: id, from: { year: 2026, month: 9 }, monthlyPrice: 0 },
+        TODAY,
+      ),
+    ).toEqual({ ok: true });
+    const [area] = repos.areaViews.list({ search: '', categoryId: null }, TODAY);
+    expect(area?.renterName).toBeNull();
+    expect(area?.currentPrice).toBe(0);
+    expect(repos.areas.get(id)?.renters.map((renter) => renter.endedOn)).toEqual(['2026-09-01']);
+    expect(auditFor(id).at(-1)).toEqual({
+      action: 'end_renter',
+      details: { renter: 'Karwan Ahmed', endedOn: '2026-09-01' },
     });
-    expect(repos.areaViews.list({ search: '', categoryId: null }, TODAY)[0]?.renterName).toBeNull();
-    expect(repos.areas.changeRenter({ kind: 'left', areaId: id, endedOn: '2026-09-01' })).toEqual({
-      ok: false,
-      reason: 'no_current_renter',
+  });
+
+  it('a renter who started after the vacant month ends on the day they started', () => {
+    const id = createArea();
+    repos.areas.changeRenter({
+      areaId: id,
+      fullName: 'Sara Ali',
+      phone: '',
+      startedOn: '2026-07-15',
     });
+    repos.priceChanges.changePrice(
+      { areaId: id, from: { year: 2026, month: 6 }, monthlyPrice: 0 },
+      TODAY,
+    );
+    expect(repos.areas.get(id)?.renters.map((renter) => [renter.fullName, renter.endedOn])).toEqual(
+      expect.arrayContaining([['Sara Ali', '2026-07-15']]),
+    );
+  });
+
+  it('a new price that is not vacant keeps the renter', () => {
+    const id = createArea();
+    repos.priceChanges.changePrice(
+      { areaId: id, from: { year: 2026, month: 9 }, monthlyPrice: 300_000 },
+      TODAY,
+    );
+    expect(repos.areaViews.list({ search: '', categoryId: null }, TODAY)[0]?.renterName).toBe(
+      'Karwan Ahmed',
+    );
   });
 
   it('refuses dates before the current renter started', () => {
     const id = createArea();
     expect(
       repos.areas.changeRenter({
-        kind: 'new',
         areaId: id,
         fullName: 'Early',
         phone: '',
         startedOn: '2025-12-31',
       }),
     ).toEqual({ ok: false, reason: 'before_current_renter' });
-    expect(repos.areas.changeRenter({ kind: 'left', areaId: id, endedOn: '2025-12-31' })).toEqual({
-      ok: false,
-      reason: 'before_current_renter',
-    });
   });
 });
 

@@ -339,7 +339,7 @@
     "from": "From which month?",
     "newRent": "New monthly rent",
     "changeHint": "Months before this keep their old price.",
-    "vacantHint": "From this month the area has no rent and is never late.",
+    "vacantHint": "From this month the area has no rent and is never late. The current renter is marked as left.",
     "before_rent_start": "This month is before the rent started ({{month}}). Please choose a later month.",
     "priceSaved": "New price saved.",
     "vacantSaved": "The area is marked as vacant.",
@@ -353,14 +353,8 @@
     "name": "New renter name",
     "phone": "New renter phone",
     "startsOn": "Starts on",
-    "leftTitle": "The renter left",
-    "leftOn": "Left on",
     "before_current_renter": "This date is before the current renter started ({{date}}).",
-    "no_current_renter": "This area has no renter right now.",
-    "saved": "Renter saved.",
-    "leftSaved": "The renter is marked as left.",
-    "newRenter": "New renter",
-    "what": "What happened?"
+    "saved": "Renter saved."
   },
   "categories": {
     "title": "Categories",
