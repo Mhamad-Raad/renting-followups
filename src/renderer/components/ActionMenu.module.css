@@ -1,0 +1,94 @@
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease);
+}
+
+.trigger:hover,
+.trigger[aria-expanded='true'] {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+/* Round line caps on a zero-length line draw a dot; thicker lines make bigger dots. */
+.dots {
+  stroke-width: 3.5;
+}
+
+/*
+ * Beside its button (popovers know the button that opened them): below it,
+ * lined up with its end edge, or above it when there is no room below.
+ */
+.menu {
+  position-area: block-end span-inline-start;
+  position-try-fallbacks: flip-block;
+  inset: auto;
+  min-width: 14rem;
+  margin: var(--space-1) 0;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-dialog);
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--duration-fast) var(--ease),
+    transform var(--duration-fast) var(--ease),
+    overlay var(--duration-fast) allow-discrete,
+    display var(--duration-fast) allow-discrete;
+}
+
+.menu:not(:popover-open) {
+  opacity: 0;
+  transform: scale(var(--scale-enter));
+}
+
+@starting-style {
+  .menu:popover-open {
+    opacity: 0;
+    transform: scale(var(--scale-enter));
+  }
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--control-height);
+  padding-inline: var(--space-4);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease);
+}
+
+.item:hover,
+.item:focus-visible {
+  background: var(--color-accent-soft);
+}
+
+/* Set apart from the everyday actions by a line, and in the warning colour. */
+.danger {
+  margin-block-start: var(--space-2);
+  border-block-start: 1px solid var(--color-border);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  color: var(--color-danger);
+  font-weight: 600;
+}
