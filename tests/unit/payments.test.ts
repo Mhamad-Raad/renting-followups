@@ -80,6 +80,7 @@ describe('recording payments', () => {
     payOk({ amount: 5 * RENT });
     const [area] = repos.areaViews.list({ search: '', categoryId: null }, TODAY.month);
     expect(area?.summary).toBe('paid');
+    expect(area?.figures).toMatchObject({ rent: RENT, received: 5 * RENT, remaining: 0 });
     expect(area?.months.slice(0, 6).map((box) => box.status)).toEqual([
       ...Array<string>(5).fill('paid'),
       'upcoming',

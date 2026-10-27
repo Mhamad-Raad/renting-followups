@@ -9,7 +9,7 @@ import {
   type YearMonth,
 } from './dates';
 import type { CategoryColor } from './categories';
-import type { MonthBox, StatusChange, YearSummary } from './months';
+import type { MonthBox, StatusChange, YearFigures, YearSummary } from './months';
 import { normalizeText } from './normalizeText';
 import { priceForMonth, type PriceRow } from './prices';
 
@@ -164,8 +164,11 @@ export interface AreaListItem {
   renterPhone: string | null;
   /** This month's price; 0 = vacant, null = rent has not started yet. */
   currentPrice: number | null;
+  notes: string;
   /** The 12 months of the current year. */
   months: MonthBox[];
+  /** Rent, total, received and still owed for the current year. */
+  figures: YearFigures;
   summary: YearSummary;
 }
 

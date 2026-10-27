@@ -289,9 +289,16 @@ describe('prices', () => {
 describe('month boxes', () => {
   const statusesOf = (boxes: { status: string }[] | undefined) => boxes?.map((box) => box.status);
 
-  it("lists each area with this year's month boxes and summary", () => {
-    createArea({ rentStartsFrom: { year: 2026, month: 3 } });
+  it("lists each area with this year's month boxes, figures, summary and notes", () => {
+    createArea({ rentStartsFrom: { year: 2026, month: 3 }, notes: 'Key with the guard' });
     const [area] = repos.areaViews.list({ search: '', categoryId: null }, TODAY);
+    expect(area?.notes).toBe('Key with the guard');
+    expect(area?.figures).toEqual({
+      rent: 250_000,
+      expected: 10 * 250_000,
+      received: 0,
+      remaining: 8 * 250_000,
+    });
     expect(statusesOf(area?.months)).toEqual([
       'not_applicable',
       'not_applicable',
