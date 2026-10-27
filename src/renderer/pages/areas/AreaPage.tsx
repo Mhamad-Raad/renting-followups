@@ -129,8 +129,8 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
           currentYear={today.year}
           onEdit={(receipt) => open({ kind: 'payment', mode: { kind: 'edit', receipt } })}
           onCancel={(receipt) => open({ kind: 'cancelReceipt', receipt })}
-          onPrint={(receipt) => actions.printReceipt(receipt.id)}
-          printing={actions.printing}
+          onSavePdf={(receipt) => actions.saveReceiptPdf(receipt.id)}
+          saving={actions.saving}
           onPickMonth={(box) =>
             void monthPick.pick({
               areaId: area.id,

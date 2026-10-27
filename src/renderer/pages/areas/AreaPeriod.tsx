@@ -21,8 +21,8 @@ interface AreaPeriodProps {
   currentYear: number;
   onEdit: (receipt: Receipt) => void;
   onCancel: (receipt: Receipt) => void;
-  onPrint: (receipt: Receipt) => void;
-  printing: boolean;
+  onSavePdf: (receipt: Receipt) => void;
+  saving: boolean;
   /** A click on a month box: mark it paid, or not paid (ARCHITECTURE.md section 7.4). */
   onPickMonth: (box: MonthBox) => void;
 }
@@ -34,8 +34,8 @@ export function AreaPeriod({
   currentYear,
   onEdit,
   onCancel,
-  onPrint,
-  printing,
+  onSavePdf,
+  saving,
   onPickMonth,
 }: AreaPeriodProps) {
   const { t } = useTranslation();
@@ -113,8 +113,8 @@ export function AreaPeriod({
             receipts={receipts.state.data}
             onEdit={onEdit}
             onCancel={onCancel}
-            onPrint={onPrint}
-            printing={printing}
+            onSavePdf={onSavePdf}
+            saving={saving}
           />
         )}
       </section>

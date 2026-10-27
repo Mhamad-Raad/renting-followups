@@ -62,8 +62,8 @@ export function useAreaActions(
   // The payment saved last on this screen; it can be undone for as long as the screen is open.
   const [undoable, setUndoable] = useState<Undoable | null>(null);
   const printing = usePrint();
-  const printReceipt = (id: number) =>
-    void printing.run({ kind: 'receipt', id, output: 'printer' });
+  // Receipts are only ever saved as PDF from here (owner's decision); printing is done from the PDF.
+  const saveReceiptPdf = (id: number) => void printing.run({ kind: 'receipt', id, output: 'pdf' });
   const close = () => setDialog(null);
 
   /** A change was saved: say so, and offer Undo when it made a receipt. */
@@ -80,9 +80,9 @@ export function useAreaActions(
     setProblem(message);
   };
 
-  const paymentSaved = ({ message, undo, print }: PaymentSaved) => {
+  const paymentSaved = ({ message, undo, pdf }: PaymentSaved) => {
     done(message, undo ?? null);
-    if (print && undo) printReceipt(undo.id);
+    if (pdf && undo) saveReceiptPdf(undo.id);
   };
 
   // Undo and Cancel receipt both cancel the receipt: it stays listed, and its number is never reused.
@@ -122,8 +122,8 @@ export function useAreaActions(
           <div className={styles.saved}>
             <span>{notice}</span>
             {undoable && undoable.receiptNumber !== null && (
-              <BigButton disabled={printing.busy} onClick={() => printReceipt(undoable.id)}>
-                {t('print.actions.printReceipt')}
+              <BigButton disabled={printing.busy} onClick={() => saveReceiptPdf(undoable.id)}>
+                {t('print.actions.receiptPdf')}
               </BigButton>
             )}
             {undoable && <BigButton onClick={undo}>{t('receipts.undo')}</BigButton>}
@@ -178,5 +178,13 @@ export function useAreaActions(
     </>
   );
 
-  return { open: setDialog, done, fail, printReceipt, printing: printing.busy, feedback, dialogs };
+  return {
+    open: setDialog,
+    done,
+    fail,
+    saveReceiptPdf,
+    saving: printing.busy,
+    feedback,
+    dialogs,
+  };
 }

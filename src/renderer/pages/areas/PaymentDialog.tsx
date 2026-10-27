@@ -36,8 +36,8 @@ export interface PaymentSaved {
   message: string;
   /** Set for a new payment, which can be undone. */
   undo?: { id: number; receiptNumber: number | null };
-  /** "Save and print receipt" was pressed: print the new receipt now. */
-  print?: boolean;
+  /** "Save and make receipt PDF" was pressed: save the new receipt as a PDF now. */
+  pdf?: boolean;
 }
 
 interface PaymentDialogProps {
@@ -116,7 +116,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
         ? t('areaForm.problems.not_found')
         : t(`paymentDialog.${result.reason}`);
 
-  const submit = async (print = false) => {
+  const submit = async (pdf = false) => {
     setShowProblems(true);
     if (amount === null || amount === 0 || busy) return;
     setBusy(true);
@@ -145,7 +145,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
               number: formatReceiptNumber(receiptNumber, settings.digitStyle),
             }),
       undo: { id, receiptNumber },
-      print: print && receiptNumber !== null,
+      pdf: pdf && receiptNumber !== null,
     });
   };
 
@@ -189,7 +189,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
         </BigButton>
         {mode.kind === 'new' && (
           <BigButton disabled={busy} onClick={() => void submit(true)}>
-            {t('print.actions.saveAndPrint')}
+            {t('print.actions.saveWithPdf')}
           </BigButton>
         )}
         <BigButton onClick={onClose}>{t('common.cancel')}</BigButton>
