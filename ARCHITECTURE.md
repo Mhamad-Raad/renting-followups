@@ -150,7 +150,7 @@ Database settings: WAL mode, `foreign_keys = ON`, all multi-row writes inside tr
 Records edits and voids of receipts, price changes, renter changes, deletes and restores. Read-only list viewable from Settings.
 
 ### settings
-Key/value table: `language, digit_style, theme_mode, theme_color, font_family, font_size, print_title, logo_path, backup_folder, last_backup_at, remind_days_before_month_end, password_hash, password_salt, recovery_hash, recovery_salt, last_receipt_number, report_filters_last_used`
+Key/value table: `language, digit_style, theme_mode, theme_color, sidebar_style, font_family, font_size, print_title, logo_path, backup_folder, last_backup_at, remind_days_before_month_end, password_hash, password_salt, recovery_hash, recovery_salt, last_receipt_number, report_filters_last_used`
 
 ### schema_version
 `version, applied_at`. Migrations run automatically on startup, in order, inside a transaction, after an automatic safety snapshot of the database.
@@ -345,7 +345,7 @@ The popup and the page use the same function so they never disagree. Also fire a
 One page, grouped into big sections, each with a short plain label and live preview where relevant:
 
 - **Language** (Sorani / English / Arabic) and **Number style** (1 2 3 / ١ ٢ ٣).
-- **Appearance:** **Light mode / Dark mode** toggle; **Theme colour** (6-8 ready-made colour choices shown as large swatches); **Font family** (choose from a list of bundled fonts, each shown in its own font, including at least 4 fonts that support Sorani well); **Font size** (Small / Normal / Large / Extra large, default Normal, applied app-wide via a CSS variable).
+- **Appearance:** **Light mode / Dark mode** toggle; **Theme colour** (6-8 ready-made colour choices shown as large swatches, blue by default); **Sidebar** (Light / Dark navy, light by default); **Font family** (choose from a list of bundled fonts, each shown in its own font, including at least 4 fonts that support Sorani well); **Font size** (Small / Normal / Large / Extra large, default Normal, applied app-wide via a CSS variable).
 - **Printing:** **Print title** (text, optional) and **Logo** (choose an image file, optional; copied into the app data folder; shown on reports and receipts; a **Remove logo** button). Include a live **print preview** of a sample receipt header.
 - **Reminders:** days before month end (default 7).
 - **Backup:** folder, **Back up now**, **Restore from backup** (see section 13).
