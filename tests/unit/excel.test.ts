@@ -134,7 +134,7 @@ describe('Excel report', () => {
       .worksheets[0];
     expect(sorani?.views[0]?.rightToLeft).toBe(true);
     expect(sorani?.getRow(4).getCell(1).value).toBe('شوێن');
-    expect(sorani?.getRow(5).getCell(5).numFmt).toBe('#,##0 "دینار"');
+    expect(sorani?.getRow(5).getCell(5).numFmt).toBe('#,##0 "IQD"');
     const english = buildReportWorkbook(REPORT, QUERY, { ...OPTIONS, language: 'en' })
       .worksheets[0];
     expect(english?.views[0]?.rightToLeft).toBe(false);

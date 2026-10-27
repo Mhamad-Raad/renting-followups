@@ -61,7 +61,7 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
   const updateCurrency = db.prepare<[Currency, number]>(
     'UPDATE areas SET currency = ? WHERE id = ?',
   );
-  // A corrected currency keeps the written rent: 1,100,000.00 dollars becomes 1,100,000 dinar.
+  // A corrected currency keeps the written rent: 1,100,000.00 USD becomes 1,100,000 IQD.
   const rescalePrices = db.prepare<[number, number]>(
     'UPDATE area_prices SET monthly_price = CAST(ROUND(monthly_price * ?) AS INTEGER) WHERE area_id = ?',
   );
