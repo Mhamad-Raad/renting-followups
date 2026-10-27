@@ -173,6 +173,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
       />
       <Form className={styles.form} onSubmit={() => void submit()}>
         <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>{t('areaForm.sections.place')}</h2>
           <TextField
             label={`${t('areaForm.name')} ${t('common.optional')}`}
             hint={t('areaForm.nameHint')}
@@ -213,6 +214,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
         </section>
 
         <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>{t('areaForm.sections.rent')}</h2>
           <RentFields
             area={area}
             rent={rent}
@@ -232,6 +234,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
         )}
 
         <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>{t('areaForm.sections.more')}</h2>
           <TextField
             label={`${t('areaForm.address')} ${t('common.optional')}`}
             value={address}
@@ -264,11 +267,15 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
         </section>
 
         {problem && (
-          <Notice tone="error">
-            {problem === 'unexpected' ? t('errors.unexpected') : t(`areaForm.problems.${problem}`)}
-          </Notice>
+          <div className={styles.wide}>
+            <Notice tone="error">
+              {problem === 'unexpected'
+                ? t('errors.unexpected')
+                : t(`areaForm.problems.${problem}`)}
+            </Notice>
+          </div>
         )}
-        <div className={styles.actions}>
+        <div className={`${styles.wide} ${styles.actions}`}>
           <BigButton type="submit" variant="primary" disabled={busy}>
             {t('areaForm.save')}
           </BigButton>

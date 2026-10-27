@@ -256,6 +256,11 @@
     "listSeparator": ", "
   },
   "areaForm": {
+    "sections": {
+      "place": "Place",
+      "rent": "Rent",
+      "more": "More details"
+    },
     "newTitle": "Add area",
     "editTitle": "Edit area",
     "name": "Area name",

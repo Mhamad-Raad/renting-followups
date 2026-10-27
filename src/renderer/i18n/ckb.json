@@ -256,6 +256,11 @@
     "listSeparator": "، "
   },
   "areaForm": {
+    "sections": {
+      "place": "شوێن",
+      "rent": "کرێ",
+      "more": "زانیاری زیاتر"
+    },
     "newTitle": "زیادکردنی شوێن",
     "editTitle": "دەستکاریکردنی شوێن",
     "name": "ناوی شوێن",

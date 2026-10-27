@@ -256,6 +256,11 @@
     "listSeparator": "، "
   },
   "areaForm": {
+    "sections": {
+      "place": "العقار",
+      "rent": "الإيجار",
+      "more": "تفاصيل أخرى"
+    },
     "newTitle": "إضافة عقار",
     "editTitle": "تعديل العقار",
     "name": "اسم العقار",
