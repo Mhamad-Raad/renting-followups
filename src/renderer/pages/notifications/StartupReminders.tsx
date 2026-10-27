@@ -38,7 +38,7 @@ export function StartupReminders() {
   const close = () => setDismissed(true);
   const rest = areaItems.length - POPUP_LIMIT;
   return (
-    <Dialog open={open} title={t('notifications.popupTitle')} onClose={close} size="wide">
+    <Dialog open={open} title={t('notifications.popupTitle')} onClose={close} size="large">
       <div className={styles.popup}>
         {areaItems.length > 0 && (
           <p className={styles.summary}>

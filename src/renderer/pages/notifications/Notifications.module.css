@@ -88,8 +88,9 @@
   color: var(--color-text-muted);
 }
 
+/* As tall as the window allows below the title, the backup box and the buttons. */
 .popupList {
-  max-height: 46vh;
+  max-height: max(14rem, calc(100vh - 26rem));
   overflow-y: auto;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);

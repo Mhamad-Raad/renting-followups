@@ -6,8 +6,8 @@ interface DialogProps {
   title: string;
   /** Called for Esc; the parent decides whether to close. */
   onClose: () => void;
-  /** 'wide' for a dialog that shows a list, such as the reminders on opening. */
-  size?: 'normal' | 'wide';
+  /** 'wide' for a form with long rows of buttons; 'large' for a long list, such as the reminders on opening. */
+  size?: 'normal' | 'wide' | 'large';
   children: ReactNode;
 }
 
@@ -33,7 +33,7 @@ export function Dialog({ open, title, onClose, size = 'normal', children }: Dial
   return (
     <dialog
       ref={dialogRef}
-      className={size === 'wide' ? `${styles.dialog} ${styles.wide}` : styles.dialog}
+      className={size === 'normal' ? styles.dialog : `${styles.dialog} ${styles[size]}`}
       aria-labelledby={titleId}
       onCancel={(event) => {
         // Esc: let React decide, so the open prop stays the single source of truth.
