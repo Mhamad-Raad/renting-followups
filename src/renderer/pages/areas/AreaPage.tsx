@@ -20,7 +20,7 @@ import { AreaFacts } from './AreaFacts';
 import { AreaHistory } from './AreaHistory';
 import { AreaPeriod } from './AreaPeriod';
 import styles from './AreaPage.module.css';
-import { RECORD_PAYMENT_PARAM } from './links';
+import { AREA_ACTION_PARAM, editAreaLink, isAreaAction, type AreaAction } from './links';
 import { parseRouteId } from '../../app/parseRouteId';
 import { PaymentDialog, type PaymentMode, type PaymentSaved } from './PaymentDialog';
 import { PriceDialog, type PriceMode } from './PriceDialog';
@@ -35,6 +35,17 @@ type OpenDialog =
   | { kind: 'renter' }
   | { kind: 'delete' }
   | null;
+
+/** The dialog each action from another screen opens (see `areaActionLink`). */
+const ACTION_DIALOGS: Record<AreaAction, NonNullable<OpenDialog>> = {
+  payment: { kind: 'payment', mode: { kind: 'new' } },
+  pastPayment: { kind: 'payment', mode: { kind: 'past' } },
+  changePrice: { kind: 'price', mode: 'change' },
+  markVacant: { kind: 'price', mode: 'vacant' },
+  setRentAgain: { kind: 'price', mode: 'rentAgain' },
+  changeRenter: { kind: 'renter' },
+  delete: { kind: 'delete' },
+};
 
 /** One area: its details, its price and renter history, and the actions that change them. */
 export function AreaPage() {
@@ -67,12 +78,13 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
   const flashed = useFlashNotice();
   const [notice, setNotice] = useState<string | null>(flashed);
   const [searchParams, setSearchParams] = useSearchParams();
-  // Opened from Home's "Record payment": start with the payment form open.
-  const [dialog, setDialog] = useState<OpenDialog>(() =>
-    searchParams.has(RECORD_PAYMENT_PARAM) ? { kind: 'payment', mode: { kind: 'new' } } : null,
-  );
+  // Opened with an action (Home's "Record payment", the Areas list's ⋯ menu): start with its dialog open.
+  const [dialog, setDialog] = useState<OpenDialog>(() => {
+    const action = searchParams.get(AREA_ACTION_PARAM);
+    return isAreaAction(action) ? ACTION_DIALOGS[action] : null;
+  });
   useEffect(() => {
-    if (searchParams.has(RECORD_PAYMENT_PARAM)) void setSearchParams({}, { replace: true });
+    if (searchParams.has(AREA_ACTION_PARAM)) void setSearchParams({}, { replace: true });
   }, [searchParams, setSearchParams]);
   const [problem, setProblem] = useState<string | null>(null);
   // The payment saved last on this screen; it can be undone for as long as the screen is open.
@@ -156,7 +168,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
             >
               {t('area.recordPayment')}
             </BigButton>
-            <LinkButton to={`/areas/${area.id}/edit`}>{t('common.edit')}</LinkButton>
+            <LinkButton to={editAreaLink(area.id)}>{t('common.edit')}</LinkButton>
             <BigButton onClick={() => setDialog({ kind: 'delete' })}>
               {t('common.delete')}
             </BigButton>
