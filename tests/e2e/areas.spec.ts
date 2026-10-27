@@ -435,3 +435,29 @@ test('the currency can be corrected on Edit until the first payment', async () =
     removeDataDir(dataDir);
   }
 });
+
+test('a click on the dark background closes a dialog; a click inside does not', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    await createAreasThroughIpc(page, ['Shop 1']);
+    await reloadApp(page);
+    await page.getByRole('link', { name: 'Shop 1' }).click();
+    await page.getByRole('button', { name: en.area.changePrice }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+
+    // Inside, on the dialog's own empty margin: it stays open.
+    const box = await dialog.boundingBox();
+    if (!box) throw new Error('dialog not drawn');
+    await page.mouse.click(box.x + 4, box.y + 4);
+    await expect(dialog).toBeVisible();
+
+    // On the dark background: it closes, like Esc.
+    await page.mouse.click(5, 5);
+    await expect(dialog).toBeHidden();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
