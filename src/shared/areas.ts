@@ -117,6 +117,8 @@ export const areaUpdateSchema = z
     contractStart: dateStringSchema.nullable(),
     notes: z.string().max(NOTES_MAX),
     renter: renterDetails.optional(),
+    /** A corrected currency; allowed only while the area has no payments (see `hasPayments`). */
+    currency: z.enum(CURRENCIES).optional(),
   })
   .strict();
 export type AreaUpdate = z.infer<typeof areaUpdateSchema>;
@@ -187,6 +189,8 @@ export interface AreaDetails {
   prices: PriceRow[];
   /** Newest first; the current renter (if any) has no end date. */
   renters: Renter[];
+  /** True once a payment counts for the area; from then on its currency is fixed. */
+  hasPayments: boolean;
 }
 
 export interface DeletedItems {
@@ -196,7 +200,10 @@ export interface DeletedItems {
 
 export type AreaSaveResult =
   | { ok: true; id: number }
-  | { ok: false; reason: 'duplicate_name' | 'not_found' | 'category_not_found' };
+  | {
+      ok: false;
+      reason: 'duplicate_name' | 'not_found' | 'category_not_found' | 'has_payments';
+    };
 
 export type PriceChangeResult =
   { ok: true } | { ok: false; reason: 'not_found' | 'before_rent_start' | 'no_room' };

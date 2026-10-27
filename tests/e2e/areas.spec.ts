@@ -393,3 +393,43 @@ test("a row's ⋯ menu lists the area's actions and opens the chosen one on the 
     removeDataDir(dataDir);
   }
 });
+
+test('the currency can be corrected on Edit until the first payment', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    await createAreasThroughIpc(page, ['Shop 1']);
+    await reloadApp(page);
+    await page.getByRole('link', { name: 'Shop 1' }).click();
+    await page.getByRole('link', { name: en.common.edit }).click();
+    await page
+      .getByRole('group', { name: en.areaForm.currency })
+      .getByRole('radio', { name: en.currency.USD })
+      .check();
+    await page.getByRole('button', { name: en.areaForm.save }).click();
+    await expect(page.getByText(en.areaForm.saved)).toBeVisible();
+    // The rent keeps its written number in the new currency.
+    await expect(page.getByText('250,000.00 USD').first()).toBeVisible();
+
+    const areaId = Number(page.url().match(/areas\/(\d+)/)?.[1]);
+    await page.evaluate(async (id) => {
+      const year = new Date().getFullYear();
+      const paid = await window.api.invoke('payments:create', {
+        areaId: id,
+        isBackfill: true,
+        amount: 25_000_000,
+        from: { year, month: 1 },
+        paidOn: `${year}-01-01`,
+        note: '',
+      });
+      if (!paid.ok || !paid.data.ok) throw new Error('payment failed');
+    }, areaId);
+    await reloadApp(page);
+    await page.getByRole('link', { name: en.common.edit }).click();
+    await expect(page.getByRole('group', { name: en.areaForm.currency })).toHaveCount(0);
+    await expect(page.getByText(en.areaForm.currencyFixed)).toBeVisible();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});

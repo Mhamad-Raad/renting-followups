@@ -62,6 +62,7 @@ describe('creating areas', () => {
           endedOn: null,
         },
       ],
+      hasPayments: false,
     });
     expect(auditFor(id).map((entry) => entry.action)).toEqual(['create']);
   });
@@ -154,13 +155,6 @@ describe('creating areas', () => {
       ok: false,
       reason: 'category_not_found',
     });
-  });
-
-  it('never lets the currency change, even by direct SQL', () => {
-    const id = createArea();
-    expect(() => db.prepare("UPDATE areas SET currency = 'USD' WHERE id = ?").run(id)).toThrow(
-      /currency cannot change/,
-    );
   });
 
   it('leaves nothing behind when part of the creation fails', () => {

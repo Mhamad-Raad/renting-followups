@@ -376,3 +376,47 @@ describe('editing and cancelling receipts', () => {
     expect(repos.paid.latestPaidOn()).toBe('2026-04-20');
   });
 });
+
+describe('correcting an area currency', () => {
+  const edit = (currency: 'IQD' | 'USD') => {
+    const area = repos.areas.get(areaId);
+    if (!area) throw new Error('no area');
+    return repos.areas.update({
+      id: areaId,
+      categoryId: area.category.id,
+      name: area.name,
+      address: area.address,
+      contractStart: area.contractStart,
+      notes: area.notes,
+      currency,
+    });
+  };
+
+  it('changes while there are no payments, and the rent keeps its written number', () => {
+    expect(repos.areas.get(areaId)?.hasPayments).toBe(false);
+    expect(edit('USD')).toEqual({ ok: true, id: areaId });
+    // 250,000 dinar becomes 250,000.00 dollars (stored in cents).
+    expect(repos.areas.get(areaId)).toMatchObject({
+      currency: 'USD',
+      prices: [expect.objectContaining({ monthlyPrice: RENT * 100 })],
+    });
+    expect(edit('IQD')).toEqual({ ok: true, id: areaId });
+    expect(repos.areas.get(areaId)?.prices[0]?.monthlyPrice).toBe(RENT);
+  });
+
+  it('is refused once a payment counts, and allowed again after it is cancelled', () => {
+    const { id } = payOk();
+    expect(repos.areas.get(areaId)?.hasPayments).toBe(true);
+    expect(edit('USD')).toEqual({ ok: false, reason: 'has_payments' });
+    expect(repos.areas.get(areaId)?.currency).toBe('IQD');
+    repos.payments.void(id);
+    expect(edit('USD')).toEqual({ ok: true, id: areaId });
+  });
+
+  it('is blocked by the database itself once a payment counts', () => {
+    payOk();
+    expect(() => db.prepare("UPDATE areas SET currency = 'USD' WHERE id = ?").run(areaId)).toThrow(
+      /cannot change once it has payments/,
+    );
+  });
+});

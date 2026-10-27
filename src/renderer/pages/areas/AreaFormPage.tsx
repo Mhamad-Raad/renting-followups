@@ -31,7 +31,12 @@ import { parseRouteId } from '../../app/parseRouteId';
 const NEW_CATEGORY = 'new';
 
 type Problem =
-  'duplicate_name' | 'category_not_found' | 'not_found' | 'duplicate_category' | 'unexpected';
+  | 'duplicate_name'
+  | 'category_not_found'
+  | 'not_found'
+  | 'duplicate_category'
+  | 'has_payments'
+  | 'unexpected';
 
 /** Add area (`/areas/new`) or Edit area (`/areas/:id/edit`). */
 export function AreaFormPage() {
@@ -66,7 +71,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
   const [categoryChoice, setCategoryChoice] = useState(area ? String(area.category.id) : '');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [rent, setRent] = useState<NewRent>({
-    currency: 'IQD',
+    currency: area?.currency ?? 'IQD',
     monthlyPrice: null,
     vacant: false,
     startsFrom: yearMonthOf(today),
@@ -152,6 +157,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
           id: area.id,
           ...common,
           ...(renterDetails && renterNow ? { renter: renterDetails } : {}),
+          ...(rent.currency === area.currency ? {} : { currency: rent.currency }),
         })
       : await callIpc('areas:create', {
           ...common,
