@@ -60,7 +60,7 @@ export const DEFAULT_SETTINGS: Settings = {
   digitStyle: 'western',
   themeMode: 'light',
   fontSize: 'normal',
-  themeColor: 'green',
+  themeColor: 'blue',
   fontFamily: 'noto-sans-arabic',
   remindDays: DEFAULT_REMIND_DAYS,
   printTitle: '',

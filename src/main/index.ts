@@ -39,7 +39,7 @@ const DATABASE_FILE = 'rent-tracker.db';
 const MEMORY_LOG_INTERVAL_MS = 30_000;
 const RESTART_DELAY_MS = 150;
 // Matches the page background of each theme, so the window never flashes white.
-const WINDOW_BACKGROUND: Record<ThemeMode, string> = { light: '#f6f4ef', dark: '#1b1d21' };
+const WINDOW_BACKGROUND: Record<ThemeMode, string> = { light: '#f4f6f9', dark: '#1b1d21' };
 
 let memoryLogTimer: NodeJS.Timeout | null = null;
 let mainWindow: BrowserWindow | null = null;

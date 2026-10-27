@@ -38,15 +38,15 @@
   background: var(--color-accent-hover);
 }
 
-/* Softly tinted in the theme colour, so the screen feels warm rather than a wall of grey outlines. */
+/* Plain and quiet, so only the main action of a screen carries the theme colour. */
 .secondary {
-  background: var(--color-accent-soft);
-  border-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
-  color: var(--color-accent-hover);
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text);
 }
 .secondary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
-  border-color: var(--color-accent);
+  background: var(--color-surface-muted);
+  border-color: var(--color-control-border);
 }
 
 .danger {

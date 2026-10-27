@@ -63,7 +63,7 @@ describe('settings repository', () => {
     ['remind_days_before_month_end', 'soon', 'remindDays'],
     ['remind_days_before_month_end', '0', 'remindDays'],
     ['font_family', 'Comic Sans', 'fontFamily'],
-    ['theme_color', 'green', 'themeColor'],
+    ['theme_color', 'orange', 'themeColor'],
   ] as const)('falls back to the default when %s is %j', (key, value, name) => {
     db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run(key, value);
     expect(createSettingsRepository(db).getAll()[name]).toBe(DEFAULT_SETTINGS[name]);
