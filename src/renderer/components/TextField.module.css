@@ -38,6 +38,7 @@
 
 .input:focus-visible {
   border-color: var(--color-accent);
+  box-shadow: var(--field-focus);
 }
 
 .input[aria-invalid='true'] {

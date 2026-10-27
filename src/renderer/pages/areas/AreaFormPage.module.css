@@ -54,6 +54,7 @@
 
 .notes textarea:focus-visible {
   border-color: var(--color-accent);
+  box-shadow: var(--field-focus);
 }
 
 .actions {

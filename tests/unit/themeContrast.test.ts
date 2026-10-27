@@ -65,12 +65,16 @@ const TEXT_PAIRS: [string, string][] = [
   ['status-na', 'status-na-bg'],
 ];
 
-// Edges and the focus ring next to them; WCAG asks for 3:1 for parts of controls.
+// Edges of controls; WCAG asks for 3:1 for parts of controls.
 const CONTROL_PAIRS: [string, string][] = [
   ['color-control-border', 'color-surface'],
   ['color-control-border', 'color-background'],
-  ['color-focus', 'color-surface'],
-  ['color-focus', 'color-background'],
+];
+
+// The focus ring and a focused field's edge are drawn in the theme colour.
+const FOCUS_PAIRS: [string, string][] = [
+  ['color-accent', 'color-surface'],
+  ['color-accent', 'color-background'],
 ];
 
 /** The colours a theme colour gives the accent tokens, as themes.css maps them. */
@@ -112,6 +116,10 @@ describe.each([
 
     it.each(TEXT_PAIRS)('%s on %s is readable (at least 4.5:1)', (foreground, background) => {
       expect(contrast(color(foreground), color(background))).toBeGreaterThanOrEqual(4.5);
+    });
+
+    it.each(FOCUS_PAIRS)('focus in %s on %s is easy to see (at least 3:1)', (part, background) => {
+      expect(contrast(color(part), color(background))).toBeGreaterThanOrEqual(3);
     });
   });
 

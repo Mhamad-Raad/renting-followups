@@ -15,7 +15,6 @@
   --color-text-muted: #545b63;
   --color-danger: #b3261e;
   --color-danger-hover: #93201a;
-  --color-focus: #b45f06;
   --color-backdrop: rgb(20 22 26 / 45%);
   --shadow-card: 0 1px 2px rgb(0 0 0 / 6%), 0 2px 8px rgb(0 0 0 / 5%);
   --shadow-dialog: 0 12px 40px rgb(0 0 0 / 22%);
@@ -73,7 +72,6 @@
   --color-text-muted: #aab0b8;
   --color-danger: #f08a80;
   --color-danger-hover: #f5a59d;
-  --color-focus: #f0b45a;
   --color-backdrop: rgb(0 0 0 / 60%);
   --shadow-card: 0 1px 2px rgb(0 0 0 / 30%);
   --shadow-dialog: 0 12px 40px rgb(0 0 0 / 55%);
