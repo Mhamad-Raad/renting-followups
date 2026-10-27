@@ -23,6 +23,7 @@
 - Month boxes (2026-10-25, on `iter-13-polish`): numbers instead of symbols in strips and the PDF; click a box to mark a month paid (receipt) or not paid (taken out of its receipts), after a question; no Print button on the area page. 666 unit tests and 56 end-to-end tests. Review: `docs/reviews/review-2026-10-25-month-boxes.md`.
 - Iteration 13 (merged, tag `iter-13`): whole-app polish. Dialogs start on the safe button (Cancel on Restore), clearer focus and edges, calmer motion, Try again on every screen that cannot load, plain messages when a file cannot be saved, month ranges and page numbers in the right order in every language, month boxes that fit any amount, clearer wording in all three languages. 200 areas with five years of payments: every screen opens in a quarter of a second or less; memory stays flat. 622 unit tests and 53 end-to-end tests pass.
 - Collapsible sidebar (2026-10-27, on `iter-14-packaging`, owner's request): opens collapsed to its icons every time; a button at its top shows or hides the names. 669 unit tests and 58 end-to-end tests pass.
+- Owner's UI updates (2026-10-27): slimmer page margins and wider pages; the dock icon on a Mac; the Areas table shows monthly rent, total for the year, received, still owed, the boxes, notes and a ⋯ menu with every area action (opens the area page with that action ready). 669 unit tests and 59 end-to-end tests pass.
 
 ## Next
 
