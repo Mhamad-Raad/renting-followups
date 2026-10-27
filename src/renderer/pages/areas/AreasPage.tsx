@@ -8,13 +8,15 @@ import {
   hasOwnName,
   nameCollator,
   SEARCH_MAX,
+  type AreaDetails,
   type AreaListItem,
 } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
 import type { TFunction } from 'i18next';
 import type { MonthBox } from '@shared/months';
 import { PART_SEPARATOR } from '@shared/reportText';
-import { useIpcQuery, type QueryState } from '../../app/ipc';
+import { callIpc, useIpcQuery, type QueryState } from '../../app/ipc';
+import { useMountedRef } from '../../app/useMountedRef';
 import { useFlashNotice } from '../../app/flash';
 import { useSettings } from '../../app/SettingsContext';
 import { useDebouncedValue } from '../../app/useDebouncedValue';
@@ -32,9 +34,10 @@ import { PhoneText } from '../../components/PhoneText';
 import { SearchField } from '../../components/SearchField';
 import styles from './AreasPage.module.css';
 import { ReportOutputButtons } from '../../print/ReportOutputButtons';
-import { areaActionLink, editAreaLink, type AreaAction } from './links';
+import { editAreaLink, type AreaAction } from './links';
 import { NoAreasYet } from './NoAreasYet';
 import { RentText } from './RentText';
+import { ACTION_DIALOGS, useAreaActions } from './useAreaActions';
 import { useMonthPick, type MonthPickOutcome } from './useMonthPick';
 
 const SEARCH_DELAY_MS = 150;
@@ -60,16 +63,21 @@ const AreaStrip = memo(function AreaStrip({ area, year, onPick }: AreaStripProps
   );
 });
 
-/** The ⋯ menu of one row: the area page's actions, each opening that page with its dialog. */
-function rowActions(area: AreaListItem, t: TFunction, go: (to: string) => void): ActionMenuItem[] {
+/** The ⋯ menu of one row: the area page's actions, opened here on the list. Edit is its own page. */
+function rowActions(
+  area: AreaListItem,
+  t: TFunction,
+  choose: (areaId: number, action: AreaAction) => void,
+  edit: (areaId: number) => void,
+): ActionMenuItem[] {
   const action = (key: AreaAction, label: string): ActionMenuItem => ({
     label,
-    onSelect: () => go(areaActionLink(area.id, key)),
+    onSelect: () => choose(area.id, key),
   });
   return [
     action('payment', t('area.recordPayment')),
     action('pastPayment', t('area.recordPastPayment')),
-    { label: t('common.edit'), onSelect: () => go(editAreaLink(area.id)) },
+    { label: t('common.edit'), onSelect: () => edit(area.id) },
     action('changePrice', t('area.changePrice')),
     area.currentPrice === 0
       ? action('setRentAgain', t('area.setRentAgain'))
@@ -84,7 +92,7 @@ export function AreasPage() {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const navigate = useNavigate();
-  const notice = useFlashNotice();
+  const flashed = useFlashNotice();
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<number | null>(null);
   // Ticked areas, for Print selected and Export selected.
@@ -101,6 +109,25 @@ export function AreasPage() {
     refreshAreas();
   });
   const { pick } = monthPick;
+
+  // The area a ⋯ menu action is for; its details are loaded when the action is chosen.
+  const [target, setTarget] = useState<AreaDetails | null>(null);
+  const actions = useAreaActions(target, { onChanged: refreshAreas, initialNotice: flashed });
+  const { open: openDialog, fail } = actions;
+  const mounted = useMountedRef();
+  const chooseAction = async (areaId: number, action: AreaAction) => {
+    const result = await callIpc('areas:get', { id: areaId });
+    if (!mounted.current) return;
+    if (!result.ok || result.data === null) {
+      fail(t('errors.unexpected'));
+      return;
+    }
+    setTarget(result.data);
+    openDialog(ACTION_DIALOGS[action]);
+  };
+  // After saving, Edit comes back here rather than to the area page.
+  const editArea = (areaId: number) =>
+    void navigate(editAreaLink(areaId), { state: { returnTo: '/areas' } });
   const pickMonth = useCallback(
     (area: AreaListItem, box: MonthBox) =>
       void pick({ areaId: area.id, currency: area.currency, year, box }),
@@ -162,7 +189,7 @@ export function AreasPage() {
     return (
       <>
         {header}
-        {notice && <Notice tone="success">{notice}</Notice>}
+        {actions.feedback}
         <NoAreasYet />
       </>
     );
@@ -172,7 +199,7 @@ export function AreasPage() {
     <>
       {header}
       <div className={styles.stack}>
-        {notice && <Notice tone="success">{notice}</Notice>}
+        {actions.feedback}
         {pickOutcome && <Notice tone={pickOutcome.tone}>{pickOutcome.text}</Notice>}
         <div className={styles.chips} role="group" aria-label={t('areas.categories')}>
           {[{ id: null, name: t('areas.all'), color: null }, ...categories.state.data].map(
@@ -356,7 +383,12 @@ export function AreasPage() {
                     <td className={styles.menuCell} onClick={(event) => event.stopPropagation()}>
                       <ActionMenu
                         label={t('areas.actionsFor', { name: areaLabel(area) })}
-                        items={rowActions(area, t, (to) => void navigate(to))}
+                        items={rowActions(
+                          area,
+                          t,
+                          (areaId, action) => void chooseAction(areaId, action),
+                          editArea,
+                        )}
                       />
                     </td>
                   </tr>
@@ -367,6 +399,7 @@ export function AreasPage() {
         )}
       </div>
       {monthPick.dialog}
+      {actions.dialogs}
     </>
   );
 }

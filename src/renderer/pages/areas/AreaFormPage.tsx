@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import {
   ADDRESS_MAX,
   AREA_NAME_MAX,
@@ -56,6 +56,8 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
   const { t } = useTranslation();
   const mounted = useMountedRef();
   const navigate = useNavigate();
+  // Opened from the Areas list's ⋯ menu: go back there after saving, not to the area page.
+  const returnTo = (useLocation().state as { returnTo?: string } | null)?.returnTo ?? null;
   const categories = useIpcQuery('categories:list');
   const today = new Date();
   const renterNow = area ? currentRenter(area.renters) : null;
@@ -163,7 +165,9 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
     setBusy(false);
     if (!result.ok) setProblem('unexpected');
     else if (!result.data.ok) setProblem(result.data.reason);
-    else void navigate(`/areas/${result.data.id}`, { state: flash(t('areaForm.saved')) });
+    else {
+      void navigate(returnTo ?? `/areas/${result.data.id}`, { state: flash(t('areaForm.saved')) });
+    }
   }
 
   return (

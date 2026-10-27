@@ -331,7 +331,7 @@ test('ticked areas hidden by a search are not printed or counted', async () => {
   }
 });
 
-test("a row's ⋯ menu lists the area's actions and opens the chosen one", async () => {
+test("a row's ⋯ menu lists the area's actions and opens the chosen one on the list", async () => {
   const dataDir = createDataDir();
   const { app, page } = await openAreas(dataDir);
   try {
@@ -363,10 +363,32 @@ test("a row's ⋯ menu lists the area's actions and opens the chosen one", async
     await expect(menu).toBeHidden();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(en.pages.areas.title);
 
+    // The chosen action opens right here on the list; the page does not change.
+    await menuButton.click();
+    await page.getByRole('menuitem', { name: en.area.markVacant }).click();
+    const dialog = page.getByRole('dialog', { name: en.priceDialog.vacantTitle });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: en.common.save }).click();
+    await expect(page.getByText(en.priceDialog.vacantSaved)).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(en.pages.areas.title);
+    await expect(row).toContainText(en.areas.vacant);
+    await expect(row).toContainText(en.areas.noRenter);
+
+    // Edit is its own page, and saving it comes back to the list.
+    await menuButton.click();
+    await page.getByRole('menuitem', { name: en.common.edit }).click();
+    await page.getByRole('button', { name: en.areaForm.save }).click();
+    await expect(page.getByText(en.areaForm.saved)).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(en.pages.areas.title);
+
     await menuButton.click();
     await page.getByRole('menuitem', { name: en.common.delete }).click();
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Shop 7');
-    await expect(page.getByRole('dialog', { name: en.area.deleteTitle })).toBeVisible();
+    await page
+      .getByRole('dialog', { name: en.area.deleteTitle })
+      .getByRole('button', { name: en.common.delete })
+      .click();
+    await expect(page.getByText(en.areas.deleted)).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(en.pages.areas.title);
   } finally {
     await app.close();
     removeDataDir(dataDir);
