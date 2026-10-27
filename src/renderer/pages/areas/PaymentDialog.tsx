@@ -62,7 +62,7 @@ export function PaymentDialog({ area, mode, onSaved, onClose }: PaymentDialogPro
         });
   })();
   return (
-    <Dialog open={mode !== null} title={title} onClose={onClose}>
+    <Dialog open={mode !== null} title={title} onClose={onClose} size="wide">
       {mode?.kind === 'edit' ? (
         <PaymentForm
           area={area}
