@@ -32,7 +32,7 @@
   --sidebar-width: 15rem;
   /* Icons only: room for one icon with its padding and the current-page bar. */
   --sidebar-width-collapsed: 5.5rem;
-  --content-max-width: 72rem;
+  --content-max-width: 110rem;
   /* A thin gap in the surface colour, then the ring, so it shows on any button colour. */
   --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 5px var(--color-focus);
 
