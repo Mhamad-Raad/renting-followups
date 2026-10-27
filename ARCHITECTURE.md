@@ -118,7 +118,7 @@ Database settings: WAL mode, `foreign_keys = ON`, all multi-row writes inside tr
 
 ### areas
 `id, category_id → categories, name, name_normalized, currency ('IQD' | 'USD'), address (nullable), contract_start (nullable date, informational only), notes (text), deleted_at`
-- `currency` is chosen when the area is created and **cannot be changed afterwards**.
+- `currency` is chosen when the area is created. It can be **corrected on Edit until the area has a payment that counts** (cancelled receipts keep their own currency and do not block it); the rent keeps its written number (250,000 dinar becomes 250,000 dollars). From the first payment on it **cannot be changed**, enforced by the database. *(Owner's decision, 2026-10-27: a wrongly chosen currency must be fixable.)*
 - The area form requires **"Rent starts from" (month number + year, default current month)**. It becomes the first `area_prices` row and decides which months count as applicable.
 - The area name is **optional**: many owners know a place only by its category and its renter. An area without a name is shown everywhere by its **category** as its name, with the renter in their own column beside it (or on the line under it where there is no renter column), so places of one category are told apart by their renter. Lists sort by that name, then by renter. *(Owner's decision, iteration 13; the category replaced the renter as the name on 2026-10-26 at the client's request.)*
 - Area names that are filled in are unique within a category (warn, do not crash). Areas without a name never clash.
