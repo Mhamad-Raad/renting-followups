@@ -65,3 +65,11 @@ textarea {
 #root {
   min-height: 100vh;
 }
+
+/* On paper "one window tall" is a whole page; with the margins it spilled onto an empty last page. */
+@media print {
+  body,
+  #root {
+    min-height: 0;
+  }
+}

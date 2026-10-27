@@ -95,6 +95,8 @@ test('the report saves as PDF and as an Excel sheet that reads right to left', a
     );
     expect(printed).toEqual({ ok: true, data: { ok: true, done: 'saved' } });
     expect(readFileSync(pdf).subarray(0, 5).toString()).toBe('%PDF-');
+    // One area fits on one page; no empty page after it.
+    expect(readFileSync(pdf, 'latin1').match(/\/Type\s*\/Page[^s]/g)).toHaveLength(1);
 
     const xlsx = join(dataDir, 'report.xlsx');
     await chooseSavePath(app, xlsx);
