@@ -25,6 +25,7 @@
 - Collapsible sidebar (2026-10-27, on `iter-14-packaging`, owner's request): opens collapsed to its icons every time; a button at its top shows or hides the names. 669 unit tests and 58 end-to-end tests pass.
 - Owner's UI updates (2026-10-27): slimmer page margins and wider pages; the dock icon on a Mac; the Areas table shows monthly rent, total for the year, received, still owed, the boxes, notes and a ⋯ menu with every area action (opens the area page with that action ready). 669 unit tests and 59 end-to-end tests pass.
 - Vacant ends the renter (2026-10-27, owner's decision): Mark as vacant also ends the current renter; Change renter only adds a new renter; a new area marked vacant takes no renter. 671 unit tests and 59 end-to-end tests pass.
+- Receipts as PDF only and a wider payment form (2026-10-27, owner's request): every receipt button saves a PDF; the ⋯ menu actions open on the Areas list. 671 unit tests and 59 end-to-end tests pass.
 
 ## Next
 
