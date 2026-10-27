@@ -22,6 +22,7 @@ import { useSettings } from '../../app/SettingsContext';
 import { useDebouncedValue } from '../../app/useDebouncedValue';
 import { ActionMenu, type ActionMenuItem } from '../../components/ActionMenu';
 import { CategoryDot } from '../../components/CategoryDot';
+import { CurrencyTag } from '../../components/CurrencyTag';
 import { Checkbox } from '../../components/Checkbox';
 import { EmptyState } from '../../components/EmptyState';
 import { LoadError } from '../../components/LoadError';
@@ -262,10 +263,11 @@ export function AreasPage() {
                   </th>
                   <th>{t('areas.columns.name')}</th>
                   <th>{t('areas.columns.renter')}</th>
-                  <th>{t('areas.columns.rent')}</th>
-                  <th>{t('area.figures.expected')}</th>
-                  <th>{t('area.figures.received')}</th>
-                  <th>{t('area.figures.remaining')}</th>
+                  <th>{t('areaForm.currency')}</th>
+                  <th className={styles.money}>{t('areas.columns.rent')}</th>
+                  <th className={styles.money}>{t('area.figures.expected')}</th>
+                  <th className={styles.money}>{t('area.figures.received')}</th>
+                  <th className={styles.money}>{t('area.figures.remaining')}</th>
                   <th>{t('areas.columns.thisYear')}</th>
                   <th>{t('area.notes')}</th>
                   <th className={styles.menuCell}>
@@ -322,23 +324,40 @@ export function AreasPage() {
                         </span>
                       )}
                     </td>
-                    <td className={styles.number}>
-                      <RentText price={area.currentPrice} currency={area.currency} />
+                    <td>
+                      <CurrencyTag currency={area.currency} />
                     </td>
-                    <td className={styles.number}>
-                      <MoneyText amount={area.figures.expected} currency={area.currency} />
+                    <td className={styles.money}>
+                      <RentText
+                        price={area.currentPrice}
+                        currency={area.currency}
+                        withCurrency={false}
+                      />
                     </td>
-                    <td className={styles.number}>
-                      <MoneyText amount={area.figures.received} currency={area.currency} />
+                    <td className={styles.money}>
+                      <MoneyText
+                        amount={area.figures.expected}
+                        currency={area.currency}
+                        withCurrency={false}
+                      />
+                    </td>
+                    <td className={styles.money}>
+                      <MoneyText
+                        amount={area.figures.received}
+                        currency={area.currency}
+                        withCurrency={false}
+                      />
                     </td>
                     <td
                       className={
-                        area.figures.remaining > 0
-                          ? `${styles.number} ${styles.owed}`
-                          : styles.number
+                        area.figures.remaining > 0 ? `${styles.money} ${styles.owed}` : styles.money
                       }
                     >
-                      <MoneyText amount={area.figures.remaining} currency={area.currency} />
+                      <MoneyText
+                        amount={area.figures.remaining}
+                        currency={area.currency}
+                        withCurrency={false}
+                      />
                     </td>
                     <td>
                       <div className={styles.year}>

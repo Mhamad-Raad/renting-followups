@@ -338,7 +338,9 @@ test("a row's ⋯ menu lists the area's actions and opens the chosen one on the 
     await reloadApp(page);
     await page.getByRole('link', { name: en.nav.areas }).click();
     const row = page.getByRole('table').getByRole('row', { name: /Shop 7/ });
-    await expect(row).toContainText('250,000 IQD');
+    // The currency has its own column; the amount beside it is a bare number.
+    await expect(row.getByRole('cell').nth(3)).toHaveText('IQD');
+    await expect(row.getByRole('cell').nth(4)).toHaveText('250,000');
     const menuButton = row.getByRole('button', {
       name: en.areas.actionsFor.replace('{{name}}', 'Shop 7'),
     });

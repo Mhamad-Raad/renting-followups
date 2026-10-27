@@ -5,6 +5,7 @@ import { formatPlain } from '@shared/formatNumber';
 import type { ReportRow, ReportTotal } from '@shared/reports';
 import { useSettings } from '../../app/SettingsContext';
 import { CategoryDot } from '../../components/CategoryDot';
+import { CurrencyTag } from '../../components/CurrencyTag';
 import { EmptyState } from '../../components/EmptyState';
 import { MoneyText } from '../../components/MoneyText';
 import { MonthBoxes, monthWord, StatusPill, YearSummaryText } from '../../components/MonthBoxes';
@@ -32,6 +33,7 @@ export function ReportTable({ rows, totals, year, month }: ReportTableProps) {
           <tr>
             <th scope="col">{t('reports.columns.area')}</th>
             <th scope="col">{t('reports.columns.renter')}</th>
+            <th scope="col">{t('areaForm.currency')}</th>
             <th scope="col">{t('reports.columns.money')}</th>
             <th scope="col">
               {t('months.title', { year: formatPlain(year, settings.digitStyle) })}
@@ -53,9 +55,14 @@ export function ReportTable({ rows, totals, year, month }: ReportTableProps) {
                 })}
               </th>
               <td>
+                <CurrencyTag currency={total.currency} />
+              </td>
+              <td>
                 <MoneyLines
                   currency={total.currency}
-                  rent={<MoneyText amount={total.rent} currency={total.currency} />}
+                  rent={
+                    <MoneyText amount={total.rent} currency={total.currency} withCurrency={false} />
+                  }
                   received={total.received}
                   remaining={total.remaining}
                 />
@@ -88,11 +95,11 @@ function MoneyLines({
       <dd>{rent}</dd>
       <dt>{t('reports.columns.received')}</dt>
       <dd>
-        <MoneyText amount={received} currency={currency} />
+        <MoneyText amount={received} currency={currency} withCurrency={false} />
       </dd>
       <dt>{t('reports.columns.remaining')}</dt>
       <dd data-owed={remaining > 0 || undefined}>
-        <MoneyText amount={remaining} currency={currency} />
+        <MoneyText amount={remaining} currency={currency} withCurrency={false} />
       </dd>
     </dl>
   );
@@ -138,9 +145,12 @@ function ReportTableRow({
         )}
       </td>
       <td>
+        <CurrencyTag currency={row.currency} />
+      </td>
+      <td>
         <MoneyLines
           currency={row.currency}
-          rent={<RentText price={row.figures.rent} currency={row.currency} />}
+          rent={<RentText price={row.figures.rent} currency={row.currency} withCurrency={false} />}
           received={row.figures.received}
           remaining={row.figures.remaining}
         />

@@ -230,6 +230,9 @@
 
 .money dd {
   margin: 0;
+  /* Bare numbers (the currency has its own column), lined up on the right in every language. */
+  text-align: right;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 

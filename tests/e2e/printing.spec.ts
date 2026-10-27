@@ -111,7 +111,8 @@ test('the report saves as PDF and as an Excel sheet that reads right to left', a
     const sheet = workbook.worksheets[0];
     expect(sheet?.views[0]?.rightToLeft).toBe(true);
     expect(sheet?.getRow(5).getCell(1).value).toBe('دوکانی ١');
-    expect(sheet?.getRow(5).getCell(6).value).toBe(500_000);
+    expect(sheet?.getRow(5).getCell(5).value).toBe('IQD');
+    expect(sheet?.getRow(5).getCell(7).value).toBe(500_000);
     expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)).toBe(1);
   } finally {
     await app.close();

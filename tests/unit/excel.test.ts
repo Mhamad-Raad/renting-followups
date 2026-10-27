@@ -77,6 +77,7 @@ describe('Excel report', () => {
       'Category',
       'Renter',
       'Phone',
+      'Currency',
       'Monthly rent',
       'Received',
       'Still owed',
@@ -85,14 +86,17 @@ describe('Excel report', () => {
     ]);
     const shop = sheet?.getRow(5);
     expect(shop?.getCell(1).value).toBe('Shop 1');
-    expect(shop?.getCell(5).value).toBe(250_000);
-    expect(shop?.getCell(5).numFmt).toBe('#,##0 "IQD"');
-    expect(shop?.getCell(8).value).toBe(250_000);
-    expect(shop?.getCell(10).value).toBe('');
-    expect(shop?.getCell(20).value).toBe('Pays in cash');
+    // The currency has its own column; the amounts are bare numbers.
+    expect(shop?.getCell(5).value).toBe('IQD');
+    expect(shop?.getCell(6).value).toBe(250_000);
+    expect(shop?.getCell(6).numFmt).toBe('#,##0');
+    expect(shop?.getCell(9).value).toBe(250_000);
+    expect(shop?.getCell(11).value).toBe('');
+    expect(shop?.getCell(21).value).toBe('Pays in cash');
     // Dollars are stored in cents and shown with two decimals.
-    expect(sheet?.getRow(6).getCell(5).value).toBe(450.5);
-    expect(sheet?.getRow(6).getCell(5).numFmt).toBe('#,##0.00 "USD"');
+    expect(sheet?.getRow(6).getCell(5).value).toBe('USD');
+    expect(sheet?.getRow(6).getCell(6).value).toBe(450.5);
+    expect(sheet?.getRow(6).getCell(6).numFmt).toBe('#,##0.00');
   });
 
   it('names an area without a name by its category', () => {
@@ -116,15 +120,16 @@ describe('Excel report', () => {
       const value = sheet?.getRow(5).getCell(column).fill;
       return value && 'fgColor' in value ? value.fgColor?.argb : undefined;
     };
-    expect(fill(8)).toBe('FFdff0e0');
-    expect(fill(10)).toBe('FFf8dcd9');
-    expect(fill(19)).toBe('FFeceef0');
+    expect(fill(9)).toBe('FFdff0e0');
+    expect(fill(11)).toBe('FFf8dcd9');
+    expect(fill(20)).toBe('FFeceef0');
   });
 
   it('ends with one total row per currency and the footer sentence', () => {
     const sheet = buildReportWorkbook(REPORT, QUERY, { ...OPTIONS, language: 'en' }).worksheets[0];
     expect(sheet?.getRow(7).getCell(1).value).toBe('Total IQD | Areas: 1');
-    expect(sheet?.getRow(7).getCell(6).value).toBe(500_000);
+    expect(sheet?.getRow(7).getCell(5).value).toBe('IQD');
+    expect(sheet?.getRow(7).getCell(7).value).toBe(500_000);
     expect(sheet?.getRow(8).getCell(1).value).toBe('Total USD | Areas: 1');
     expect(String(sheet?.getRow(10).getCell(1).value)).toContain('Received');
   });
@@ -134,7 +139,7 @@ describe('Excel report', () => {
       .worksheets[0];
     expect(sorani?.views[0]?.rightToLeft).toBe(true);
     expect(sorani?.getRow(4).getCell(1).value).toBe('شوێن');
-    expect(sorani?.getRow(5).getCell(5).numFmt).toBe('#,##0 "IQD"');
+    expect(sorani?.getRow(5).getCell(5).value).toBe('IQD');
     const english = buildReportWorkbook(REPORT, QUERY, { ...OPTIONS, language: 'en' })
       .worksheets[0];
     expect(english?.views[0]?.rightToLeft).toBe(false);
