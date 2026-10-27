@@ -158,6 +158,7 @@
   },
   "areas": {
     "add": "Add area",
+    "actionsFor": "Actions for {{name}}",
     "categories": "Categories",
     "search": "Search by area, renter or phone",
     "all": "All",
@@ -173,7 +174,8 @@
       "name": "Area",
       "renter": "Renter",
       "rent": "Monthly rent",
-      "thisYear": "This year"
+      "thisYear": "This year",
+      "actions": "Actions"
     },
     "vacant": "Vacant",
     "notStarted": "Rent not started yet",

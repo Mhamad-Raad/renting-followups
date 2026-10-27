@@ -11,17 +11,20 @@ import {
   type AreaListItem,
 } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
+import type { TFunction } from 'i18next';
 import type { MonthBox } from '@shared/months';
 import { PART_SEPARATOR } from '@shared/reportText';
 import { useIpcQuery, type QueryState } from '../../app/ipc';
 import { useFlashNotice } from '../../app/flash';
 import { useSettings } from '../../app/SettingsContext';
 import { useDebouncedValue } from '../../app/useDebouncedValue';
+import { ActionMenu, type ActionMenuItem } from '../../components/ActionMenu';
 import { CategoryDot } from '../../components/CategoryDot';
 import { Checkbox } from '../../components/Checkbox';
 import { EmptyState } from '../../components/EmptyState';
 import { LoadError } from '../../components/LoadError';
 import { LinkButton } from '../../components/LinkButton';
+import { MoneyText } from '../../components/MoneyText';
 import { MonthBoxes, YearSummaryText } from '../../components/MonthBoxes';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
@@ -29,6 +32,7 @@ import { PhoneText } from '../../components/PhoneText';
 import { SearchField } from '../../components/SearchField';
 import styles from './AreasPage.module.css';
 import { ReportOutputButtons } from '../../print/ReportOutputButtons';
+import { areaActionLink, editAreaLink, type AreaAction } from './links';
 import { NoAreasYet } from './NoAreasYet';
 import { RentText } from './RentText';
 import { useMonthPick, type MonthPickOutcome } from './useMonthPick';
@@ -55,6 +59,25 @@ const AreaStrip = memo(function AreaStrip({ area, year, onPick }: AreaStripProps
     <MonthBoxes boxes={area.months} year={year} currency={area.currency} compact onPick={pick} />
   );
 });
+
+/** The ⋯ menu of one row: the area page's actions, each opening that page with its dialog. */
+function rowActions(area: AreaListItem, t: TFunction, go: (to: string) => void): ActionMenuItem[] {
+  const action = (key: AreaAction, label: string): ActionMenuItem => ({
+    label,
+    onSelect: () => go(areaActionLink(area.id, key)),
+  });
+  return [
+    action('payment', t('area.recordPayment')),
+    action('pastPayment', t('area.recordPastPayment')),
+    { label: t('common.edit'), onSelect: () => go(editAreaLink(area.id)) },
+    action('changePrice', t('area.changePrice')),
+    area.currentPrice === 0
+      ? action('setRentAgain', t('area.setRentAgain'))
+      : action('markVacant', t('area.markVacant')),
+    action('changeRenter', t('area.changeRenter')),
+    { ...action('delete', t('common.delete')), tone: 'danger' },
+  ];
+}
 
 /** The list of all areas: filter by category, search, and open one. */
 export function AreasPage() {
@@ -219,7 +242,14 @@ export function AreasPage() {
                   {nameColumn && <th>{t('areas.columns.name')}</th>}
                   <th>{t('areas.columns.renter')}</th>
                   <th>{t('areas.columns.rent')}</th>
+                  <th>{t('area.figures.expected')}</th>
+                  <th>{t('area.figures.received')}</th>
+                  <th>{t('area.figures.remaining')}</th>
                   <th>{t('areas.columns.thisYear')}</th>
+                  <th>{t('area.notes')}</th>
+                  <th className={styles.menuCell}>
+                    <span className={styles.hidden}>{t('areas.columns.actions')}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -295,11 +325,39 @@ export function AreasPage() {
                     <td className={styles.number}>
                       <RentText price={area.currentPrice} currency={area.currency} />
                     </td>
+                    <td className={styles.number}>
+                      <MoneyText amount={area.figures.expected} currency={area.currency} />
+                    </td>
+                    <td className={styles.number}>
+                      <MoneyText amount={area.figures.received} currency={area.currency} />
+                    </td>
+                    <td
+                      className={
+                        area.figures.remaining > 0
+                          ? `${styles.number} ${styles.owed}`
+                          : styles.number
+                      }
+                    >
+                      <MoneyText amount={area.figures.remaining} currency={area.currency} />
+                    </td>
                     <td>
                       <div className={styles.year}>
                         <AreaStrip area={area} year={year} onPick={pickMonth} />
                         <YearSummaryText summary={area.summary} />
                       </div>
+                    </td>
+                    <td>
+                      {area.notes && (
+                        <span className={styles.notes} title={area.notes} dir="auto">
+                          {area.notes}
+                        </span>
+                      )}
+                    </td>
+                    <td className={styles.menuCell} onClick={(event) => event.stopPropagation()}>
+                      <ActionMenu
+                        label={t('areas.actionsFor', { name: areaLabel(area) })}
+                        items={rowActions(area, t, (to) => void navigate(to))}
+                      />
                     </td>
                   </tr>
                 ))}

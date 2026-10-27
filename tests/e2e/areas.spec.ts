@@ -51,7 +51,7 @@ test('with one category chosen, the table leaves the category out', async () => 
     await page.getByRole('link', { name: en.nav.areas }).click();
     const table = page.getByRole('table');
 
-    await page.getByRole('button', { name: 'Shops' }).click();
+    await page.getByRole('button', { name: 'Shops', exact: true }).click();
     await expect(table.getByRole('row')).toHaveCount(3);
     // The name cell holds the own name alone, or a dash, never the category again.
     const nameCell = (renter: string) =>
@@ -60,7 +60,7 @@ test('with one category chosen, the table leaves the category out', async () => 
     await expect(nameCell('Renter 1')).toHaveText('Shop 7');
 
     // No place here has a name of its own, so the name column goes and the renter opens the area.
-    await page.getByRole('button', { name: 'Plots' }).click();
+    await page.getByRole('button', { name: 'Plots', exact: true }).click();
     await expect(table.getByRole('columnheader', { name: en.areas.columns.name })).toHaveCount(0);
     await table.getByRole('link', { name: 'Renter 1' }).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Plots');
@@ -321,6 +321,48 @@ test('ticked areas hidden by a search are not printed or counted', async () => {
     await expect(page.getByRole('button', { name: en.print.actions.printSelected })).toHaveCount(0);
     await page.getByLabel(en.areas.search).fill('');
     await expect(page.getByRole('button', { name: en.print.actions.printSelected })).toBeVisible();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
+test("a row's ⋯ menu lists the area's actions and opens the chosen one", async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    await createAreasThroughIpc(page, ['Shop 7']);
+    await reloadApp(page);
+    await page.getByRole('link', { name: en.nav.areas }).click();
+    const row = page.getByRole('table').getByRole('row', { name: /Shop 7/ });
+    await expect(row).toContainText('250,000 IQD');
+    const menuButton = row.getByRole('button', {
+      name: en.areas.actionsFor.replace('{{name}}', 'Shop 7'),
+    });
+
+    await menuButton.click();
+    const menu = page.getByRole('menu');
+    await expect(menu.getByRole('menuitem')).toHaveText([
+      en.area.recordPayment,
+      en.area.recordPastPayment,
+      en.common.edit,
+      en.area.changePrice,
+      en.area.markVacant,
+      en.area.changeRenter,
+      en.common.delete,
+    ]);
+    // Opens on the first action; the arrow keys move, Esc closes and stays on the Areas page.
+    await expect(menu.getByRole('menuitem').first()).toBeFocused();
+    await page.keyboard.press('ArrowUp');
+    await expect(menu.getByRole('menuitem').last()).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(en.pages.areas.title);
+
+    await menuButton.click();
+    await page.getByRole('menuitem', { name: en.common.delete }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Shop 7');
+    await expect(page.getByRole('dialog', { name: en.area.deleteTitle })).toBeVisible();
   } finally {
     await app.close();
     removeDataDir(dataDir);
