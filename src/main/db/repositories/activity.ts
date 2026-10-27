@@ -94,7 +94,7 @@ export function createActivityRepository(db: Db) {
             area_category.name AS area_category,
             r.renter_name_snapshot AS receipt_renter,
             area_renter.full_name AS renter_now,
-            COALESCE(a.currency, receipt_area.currency) AS currency,
+            COALESCE(r.currency, a.currency) AS currency,
             r.receipt_number
        FROM audit_log l
        LEFT JOIN areas a ON l.entity = 'area' AND a.id = l.entity_id
