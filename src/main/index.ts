@@ -209,6 +209,8 @@ function startApp(): void {
   // Windows gets no menu bar: the app's own sidebar is the only navigation.
   if (process.platform === 'win32') Menu.setApplicationMenu(null);
   if (isGhost) app.dock?.hide();
+  // macOS ignores the window icon and shows Electron's own in the dock unless told otherwise.
+  else app.dock?.setIcon(appIcon);
   hardenSession(RENDERER_DIRECTORY);
   let themeMode: ThemeMode;
   try {
