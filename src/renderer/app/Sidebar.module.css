@@ -4,11 +4,19 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
+  width: var(--sidebar-width);
   height: 100vh;
   padding: var(--space-5) var(--space-3);
   background: var(--color-surface);
   border-inline-end: 1px solid var(--color-border);
+  overflow-x: hidden;
   overflow-y: auto;
+  transition: width var(--duration-normal) var(--ease);
+}
+
+/* Icons only, still every item and the bell count: nothing is hidden behind the button. */
+.collapsed {
+  width: var(--sidebar-width-collapsed);
 }
 
 /* The logo above the name, so a long name never squeezes beside it. */
@@ -27,6 +35,14 @@
   width: 3.5rem;
   height: 3.5rem;
   flex-shrink: 0;
+  transition:
+    width var(--duration-normal) var(--ease),
+    height var(--duration-normal) var(--ease);
+}
+
+.collapsed .logo {
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 .list {
@@ -46,9 +62,16 @@
   padding-inline: var(--space-4);
   border-radius: var(--radius-md);
   border-inline-start: 4px solid transparent;
+  background: none;
+  border-block: 0;
+  border-inline-end: 0;
   color: var(--color-text);
+  font: inherit;
   font-size: var(--text-lg);
+  text-align: start;
   text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
   transition:
     background-color var(--duration-fast) var(--ease),
     border-color var(--duration-fast) var(--ease);

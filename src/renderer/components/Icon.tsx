@@ -8,6 +8,7 @@ const ICONS = {
   reports: 'M6 3h9l4 4v14H6zM15 3v4h4M9 12h7M9 16h7',
   notifications: 'M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0',
   settings: 'M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0M16 4v4M10 10v4M18 16v4',
+  sidebar: 'M4 4h16v16H4zM9 4v16',
   back: 'M19 12H5M11 6l-6 6 6 6',
   chevronDown: 'M6 9l6 6 6-6',
   alert: 'M12 3 2 20h20zM12 9v5M12 17h.01',

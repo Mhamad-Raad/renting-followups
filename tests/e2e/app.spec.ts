@@ -130,3 +130,27 @@ test('the window starts maximized and never gets smaller than 1100×700', async 
     removeDataDir(dataDir);
   }
 });
+
+test('the sidebar opens collapsed to its icons and shows the names on request', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    const sidebar = page.getByRole('navigation');
+    const toggle = sidebar.getByRole('button');
+    const widthOf = async () => (await sidebar.boundingBox())?.width ?? 0;
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(sidebar.getByRole('link')).toHaveCount(5);
+    const collapsedWidth = await widthOf();
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect.poll(widthOf).toBeGreaterThan(collapsedWidth * 2);
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect.poll(widthOf).toBeCloseTo(collapsedWidth, 0);
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});

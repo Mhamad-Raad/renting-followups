@@ -4,6 +4,8 @@
   },
   "nav": {
     "label": "Main menu",
+    "expand": "Show names",
+    "collapse": "Hide names",
     "home": "Home",
     "areas": "Areas",
     "reports": "Reports",
