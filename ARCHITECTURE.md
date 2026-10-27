@@ -251,7 +251,7 @@ Large password field and one **Open** button. A "Forgot password?" link goes to 
 ### 8.3 Areas list
 - Category chips (All + each category, in its colour). Add / edit / delete categories from here.
 - Search box (by area name, renter name, phone), using normalized text matching (section 9).
-- Each row: area name, category, renter name, phone, monthly rent, then for the current year: **Total for the year**, **Received**, **Still owed**, the compact 12-box strip with a status word, then **Notes** (two lines at most) and a **⋯ menu** with the area page's actions (Record payment, Record past payment, Edit, Change price, Mark as vacant / Set rent again, Change renter, Delete); each opens the area page with that action ready. Click a row to open the area page.
+- Each row: area name, category, renter name, phone, monthly rent, then for the current year: **Total for the year**, **Received**, **Still owed**, the compact 12-box strip with a status word, then **Notes** (two lines at most) and a **⋯ menu** with the area page's actions (Record payment, Record past payment, Edit, Change price, Mark as vacant / Set rent again, Change renter, Delete); each opens its form right on the list, without leaving it; Edit opens its own page and returns to the list after saving. Click a row to open the area page.
 - Big **Add area** button and an **Import from Excel** button (section 16).
 - Checkboxes to select several areas, then **Print selected** / **Export selected**.
 
