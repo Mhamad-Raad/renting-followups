@@ -95,6 +95,8 @@ test('the report saves as PDF and as an Excel sheet that reads right to left', a
     );
     expect(printed).toEqual({ ok: true, data: { ok: true, done: 'saved' } });
     expect(readFileSync(pdf).subarray(0, 5).toString()).toBe('%PDF-');
+    // One area fits on one page; no empty page after it.
+    expect(readFileSync(pdf, 'latin1').match(/\/Type\s*\/Page[^s]/g)).toHaveLength(1);
 
     const xlsx = join(dataDir, 'report.xlsx');
     await chooseSavePath(app, xlsx);
@@ -109,7 +111,8 @@ test('the report saves as PDF and as an Excel sheet that reads right to left', a
     const sheet = workbook.worksheets[0];
     expect(sheet?.views[0]?.rightToLeft).toBe(true);
     expect(sheet?.getRow(5).getCell(1).value).toBe('دوکانی ١');
-    expect(sheet?.getRow(5).getCell(6).value).toBe(500_000);
+    expect(sheet?.getRow(5).getCell(5).value).toBe('IQD');
+    expect(sheet?.getRow(5).getCell(7).value).toBe(500_000);
     expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)).toBe(1);
   } finally {
     await app.close();
@@ -204,22 +207,26 @@ test('the buttons on screen print and export, with a plain message each time', a
     await reloadApp(page);
     await fakePrinter(app);
 
-    // Area page: Save and print receipt, then the receipt's own Print button says it is sent.
+    // Area page: Save and make receipt PDF saves a file; receipts never go to the printer.
     await page.getByRole('link', { name: en.nav.areas, exact: true }).click();
     await page.getByRole('link', { name: 'دوکانی ١' }).click();
     await page.getByRole('button', { name: en.area.recordPayment }).click();
     await page.getByRole('dialog').getByLabel(en.paymentDialog.amount).fill('250000');
+    const receiptPdf = join(dataDir, 'receipt.pdf');
+    await chooseSavePath(app, receiptPdf);
     await page
       .getByRole('dialog')
-      .getByRole('button', { name: en.print.actions.saveAndPrint })
+      .getByRole('button', { name: en.print.actions.saveWithPdf })
       .click();
-    await expect(page.getByText(en.print.results.printed)).toBeVisible();
+    await expect(page.getByText(en.print.results.savedPdf)).toBeVisible();
+    expect(existsSync(receiptPdf)).toBe(true);
+    await expect(page.getByText(en.print.results.printed)).toHaveCount(0);
 
     const pdf = join(dataDir, 'area.pdf');
     await chooseSavePath(app, pdf);
     await page.getByRole('button', { name: en.print.actions.pdf }).click();
-    await expect(page.getByText(en.print.results.savedPdf)).toBeVisible();
-    expect(existsSync(pdf)).toBe(true);
+    // The receipt's "saved" message is already showing, so wait for this file itself.
+    await expect.poll(() => existsSync(pdf)).toBe(true);
 
     // Areas list: tick one area, then Export to Excel.
     await page.getByRole('link', { name: en.nav.areas, exact: true }).click();

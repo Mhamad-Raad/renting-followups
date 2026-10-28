@@ -3,6 +3,8 @@
   align-items: center;
   gap: var(--space-3);
   justify-content: center;
+  /* In a column of fields, sits at the start like the fields, not stretched and centred. */
+  align-self: flex-start;
   /* The whole square around the box can be clicked, not just the small box. */
   min-width: var(--control-height);
   min-height: var(--control-height);

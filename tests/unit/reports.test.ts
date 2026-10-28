@@ -136,16 +136,16 @@ describe('reports', () => {
     expect(build().candidates.map((row) => row.name)).toEqual(['Shop A', 'Shop B', 'Shop C']);
   });
 
-  it('lists an area without a name by its renter', () => {
+  it('lists an area without a name by its category', () => {
     area('Shop B', shops);
     area('', shops, {
       renter: { fullName: 'Aram', phone: '', startedOn: '2026-01-01' },
     });
     expect(build().rows.map((row) => [row.name, row.renterName])).toEqual([
-      ['', 'Aram'],
       ['Shop B', 'Karwan Ahmed'],
+      ['', 'Aram'],
     ]);
-    expect(build().candidates.map((row) => row.renterName)).toEqual(['Aram', 'Karwan Ahmed']);
+    expect(build().candidates.map((row) => row.renterName)).toEqual(['Karwan Ahmed', 'Aram']);
   });
 
   it('leaves out deleted areas', () => {

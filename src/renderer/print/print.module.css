@@ -80,6 +80,13 @@
   white-space: nowrap;
 }
 
+/* Bare amounts (the currency has its own column), lined up on the right in every language. */
+.table .money {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .status {
   display: block;
   margin-block-start: 0.5mm;

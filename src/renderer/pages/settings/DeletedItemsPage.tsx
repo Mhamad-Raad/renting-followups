@@ -1,16 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { RestoreResult } from '@shared/areas';
+import { areaLabel, areaSubline, type RestoreResult } from '@shared/areas';
 import type { IpcResult } from '@shared/ipc';
 import { dateStringFromLocal, formatDate } from '@shared/dates';
 import { callIpc, useIpcQuery } from '../../app/ipc';
 import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
-import { useAreaLabel } from '../../app/useAreaLabel';
 import { BigButton } from '../../components/BigButton';
 import { EmptyState } from '../../components/EmptyState';
 import { LoadError } from '../../components/LoadError';
-import { LinkButton } from '../../components/LinkButton';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import styles from './SettingsList.module.css';
@@ -27,7 +25,6 @@ export function DeletedItemsPage() {
   const { t } = useTranslation();
   const mounted = useMountedRef();
   const { settings } = useSettings();
-  const label = useAreaLabel();
   const deleted = useIpcQuery('deleted:list');
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
@@ -75,7 +72,10 @@ export function DeletedItemsPage() {
 
   return (
     <>
-      <PageHeader title={t('deletedItems.title')} />
+      <PageHeader
+        title={t('deletedItems.title')}
+        back={{ to: '/settings', label: t('pages.settings.title') }}
+      />
       <div className={styles.stack}>
         <p className={styles.muted}>{t('deletedItems.intro')}</p>
         {message && <Notice tone={message.tone}>{message.text}</Notice>}
@@ -89,8 +89,8 @@ export function DeletedItemsPage() {
                 t('deletedItems.areas'),
                 deleted.state.data.areas.map((area) => ({
                   id: area.id,
-                  name: label(area),
-                  detail: area.categoryName,
+                  name: areaLabel(area),
+                  detail: areaSubline(area) ?? '',
                   deletedAt: area.deletedAt,
                 })),
                 (id) => void restore(() => callIpc('areas:restore', { id })),
@@ -102,11 +102,6 @@ export function DeletedItemsPage() {
               )}
             </>
           ))}
-        <div>
-          <LinkButton to="/settings" icon="back">
-            {t('pages.settings.title')}
-          </LinkButton>
-        </div>
       </div>
     </>
   );

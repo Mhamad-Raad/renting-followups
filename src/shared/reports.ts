@@ -67,7 +67,7 @@ export interface ReportTotal {
 
 export interface Report {
   /** Areas the picker offers: those matching the category and currency filters. */
-  candidates: ({ id: number; categoryName: string } & AreaNaming)[];
+  candidates: ({ id: number } & AreaNaming)[];
   rows: ReportRow[];
   totals: ReportTotal[];
 }

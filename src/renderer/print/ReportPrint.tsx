@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
+import { areaLabel, hasOwnName } from '@shared/areas';
 import { dateStringFromLocal, formatDate } from '@shared/dates';
 import { formatPlain } from '@shared/formatNumber';
 import { PART_SEPARATOR, reportFilterParts } from '@shared/reportText';
 import { reportQuerySchema, type ReportQuery } from '@shared/reports';
 import { useIpcQuery } from '../app/ipc';
 import { useSettings } from '../app/SettingsContext';
-import { useAreaLabel } from '../app/useAreaLabel';
 import { MoneyText } from '../components/MoneyText';
 import { MonthBoxes, monthWord } from '../components/MonthBoxes';
 import { PhoneText } from '../components/PhoneText';
@@ -46,7 +46,6 @@ function ReportNotReadable() {
 
 function ReportPaper({ query }: { query: ReportQuery }) {
   const { t } = useTranslation();
-  const label = useAreaLabel();
   const { settings } = useSettings();
   const digits = settings.digitStyle;
   const report = useIpcQuery('reports:build', query);
@@ -83,6 +82,7 @@ function ReportPaper({ query }: { query: ReportQuery }) {
             <th scope="col">{t('area.category')}</th>
             <th scope="col">{t('reports.columns.renter')}</th>
             <th scope="col">{t('area.phone')}</th>
+            <th scope="col">{t('areaForm.currency')}</th>
             <th scope="col">{t('reports.columns.rent')}</th>
             <th scope="col">{t('reports.columns.received')}</th>
             <th scope="col">{t('reports.columns.remaining')}</th>
@@ -96,20 +96,30 @@ function ReportPaper({ query }: { query: ReportQuery }) {
               query.month === null ? null : row.boxes.find((box) => box.month === query.month);
             return (
               <tr key={row.id}>
-                <td className={styles.strong}>{label(row)}</td>
-                <td>{row.categoryName}</td>
+                <td className={styles.strong}>{areaLabel(row)}</td>
+                {/* Already the label when the place has no name of its own. */}
+                <td>{hasOwnName(row) ? row.categoryName : ''}</td>
                 <td>{row.renterName ?? '—'}</td>
                 <td className={styles.number}>
                   {row.renterPhone && <PhoneText phone={row.renterPhone} />}
                 </td>
-                <td className={styles.number}>
-                  <RentText price={row.figures.rent} currency={row.currency} />
+                <td className={styles.strong}>{t(`currency.${row.currency}`)}</td>
+                <td className={styles.money}>
+                  <RentText price={row.figures.rent} currency={row.currency} withCurrency={false} />
                 </td>
-                <td className={styles.number}>
-                  <MoneyText amount={row.figures.received} currency={row.currency} />
+                <td className={styles.money}>
+                  <MoneyText
+                    amount={row.figures.received}
+                    currency={row.currency}
+                    withCurrency={false}
+                  />
                 </td>
-                <td className={styles.number}>
-                  <MoneyText amount={row.figures.remaining} currency={row.currency} />
+                <td className={styles.money}>
+                  <MoneyText
+                    amount={row.figures.remaining}
+                    currency={row.currency}
+                    withCurrency={false}
+                  />
                 </td>
                 <td>
                   <MonthBoxes
@@ -141,14 +151,19 @@ function ReportPaper({ query }: { query: ReportQuery }) {
                   number: formatPlain(total.areas, digits),
                 })}
               </th>
-              <td className={styles.number}>
-                <MoneyText amount={total.rent} currency={total.currency} />
+              <td>{t(`currency.${total.currency}`)}</td>
+              <td className={styles.money}>
+                <MoneyText amount={total.rent} currency={total.currency} withCurrency={false} />
               </td>
-              <td className={styles.number}>
-                <MoneyText amount={total.received} currency={total.currency} />
+              <td className={styles.money}>
+                <MoneyText amount={total.received} currency={total.currency} withCurrency={false} />
               </td>
-              <td className={styles.number}>
-                <MoneyText amount={total.remaining} currency={total.currency} />
+              <td className={styles.money}>
+                <MoneyText
+                  amount={total.remaining}
+                  currency={total.currency}
+                  withCurrency={false}
+                />
               </td>
               <td colSpan={2} />
             </tr>

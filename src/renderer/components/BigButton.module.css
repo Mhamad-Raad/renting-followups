@@ -13,7 +13,12 @@
   transition:
     background-color var(--duration-fast) var(--ease),
     border-color var(--duration-fast) var(--ease),
+    box-shadow var(--duration-fast) var(--ease),
     transform var(--duration-fast) var(--ease);
+}
+
+.button:hover:not(:disabled) {
+  box-shadow: var(--shadow-card);
 }
 
 .button:active:not(:disabled) {
@@ -33,13 +38,15 @@
   background: var(--color-accent-hover);
 }
 
+/* Plain and quiet, so only the main action of a screen carries the theme colour. */
 .secondary {
   background: var(--color-surface);
-  border-color: var(--color-control-border);
+  border-color: var(--color-border);
   color: var(--color-text);
 }
 .secondary:hover:not(:disabled) {
-  border-color: var(--color-accent);
+  background: var(--color-surface-muted);
+  border-color: var(--color-control-border);
 }
 
 .danger {

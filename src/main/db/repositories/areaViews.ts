@@ -23,6 +23,7 @@ interface AreaListRecord {
   category_color: CategoryColor | null;
   renter_name: string | null;
   renter_phone: string | null;
+  notes: string;
 }
 
 interface Dependencies {
@@ -37,7 +38,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
     { categoryId: number | null; namePattern: string; phonePattern: string | null },
     AreaListRecord
   >(
-    `SELECT a.id, a.name, a.currency, a.category_id,
+    `SELECT a.id, a.name, a.currency, a.category_id, a.notes,
        c.name AS category_name, c.color AS category_color,
        r.full_name AS renter_name, r.phone AS renter_phone
      FROM areas a
@@ -46,6 +47,8 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
      WHERE a.deleted_at IS NULL
        AND (@categoryId IS NULL OR a.category_id = @categoryId)
        AND (a.name_normalized LIKE @namePattern ESCAPE '\\'
+         -- The category is the name of a place without one, so it is searched too.
+         OR c.name_normalized LIKE @namePattern ESCAPE '\\'
          OR r.full_name_normalized LIKE @namePattern ESCAPE '\\'
          OR (@phonePattern IS NOT NULL AND r.phone_digits LIKE @phonePattern ESCAPE '\\'))`,
   );
@@ -66,7 +69,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
         .map((row) => {
           const history = pricesByArea.get(row.id) ?? [];
           const paid = paidByArea.get(row.id) ?? NO_PAYMENTS;
-          const { boxes, summary } = areaYear(history, paid, today.year, today);
+          const { boxes, figures, summary } = areaYear(history, paid, today.year, today);
           return {
             id: row.id,
             name: row.name,
@@ -77,7 +80,9 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
             renterName: row.renter_name,
             renterPhone: row.renter_phone,
             currentPrice: priceForMonth(history, today),
+            notes: row.notes,
             months: boxes,
+            figures,
             summary,
           };
         });
@@ -98,6 +103,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
         .map((row) => ({
           id: row.id,
           name: row.name,
+          categoryName: row.category_name,
           currency: row.currency,
           renterName: row.renter_name,
           renterPhone: row.renter_phone,

@@ -18,7 +18,7 @@ export interface NewRent {
 }
 
 interface RentFieldsProps {
-  /** An existing area: currency and start are fixed and only shown. */
+  /** An existing area: the start is only shown; the currency can change until its first payment. */
   area: AreaDetails | null;
   rent: NewRent;
   onChange: (rent: NewRent) => void;
@@ -35,10 +35,22 @@ export function RentFields({ area, rent, onChange, rentError }: RentFieldsProps)
     const firstPrice = area.prices[0];
     return (
       <>
-        <p>
-          <strong>{t('areaForm.currency')}:</strong> {t(`currency.${area.currency}`)} —{' '}
-          {t('areaForm.currencyFixed')}
-        </p>
+        {area.hasPayments ? (
+          <p>
+            <strong>{t('areaForm.currency')}:</strong> {t(`currency.${area.currency}`)} —{' '}
+            {t('areaForm.currencyFixed')}
+          </p>
+        ) : (
+          <>
+            <ChoiceGroup
+              label={t('areaForm.currency')}
+              value={rent.currency}
+              choices={CURRENCIES.map((code) => ({ value: code, label: t(`currency.${code}`) }))}
+              onChange={(currency) => change({ currency })}
+            />
+            <p className={styles.hint}>{t('areaForm.currencyEditHint')}</p>
+          </>
+        )}
         {firstPrice && (
           <p className={styles.hint}>
             {t('areaForm.rentStartsFromFixed', {

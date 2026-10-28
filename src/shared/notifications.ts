@@ -9,6 +9,7 @@ export const ALWAYS_REMIND_LAST_DAYS = 3;
 interface AreaRef {
   areaId: number;
   areaName: string;
+  categoryName: string;
   currency: Currency;
   renterName: string | null;
   renterPhone: string | null;

@@ -2,7 +2,7 @@
 
 ## Current iteration
 
-**Iteration 13 is merged into `main` (tag `iter-13`)**, together with the owner's later changes: optional area names, numbered month boxes, clicking a box to mark a month paid or not paid, and no Print button on the area page. Next is iteration 14, not started yet.
+**Iteration 14 (packaging) is in progress on `iter-14-packaging`** (not merged; about 58 commits not pushed yet). The new app icon is done; on 2026-10-26 to 2026-10-28 the owner asked for many UI and business changes first (listed below). The installer itself is not started.
 
 ## Done
 
@@ -22,6 +22,16 @@
 - Optional area name (2026-10-25, on `iter-13-polish`): areas may have no name and are shown by their renter; receipts show the category; migration 004; import without the name column. 660 unit tests and 55 end-to-end tests pass.
 - Month boxes (2026-10-25, on `iter-13-polish`): numbers instead of symbols in strips and the PDF; click a box to mark a month paid (receipt) or not paid (taken out of its receipts), after a question; no Print button on the area page. 666 unit tests and 56 end-to-end tests. Review: `docs/reviews/review-2026-10-25-month-boxes.md`.
 - Iteration 13 (merged, tag `iter-13`): whole-app polish. Dialogs start on the safe button (Cancel on Restore), clearer focus and edges, calmer motion, Try again on every screen that cannot load, plain messages when a file cannot be saved, month ranges and page numbers in the right order in every language, month boxes that fit any amount, clearer wording in all three languages. 200 areas with five years of payments: every screen opens in a quarter of a second or less; memory stays flat. 622 unit tests and 53 end-to-end tests pass.
+- Collapsible sidebar (2026-10-27, on `iter-14-packaging`, owner's request): opens collapsed to its icons every time; a button at its top shows or hides the names. 669 unit tests and 58 end-to-end tests pass.
+- Owner's UI updates (2026-10-27): slimmer page margins and wider pages; the dock icon on a Mac; the Areas table shows monthly rent, total for the year, received, still owed, the boxes, notes and a ⋯ menu with every area action (opens the area page with that action ready). 669 unit tests and 59 end-to-end tests pass.
+- Vacant ends the renter (2026-10-27, owner's decision): Mark as vacant also ends the current renter; Change renter only adds a new renter; a new area marked vacant takes no renter. 671 unit tests and 59 end-to-end tests pass.
+- Receipts as PDF only and a wider payment form (2026-10-27, owner's request): every receipt button saves a PDF; the ⋯ menu actions open on the Areas list. 671 unit tests and 59 end-to-end tests pass.
+- Look and feel (2026-10-27): calmer focus in the theme colour (no orange ring); a calm blue palette with plain white secondary buttons (blue is the default theme colour again); Settings → Sidebar: Light / Dark, and the green theme colour is now a calmer deep green; a larger reminders popup; clicking the dark background closes any dialog.
+- Areas table (2026-10-27): the same table under every category (the Area column always shows); the area form in side-by-side cards; tick boxes line up with fields.
+- Currency (2026-10-27): amounts say IQD / USD in every language; lists and reports (screen, PDF, Excel) have a Currency column with bare amounts lined up on the right; totals stay separate per currency, never converted (no exchange rates, the business confirmed); an area's currency can be corrected on Edit until its first payment that counts (migration 005; the rent keeps its written number).
+- Fix (2026-10-27): no empty last page in report and receipt PDFs.
+- Month colours (2026-10-28, the business): no yellow; this month not fully paid is red at once ("Not paid"), a coming month paid in part is grey; darker green and red; list strips a little deeper; Home warning cards without the red fade. 703 unit tests and 61 end-to-end tests pass.
+- Dev data: `test-1` … `test-10` were added to the dev data folder in a `Test` category (5 IQD, 5 USD, payments as past records); the data before that is kept as `rent-tracker.before-test-data.db` in the same folder.
 
 ## Next
 
@@ -30,8 +40,8 @@
 ## Open questions
 
 - A price change from an earlier month fills a gap left by taking a month out of a receipt (the warning lists it). Keep, or keep such a month closed for that receipt?
-- Should "Mark as vacant" also end the current renter? Today a place can show as vacant with a renter.
-- The window-size end-to-end test failed while the owner had the app open (also on older code): check again with the app closed.
+- The window-size end-to-end test ("starts maximized") fails now and then on the Mac, also on older code and with the app closed; it passes on other runs. Look into it (probably the hidden window is not maximized when the screen is asleep or locked).
+- Offered, not yet answered: a 1,000-area speed check (and virtual scrolling only if a list is slow) instead of pagination; group the printed report by currency; make the large month boxes on the area page as deep as the list strips. (The Excel export already has one total row per currency, checked by its unit tests.)
 
 - Data from the client's old system (three 2023 sheets, typed up on the Desktop) is waiting on the client: IQD or USD for each place, three plots paid once a year, two phones written only as "770", and one shop whose total does not match its start month. Then it can become an import file.
 - The new logo (white ring, slightly darker green) is liked by the owner; it goes into the app icons in iteration 14.

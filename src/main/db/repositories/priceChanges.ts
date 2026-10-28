@@ -4,7 +4,7 @@ import {
   type PriceChangeImpact,
   type PriceChangeResult,
 } from '@shared/areas';
-import { monthIndex, type YearMonth } from '@shared/dates';
+import { monthIndex, toDateString, type YearMonth } from '@shared/dates';
 import { priceForMonth, withPriceFrom, type PriceRow } from '@shared/prices';
 import { reshare, type ReshareReceipt, type ReshareResult } from '../../services/allocation';
 import { statusChanges, type PaidHistory } from '../../services/monthStatus';
@@ -13,19 +13,34 @@ import type { AllocationRepository } from './allocations';
 import type { AreaRepository } from './areas';
 import type { AuditRepository } from './audit';
 import type { PriceRepository } from './prices';
+import type { RenterRepository } from './renters';
 
 interface Dependencies {
   allocations: AllocationRepository;
   areas: AreaRepository;
   audit: AuditRepository;
   prices: PriceRepository;
+  renters: RenterRepository;
 }
 
 /** Changing an area's rent from a month onward, and sharing paid money out again. */
 export function createPriceChangeRepository(
   db: Db,
-  { allocations, areas, audit, prices }: Dependencies,
+  { allocations, areas, audit, prices, renters }: Dependencies,
 ) {
+  /**
+   * A vacant area has no renter: the current one leaves on the first day of
+   * the vacant month (or the day they started, if that is later).
+   */
+  const endRenterForVacancy = (areaId: number, from: YearMonth) => {
+    const current = renters.current(areaId);
+    if (!current) return;
+    const firstDay = toDateString(from.year, from.month, 1);
+    const endedOn = firstDay < current.startedOn ? current.startedOn : firstDay;
+    renters.end(current.id, endedOn);
+    audit.record('end_renter', 'area', areaId, { renter: current.fullName, endedOn });
+  };
+
   /**
    * How the money already paid from `from` onward would be shared out again
    * with `newPrices` (oldest receipt first), plus what is paid now, for the
@@ -85,7 +100,7 @@ export function createPriceChangeRepository(
 
     /**
      * A new price from a month onward. Earlier months keep their price; 0 means
-     * vacant. Money already paid from that month onward is shared out again
+     * vacant, which also ends the current renter. Money already paid from that month onward is shared out again
      * with the new rent, in the same transaction.
      */
     changePrice: db.transaction(
@@ -106,6 +121,7 @@ export function createPriceChangeRepository(
           monthlyPrice,
           resharedReceipts: [...plan.byReceipt.keys()],
         });
+        if (monthlyPrice === 0) endRenterForVacancy(areaId, from);
         return { ok: true };
       },
     ),

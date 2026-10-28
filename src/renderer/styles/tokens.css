@@ -30,9 +30,13 @@
   /* Large, easy targets: never below 48px, and growing with the font size. */
   --control-height: max(48px, 2.75rem);
   --sidebar-width: 15rem;
-  --content-max-width: 72rem;
-  /* A thin gap in the surface colour, then the ring, so it shows on any button colour. */
-  --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 5px var(--color-focus);
+  /* Icons only: room for one icon with its padding and the current-page bar. */
+  --sidebar-width-collapsed: 5.5rem;
+  --content-max-width: 110rem;
+  /* A thin gap in the surface colour, then a thin ring in the theme colour, so it shows on any button. */
+  --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-accent);
+  /* A typing field shows focus by its own edge in the theme colour, with a soft glow, not a ring. */
+  --field-focus: 0 0 0 3px var(--color-accent-soft);
 
   --duration-fast: 150ms;
   --duration-normal: 220ms;

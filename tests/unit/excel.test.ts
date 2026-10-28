@@ -77,6 +77,7 @@ describe('Excel report', () => {
       'Category',
       'Renter',
       'Phone',
+      'Currency',
       'Monthly rent',
       'Received',
       'Still owed',
@@ -85,17 +86,20 @@ describe('Excel report', () => {
     ]);
     const shop = sheet?.getRow(5);
     expect(shop?.getCell(1).value).toBe('Shop 1');
-    expect(shop?.getCell(5).value).toBe(250_000);
-    expect(shop?.getCell(5).numFmt).toBe('#,##0 "IQD"');
-    expect(shop?.getCell(8).value).toBe(250_000);
-    expect(shop?.getCell(10).value).toBe('');
-    expect(shop?.getCell(20).value).toBe('Pays in cash');
+    // The currency has its own column; the amounts are bare numbers.
+    expect(shop?.getCell(5).value).toBe('IQD');
+    expect(shop?.getCell(6).value).toBe(250_000);
+    expect(shop?.getCell(6).numFmt).toBe('#,##0');
+    expect(shop?.getCell(9).value).toBe(250_000);
+    expect(shop?.getCell(11).value).toBe('');
+    expect(shop?.getCell(21).value).toBe('Pays in cash');
     // Dollars are stored in cents and shown with two decimals.
-    expect(sheet?.getRow(6).getCell(5).value).toBe(450.5);
-    expect(sheet?.getRow(6).getCell(5).numFmt).toBe('#,##0.00 "USD"');
+    expect(sheet?.getRow(6).getCell(5).value).toBe('USD');
+    expect(sheet?.getRow(6).getCell(6).value).toBe(450.5);
+    expect(sheet?.getRow(6).getCell(6).numFmt).toBe('#,##0.00');
   });
 
-  it('names an area without a name by its renter, or as having no name', () => {
+  it('names an area without a name by its category', () => {
     const [shop, office] = REPORT.rows;
     if (!shop || !office) throw new Error('fixture changed');
     const report = {
@@ -106,8 +110,8 @@ describe('Excel report', () => {
       ],
     };
     const sheet = buildReportWorkbook(report, QUERY, { ...OPTIONS, language: 'en' }).worksheets[0];
-    expect(sheet?.getRow(5).getCell(1).value).toBe('Karwan Ahmed');
-    expect(sheet?.getRow(6).getCell(1).value).toBe('No name');
+    expect(sheet?.getRow(5).getCell(1).value).toBe('Shops');
+    expect(sheet?.getRow(6).getCell(1).value).toBe('Offices');
   });
 
   it('colours month cells by status', () => {
@@ -116,15 +120,16 @@ describe('Excel report', () => {
       const value = sheet?.getRow(5).getCell(column).fill;
       return value && 'fgColor' in value ? value.fgColor?.argb : undefined;
     };
-    expect(fill(8)).toBe('FFdff0e0');
-    expect(fill(10)).toBe('FFf8dcd9');
-    expect(fill(19)).toBe('FFeceef0');
+    expect(fill(9)).toBe('FFc4e5c7');
+    expect(fill(11)).toBe('FFf4c4be');
+    expect(fill(20)).toBe('FFeceef0');
   });
 
   it('ends with one total row per currency and the footer sentence', () => {
     const sheet = buildReportWorkbook(REPORT, QUERY, { ...OPTIONS, language: 'en' }).worksheets[0];
     expect(sheet?.getRow(7).getCell(1).value).toBe('Total IQD | Areas: 1');
-    expect(sheet?.getRow(7).getCell(6).value).toBe(500_000);
+    expect(sheet?.getRow(7).getCell(5).value).toBe('IQD');
+    expect(sheet?.getRow(7).getCell(7).value).toBe(500_000);
     expect(sheet?.getRow(8).getCell(1).value).toBe('Total USD | Areas: 1');
     expect(String(sheet?.getRow(10).getCell(1).value)).toContain('Received');
   });
@@ -134,7 +139,7 @@ describe('Excel report', () => {
       .worksheets[0];
     expect(sorani?.views[0]?.rightToLeft).toBe(true);
     expect(sorani?.getRow(4).getCell(1).value).toBe('شوێن');
-    expect(sorani?.getRow(5).getCell(5).numFmt).toBe('#,##0 "دینار"');
+    expect(sorani?.getRow(5).getCell(5).value).toBe('IQD');
     const english = buildReportWorkbook(REPORT, QUERY, { ...OPTIONS, language: 'en' })
       .worksheets[0];
     expect(english?.views[0]?.rightToLeft).toBe(false);
@@ -165,7 +170,9 @@ describe('Excel report', () => {
     const color = (name: string) =>
       new RegExp(`--status-${name}-bg:\\s*#([0-9a-f]{6})`).exec(light)?.[1];
     expect(STATUS_FILLS.paid).toBe(color('paid'));
-    expect(STATUS_FILLS.due).toBe(color('due'));
+    // No yellow: this month unpaid looks late, a coming month paid in part looks upcoming.
+    expect(STATUS_FILLS.due).toBe(color('late'));
+    expect(STATUS_FILLS.partial).toBe(color('upcoming'));
     expect(STATUS_FILLS.late).toBe(color('late'));
     expect(STATUS_FILLS.upcoming).toBe(color('upcoming'));
     expect(STATUS_FILLS.not_applicable).toBe(color('na'));

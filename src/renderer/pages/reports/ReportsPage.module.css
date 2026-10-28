@@ -15,33 +15,125 @@
 }
 
 .picker {
-  padding: var(--space-3) var(--space-5);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow-card);
 }
 
+/* The folded line looks and behaves like a button, with an arrow that turns when it opens. */
 .pickerTitle {
-  min-height: var(--control-height);
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--control-height);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-lg);
   font-weight: 700;
-  cursor: pointer;
+  list-style: none;
+  transition: background-color var(--duration-fast) var(--ease);
+}
+
+.pickerTitle::-webkit-details-marker {
+  display: none;
+}
+
+.pickerTitle:hover {
+  background: var(--color-surface-muted);
+}
+
+.pickerChevron {
+  color: var(--color-accent);
+  stroke-width: 2.5;
+  transition: transform var(--duration-normal) var(--ease);
+}
+
+.picker[open] .pickerChevron {
+  transform: rotate(180deg);
+}
+
+.pickerBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-5) var(--space-5);
+  border-block-start: 1px solid var(--color-border);
 }
 
 .pickerActions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-3);
-  margin-block: var(--space-2) var(--space-3);
+  padding-block-start: var(--space-3);
+}
+
+/* The search takes the free room beside the two buttons, and its own line when there is none. */
+.pickerActions > input {
+  flex: 1 1 16rem;
+  width: auto;
+}
+
+.pickerEmpty {
+  color: var(--color-text-muted);
 }
 
 .pickerList {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-  gap: 0 var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-2);
   max-height: 24rem;
+  margin: 0;
+  padding: 0;
   overflow-y: auto;
+  list-style: none;
+}
+
+/* Each area is a tile: tinted when it goes into the report, plain when it is left out. */
+.pickerItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease);
+}
+
+.pickerItem:hover {
+  border-color: var(--color-accent);
+}
+
+.pickerItem[data-checked='true'] {
+  border-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  background: var(--color-accent-soft);
+}
+
+.pickerItem input {
+  flex-shrink: 0;
+  width: 1.4rem;
+  height: 1.4rem;
+  margin: 0;
+  accent-color: var(--color-accent);
+}
+
+.pickerText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pickerName {
+  font-weight: 600;
+}
+
+.pickerCategory {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
 }
 
 /* Only with very large text in a small window does the table scroll; the page itself never does. */
@@ -138,6 +230,9 @@
 
 .money dd {
   margin: 0;
+  /* Bare numbers (the currency has its own column), lined up on the right in every language. */
+  text-align: right;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 

@@ -9,7 +9,7 @@ import {
   type YearMonth,
 } from './dates';
 import type { CategoryColor } from './categories';
-import type { MonthBox, StatusChange, YearSummary } from './months';
+import type { MonthBox, StatusChange, YearFigures, YearSummary } from './months';
 import { normalizeText } from './normalizeText';
 import { priceForMonth, type PriceRow } from './prices';
 
@@ -42,31 +42,54 @@ const renterDetails = z
   .object({ fullName: z.string().trim().min(1).max(PERSON_NAME_MAX), phone })
   .strict();
 
-/**
- * What an area is called on screen and on paper: its own name, or, when it
- * has none, its current renter's name. Null when it has neither, so the
- * caller shows its "No name" text in the reader's language.
- */
-export function areaLabel(name: string, renterName: string | null): string | null {
-  return name !== '' ? name : renterName || null;
-}
-
-/** What `areaLabel` needs: the area's own name and its current renter's name. */
+/** What an area's label needs: its own name, its category and its current renter's name. */
 export interface AreaNaming {
   name: string;
+  categoryName: string;
   renterName: string | null;
 }
 
 /**
- * Orders areas by what they are called on screen (areas with no name at all
- * come first); the same label keeps the order the areas were added in, so
- * every list, print and export agrees.
+ * What an area is called on screen and on paper: its own name, or, when it
+ * has none, its category, as the owner's clients know a place by its group
+ * and its renter (ARCHITECTURE.md section 5).
+ */
+export function areaLabel(area: Pick<AreaNaming, 'name' | 'categoryName'>): string {
+  return area.name !== '' ? area.name : area.categoryName;
+}
+
+/**
+ * The small line under an area's label where there is no renter column
+ * beside it: the category under an own name, else the renter, so two places
+ * of the same category can be told apart.
+ */
+export function areaSubline(area: AreaNaming): string | null {
+  return area.name !== '' ? area.categoryName : area.renterName;
+}
+
+/** True when the area has its own name, so its category is worth showing under it. */
+export function hasOwnName(area: Pick<AreaNaming, 'name'>): boolean {
+  return area.name !== '';
+}
+
+/** Compares names in the reader's language, with numbers in number order: "Shop 2" before "Shop 10". */
+export function nameCollator(language: string): Intl.Collator {
+  return new Intl.Collator(language, { numeric: true });
+}
+
+/**
+ * Orders areas by what they are called on screen, then by renter, so the
+ * places of one category stand together in renter order; the same label and
+ * renter keep the order the areas were added in, so every list, print and
+ * export agrees.
  */
 export function compareAreaLabels(
   collator: Intl.Collator,
 ): (a: AreaNaming & { id: number }, b: AreaNaming & { id: number }) => number {
-  const label = (area: AreaNaming) => areaLabel(area.name, area.renterName) ?? '';
-  return (a, b) => collator.compare(label(a), label(b)) || a.id - b.id;
+  return (a, b) =>
+    collator.compare(areaLabel(a), areaLabel(b)) ||
+    collator.compare(a.renterName ?? '', b.renterName ?? '') ||
+    a.id - b.id;
 }
 
 export const areaCreateSchema = z
@@ -94,6 +117,8 @@ export const areaUpdateSchema = z
     contractStart: dateStringSchema.nullable(),
     notes: z.string().max(NOTES_MAX),
     renter: renterDetails.optional(),
+    /** A corrected currency; allowed only while the area has no payments (see `hasPayments`). */
+    currency: z.enum(CURRENCIES).optional(),
   })
   .strict();
 export type AreaUpdate = z.infer<typeof areaUpdateSchema>;
@@ -104,12 +129,10 @@ export const priceChangeSchema = z
   .strict();
 export type PriceChange = z.infer<typeof priceChangeSchema>;
 
-export const renterChangeSchema = z.discriminatedUnion('kind', [
-  renterDetails
-    .extend({ kind: z.literal('new'), areaId: id, startedOn: dateStringSchema })
-    .strict(),
-  z.object({ kind: z.literal('left'), areaId: id, endedOn: dateStringSchema }).strict(),
-]);
+/** A new renter; a renter leaving is recorded by marking the area vacant (see `changePrice`). */
+export const renterChangeSchema = renterDetails
+  .extend({ areaId: id, startedOn: dateStringSchema })
+  .strict();
 export type RenterChange = z.infer<typeof renterChangeSchema>;
 
 export const areaListQuerySchema = z
@@ -141,8 +164,11 @@ export interface AreaListItem {
   renterPhone: string | null;
   /** This month's price; 0 = vacant, null = rent has not started yet. */
   currentPrice: number | null;
+  notes: string;
   /** The 12 months of the current year. */
   months: MonthBox[];
+  /** Rent, total, received and still owed for the current year. */
+  figures: YearFigures;
   summary: YearSummary;
 }
 
@@ -163,16 +189,21 @@ export interface AreaDetails {
   prices: PriceRow[];
   /** Newest first; the current renter (if any) has no end date. */
   renters: Renter[];
+  /** True once a payment counts for the area; from then on its currency is fixed. */
+  hasPayments: boolean;
 }
 
 export interface DeletedItems {
-  areas: ({ id: number; categoryName: string; deletedAt: string } & AreaNaming)[];
+  areas: ({ id: number; deletedAt: string } & AreaNaming)[];
   categories: { id: number; name: string; deletedAt: string }[];
 }
 
 export type AreaSaveResult =
   | { ok: true; id: number }
-  | { ok: false; reason: 'duplicate_name' | 'not_found' | 'category_not_found' };
+  | {
+      ok: false;
+      reason: 'duplicate_name' | 'not_found' | 'category_not_found' | 'has_payments';
+    };
 
 export type PriceChangeResult =
   { ok: true } | { ok: false; reason: 'not_found' | 'before_rent_start' | 'no_room' };
@@ -184,7 +215,7 @@ export type PriceChangeImpact =
   | { ok: false; reason: 'no_room' };
 
 export type RenterChangeResult =
-  { ok: true } | { ok: false; reason: 'not_found' | 'no_current_renter' | 'before_current_renter' };
+  { ok: true } | { ok: false; reason: 'not_found' | 'before_current_renter' };
 
 export type RestoreResult = { ok: true } | { ok: false; reason: 'not_found' | 'duplicate_name' };
 

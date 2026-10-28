@@ -1,13 +1,13 @@
 .shell {
   display: grid;
-  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-columns: auto 1fr;
   min-height: 100vh;
 }
 
 .main {
   min-width: 0;
-  /* Narrower side margins in small windows leave room for the content at large text sizes. */
-  padding: var(--space-6) clamp(var(--space-4), 3vw, var(--space-7));
+  /* Slim side margins, so tables and month strips get most of the window. */
+  padding: var(--space-6) var(--space-4);
 }
 
 .page {

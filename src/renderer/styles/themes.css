@@ -5,29 +5,29 @@
 :root,
 :root[data-theme='light'] {
   color-scheme: light;
-  --color-background: #f6f4ef;
+  /* Calm, cool greys: colour is kept for the main action, the current page and the month statuses. */
+  --color-background: #f4f6f9;
   --color-surface: #ffffff;
-  --color-surface-muted: #efece5;
-  --color-border: #d6d1c7;
+  --color-surface-muted: #eef1f5;
+  --color-border: #dde2e8;
   /* Edges of boxes you type in or press (fields, buttons, choices): clearly visible. */
-  --color-control-border: #857f73;
-  --color-text: #1f2328;
-  --color-text-muted: #545b63;
+  --color-control-border: #7f8a99;
+  --color-text: #1b2430;
+  --color-text-muted: #5a6573;
   --color-danger: #b3261e;
   --color-danger-hover: #93201a;
-  --color-focus: #b45f06;
   --color-backdrop: rgb(20 22 26 / 45%);
   --shadow-card: 0 1px 2px rgb(0 0 0 / 6%), 0 2px 8px rgb(0 0 0 / 5%);
   --shadow-dialog: 0 12px 40px rgb(0 0 0 / 22%);
 
   /* Theme colours (Settings → Theme colour), each with its hover, soft background and text on it. */
-  --accent-green: #107c01;
-  --accent-green-hover: #0d6601;
-  --accent-green-soft: #e1f0d8;
+  --accent-green: #17694a;
+  --accent-green-hover: #11553b;
+  --accent-green-soft: #e6f1ec;
   --accent-green-on: #ffffff;
-  --accent-blue: #1f5f99;
-  --accent-blue-hover: #194e7e;
-  --accent-blue-soft: #e2ecf6;
+  --accent-blue: #2457b7;
+  --accent-blue-hover: #1c4796;
+  --accent-blue-soft: #e8eefa;
   --accent-blue-on: #ffffff;
   --accent-teal: #0f6b6b;
   --accent-teal-hover: #0b5555;
@@ -50,12 +50,12 @@
   --accent-slate-soft: #e6eaee;
   --accent-slate-on: #ffffff;
 
-  --status-paid: #1e6b2a;
-  --status-paid-bg: #dff0e0;
+  --status-paid: #155c20;
+  --status-paid-bg: #c4e5c7;
   --status-due: #9a4a00;
   --status-due-bg: #fde8cc;
-  --status-late: #a3211a;
-  --status-late-bg: #f8dcd9;
+  --status-late: #8f1a14;
+  --status-late-bg: #f4c4be;
   --status-upcoming: #545b63;
   --status-upcoming-bg: #eceef0;
   --status-na: #62676e;
@@ -73,7 +73,6 @@
   --color-text-muted: #aab0b8;
   --color-danger: #f08a80;
   --color-danger-hover: #f5a59d;
-  --color-focus: #f0b45a;
   --color-backdrop: rgb(0 0 0 / 60%);
   --shadow-card: 0 1px 2px rgb(0 0 0 / 30%);
   --shadow-dialog: 0 12px 40px rgb(0 0 0 / 55%);
@@ -107,26 +106,26 @@
   --accent-slate-soft: #313a44;
   --accent-slate-on: #141a20;
 
-  --status-paid: #8fd694;
-  --status-paid-bg: #1f3b25;
+  --status-paid: #a6e3aa;
+  --status-paid-bg: #23502c;
   --status-due: #ffbf66;
   --status-due-bg: #4a3418;
-  --status-late: #f4a09a;
-  --status-late-bg: #4d2325;
+  --status-late: #ffb3ad;
+  --status-late-bg: #662a2b;
   --status-upcoming: #b4bac1;
   --status-upcoming-bg: #30343a;
   --status-na: #8a9098;
   --status-na-bg: #26292e;
 }
 
-/* The chosen theme colour, in the current light or dark values. */
-:root,
+/* The chosen theme colour, in the current light or dark values; blue until one is chosen. */
 :root[data-accent='green'] {
   --color-accent: var(--accent-green);
   --color-accent-hover: var(--accent-green-hover);
   --color-accent-soft: var(--accent-green-soft);
   --color-on-accent: var(--accent-green-on);
 }
+:root,
 :root[data-accent='blue'] {
   --color-accent: var(--accent-blue);
   --color-accent-hover: var(--accent-blue-hover);
@@ -162,4 +161,15 @@
   --color-accent-hover: var(--accent-slate-hover);
   --color-accent-soft: var(--accent-slate-soft);
   --color-on-accent: var(--accent-slate-on);
+}
+
+/* Settings → Sidebar: Dark. Only the sidebar takes these colours; the page keeps its own. */
+:root[data-sidebar='dark'] .app-sidebar {
+  --color-surface: #18212e;
+  --color-surface-muted: #232e3d;
+  --color-border: #18212e;
+  --color-text: #e6ebf1;
+  --color-text-muted: #a9b4c2;
+  --color-accent: #8fb0ff;
+  --color-accent-soft: #2b3a52;
 }

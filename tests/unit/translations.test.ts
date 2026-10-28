@@ -32,7 +32,9 @@ describe('translations', () => {
   it.each(['ckb', 'ar'])('%s is really translated, not left in English', (language) => {
     const translated = flatten(languages[language] ?? {});
     const leftInEnglish = [...flatten(en)].filter(
-      ([key, text]) => translated.get(key) === text && /[a-z]{3}/i.test(text),
+      // Currency codes (IQD, USD) are written the same in every language, on purpose.
+      ([key, text]) =>
+        translated.get(key) === text && /[a-z]{3}/i.test(text) && !key.startsWith('currency.'),
     );
     expect(leftInEnglish).toEqual([]);
   });

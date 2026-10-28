@@ -43,6 +43,8 @@
 
 /* Only with very large text in a small window does the table scroll; the page itself never does. */
 .tableFrame {
+  /* Also holds the screen-reader-only header text, which would otherwise widen the page. */
+  position: relative;
   overflow-x: auto;
   border-radius: var(--radius-lg);
   background: var(--color-surface);
@@ -81,6 +83,10 @@
 }
 
 .name {
+  /* A place without its own name is called by its category, with the category's dot. */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--color-text);
   font-weight: 700;
   text-decoration: none;
@@ -120,8 +126,50 @@
   white-space: nowrap;
 }
 
+/*
+ * Amounts as bare numbers (the currency has its own column), lined up on the
+ * right in every language so their last digits sit under each other.
+ */
+.table .money {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* The tick box column: narrow, and the box itself is the click target. */
 .tick {
   width: 1%;
   padding-inline-end: 0;
+}
+
+/* Still owed above nothing: in the late colour, like on Reports. */
+.owed {
+  color: var(--status-late);
+  font-weight: 700;
+}
+
+/* At most two lines; the whole note shows on the area page and as a tooltip. */
+.notes {
+  display: -webkit-box;
+  max-width: 14rem;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+/* The ⋯ button: as narrow as the button itself. */
+.menuCell {
+  width: 1%;
+  padding-inline-start: 0;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

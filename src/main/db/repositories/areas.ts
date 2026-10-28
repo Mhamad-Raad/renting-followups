@@ -7,7 +7,7 @@ import type {
   RenterChangeResult,
   RestoreResult,
 } from '@shared/areas';
-import type { Currency } from '@shared/currency';
+import { FRACTION_DIGITS, type Currency } from '@shared/currency';
 import { normalizeText } from '@shared/normalizeText';
 import type { Db } from '../connection';
 import type { AuditRepository } from './audit';
@@ -55,6 +55,16 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
        contract_start = ?, notes = ?
      WHERE id = ?`,
   );
+  const selectHasPayments = db.prepare<[number], { found: number }>(
+    'SELECT 1 AS found FROM receipts WHERE area_id = ? AND voided_at IS NULL LIMIT 1',
+  );
+  const updateCurrency = db.prepare<[Currency, number]>(
+    'UPDATE areas SET currency = ? WHERE id = ?',
+  );
+  // A corrected currency keeps the written rent: 1,100,000.00 USD becomes 1,100,000 IQD.
+  const rescalePrices = db.prepare<[number, number]>(
+    'UPDATE area_prices SET monthly_price = CAST(ROUND(monthly_price * ?) AS INTEGER) WHERE area_id = ?',
+  );
   const markDeleted = db.prepare<[number]>(`UPDATE areas SET deleted_at = ${NOW_SQL} WHERE id = ?`);
   const markRestored = db.prepare<[number]>('UPDATE areas SET deleted_at = NULL WHERE id = ?');
   const selectDeleted = db.prepare<
@@ -82,6 +92,7 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
   const nameInUse = (categoryId: number, name: string, exceptId = 0) =>
     selectNameInUse.get(categoryId, normalizeText(name), exceptId) !== undefined;
   const emptyToNull = (text: string) => (text === '' ? null : text);
+  const hasPayments = (id: number) => selectHasPayments.get(id) !== undefined;
 
   return {
     /** True when an area in use in the category already has this name (letter variants count as the same). */
@@ -104,6 +115,7 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
         notes: area.notes,
         prices: prices.forArea(id),
         renters: renters.forArea(id),
+        hasPayments: hasPayments(id),
       };
     },
 
@@ -144,6 +156,15 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
       if (nameInUse(input.categoryId, input.name, input.id)) {
         return { ok: false, reason: 'duplicate_name' };
       }
+      const currency = input.currency ?? before.currency;
+      if (currency !== before.currency) {
+        if (hasPayments(input.id)) return { ok: false, reason: 'has_payments' };
+        updateCurrency.run(currency, input.id);
+        rescalePrices.run(
+          10 ** (FRACTION_DIGITS[currency] - FRACTION_DIGITS[before.currency]),
+          input.id,
+        );
+      }
       update.run(
         input.categoryId,
         input.name,
@@ -163,6 +184,7 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
           contractStart: before.contract_start,
           notes: before.notes,
           renter: currentRenter && { fullName: currentRenter.fullName, phone: currentRenter.phone },
+          currency: before.currency,
         },
         after: {
           name: input.name,
@@ -171,26 +193,16 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
           contractStart: input.contractStart,
           notes: input.notes,
           renter: input.renter && currentRenter ? input.renter : null,
+          currency,
         },
       });
       return { ok: true, id: input.id };
     }),
 
-    /** A new renter closes the current one on the day the new one starts; "left" just closes it. */
+    /** A new renter closes the current one on the day the new one starts. */
     changeRenter: db.transaction((change: RenterChange): RenterChangeResult => {
       if (!findActive(change.areaId)) return { ok: false, reason: 'not_found' };
       const current = renters.current(change.areaId);
-      if (change.kind === 'left') {
-        if (!current) return { ok: false, reason: 'no_current_renter' };
-        if (change.endedOn < current.startedOn)
-          return { ok: false, reason: 'before_current_renter' };
-        renters.end(current.id, change.endedOn);
-        audit.record('end_renter', 'area', change.areaId, {
-          renter: current.fullName,
-          endedOn: change.endedOn,
-        });
-        return { ok: true };
-      }
       if (current && change.startedOn < current.startedOn) {
         return { ok: false, reason: 'before_current_renter' };
       }

@@ -41,6 +41,34 @@ async function createAreasThroughIpc(page: Page, names: string[], categoryName =
   );
 }
 
+test('with one category chosen, the table looks the same as under All', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    await createAreasThroughIpc(page, ['', 'Shop 7']);
+    await createAreasThroughIpc(page, ['', ''], 'Plots');
+    await reloadApp(page);
+    await page.getByRole('link', { name: en.nav.areas }).click();
+    const table = page.getByRole('table');
+    const nameCell = (renter: string) =>
+      table.getByRole('row', { name: renter }).getByRole('cell').nth(1);
+
+    await page.getByRole('button', { name: 'Shops', exact: true }).click();
+    await expect(table.getByRole('row')).toHaveCount(3);
+    await expect(nameCell('Renter 0')).toHaveText('Shops');
+    await expect(nameCell('Renter 1')).toHaveText('Shop 7Shops');
+
+    // Even when no place here has a name of its own, the name column stays.
+    await page.getByRole('button', { name: 'Plots', exact: true }).click();
+    await expect(table.getByRole('columnheader', { name: en.areas.columns.name })).toHaveCount(1);
+    await table.getByRole('row', { name: 'Renter 1' }).getByRole('link', { name: 'Plots' }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Plots');
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
 test('the first area is added from the empty screen and shows on the list', async () => {
   const dataDir = createDataDir();
   const { app, page } = await openAreas(dataDir);
@@ -71,7 +99,7 @@ test('the first area is added from the empty screen and shows on the list', asyn
   }
 });
 
-test('areas without a name are shown by their renter, and two may share a category', async () => {
+test('areas without a name are shown by their category, and two may share one', async () => {
   const dataDir = createDataDir();
   const { app, page } = await openAreas(dataDir);
   try {
@@ -80,7 +108,11 @@ test('areas without a name are shown by their renter, and two may share a catego
     await page.getByRole('link', { name: en.nav.areas }).click();
     const rows = page.getByRole('row');
     await expect(rows).toHaveCount(3);
-    await expect(page.getByRole('link', { name: 'Renter 0' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Shops' })).toHaveCount(2);
+    // Each row keeps its renter beside the category, so the two places stay apart.
+    await expect(
+      page.getByRole('row', { name: /Renter 0/ }).getByRole('link', { name: 'Shops' }),
+    ).toBeVisible();
 
     await page.getByRole('link', { name: en.areas.add }).click();
     await expect(page.getByText(en.areaForm.nameHint)).toBeVisible();
@@ -88,7 +120,7 @@ test('areas without a name are shown by their renter, and two may share a catego
     await page.getByLabel(en.areaForm.monthlyRent).fill('100000');
     await page.getByLabel(en.areaForm.renterName).fill('Kazim');
     await page.getByRole('button', { name: en.areaForm.save }).click();
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Kazim');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Shops');
   } finally {
     await app.close();
     removeDataDir(dataDir);
@@ -139,8 +171,12 @@ test('price changes, vacant and renter changes are kept as history', async () =>
     await page.getByRole('dialog').getByRole('button', { name: en.common.save }).click();
     await expect(page.getByText(en.priceDialog.vacantSaved)).toBeVisible();
     await expect(page.getByRole('button', { name: en.area.setRentAgain })).toBeVisible();
+    // Vacant also ends the renter: the page says No renter, and the old one is in the history.
+    await expect(page.getByText(en.areas.noRenter)).toBeVisible();
 
+    // Change renter only adds a new renter; there is no "renter left" choice any more.
     await page.getByRole('button', { name: en.area.changeRenter }).click();
+    await expect(page.getByRole('dialog').getByRole('radio')).toHaveCount(0);
     await page.getByRole('dialog').getByLabel(en.renterDialog.name).fill('Sara Ali');
     await page.getByRole('dialog').getByRole('button', { name: en.common.save }).click();
     await expect(page.getByText(en.renterDialog.saved)).toBeVisible();
@@ -288,6 +324,138 @@ test('ticked areas hidden by a search are not printed or counted', async () => {
     await expect(page.getByRole('button', { name: en.print.actions.printSelected })).toHaveCount(0);
     await page.getByLabel(en.areas.search).fill('');
     await expect(page.getByRole('button', { name: en.print.actions.printSelected })).toBeVisible();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
+test("a row's ⋯ menu lists the area's actions and opens the chosen one on the list", async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    await createAreasThroughIpc(page, ['Shop 7']);
+    await reloadApp(page);
+    await page.getByRole('link', { name: en.nav.areas }).click();
+    const row = page.getByRole('table').getByRole('row', { name: /Shop 7/ });
+    // The currency has its own column; the amount beside it is a bare number.
+    await expect(row.getByRole('cell').nth(3)).toHaveText('IQD');
+    await expect(row.getByRole('cell').nth(4)).toHaveText('250,000');
+    const menuButton = row.getByRole('button', {
+      name: en.areas.actionsFor.replace('{{name}}', 'Shop 7'),
+    });
+
+    await menuButton.click();
+    const menu = page.getByRole('menu');
+    await expect(menu.getByRole('menuitem')).toHaveText([
+      en.area.recordPayment,
+      en.area.recordPastPayment,
+      en.common.edit,
+      en.area.changePrice,
+      en.area.markVacant,
+      en.area.changeRenter,
+      en.common.delete,
+    ]);
+    // Opens on the first action; the arrow keys move, Esc closes and stays on the Areas page.
+    await expect(menu.getByRole('menuitem').first()).toBeFocused();
+    await page.keyboard.press('ArrowUp');
+    await expect(menu.getByRole('menuitem').last()).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(en.pages.areas.title);
+
+    // The chosen action opens right here on the list; the page does not change.
+    await menuButton.click();
+    await page.getByRole('menuitem', { name: en.area.markVacant }).click();
+    const dialog = page.getByRole('dialog', { name: en.priceDialog.vacantTitle });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: en.common.save }).click();
+    await expect(page.getByText(en.priceDialog.vacantSaved)).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(en.pages.areas.title);
+    await expect(row).toContainText(en.areas.vacant);
+    await expect(row).toContainText(en.areas.noRenter);
+
+    // Edit is its own page, and saving it comes back to the list.
+    await menuButton.click();
+    await page.getByRole('menuitem', { name: en.common.edit }).click();
+    await page.getByRole('button', { name: en.areaForm.save }).click();
+    await expect(page.getByText(en.areaForm.saved)).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(en.pages.areas.title);
+
+    await menuButton.click();
+    await page.getByRole('menuitem', { name: en.common.delete }).click();
+    await page
+      .getByRole('dialog', { name: en.area.deleteTitle })
+      .getByRole('button', { name: en.common.delete })
+      .click();
+    await expect(page.getByText(en.areas.deleted)).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(en.pages.areas.title);
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
+test('the currency can be corrected on Edit until the first payment', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    await createAreasThroughIpc(page, ['Shop 1']);
+    await reloadApp(page);
+    await page.getByRole('link', { name: 'Shop 1' }).click();
+    await page.getByRole('link', { name: en.common.edit }).click();
+    await page
+      .getByRole('group', { name: en.areaForm.currency })
+      .getByRole('radio', { name: en.currency.USD })
+      .check();
+    await page.getByRole('button', { name: en.areaForm.save }).click();
+    await expect(page.getByText(en.areaForm.saved)).toBeVisible();
+    // The rent keeps its written number in the new currency.
+    await expect(page.getByText('250,000.00 USD').first()).toBeVisible();
+
+    const areaId = Number(page.url().match(/areas\/(\d+)/)?.[1]);
+    await page.evaluate(async (id) => {
+      const year = new Date().getFullYear();
+      const paid = await window.api.invoke('payments:create', {
+        areaId: id,
+        isBackfill: true,
+        amount: 25_000_000,
+        from: { year, month: 1 },
+        paidOn: `${year}-01-01`,
+        note: '',
+      });
+      if (!paid.ok || !paid.data.ok) throw new Error('payment failed');
+    }, areaId);
+    await reloadApp(page);
+    await page.getByRole('link', { name: en.common.edit }).click();
+    await expect(page.getByRole('group', { name: en.areaForm.currency })).toHaveCount(0);
+    await expect(page.getByText(en.areaForm.currencyFixed)).toBeVisible();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
+test('a click on the dark background closes a dialog; a click inside does not', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    await createAreasThroughIpc(page, ['Shop 1']);
+    await reloadApp(page);
+    await page.getByRole('link', { name: 'Shop 1' }).click();
+    await page.getByRole('button', { name: en.area.changePrice }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+
+    // Inside, on the dialog's own empty margin: it stays open.
+    const box = await dialog.boundingBox();
+    if (!box) throw new Error('dialog not drawn');
+    await page.mouse.click(box.x + 4, box.y + 4);
+    await expect(dialog).toBeVisible();
+
+    // On the dark background: it closes, like Esc.
+    await page.mouse.click(5, 5);
+    await expect(dialog).toBeHidden();
   } finally {
     await app.close();
     removeDataDir(dataDir);

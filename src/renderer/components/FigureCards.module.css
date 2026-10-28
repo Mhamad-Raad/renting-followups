@@ -6,18 +6,23 @@
   margin: 0;
 }
 
+/* A thin coloured line along the top: the theme colour, or red for money still owed. */
 .card {
+  --card-tone: var(--color-accent);
   min-width: 0;
   padding: var(--space-4) var(--space-5);
+  border-block-start: 3px solid var(--card-tone);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow-card);
 }
 
 .card[data-tone='warning'] {
-  box-shadow:
-    inset 0 0 0 2px var(--status-late-bg),
-    var(--shadow-card);
+  --card-tone: var(--status-late);
+}
+
+.card[data-tone='warning'] .value {
+  color: var(--status-late);
 }
 
 .label {

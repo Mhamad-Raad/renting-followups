@@ -1,41 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { currentRenter, type AreaDetails } from '@shared/areas';
+import { areaLabel, type AreaDetails } from '@shared/areas';
 import { yearMonthOf } from '@shared/dates';
-import { formatReceiptNumber, type Receipt } from '@shared/payments';
+import { useIpcQuery } from '../../app/ipc';
 import { priceForMonth } from '@shared/prices';
-import { callIpc, useIpcQuery } from '../../app/ipc';
-import { useMountedRef } from '../../app/useMountedRef';
 import { flash, useFlashNotice } from '../../app/flash';
-import { useSettings } from '../../app/SettingsContext';
-import { useAreaLabel } from '../../app/useAreaLabel';
 import { BigButton } from '../../components/BigButton';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { LoadError } from '../../components/LoadError';
 import { LinkButton } from '../../components/LinkButton';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
-import { usePrint } from '../../print/usePrint';
 import { AreaFacts } from './AreaFacts';
 import { AreaHistory } from './AreaHistory';
 import { AreaPeriod } from './AreaPeriod';
 import styles from './AreaPage.module.css';
-import { RECORD_PAYMENT_PARAM } from './links';
+import { AREA_ACTION_PARAM, editAreaLink, isAreaAction } from './links';
 import { parseRouteId } from '../../app/parseRouteId';
-import { PaymentDialog, type PaymentMode, type PaymentSaved } from './PaymentDialog';
-import { PriceDialog, type PriceMode } from './PriceDialog';
-import { RenterDialog } from './RenterDialog';
+import { ACTION_DIALOGS, useAreaActions } from './useAreaActions';
 import { useAreaPeriod } from './useAreaPeriod';
 import { useMonthPick } from './useMonthPick';
-
-type OpenDialog =
-  | { kind: 'price'; mode: PriceMode }
-  | { kind: 'payment'; mode: PaymentMode }
-  | { kind: 'cancelReceipt'; receipt: Receipt }
-  | { kind: 'renter' }
-  | { kind: 'delete' }
-  | null;
 
 /** One area: its details, its price and renter history, and the actions that change them. */
 export function AreaPage() {
@@ -62,147 +46,79 @@ export function AreaPage() {
 
 function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => void }) {
   const { t } = useTranslation();
-  const mounted = useMountedRef();
-  const { settings } = useSettings();
-  const label = useAreaLabel();
   const navigate = useNavigate();
   const flashed = useFlashNotice();
-  const [notice, setNotice] = useState<string | null>(flashed);
   const [searchParams, setSearchParams] = useSearchParams();
-  // Opened from Home's "Record payment": start with the payment form open.
-  const [dialog, setDialog] = useState<OpenDialog>(() =>
-    searchParams.has(RECORD_PAYMENT_PARAM) ? { kind: 'payment', mode: { kind: 'new' } } : null,
-  );
   useEffect(() => {
-    if (searchParams.has(RECORD_PAYMENT_PARAM)) void setSearchParams({}, { replace: true });
+    if (searchParams.has(AREA_ACTION_PARAM)) void setSearchParams({}, { replace: true });
   }, [searchParams, setSearchParams]);
-  const [problem, setProblem] = useState<string | null>(null);
-  // The payment saved last on this screen; it can be undone for as long as the screen is open.
-  const [undoable, setUndoable] = useState<PaymentSaved['undo'] | null>(null);
 
   const today = yearMonthOf(new Date());
   const price = priceForMonth(area.prices, today);
   const period = useAreaPeriod(area.id, today.year);
 
-  const done = (message: string) => {
-    setDialog(null);
-    setProblem(null);
-    setNotice(message);
-    setUndoable(null);
-    onChanged();
-    period.refresh();
-  };
+  const actions = useAreaActions(area, {
+    onChanged: () => {
+      onChanged();
+      period.refresh();
+    },
+    onDeleted: (message) => void navigate('/areas', { state: flash(message) }),
+    // Opened with an action (Home's "Record payment"): start with its dialog open.
+    initialDialog: (() => {
+      const action = searchParams.get(AREA_ACTION_PARAM);
+      return isAreaAction(action) ? ACTION_DIALOGS[action] : null;
+    })(),
+    initialNotice: flashed,
+  });
+  const { open } = actions;
 
   const monthPick = useMonthPick((outcome) => {
     if (outcome.tone === 'error') {
-      setProblem(outcome.text);
+      actions.fail(outcome.text);
       period.refresh();
       return;
     }
-    done(outcome.text);
     // A month marked as paid can be undone, like any new payment.
-    setUndoable(outcome.undo ?? null);
+    actions.done(outcome.text, outcome.undo ?? null);
   });
-
-  const printing = usePrint();
-  const printReceipt = (id: number) =>
-    void printing.run({ kind: 'receipt', id, output: 'printer' });
-
-  const paymentSaved = ({ message, undo, print }: PaymentSaved) => {
-    done(message);
-    setUndoable(undo ?? null);
-    if (print && undo) printReceipt(undo.id);
-  };
-
-  // Undo and Cancel receipt both cancel the receipt: it stays listed, and its number is never reused.
-  const cancelReceipt = async (id: number, message: string) => {
-    setDialog(null);
-    const result = await callIpc('payments:void', { id });
-    if (!mounted.current) return;
-    if (result.ok && result.data.ok) done(message);
-    else setProblem(t('errors.unexpected'));
-  };
-
-  const undo = () => {
-    if (!undoable) return;
-    const { id, receiptNumber } = undoable;
-    void cancelReceipt(
-      id,
-      receiptNumber === null
-        ? t('receipts.pastUndone')
-        : t('receipts.undone', { number: formatReceiptNumber(receiptNumber, settings.digitStyle) }),
-    );
-  };
-
-  const remove = async () => {
-    setDialog(null);
-    const result = await callIpc('areas:delete', { id: area.id });
-    if (!mounted.current) return;
-    if (result.ok && result.data.ok) {
-      void navigate('/areas', { state: flash(t('areas.deleted')) });
-    } else {
-      setProblem(t('errors.unexpected'));
-    }
-  };
 
   return (
     <>
       <PageHeader
-        title={label({
-          name: area.name,
-          renterName: currentRenter(area.renters)?.fullName ?? null,
-        })}
+        back={{ to: '/areas', label: t('area.back') }}
+        title={areaLabel({ name: area.name, categoryName: area.category.name })}
         actions={
           <>
-            <BigButton
-              variant="primary"
-              onClick={() => setDialog({ kind: 'payment', mode: { kind: 'new' } })}
-            >
+            <BigButton variant="primary" onClick={() => open(ACTION_DIALOGS.payment)}>
               {t('area.recordPayment')}
             </BigButton>
-            <LinkButton to={`/areas/${area.id}/edit`}>{t('common.edit')}</LinkButton>
-            <BigButton onClick={() => setDialog({ kind: 'delete' })}>
-              {t('common.delete')}
-            </BigButton>
+            <LinkButton to={editAreaLink(area.id)}>{t('common.edit')}</LinkButton>
+            <BigButton onClick={() => open(ACTION_DIALOGS.delete)}>{t('common.delete')}</BigButton>
           </>
         }
       />
       <div className={styles.stack}>
-        {notice && (
-          <Notice tone="success">
-            <div className={styles.saved}>
-              <span>{notice}</span>
-              {undoable && undoable.receiptNumber !== null && (
-                <BigButton disabled={printing.busy} onClick={() => printReceipt(undoable.id)}>
-                  {t('print.actions.printReceipt')}
-                </BigButton>
-              )}
-              {undoable && <BigButton onClick={undo}>{t('receipts.undo')}</BigButton>}
-            </div>
-          </Notice>
-        )}
-        {problem && <Notice tone="error">{problem}</Notice>}
-        {printing.message && <Notice tone={printing.message.tone}>{printing.message.text}</Notice>}
+        {actions.feedback}
 
         <AreaFacts area={area} price={price} />
 
         <div className={styles.actions}>
-          <BigButton onClick={() => setDialog({ kind: 'payment', mode: { kind: 'past' } })}>
+          <BigButton onClick={() => open(ACTION_DIALOGS.pastPayment)}>
             {t('area.recordPastPayment')}
           </BigButton>
-          <BigButton onClick={() => setDialog({ kind: 'price', mode: 'change' })}>
+          <BigButton onClick={() => open(ACTION_DIALOGS.changePrice)}>
             {t('area.changePrice')}
           </BigButton>
           {price === 0 ? (
-            <BigButton onClick={() => setDialog({ kind: 'price', mode: 'rentAgain' })}>
+            <BigButton onClick={() => open(ACTION_DIALOGS.setRentAgain)}>
               {t('area.setRentAgain')}
             </BigButton>
           ) : (
-            <BigButton onClick={() => setDialog({ kind: 'price', mode: 'vacant' })}>
+            <BigButton onClick={() => open(ACTION_DIALOGS.markVacant)}>
               {t('area.markVacant')}
             </BigButton>
           )}
-          <BigButton onClick={() => setDialog({ kind: 'renter' })}>
+          <BigButton onClick={() => open(ACTION_DIALOGS.changeRenter)}>
             {t('area.changeRenter')}
           </BigButton>
         </div>
@@ -211,10 +127,10 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
           area={area}
           period={period}
           currentYear={today.year}
-          onEdit={(receipt) => setDialog({ kind: 'payment', mode: { kind: 'edit', receipt } })}
-          onCancel={(receipt) => setDialog({ kind: 'cancelReceipt', receipt })}
-          onPrint={(receipt) => printReceipt(receipt.id)}
-          printing={printing.busy}
+          onEdit={(receipt) => open({ kind: 'payment', mode: { kind: 'edit', receipt } })}
+          onCancel={(receipt) => open({ kind: 'cancelReceipt', receipt })}
+          onSavePdf={(receipt) => actions.saveReceiptPdf(receipt.id)}
+          saving={actions.saving}
           onPickMonth={(box) =>
             void monthPick.pick({
               areaId: area.id,
@@ -226,58 +142,10 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
         />
 
         <AreaHistory area={area} />
-
-        <div className={styles.back}>
-          <LinkButton to="/areas" icon="back">
-            {t('area.back')}
-          </LinkButton>
-        </div>
       </div>
 
       {monthPick.dialog}
-      <PriceDialog
-        area={area}
-        mode={dialog?.kind === 'price' ? dialog.mode : null}
-        onDone={done}
-        onClose={() => setDialog(null)}
-      />
-      <PaymentDialog
-        area={area}
-        mode={dialog?.kind === 'payment' ? dialog.mode : null}
-        onSaved={paymentSaved}
-        onClose={() => setDialog(null)}
-      />
-      <ConfirmDialog
-        open={dialog?.kind === 'cancelReceipt'}
-        title={t('receipts.cancelTitle')}
-        confirmLabel={t('receipts.cancel')}
-        cancelLabel={t('receipts.keep')}
-        tone="danger"
-        onConfirm={() => {
-          if (dialog?.kind === 'cancelReceipt') {
-            void cancelReceipt(dialog.receipt.id, t('receipts.cancelDone'));
-          }
-        }}
-        onCancel={() => setDialog(null)}
-      >
-        {t('receipts.cancelBody')}
-      </ConfirmDialog>
-      <RenterDialog
-        area={area}
-        open={dialog?.kind === 'renter'}
-        onDone={done}
-        onClose={() => setDialog(null)}
-      />
-      <ConfirmDialog
-        open={dialog?.kind === 'delete'}
-        title={t('area.deleteTitle')}
-        confirmLabel={t('common.delete')}
-        tone="danger"
-        onConfirm={() => void remove()}
-        onCancel={() => setDialog(null)}
-      >
-        {t('area.deleteBody')}
-      </ConfirmDialog>
+      {actions.dialogs}
     </>
   );
 }

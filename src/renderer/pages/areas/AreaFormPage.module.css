@@ -1,8 +1,21 @@
+/* Cards side by side on a wide window (place and rent, then renter and more), one under another on a narrow one. */
 .form {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr));
   gap: var(--space-5);
-  max-width: 44rem;
+  max-width: 76rem;
+}
+
+/* The problem message and the Save row run under all the cards. */
+.wide {
+  grid-column: 1 / -1;
+}
+
+/* Two short fields on one line, such as the renter's name and phone. */
+.pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: var(--space-4);
 }
 
 .section {
@@ -41,6 +54,7 @@
 
 .notes textarea:focus-visible {
   border-color: var(--color-accent);
+  box-shadow: var(--field-focus);
 }
 
 .actions {

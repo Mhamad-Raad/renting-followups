@@ -18,6 +18,7 @@ function area(name: string, prices: PriceRow[], paid: [YearMonth, number][] = []
   return {
     id: name.length,
     name,
+    categoryName: 'Shops',
     currency: 'IQD',
     renterName: 'Karwan',
     renterPhone: null,

@@ -17,17 +17,20 @@ import { translate } from './translate';
  */
 
 /** The light theme's status backgrounds (themes.css); a test keeps the two in step. */
+/** As on screen: no yellow; this month unpaid is red, a coming month paid in part is grey. */
 export const STATUS_FILLS: Record<MonthStatus, string> = {
-  paid: 'dff0e0',
-  due: 'fde8cc',
-  partial: 'fde8cc',
-  late: 'f8dcd9',
+  paid: 'c4e5c7',
+  due: 'f4c4be',
+  partial: 'eceef0',
+  late: 'f4c4be',
   upcoming: 'eceef0',
   not_applicable: 'f6f6f6',
 };
 
 const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
-const FIRST_MONTH_COLUMN = 8;
+/** Rent, received and still owed, after the currency column. */
+const MONEY_COLUMNS = [6, 7, 8];
+const FIRST_MONTH_COLUMN = 9;
 
 export interface ExcelOptions {
   language: Language;
@@ -55,9 +58,8 @@ export function buildReportWorkbook(
       fitToHeight: 0,
     },
   });
-  // A cell number format that shows the amount with its currency name, like the screen.
-  const moneyFormat = (currency: Currency) =>
-    `#,##0${FRACTION_DIGITS[currency] > 0 ? '.00' : ''} "${t(`currency.${currency}`)}"`;
+  // A bare number (the currency has its own column), with cents for USD.
+  const moneyFormat = (currency: Currency) => `#,##0${FRACTION_DIGITS[currency] > 0 ? '.00' : ''}`;
   const toMajor = (amount: number, currency: Currency) => amount / 10 ** FRACTION_DIGITS[currency];
 
   if (printTitle) sheet.addRow([printTitle]).font = { bold: true, size: 12 };
@@ -77,6 +79,7 @@ export function buildReportWorkbook(
     t('area.category'),
     t('reports.columns.renter'),
     t('area.phone'),
+    t('areaForm.currency'),
     t('reports.columns.rent'),
     t('reports.columns.received'),
     t('reports.columns.remaining'),
@@ -89,17 +92,18 @@ export function buildReportWorkbook(
 
   for (const row of report.rows) {
     const line = sheet.addRow([
-      areaLabel(row.name, row.renterName) ?? t('areas.noName'),
+      areaLabel(row),
       row.categoryName,
       row.renterName ?? '',
       row.renterPhone ?? '',
+      t(`currency.${row.currency}`),
       row.figures.rent === null ? '' : toMajor(row.figures.rent, row.currency),
       toMajor(row.figures.received, row.currency),
       toMajor(row.figures.remaining, row.currency),
       ...row.boxes.map((box) => (box.paid > 0 ? toMajor(box.paid, row.currency) : '')),
       row.notes,
     ]);
-    for (const column of [5, 6, 7, ...MONTHS.map((m) => FIRST_MONTH_COLUMN + m - 1)]) {
+    for (const column of [...MONEY_COLUMNS, ...MONTHS.map((m) => FIRST_MONTH_COLUMN + m - 1)]) {
       line.getCell(column).numFmt = moneyFormat(row.currency);
     }
     row.boxes.forEach((box, index) => {
@@ -120,12 +124,13 @@ export function buildReportWorkbook(
       '',
       '',
       '',
+      t(`currency.${total.currency}`),
       toMajor(total.rent, total.currency),
       toMajor(total.received, total.currency),
       toMajor(total.remaining, total.currency),
     ]);
     line.font = { bold: true };
-    for (const column of [5, 6, 7]) line.getCell(column).numFmt = moneyFormat(total.currency);
+    for (const column of MONEY_COLUMNS) line.getCell(column).numFmt = moneyFormat(total.currency);
   }
   sheet.addRow([]);
   sheet.addRow([
@@ -136,7 +141,7 @@ export function buildReportWorkbook(
   ]);
 
   sheet.columns.forEach((column, index) => {
-    column.width = index < 4 ? 22 : index < 7 ? 16 : index < 19 ? 12 : 40;
+    column.width = index < 4 ? 22 : index === 4 ? 10 : index < 8 ? 16 : index < 20 ? 12 : 40;
   });
   return workbook;
 }

@@ -415,7 +415,7 @@ Named in ARCHITECTURE.md for Excel export; pure JavaScript, runs in the main pro
 
 - **Dialogs** start with the keyboard on the button meant for it: OK in the reminders popup, Cancel in the Restore question (so a stray Enter never replaces the data). Closing a dialog is instant; only opening fades in.
 - **Motion:** with "reduce motion" on in Windows, buttons and dialogs no longer change size; the bell's pulse lasts as long as other short animations.
-- **Contrast (light theme):** a darker focus ring with a thin gap in the surface colour (visible on any button colour), and a separate, darker edge colour for fields, buttons and choices (`--color-control-border`); card and table lines stay soft. A test keeps edges and the focus ring at 3:1 or more in both themes.
+- **Contrast (light theme):** a focus ring in the theme colour with a thin gap in the surface colour (visible on any button colour; the orange ring was dropped at the owner's request, 2026-10-27, and typing fields show focus by their own edge with a soft glow), and a separate, darker edge colour for fields, buttons and choices (`--color-control-border`); card and table lines stay soft. A test keeps edges and the focus ring at 3:1 or more in both themes.
 - **Month boxes:** the amount and status word are at the normal reading size and shrink just enough to stay on one line in a narrow box (very large text, small window).
 - **Separators:** a bar ( | ) instead of a middle dot (·) between parts of a line, because next to Arabic-Indic digits the dot looks like the zero (٠).
 - **Errors:** every screen that cannot load its information shows the plain message with a **Try again** button; "not found" is shown only when the area really does not exist. A PDF or Excel file that cannot be written (for example, open in Excel) says so plainly.
@@ -426,9 +426,10 @@ Named in ARCHITECTURE.md for Excel export; pure JavaScript, runs in the main pro
 
 ### App icon (chosen by the owner)
 
-- The owner's logo (green circle, hand with a red tulip, wheat and olive branch) as a round badge with a red ring on the front of a classic building (roof, columns, steps) in the logo's green, on a cream rounded square. The logo's green (#129901) and red (#ba0001) are unchanged. Chosen from three options on 2026-10-22.
+- The owner's logo (green circle, hand with a red tulip, wheat and olive branch) as a round badge with a red ring on the front of a classic building (roof, columns, steps) in the logo's green, on a cream rounded square. The logo's green (#129901) and red (#ba0001) are unchanged. Chosen from three options on 2026-10-22. **Updated 2026-10-25 at the business's request:** the ring around the badge is white instead of red, and the main green is lighter (#41ad34 instead of #129901; the dark green bands stay #005612).
 - `build/icon.png` (1024 px) and `build/icon.ico` (16 to 256 px) are for the installer and shortcuts; `resources/icon.png` (256 px) is the window and taskbar icon. The original logo picture is only 300 px, so the logo part is slightly soft at large sizes; a larger original would make it crisp.
 - **Green theme colour (owner's choice):** green from the logo is now the first theme colour and the default (light #107c01, a little deeper than the logo's #129901 so white button text stays readable; dark #6cc95c). The earlier rule "no green theme colour, so it never looks like a paid month" is set aside at the owner's request; the paid status keeps its own darker green and its tick and word, so months stay easy to tell apart. Blue and the other colours remain choices in Settings.
+- **Calm palette (owner's choice, 2026-10-27):** blue is the default theme colour again, so green only means "paid"; green stays a choice. Cool light greys replace the beige background, and ordinary buttons are plain white with a grey edge, so the theme colour is kept for the main action of a screen, the current page and selections. The other two looks shown to the owner became choices: the green theme colour is now the calmer deep green (#17694a), and Settings → Sidebar: Dark gives the sidebar alone navy colours (`:root[data-sidebar='dark'] .app-sidebar` in `themes.css`, checked by the contrast test).
 - **Password eye:** the Show/Hide button is now an eye icon inside the password box (a crossed-out eye while the password is shown), still a real button that the keyboard reaches and screen readers announce as "Show password" / "Hide password".
 
 ### Optional area name (owner's decision, 2026-10-25)
@@ -439,6 +440,15 @@ Named in ARCHITECTURE.md for Excel export; pure JavaScript, runs in the main pro
 - **Duplicates:** names that are filled in stay unique within a category. Areas without a name never clash, because the same person may rent two places in one category (as in the client's sheets). Migration 004 changes the unique index to match.
 - **Import:** the name column may be left out or empty. Rows without a name are never flagged as already imported, so the template help asks to import such a file only once. In the preview an empty name shows a dash.
 - **Tests:** the three reminder end-to-end tests failed in the last week of every month (the late test area also got a month-end reminder). The test now pays the current month, so it gives the same counts on any day.
+
+### The category is the name (client's decision, 2026-10-26)
+
+- The client treats the category as the name of a place that has none, so `areaLabel` now returns the area's own name, else its category (it never needs "No name": every area has a category). This replaces "shown by its renter's name" above.
+- **Tables** (Home, Areas, Reports): the place column shows the category with its colour dot; the renter keeps its own column, so nothing is repeated. An area with its own name still shows its category under the name.
+- **Where there is no renter column** (Reports area picker, Deleted items): the line under the label shows the category under an own name, else the renter (`areaSubline`).
+- **Printed report:** the Category column is left empty when the category is already the label. The Excel export keeps the Category column filled, as it is data people filter on.
+- **Activity log:** an area without a name is written as "category | renter", the renter of that time when the entry recorded one.
+- **Sorting:** by the shown name, then renter, then the order added, everywhere (lists, reports, reminders). Numbers in names sort in number order ("House 9" before "House 10").
 
 ### Month boxes: numbers and clicks (owner's decisions, 2026-10-25)
 

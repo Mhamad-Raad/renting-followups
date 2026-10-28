@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import {
   ADDRESS_MAX,
   AREA_NAME_MAX,
@@ -31,7 +31,12 @@ import { parseRouteId } from '../../app/parseRouteId';
 const NEW_CATEGORY = 'new';
 
 type Problem =
-  'duplicate_name' | 'category_not_found' | 'not_found' | 'duplicate_category' | 'unexpected';
+  | 'duplicate_name'
+  | 'category_not_found'
+  | 'not_found'
+  | 'duplicate_category'
+  | 'has_payments'
+  | 'unexpected';
 
 /** Add area (`/areas/new`) or Edit area (`/areas/:id/edit`). */
 export function AreaFormPage() {
@@ -56,6 +61,8 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
   const { t } = useTranslation();
   const mounted = useMountedRef();
   const navigate = useNavigate();
+  // Opened from the Areas list's ⋯ menu: go back there after saving, not to the area page.
+  const returnTo = (useLocation().state as { returnTo?: string } | null)?.returnTo ?? null;
   const categories = useIpcQuery('categories:list');
   const today = new Date();
   const renterNow = area ? currentRenter(area.renters) : null;
@@ -64,7 +71,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
   const [categoryChoice, setCategoryChoice] = useState(area ? String(area.category.id) : '');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [rent, setRent] = useState<NewRent>({
-    currency: 'IQD',
+    currency: area?.currency ?? 'IQD',
     monthlyPrice: null,
     vacant: false,
     startsFrom: yearMonthOf(today),
@@ -150,26 +157,34 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
           id: area.id,
           ...common,
           ...(renterDetails && renterNow ? { renter: renterDetails } : {}),
+          ...(rent.currency === area.currency ? {} : { currency: rent.currency }),
         })
       : await callIpc('areas:create', {
           ...common,
           currency: rent.currency,
           monthlyPrice: rent.vacant ? 0 : (rent.monthlyPrice ?? 0),
           rentStartsFrom: rent.startsFrom,
-          renter: renterDetails && { ...renterDetails, startedOn: renter.since },
+          renter:
+            rent.vacant || !renterDetails ? null : { ...renterDetails, startedOn: renter.since },
         });
     if (!mounted.current) return;
     setBusy(false);
     if (!result.ok) setProblem('unexpected');
     else if (!result.data.ok) setProblem(result.data.reason);
-    else void navigate(`/areas/${result.data.id}`, { state: flash(t('areaForm.saved')) });
+    else {
+      void navigate(returnTo ?? `/areas/${result.data.id}`, { state: flash(t('areaForm.saved')) });
+    }
   }
 
   return (
     <>
-      <PageHeader title={t(area ? 'areaForm.editTitle' : 'areaForm.newTitle')} />
+      <PageHeader
+        title={t(area ? 'areaForm.editTitle' : 'areaForm.newTitle')}
+        back={{ to: '/areas', label: t('area.back') }}
+      />
       <Form className={styles.form} onSubmit={() => void submit()}>
         <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>{t('areaForm.sections.place')}</h2>
           <TextField
             label={`${t('areaForm.name')} ${t('common.optional')}`}
             hint={t('areaForm.nameHint')}
@@ -210,6 +225,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
         </section>
 
         <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>{t('areaForm.sections.rent')}</h2>
           <RentFields
             area={area}
             rent={rent}
@@ -218,7 +234,8 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
           />
         </section>
 
-        {(!area || renterNow) && (
+        {/* A vacant place has no renter (see Mark as vacant). */}
+        {(area ? renterNow : !rent.vacant) && (
           <RenterFields
             editing={area !== null}
             renter={renter}
@@ -229,6 +246,7 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
         )}
 
         <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>{t('areaForm.sections.more')}</h2>
           <TextField
             label={`${t('areaForm.address')} ${t('common.optional')}`}
             value={address}
@@ -261,11 +279,15 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
         </section>
 
         {problem && (
-          <Notice tone="error">
-            {problem === 'unexpected' ? t('errors.unexpected') : t(`areaForm.problems.${problem}`)}
-          </Notice>
+          <div className={styles.wide}>
+            <Notice tone="error">
+              {problem === 'unexpected'
+                ? t('errors.unexpected')
+                : t(`areaForm.problems.${problem}`)}
+            </Notice>
+          </div>
         )}
-        <div className={styles.actions}>
+        <div className={`${styles.wide} ${styles.actions}`}>
           <BigButton type="submit" variant="primary" disabled={busy}>
             {t('areaForm.save')}
           </BigButton>

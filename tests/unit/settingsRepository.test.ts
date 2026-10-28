@@ -46,6 +46,16 @@ describe('settings repository', () => {
     ]);
   });
 
+  it('remembers the sidebar style, light by default', () => {
+    const settings = createSettingsRepository(db);
+    expect(settings.getAll().sidebarStyle).toBe('light');
+    settings.update({ sidebarStyle: 'dark' });
+    expect(createSettingsRepository(db).getAll().sidebarStyle).toBe('dark');
+    expect(db.prepare("SELECT value FROM settings WHERE key = 'sidebar_style'").get()).toEqual({
+      value: 'dark',
+    });
+  });
+
   it('keeps numbers and text as they were saved', () => {
     const settings = createSettingsRepository(db);
     settings.update({ remindDays: 10, printTitle: '  Kawa Rentals  ', themeColor: 'teal' });
@@ -63,7 +73,7 @@ describe('settings repository', () => {
     ['remind_days_before_month_end', 'soon', 'remindDays'],
     ['remind_days_before_month_end', '0', 'remindDays'],
     ['font_family', 'Comic Sans', 'fontFamily'],
-    ['theme_color', 'green', 'themeColor'],
+    ['theme_color', 'orange', 'themeColor'],
   ] as const)('falls back to the default when %s is %j', (key, value, name) => {
     db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run(key, value);
     expect(createSettingsRepository(db).getAll()[name]).toBe(DEFAULT_SETTINGS[name]);

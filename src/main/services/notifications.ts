@@ -26,6 +26,7 @@ import { unpaidMonths, type PaidHistory } from './monthStatus';
 export interface ReminderArea {
   id: number;
   name: string;
+  categoryName: string;
   currency: Currency;
   renterName: string | null;
   renterPhone: string | null;
@@ -57,6 +58,7 @@ export function buildReminders(
     const ref = {
       areaId: area.id,
       areaName: area.name,
+      categoryName: area.categoryName,
       currency: area.currency,
       renterName: area.renterName,
       renterPhone: area.renterPhone,
@@ -83,11 +85,10 @@ export function buildReminders(
     }
   }
 
+  const label = (reminder: AreaReminder) =>
+    areaLabel({ name: reminder.areaName, categoryName: reminder.categoryName });
   const byLabel = (a: AreaReminder, b: AreaReminder) =>
-    compareNames(
-      areaLabel(a.areaName, a.renterName) ?? '',
-      areaLabel(b.areaName, b.renterName) ?? '',
-    );
+    compareNames(label(a), label(b)) || compareNames(a.renterName ?? '', b.renterName ?? '');
   late.sort((a, b) => b.months.length - a.months.length || byLabel(a, b));
   monthEnd.sort(byLabel);
   return [...late, ...monthEnd];

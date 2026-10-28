@@ -41,6 +41,21 @@ textarea {
   color: inherit;
 }
 
+/* Everything that can be clicked shows the hand cursor; something switched off shows it cannot. */
+:is(
+  button,
+  select,
+  summary,
+  [role='button'],
+  input:is([type='checkbox'], [type='radio'], [type='file'])
+):not(:disabled) {
+  cursor: pointer;
+}
+
+:is(button, select, input):disabled {
+  cursor: not-allowed;
+}
+
 /* A clearly visible focus outline for keyboard users, never removed. */
 :focus-visible {
   outline: none;
@@ -49,4 +64,12 @@ textarea {
 
 #root {
   min-height: 100vh;
+}
+
+/* On paper "one window tall" is a whole page; with the margins it spilled onto an empty last page. */
+@media print {
+  body,
+  #root {
+    min-height: 0;
+  }
 }

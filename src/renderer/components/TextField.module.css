@@ -38,6 +38,7 @@
 
 .input:focus-visible {
   border-color: var(--color-accent);
+  box-shadow: var(--field-focus);
 }
 
 .input[aria-invalid='true'] {
@@ -100,4 +101,29 @@
 .iconButton:hover {
   background: var(--color-surface-muted);
   color: var(--color-text);
+}
+
+/* A drop-down draws its own arrow: bold, in the theme colour, with room around it. */
+.select {
+  appearance: none;
+  padding-inline-end: calc(var(--space-4) + 1.4em + var(--space-3));
+}
+
+.chevron {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: var(--space-4);
+  translate: 0 -50%;
+  color: var(--color-accent);
+  stroke-width: 2.5;
+  pointer-events: none;
+  transition: color var(--duration-fast) var(--ease);
+}
+
+.box:hover .chevron {
+  color: var(--color-accent-hover);
+}
+
+.select:disabled + .chevron {
+  color: var(--color-text-muted);
 }

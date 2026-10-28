@@ -31,6 +31,7 @@ function applyToDocument(settings: Settings): void {
   // Paper is always printed light and at normal size, whatever the screen uses; the font is the chosen one.
   root.dataset['theme'] = isPrintPage() ? 'light' : settings.themeMode;
   root.dataset['accent'] = settings.themeColor;
+  root.dataset['sidebar'] = settings.sidebarStyle;
   root.dataset['font'] = settings.fontFamily;
   root.dataset['fontSize'] = isPrintPage() ? 'normal' : settings.fontSize;
   void i18next.changeLanguage(settings.language);

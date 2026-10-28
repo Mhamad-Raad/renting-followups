@@ -37,23 +37,25 @@ export function RenterFields({
       <p className={styles.hint}>
         {t(editing ? 'areaForm.renterEditHint' : 'areaForm.renterHint')}
       </p>
-      <TextField
-        label={t('areaForm.renterName')}
-        value={renter.name}
-        onChange={(name) => change({ name })}
-        error={nameError}
-        maxLength={PERSON_NAME_MAX}
-        dir="auto"
-      />
-      <TextField
-        label={t('areaForm.renterPhone')}
-        value={renter.phone}
-        onChange={(phone) => change({ phone })}
-        error={phoneError}
-        maxLength={PHONE_MAX}
-        inputMode="tel"
-        dir="ltr"
-      />
+      <div className={styles.pair}>
+        <TextField
+          label={t('areaForm.renterName')}
+          value={renter.name}
+          onChange={(name) => change({ name })}
+          error={nameError}
+          maxLength={PERSON_NAME_MAX}
+          dir="auto"
+        />
+        <TextField
+          label={t('areaForm.renterPhone')}
+          value={renter.phone}
+          onChange={(phone) => change({ phone })}
+          error={phoneError}
+          maxLength={PHONE_MAX}
+          inputMode="tel"
+          dir="ltr"
+        />
+      </div>
       {!editing && renter.name.trim() !== '' && (
         <DateField
           label={t('areaForm.renterSince')}

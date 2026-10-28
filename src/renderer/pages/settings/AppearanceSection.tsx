@@ -1,13 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { FONT_FAMILIES, FONT_NAMES, SORANI_TEST_TEXT } from '@shared/fonts';
-import { FONT_SIZES, THEME_COLORS } from '@shared/settings';
+import { FONT_SIZES, SIDEBAR_STYLES, THEME_COLORS } from '@shared/settings';
 import { useSettings } from '../../app/SettingsContext';
 import { ChoiceGroup } from '../../components/ChoiceGroup';
 import { SwatchPicker } from '../../components/SwatchPicker';
 import type { ChangeSettings } from './SettingsPage';
 import styles from './SettingsPage.module.css';
 
-/** Settings → Appearance: light or dark, theme colour, font and text size, all applied at once. */
+/** Settings → Appearance: light or dark, theme colour, sidebar, font and text size, all applied at once. */
 export function AppearanceSection({ change }: { change: ChangeSettings }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
@@ -35,6 +35,12 @@ export function AppearanceSection({ change }: { change: ChangeSettings }) {
           showLabel: true,
         }))}
         onChange={(themeColor) => change({ themeColor })}
+      />
+      <ChoiceGroup
+        label={t('settings.sidebar')}
+        value={settings.sidebarStyle}
+        choices={SIDEBAR_STYLES.map((style) => ({ value: style, label: t(`settings.${style}`) }))}
+        onChange={(sidebarStyle) => change({ sidebarStyle })}
       />
       <ChoiceGroup
         label={t('settings.font')}

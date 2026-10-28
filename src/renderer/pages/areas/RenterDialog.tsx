@@ -13,7 +13,6 @@ import { callIpc } from '../../app/ipc';
 import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
-import { ChoiceGroup } from '../../components/ChoiceGroup';
 import { DateField } from '../../components/DateField';
 import { Dialog, DialogActions } from '../../components/Dialog';
 import { Form } from '../../components/Form';
@@ -28,7 +27,7 @@ interface RenterDialogProps {
   onClose: () => void;
 }
 
-/** Change renter: a new person starts (closing the current one), or the current renter left. */
+/** Change renter: a new person starts, closing the current one. A renter leaving is Mark as vacant. */
 export function RenterDialog({ area, open, onDone, onClose }: RenterDialogProps) {
   const { t } = useTranslation();
   return (
@@ -43,7 +42,6 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
   const mounted = useMountedRef();
   const { settings } = useSettings();
   const current = currentRenter(area.renters);
-  const [kind, setKind] = useState<RenterChange['kind']>('new');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [date, setDate] = useState(dateStringFromLocal(new Date()));
@@ -51,33 +49,25 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const nameProblem = kind === 'new' && fullName.trim() === '' ? t('common.requiredField') : null;
-  const phoneProblem =
-    kind === 'new' && !PHONE_PATTERN.test(phone) ? t('areaForm.problems.phone') : null;
+  const nameProblem = fullName.trim() === '' ? t('common.requiredField') : null;
+  const phoneProblem = PHONE_PATTERN.test(phone) ? null : t('areaForm.problems.phone');
 
-  const explain = (reason: 'not_found' | 'no_current_renter' | 'before_current_renter') => {
-    if (reason === 'before_current_renter' && current) {
-      return t('renterDialog.before_current_renter', {
-        date: formatDate(current.startedOn, settings.digitStyle),
-      });
-    }
-    return reason === 'no_current_renter'
-      ? t('renterDialog.no_current_renter')
+  const explain = (reason: 'not_found' | 'before_current_renter') =>
+    reason === 'before_current_renter' && current
+      ? t('renterDialog.before_current_renter', {
+          date: formatDate(current.startedOn, settings.digitStyle),
+        })
       : t('areaForm.problems.not_found');
-  };
 
   const submit = async () => {
     setShowProblems(true);
     if (nameProblem || phoneProblem || busy) return;
-    const change: RenterChange =
-      kind === 'new'
-        ? { kind, areaId: area.id, fullName, phone, startedOn: date }
-        : { kind, areaId: area.id, endedOn: date };
+    const change: RenterChange = { areaId: area.id, fullName, phone, startedOn: date };
     setBusy(true);
     const result = await callIpc('areas:changeRenter', change);
     // A saved change always reaches the page, even if the dialog was closed meanwhile.
     if (result.ok && result.data.ok) {
-      onDone(t(kind === 'new' ? 'renterDialog.saved' : 'renterDialog.leftSaved'));
+      onDone(t('renterDialog.saved'));
       return;
     }
     if (!mounted.current) return;
@@ -88,44 +78,25 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
 
   return (
     <Form className={styles.dialogForm} onSubmit={() => void submit()}>
-      {current && (
-        <ChoiceGroup
-          label={t('renterDialog.what')}
-          value={kind}
-          choices={[
-            { value: 'new', label: t('renterDialog.newRenter') },
-            { value: 'left', label: t('renterDialog.leftTitle') },
-          ]}
-          onChange={setKind}
-        />
-      )}
-      {kind === 'new' && (
-        <>
-          <TextField
-            label={t('renterDialog.name')}
-            value={fullName}
-            onChange={setFullName}
-            error={showProblems ? nameProblem : null}
-            maxLength={PERSON_NAME_MAX}
-            autoFocus
-            dir="auto"
-          />
-          <TextField
-            label={t('renterDialog.phone')}
-            value={phone}
-            onChange={setPhone}
-            error={showProblems ? phoneProblem : null}
-            maxLength={PHONE_MAX}
-            inputMode="tel"
-            dir="ltr"
-          />
-        </>
-      )}
-      <DateField
-        label={t(kind === 'new' ? 'renterDialog.startsOn' : 'renterDialog.leftOn')}
-        value={date}
-        onChange={setDate}
+      <TextField
+        label={t('renterDialog.name')}
+        value={fullName}
+        onChange={setFullName}
+        error={showProblems ? nameProblem : null}
+        maxLength={PERSON_NAME_MAX}
+        autoFocus
+        dir="auto"
       />
+      <TextField
+        label={t('renterDialog.phone')}
+        value={phone}
+        onChange={setPhone}
+        error={showProblems ? phoneProblem : null}
+        maxLength={PHONE_MAX}
+        inputMode="tel"
+        dir="ltr"
+      />
+      <DateField label={t('renterDialog.startsOn')} value={date} onChange={setDate} />
       {problem && <Notice tone="error">{problem}</Notice>}
       <DialogActions>
         <BigButton type="submit" variant="primary" disabled={busy}>

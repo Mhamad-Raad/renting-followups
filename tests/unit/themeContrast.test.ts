@@ -65,12 +65,16 @@ const TEXT_PAIRS: [string, string][] = [
   ['status-na', 'status-na-bg'],
 ];
 
-// Edges and the focus ring next to them; WCAG asks for 3:1 for parts of controls.
+// Edges of controls; WCAG asks for 3:1 for parts of controls.
 const CONTROL_PAIRS: [string, string][] = [
   ['color-control-border', 'color-surface'],
   ['color-control-border', 'color-background'],
-  ['color-focus', 'color-surface'],
-  ['color-focus', 'color-background'],
+];
+
+// The focus ring and a focused field's edge are drawn in the theme colour.
+const FOCUS_PAIRS: [string, string][] = [
+  ['color-accent', 'color-surface'],
+  ['color-accent', 'color-background'],
 ];
 
 /** The colours a theme colour gives the accent tokens, as themes.css maps them. */
@@ -90,7 +94,7 @@ function withAccent(colors: Map<string, string>, accent: string): Map<string, st
 
 it.each(THEME_COLORS)('themes.css maps theme colour %s onto the accent', (accent) => {
   const selector =
-    accent === 'green' ? ':root,\n:root[data-accent' : `:root[data-accent='${accent}']`;
+    accent === 'blue' ? ':root,\n:root[data-accent' : `:root[data-accent='${accent}']`;
   const block = css.split('}').find((part) => part.includes(selector)) ?? '';
   expect(block).toContain(`--color-accent: var(--accent-${accent});`);
   expect(block).toContain(`--color-on-accent: var(--accent-${accent}-on);`);
@@ -113,6 +117,10 @@ describe.each([
     it.each(TEXT_PAIRS)('%s on %s is readable (at least 4.5:1)', (foreground, background) => {
       expect(contrast(color(foreground), color(background))).toBeGreaterThanOrEqual(4.5);
     });
+
+    it.each(FOCUS_PAIRS)('focus in %s on %s is easy to see (at least 3:1)', (part, background) => {
+      expect(contrast(color(part), color(background))).toBeGreaterThanOrEqual(3);
+    });
   });
 
   it.each(CONTROL_PAIRS)('%s on %s is easy to see (at least 3:1)', (part, background) => {
@@ -133,5 +141,28 @@ describe.each([
         expect(Math.min(gap, 360 - gap)).toBeGreaterThanOrEqual(25);
       }
     }
+  });
+});
+
+describe('dark sidebar (Settings → Sidebar: Dark)', () => {
+  const colors = themeColors(":root[data-sidebar='dark'] .app-sidebar");
+  const color = (name: string) => {
+    const value = colors.get(name);
+    if (!value) throw new Error(`Missing colour --${name}`);
+    return value;
+  };
+
+  it.each([
+    ['color-text', 'color-surface'],
+    ['color-text', 'color-surface-muted'],
+    ['color-text', 'color-accent-soft'],
+    ['color-text-muted', 'color-surface'],
+  ])('%s on %s is readable (at least 4.5:1)', (foreground, background) => {
+    expect(contrast(color(foreground), color(background))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('the current-page bar and focus ring are easy to see (at least 3:1)', () => {
+    expect(contrast(color('color-accent'), color('color-surface'))).toBeGreaterThanOrEqual(3);
+    expect(contrast(color('color-accent'), color('color-accent-soft'))).toBeGreaterThanOrEqual(3);
   });
 });

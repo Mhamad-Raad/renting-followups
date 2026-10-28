@@ -23,6 +23,10 @@
   width: min(50rem, calc(100vw - 4rem));
 }
 
+.large {
+  width: min(80rem, calc(100vw - 4rem));
+}
+
 .dialog:not([open]) {
   opacity: 0;
   transform: scale(var(--scale-enter));

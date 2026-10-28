@@ -9,6 +9,10 @@ export type Language = (typeof LANGUAGES)[number];
 export const THEME_MODES = ['light', 'dark'] as const;
 export type ThemeMode = (typeof THEME_MODES)[number];
 
+/** Settings → Sidebar: light like the page, or dark navy. */
+export const SIDEBAR_STYLES = ['light', 'dark'] as const;
+export type SidebarStyle = (typeof SIDEBAR_STYLES)[number];
+
 export const FONT_SIZES = ['extraSmall', 'small', 'normal', 'large', 'extraLarge'] as const;
 export type FontSize = (typeof FONT_SIZES)[number];
 
@@ -44,6 +48,7 @@ export const settingsSchema = z.object({
   themeMode: z.enum(THEME_MODES),
   fontSize: z.enum(FONT_SIZES),
   themeColor: z.enum(THEME_COLORS),
+  sidebarStyle: z.enum(SIDEBAR_STYLES),
   fontFamily: z.enum(FONT_FAMILIES),
   remindDays: z.number().int().min(1).max(REMIND_DAYS_MAX),
   /** Printed above every receipt and report; empty for none. */
@@ -60,7 +65,8 @@ export const DEFAULT_SETTINGS: Settings = {
   digitStyle: 'western',
   themeMode: 'light',
   fontSize: 'normal',
-  themeColor: 'green',
+  themeColor: 'blue',
+  sidebarStyle: 'light',
   fontFamily: 'noto-sans-arabic',
   remindDays: DEFAULT_REMIND_DAYS,
   printTitle: '',
