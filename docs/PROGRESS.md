@@ -2,7 +2,7 @@
 
 ## Current iteration
 
-**Iteration 14 (packaging) is in progress on `iter-14-packaging`** (not merged, 56 commits not pushed yet). The new app icon is done; on 2026-10-26 to 2026-10-28 the owner asked for many UI and business changes first (listed below). The installer itself is not started.
+**Iteration 14 (packaging) is in progress on `iter-14-packaging`** (not merged; about 58 commits not pushed yet). The new app icon is done; on 2026-10-26 to 2026-10-28 the owner asked for many UI and business changes first (listed below). The installer itself is not started.
 
 ## Done
 
@@ -41,7 +41,7 @@
 
 - A price change from an earlier month fills a gap left by taking a month out of a receipt (the warning lists it). Keep, or keep such a month closed for that receipt?
 - The window-size end-to-end test ("starts maximized") fails now and then on the Mac, also on older code and with the app closed; it passes on other runs. Look into it (probably the hidden window is not maximized when the screen is asleep or locked).
-- Offered, not yet answered: a 1,000-area speed check (and virtual scrolling only if a list is slow) instead of pagination; group the printed report by currency; make the large month boxes on the area page as deep as the list strips; check that the Excel export's totals are split per currency like the PDF.
+- Offered, not yet answered: a 1,000-area speed check (and virtual scrolling only if a list is slow) instead of pagination; group the printed report by currency; make the large month boxes on the area page as deep as the list strips. (The Excel export already has one total row per currency, checked by its unit tests.)
 
 - Data from the client's old system (three 2023 sheets, typed up on the Desktop) is waiting on the client: IQD or USD for each place, three plots paid once a year, two phones written only as "770", and one shop whose total does not match its start month. Then it can become an import file.
 - The new logo (white ring, slightly darker green) is liked by the owner; it goes into the app icons in iteration 14.
