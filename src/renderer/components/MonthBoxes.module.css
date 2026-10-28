@@ -119,6 +119,12 @@
   gap: 2px;
 }
 
+/* The small strips in lists are deepened a little, so paid and unpaid read at a glance. */
+.cell:is([data-status='paid'], [data-status='late'], [data-status='due']) {
+  background-color: color-mix(in srgb, var(--box-text) 14%, var(--box-bg));
+  border-color: color-mix(in srgb, var(--box-text) 50%, transparent);
+}
+
 .cell {
   display: grid;
   place-items: center;
