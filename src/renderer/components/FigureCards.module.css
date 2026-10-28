@@ -6,12 +6,12 @@
   margin: 0;
 }
 
-/* A coloured band along the top: the theme colour, or red for money still owed. */
+/* A thin coloured line along the top: the theme colour, or red for money still owed. */
 .card {
   --card-tone: var(--color-accent);
   min-width: 0;
   padding: var(--space-4) var(--space-5);
-  border-block-start: 4px solid var(--card-tone);
+  border-block-start: 3px solid var(--card-tone);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow-card);
@@ -19,7 +19,6 @@
 
 .card[data-tone='warning'] {
   --card-tone: var(--status-late);
-  background: linear-gradient(var(--status-late-bg), var(--color-surface) 70%);
 }
 
 .card[data-tone='warning'] .value {
