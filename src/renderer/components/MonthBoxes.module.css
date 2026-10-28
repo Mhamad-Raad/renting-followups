@@ -1,17 +1,17 @@
-/* The one place that maps a month status to its colours (ARCHITECTURE.md section 6). */
+/*
+ * The one place that maps a month status to its colours (ARCHITECTURE.md section 6).
+ * No yellow (owner's decision): this month not fully paid is red like a late month,
+ * and a coming month paid in part stays grey like the other coming months.
+ */
 :is(.box, .cell, .summary)[data-status='paid'] {
   --box-text: var(--status-paid);
   --box-bg: var(--status-paid-bg);
 }
-:is(.box, .cell, .summary):is([data-status='due'], [data-status='partial']) {
-  --box-text: var(--status-due);
-  --box-bg: var(--status-due-bg);
-}
-:is(.box, .cell, .summary)[data-status='late'] {
+:is(.box, .cell, .summary):is([data-status='late'], [data-status='due']) {
   --box-text: var(--status-late);
   --box-bg: var(--status-late-bg);
 }
-:is(.box, .cell, .summary)[data-status='upcoming'] {
+:is(.box, .cell, .summary):is([data-status='upcoming'], [data-status='partial']) {
   --box-text: var(--status-upcoming);
   --box-bg: var(--status-upcoming-bg);
 }

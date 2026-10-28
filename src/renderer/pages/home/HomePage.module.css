@@ -66,12 +66,8 @@
   transition: background-color var(--duration-fast) var(--ease);
 }
 
-.row[data-status='late'] {
+.row:is([data-status='late'], [data-status='due']) {
   border-inline-start-color: var(--status-late);
-}
-
-.row[data-status='due'] {
-  border-inline-start-color: var(--status-due);
 }
 
 .list .row:hover {

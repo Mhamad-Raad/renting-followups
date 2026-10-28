@@ -50,12 +50,12 @@
   --accent-slate-soft: #e6eaee;
   --accent-slate-on: #ffffff;
 
-  --status-paid: #1e6b2a;
-  --status-paid-bg: #dff0e0;
+  --status-paid: #155c20;
+  --status-paid-bg: #c4e5c7;
   --status-due: #9a4a00;
   --status-due-bg: #fde8cc;
-  --status-late: #a3211a;
-  --status-late-bg: #f8dcd9;
+  --status-late: #8f1a14;
+  --status-late-bg: #f4c4be;
   --status-upcoming: #545b63;
   --status-upcoming-bg: #eceef0;
   --status-na: #62676e;
@@ -106,12 +106,12 @@
   --accent-slate-soft: #313a44;
   --accent-slate-on: #141a20;
 
-  --status-paid: #8fd694;
-  --status-paid-bg: #1f3b25;
+  --status-paid: #a6e3aa;
+  --status-paid-bg: #23502c;
   --status-due: #ffbf66;
   --status-due-bg: #4a3418;
-  --status-late: #f4a09a;
-  --status-late-bg: #4d2325;
+  --status-late: #ffb3ad;
+  --status-late-bg: #662a2b;
   --status-upcoming: #b4bac1;
   --status-upcoming-bg: #30343a;
   --status-na: #8a9098;

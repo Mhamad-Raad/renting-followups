@@ -17,11 +17,12 @@ import { translate } from './translate';
  */
 
 /** The light theme's status backgrounds (themes.css); a test keeps the two in step. */
+/** As on screen: no yellow; this month unpaid is red, a coming month paid in part is grey. */
 export const STATUS_FILLS: Record<MonthStatus, string> = {
-  paid: 'dff0e0',
-  due: 'fde8cc',
-  partial: 'fde8cc',
-  late: 'f8dcd9',
+  paid: 'c4e5c7',
+  due: 'f4c4be',
+  partial: 'eceef0',
+  late: 'f4c4be',
   upcoming: 'eceef0',
   not_applicable: 'f6f6f6',
 };

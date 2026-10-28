@@ -461,7 +461,7 @@
     "box": "Month {{month}}: {{status}}",
     "status": {
       "paid": "Paid",
-      "due": "Due",
+      "due": "Not paid",
       "partial": "Partly paid",
       "late": "Late",
       "upcoming": "Upcoming",
@@ -470,7 +470,7 @@
     },
     "summary": {
       "late": "Late",
-      "due": "Due",
+      "due": "Not paid",
       "partial": "Partly paid",
       "paid": "Paid",
       "nothing_due": "Nothing due"

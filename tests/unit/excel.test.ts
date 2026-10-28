@@ -120,8 +120,8 @@ describe('Excel report', () => {
       const value = sheet?.getRow(5).getCell(column).fill;
       return value && 'fgColor' in value ? value.fgColor?.argb : undefined;
     };
-    expect(fill(9)).toBe('FFdff0e0');
-    expect(fill(11)).toBe('FFf8dcd9');
+    expect(fill(9)).toBe('FFc4e5c7');
+    expect(fill(11)).toBe('FFf4c4be');
     expect(fill(20)).toBe('FFeceef0');
   });
 
@@ -170,7 +170,9 @@ describe('Excel report', () => {
     const color = (name: string) =>
       new RegExp(`--status-${name}-bg:\\s*#([0-9a-f]{6})`).exec(light)?.[1];
     expect(STATUS_FILLS.paid).toBe(color('paid'));
-    expect(STATUS_FILLS.due).toBe(color('due'));
+    // No yellow: this month unpaid looks late, a coming month paid in part looks upcoming.
+    expect(STATUS_FILLS.due).toBe(color('late'));
+    expect(STATUS_FILLS.partial).toBe(color('upcoming'));
     expect(STATUS_FILLS.late).toBe(color('late'));
     expect(STATUS_FILLS.upcoming).toBe(color('upcoming'));
     expect(STATUS_FILLS.not_applicable).toBe(color('na'));
