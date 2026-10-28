@@ -170,13 +170,13 @@ This one module decides every colour and every total. Everything (UI, print, Exc
 | Month is before the area's first price row, or its effective price is 0 (vacant) | **not applicable** | Light hatched/empty, excluded from totals, never late |
 | `paid >= expected` (and `expected > 0`) | **paid** | **Green** |
 | Month is in the **past** (before the current month) and `paid < expected` (partial or nothing) | **late** | **Red** |
-| Month is the **current month** and `paid < expected` (partial or nothing) | **due** | **Orange** |
-| Month is in the **future** and `0 < paid < expected` | **partial** | Orange |
+| Month is the **current month** and `paid < expected` (partial or nothing) | **due** (word: "Not paid") | **Red** |
+| Month is in the **future** and `0 < paid < expected` | **partial** | Grey |
 | Month is in the **future** and `paid == 0` | **upcoming** | Neutral grey |
 
 Rules:
 - A month turns red on **the 1st of the next month** (no grace period).
-- A partial payment is orange while it is the current month (or a future month) and turns red once the month has passed.
+- No month is ever orange *(owner's decision, 2026-10-28)*: the current month not fully paid is red at once (word "Not paid"; it is called "Late" only once it has passed), and a future month paid in part stays grey with its amount shown. Paid green and unpaid red are a little darker than before. The statuses themselves (due, partial) are unchanged, so totals, "Still owed" and reminders work as before.
 - "Today" comes from the Windows clock. At startup, if the clock date is earlier than the latest recorded payment date or the last backup date, show a plain warning ("The computer date looks wrong. Late rent colours may be incorrect.").
 - Overpayment on one month is never silently kept in that month: allocation fills each month only up to its expected amount (see section 7).
 
@@ -262,7 +262,7 @@ Filter bar on top: **Year** selector (default **current year**, range from the e
 
 Then, for the selected year:
 - Four figures: **Rent price**, **Total for the year** (expected), **Received**, **Still owed**.
-- **12 boxes** in a row/grid (2 rows of 6 on narrow widths). Each box shows the month number (1-12), the amount paid, and a status word. Colours per section 6: green / orange / red / grey / hatched.
+- **12 boxes** in a row/grid (2 rows of 6 on narrow widths). Each box shows the month number (1-12), the amount paid, and a status word. Colours per section 6: green / red / grey / hatched.
 - Notes field.
 - List of receipts for the year (number or "Past record", date, amount, months covered) with Save receipt as PDF / Edit / Cancel.
 - Price history and renter history (collapsible, plain).
@@ -354,7 +354,7 @@ One page, grouped into big sections, each with a short plain label and live prev
 
 All settings apply immediately and persist.
 
-Light and dark themes must both have adequate contrast, and the month status colours (green, orange, red, grey) must stay clearly distinguishable in both.
+Light and dark themes must both have adequate contrast, and the month status colours (green, red, grey) must stay clearly distinguishable in both.
 
 ---
 
@@ -439,7 +439,7 @@ The app is done when all of these are true:
 - [ ] Areas are grouped into named categories (with optional colour), carry a currency set at creation, and support price changes from a chosen month without altering past months; a price change over paid months shows a warning first.
 - [ ] Areas can be imported from Excel, and past payments can be backfilled without numbered receipts.
 - [ ] A renter can pay several months at once and pay partially; the preview shows exactly how the money is allocated before saving; absurdly large amounts are blocked.
-- [ ] Month boxes: **green** = fully paid, **orange** = the current month not fully paid (or a partial prepayment), **red** from the 1st of the next month for any unpaid or partly paid month, **grey** for future months, **hatched** for vacant or not-yet-started months, which are excluded from late status and totals.
+- [ ] Month boxes: **green** = fully paid, **red** = any month up to and including the current one that is not fully paid (the current one says "Not paid", past ones "Late"), **grey** for future months (also when paid in part ahead), **hatched** for vacant or not-yet-started months, which are excluded from late status and totals.
 - [ ] The area page shows price, year total, received, still owed, the 12 boxes, renter name and phone, and notes, and filters by year (default current) and month.
 - [ ] Reports filter by year, month, category, currency and status; print, PDF and Excel contain the same fields; **IQD and USD totals are separate** at the bottom.
 - [ ] Receipts are numbered sequentially (never reused), print on A4, show the logo and title when set in settings, and reprints are marked "Copy".
