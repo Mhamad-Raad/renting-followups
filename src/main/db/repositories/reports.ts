@@ -77,7 +77,16 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
           today,
           query.month,
         );
-        if (!matchesReportStatus(year.boxes, query.status, query.month)) continue;
+        // Filtered by currency, the status is that of the months in it; the others count as no rent.
+        const boxesInCurrency =
+          query.currency === null
+            ? year.boxes
+            : year.boxes.map((box) =>
+                box.currency === query.currency
+                  ? box
+                  : { ...box, status: 'not_applicable' as const },
+              );
+        if (!matchesReportStatus(boxesInCurrency, query.status, query.month)) continue;
         // Filtered by currency: only that currency's figures, and no row for a year without it.
         const figures = year.figures.filter(
           (part) => query.currency === null || part.currency === query.currency,

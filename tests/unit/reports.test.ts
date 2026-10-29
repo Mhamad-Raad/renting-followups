@@ -102,6 +102,29 @@ describe('reports', () => {
     expect(names({ status: 'late' })).toEqual(['Office late', 'Shop late']);
   });
 
+  it('filtered by currency, an area that changed currency shows and matches only that one', () => {
+    const id = area('Shop 1', shops);
+    // Late in dinars from January; a new renter pays dollars from April, paid up to May.
+    repos.priceChanges.changeRenter(
+      {
+        areaId: id,
+        fullName: 'Ahmed Ali',
+        phone: '',
+        startedOn: '2026-04-01',
+        monthlyPrice: 300_00,
+        currency: 'USD',
+      },
+      TODAY,
+    );
+    pay(id, 2 * 300_00, 4);
+    expect(names({ currency: 'USD', status: 'late' })).toEqual([]);
+    expect(names({ currency: 'USD', status: 'paid' })).toEqual(['Shop 1']);
+    expect(names({ currency: 'IQD', status: 'late' })).toEqual(['Shop 1']);
+    expect(build({ currency: 'USD' }).rows[0]?.figures.map((part) => part.currency)).toEqual([
+      'USD',
+    ]);
+  });
+
   it('with a month chosen, gives that month’s figures, status and totals', () => {
     const id = area('Shop 1', shops);
     pay(id, RENT + 100_000);
