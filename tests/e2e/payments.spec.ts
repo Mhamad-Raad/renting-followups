@@ -181,6 +181,29 @@ test('change price empties the rent when the month is in another currency', asyn
   }
 });
 
+test('a renter who starts before the rent saves with only the renter', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    const { year, month } = await openNewArea(page);
+    await page.getByRole('button', { name: en.area.changeRenter }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByLabel(en.renterDialog.name).fill('Ahmed Ali');
+    // An emptied rent, then a start before the rent starts: the rent part goes away.
+    await dialog.getByRole('checkbox').uncheck();
+    await dialog.getByLabel(en.renterDialog.rent).fill('');
+    const before = month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 };
+    await dialog.getByLabel(en.common.year, { exact: true }).selectOption(String(before.year));
+    await dialog.getByLabel(en.common.month, { exact: true }).selectOption(String(before.month));
+    await expect(dialog.getByLabel(en.renterDialog.rent)).toHaveCount(0);
+    await dialog.getByRole('button', { name: en.common.save }).click();
+    await expect(page.getByText(en.renterDialog.saved)).toBeVisible();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
 test('edit and cancel a receipt, record a past payment, and refuse too much', async () => {
   const dataDir = createDataDir();
   const { app, page } = await launchUnlocked(dataDir);

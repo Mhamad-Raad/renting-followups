@@ -119,12 +119,22 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
 
   const submit = async () => {
     setShowProblems(true);
-    if (nameProblem || phoneProblem || !rent.monthlyPrice || busy) return;
+    // Before the rent starts the rent part is hidden: only the renter is saved, so no rent is needed.
+    const hasRentPart = now !== null;
+    if (nameProblem || phoneProblem || (hasRentPart && !rent.monthlyPrice) || busy) return;
     setBusy(true);
-    const chosen = { monthlyPrice: rent.monthlyPrice, currency: rent.currency };
-    if (rentChanges) {
+    const chosen =
+      hasRentPart && rent.monthlyPrice
+        ? { monthlyPrice: rent.monthlyPrice, currency: rent.currency }
+        : {};
+    if (rentChanges && rent.monthlyPrice) {
       // What the new rent does to months already paid is shown before anything is saved.
-      const checked = await rentCheck.check({ areaId: area.id, from: start, ...chosen });
+      const checked = await rentCheck.check({
+        areaId: area.id,
+        from: start,
+        monthlyPrice: rent.monthlyPrice,
+        currency: rent.currency,
+      });
       if (!mounted.current) return;
       if (checked.kind !== 'save') {
         setBusy(false);
