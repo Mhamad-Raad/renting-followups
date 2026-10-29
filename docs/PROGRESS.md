@@ -33,6 +33,8 @@
 - Month colours (2026-10-28, the business): no yellow; this month not fully paid is red at once ("Not paid"), a coming month paid in part is grey; darker green and red; list strips a little deeper; Home warning cards without the red fade. 703 unit tests and 61 end-to-end tests pass.
 - Marking vacant over paid months (2026-10-29, owner's request, fewer clicks): instead of only refusing, the dialog lists each receipt paying a month that would become vacant (months, amount, cancelled or lowered) and one button, **Take out and save**, takes those months out and marks the area vacant together (ARCHITECTURE.md section on price changes updated). 706 unit tests pass; payments and areas end-to-end tests pass.
 - Part-paid coming months (2026-10-29, owner's choice from mockups): the list box and the big box on the area page are filled half green, corner to corner (the owner preferred this to a bar that grows with the share paid); hovering says "Partly paid, 20,000 of 40,000".
+- Currency per rent period (2026-10-29, owner's choice): Change renter asks the monthly rent and its currency (IQD / USD), filled in with the place's rent; a new price row from the renter's start month is saved with the renter. Each month has its row's currency; a receipt only fills months in its currency; every figure (area page, Areas list, Home, Reports, PDF, Excel, reminders, activity log) is kept per currency, one line per currency in the switch year (migration 006). A new renter of a vacant place starts the rent again. Independent review: no money lost or mixed; 6 smaller findings fixed in separate commits. The Change renter form is wider, in two cards.
+- No Undo button after saving money, and no receipt PDFs at all (2026-10-29, owner's requests); the receipt list on the area page stays (owner chose to keep it). 720 unit tests and 62 end-to-end tests pass.
 - Dev data: `test-1` … `test-10` were added to the dev data folder in a `Test` category (5 IQD, 5 USD, payments as past records); the data before that is kept as `rent-tracker.before-test-data.db` in the same folder.
 
 ## Next
@@ -40,6 +42,8 @@
 - Iteration 14, on a new branch `iter-14-packaging` from `main` (packaging and release): the Windows installer, with an explicit file list (`out/`, `resources/` and `package.json` only; the installer icon is `build/icon.ico`) and a check that no demo data (`demo-data/`, `scripts/`) is packed; then the Windows-only checks listed in `docs/reviews/iteration-13.md`, including printing to paper (the Print buttons failed on the Mac). Put the owner's new logo (white ring, slightly darker green: `~/Desktop/logo-option-2.png`) into `build/icon.png`, `build/icon.ico` and `resources/icon.png`.
 
 ## Open questions
+
+- Review note (2026-10-29): a rent change or new renter dated before an already planned later rent row (for example a raise saved for December) does not replace that later row, so from that month the planned rent applies again. Warn when later rows exist?
 
 - A price change from an earlier month fills a gap left by taking a month out of a receipt (the warning lists it). Keep, or keep such a month closed for that receipt?
 - The window-size end-to-end test ("starts maximized") fails now and then on the Mac, also on older code and with the app closed; it passes on other runs. Look into it (probably the hidden window is not maximized when the screen is asleep or locked).
