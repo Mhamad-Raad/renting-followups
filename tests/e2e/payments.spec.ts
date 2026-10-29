@@ -60,8 +60,10 @@ test('record a payment, see the preview and colours, then undo it', async () => 
     await expect(boxes.getByLabel(boxLabel(month, en.months.status.paid))).toBeVisible();
     await expect(page.getByText('Receipt No. 0001', { exact: true })).toBeVisible();
 
-    await page.getByRole('button', { name: en.receipts.undo }).click();
-    await expect(page.getByText(en.receipts.undone.replace('{{number}}', '0001'))).toBeVisible();
+    // No Undo in the message; a wrong payment is cancelled from the receipt list.
+    await expect(page.getByRole('button', { name: 'Undo' })).toHaveCount(0);
+    await page.getByRole('button', { name: en.receipts.cancel }).click();
+    await page.getByRole('dialog').getByRole('button', { name: en.receipts.cancel }).click();
     await expect(page.getByText(en.receipts.cancelledLabel, { exact: true })).toBeVisible();
     await expect(boxes.getByLabel(boxLabel(month, en.months.status.due))).toBeVisible();
 

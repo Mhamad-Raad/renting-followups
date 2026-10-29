@@ -23,8 +23,8 @@ export interface PickedMonth {
 export interface MonthPickOutcome {
   tone: 'success' | 'error';
   text: string;
-  /** Set when a month was marked as paid: the new receipt, which can be undone. */
-  undo?: { id: number; receiptNumber: number | null };
+  /** Set when a month was marked as paid: the new receipt. */
+  receipt?: { id: number; receiptNumber: number | null };
 }
 
 type Question = { picked: PickedMonth; takeOut: MonthTakeOut[] | null };
@@ -131,7 +131,7 @@ export function useMonthPick(onDone: (outcome: MonthPickOutcome) => void) {
           month,
           number: formatReceiptNumber(result.data.receiptNumber ?? 0, digits),
         }),
-        undo: { id: result.data.id, receiptNumber: result.data.receiptNumber },
+        receipt: { id: result.data.id, receiptNumber: result.data.receiptNumber },
       });
   };
 

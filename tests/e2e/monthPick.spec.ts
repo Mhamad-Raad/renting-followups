@@ -49,7 +49,11 @@ test('a click on a month box asks first, then marks it paid or not paid', async 
     await question.getByRole('button', { name: en.monthPick.payButton }).click();
     await expect(page.getByText('Month 1 is paid. Receipt No. 0001')).toBeVisible();
     await expect(monthButton(page, en.months.status.paid)).toBeVisible();
-    await expect(page.getByRole('button', { name: en.receipts.undo })).toBeVisible();
+    // The message offers the receipt as a PDF, and no Undo (owner's decision).
+    await expect(
+      page.getByRole('status').getByRole('button', { name: en.print.actions.receiptPdf }),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Undo' })).toHaveCount(0);
 
     await monthButton(page, en.months.status.paid).click();
     await expect(question).toContainText('Receipt No. 0001 is cancelled');

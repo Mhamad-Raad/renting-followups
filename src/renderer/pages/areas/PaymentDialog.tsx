@@ -32,11 +32,11 @@ const PREVIEW_DELAY_MS = 200;
 /** A new payment, a past record (no receipt number), or a correction of a saved receipt. */
 export type PaymentMode = { kind: 'new' } | { kind: 'past' } | { kind: 'edit'; receipt: Receipt };
 
-/** What the area page needs after a save, to show the message and offer Undo. */
+/** What the area page needs after a save, to show the message and offer the receipt as a PDF. */
 export interface PaymentSaved {
   message: string;
-  /** Set for a new payment, which can be undone. */
-  undo?: { id: number; receiptNumber: number | null };
+  /** Set for a new payment: its receipt. */
+  receipt?: { id: number; receiptNumber: number | null };
   /** "Save and make receipt PDF" was pressed: save the new receipt as a PDF now. */
   pdf?: boolean;
 }
@@ -147,7 +147,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
           : t('paymentDialog.saved', {
               number: formatReceiptNumber(receiptNumber, settings.digitStyle),
             }),
-      undo: { id, receiptNumber },
+      receipt: { id, receiptNumber },
       pdf: pdf && receiptNumber !== null,
     });
   };

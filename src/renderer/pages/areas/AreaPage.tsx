@@ -79,8 +79,8 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
       period.refresh();
       return;
     }
-    // A month marked as paid can be undone, like any new payment.
-    actions.done(outcome.text, outcome.undo ?? null);
+    // A month marked as paid made a receipt, which the message offers as a PDF like any new payment.
+    actions.done(outcome.text, outcome.receipt ?? null);
   });
 
   return (

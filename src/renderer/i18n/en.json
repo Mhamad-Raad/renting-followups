@@ -534,9 +534,6 @@
     "cancelBody": "It stays in the list, crossed out, and no longer counts as paid. Its number is never used again.",
     "keep": "Keep it",
     "cancelDone": "The receipt was cancelled.",
-    "undo": "Undo",
-    "undone": "The payment was undone. Receipt No. {{number}} is kept as cancelled.",
-    "pastUndone": "The past record was removed.",
     "separator": ", "
   },
   "clock": {
