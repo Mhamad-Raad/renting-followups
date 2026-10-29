@@ -118,21 +118,24 @@ Database settings: WAL mode, `foreign_keys = ON`, all multi-row writes inside tr
 
 ### areas
 `id, category_id → categories, name, name_normalized, currency ('IQD' | 'USD'), address (nullable), contract_start (nullable date, informational only), notes (text), deleted_at`
-- `currency` is chosen when the area is created. It can be **corrected on Edit until the area has a payment that counts** (cancelled receipts keep their own currency and do not block it); the rent keeps its written number (250,000 dinar becomes 250,000 dollars). From the first payment on it **cannot be changed**, enforced by the database. *(Owner's decision, 2026-10-27: a wrongly chosen currency must be fixable.)*
+- `currency` is chosen when the area is created and is always the currency of its **newest rent period** (`area_prices.currency`, kept in step by the app). It can be **corrected on Edit until the area has a payment that counts** (cancelled receipts keep their own currency and do not block it); the rent keeps its written number (250,000 dinar becomes 250,000 dollars). From the first payment on, Edit cannot change it. *(Owner's decision, 2026-10-27: a wrongly chosen currency must be fixable.)*
+- A **new renter may pay in another currency** from the month they start (**Change renter**, section 4 renters): the rent period from that month carries the new currency, and earlier months keep theirs. *(Owner's decision, 2026-10-29.)*
 - The area form requires **"Rent starts from" (month number + year, default current month)**. It becomes the first `area_prices` row and decides which months count as applicable.
 - The area name is **optional**: many owners know a place only by its category and its renter. An area without a name is shown everywhere by its **category** as its name, with the renter in their own column beside it (or on the line under it where there is no renter column), so places of one category are told apart by their renter. Lists sort by that name, then by renter. *(Owner's decision, iteration 13; the category replaced the renter as the name on 2026-10-26 at the client's request.)*
 - Area names that are filled in are unique within a category (warn, do not crash). Areas without a name never clash.
 - `name_normalized` supports search (section 9).
 
 ### area_prices (rent price history)
-`id, area_id, monthly_price (int), effective_from_year, effective_from_month`
+`id, area_id, monthly_price (int), currency ('IQD' | 'USD'), effective_from_year, effective_from_month`
 - The price for a given month is the row with the latest `(year, month)` that is ≤ that month. Months before the first row are **not applicable**.
+- **Each month has the currency of its row.** A receipt is in one currency (that of its first month) and only ever fills months in that currency; months in the other currency count as having no rent for it. Every figure (year totals, still owed, Home cards, reports, reminders) is worked out **per currency**: an area shows one line per currency used in the period (two only in the year the currency changed), and amounts in different currencies are never added together. Excel has one row per area and currency.
 - Creating an area creates its first row. "Change price" adds a new row from the chosen month; **old months keep their old price**.
 - A `monthly_price` of **0** means the area is **vacant** from that month (see section 6). The UI never shows the word "zero price"; it offers **Mark as vacant from month...** and **Set rent again from month...**. Marking an area vacant also ends its current renter, on the first day of the vacant month (or the day they started, if later); a vacant area never has a renter, and a new area marked vacant takes no renter. *(Owner's decision, 2026-10-27.)*
 
 ### renters (renter history per area)
 `id, area_id, full_name, full_name_normalized, phone, started_on (date), ended_on (nullable date)`
 - The current renter is the row with `ended_on IS NULL`. **Change renter** only adds a new renter: it closes the old row and opens a new one. A renter leaving is recorded by **Mark as vacant** (section 4, prices). History stays visible on the area page.
+- Change renter also asks the **monthly rent and its currency** (IQD / USD), filled in with the place's rent for the start month (its last rent while vacant). If either changes, a new price row from the renter's start month is saved together with the renter, with the same warning and **Take out and save** as Change price (section 7) for months already paid. *(Owner's decision, 2026-10-29.)*
 
 ### receipts
 `id, receipt_number (unique, sequential, displayed zero-padded as 0001; NULL for backfilled payments), is_backfill (bool), area_id, renter_name_snapshot, renter_phone_snapshot, currency, total_amount, paid_on (date), note, voided_at (nullable), print_count`
@@ -207,7 +210,7 @@ Numbers display as thousands-separated. IQD has no decimals; USD shows 2 decimal
 Button: **Record Payment**, always visible on the area page and on rows of the "Needs attention" list.
 
 Form (large, single column):
-1. **Amount received** (big number field; currency label fixed by the area; parsing per section 9).
+1. **Amount received** (big number field; currency label from the month the payment starts from, or the receipt's own when editing; parsing per section 9).
 2. **From which month** (defaults to the oldest month that is not fully paid; year + month number selectors).
 3. **Date received** (defaults to today).
 4. **Note** (optional).
