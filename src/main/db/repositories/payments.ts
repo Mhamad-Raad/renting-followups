@@ -12,7 +12,7 @@ import type {
   PaymentVoidResult,
   Receipt,
 } from '@shared/payments';
-import { currencyForMonth, priceForMonth, pricesInCurrency } from '@shared/prices';
+import { paymentCurrency, priceForMonth, pricesInCurrency } from '@shared/prices';
 import { allocate, oldestOpenMonth } from '../../services/allocation';
 import type { Db } from '../connection';
 import type { AllocationRepository } from './allocations';
@@ -109,9 +109,9 @@ export function createPaymentRepository(
   const markVoided = db.prepare<[number]>(
     `UPDATE receipts SET voided_at = ${NOW_SQL} WHERE id = ?`,
   );
-  /** A receipt is in one currency: new money takes the currency of its first month. */
+  /** A receipt is in one currency: new money takes that of the first month it can fill. */
   const currencyFrom = (areaId: number, from: YearMonth, fallback: Currency): Currency =>
-    currencyForMonth(prices.forArea(areaId), from) ?? fallback;
+    paymentCurrency(prices.forArea(areaId), from) ?? fallback;
   // Months in another currency count as vacant for this money, so it never fills them.
   const plan = (
     areaId: number,

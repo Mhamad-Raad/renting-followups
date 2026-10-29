@@ -38,6 +38,18 @@ export function currencyForMonth(prices: readonly PriceRow[], month: YearMonth):
 }
 
 /**
+ * The currency new money from `from` is in: that of the first month with rent
+ * on or after it, so a payment starting in a vacant month before a new renter's
+ * currency takes the new one. Falls back to the month's own currency.
+ */
+export function paymentCurrency(prices: readonly PriceRow[], from: YearMonth): Currency | null {
+  const current = priceRowForMonth(prices, from);
+  if (current && current.monthlyPrice > 0) return current.currency;
+  const next = prices.find((row) => row.monthlyPrice > 0 && compareYearMonth(row, from) > 0);
+  return next?.currency ?? currencyForMonth(prices, from);
+}
+
+/**
  * The history as seen in one currency: rows in another currency count as
  * vacant (rent 0), so their months are left out of that currency's figures.
  * Months belong to exactly one currency, so totals are never mixed.

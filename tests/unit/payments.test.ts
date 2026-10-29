@@ -481,6 +481,11 @@ describe('a new renter with a new rent or currency', () => {
       TODAY.month,
     );
   const prices = () => repos.areas.get(areaId)?.prices;
+  const changePriceTo = (month: number, monthlyPrice: number) =>
+    repos.priceChanges.changePrice(
+      { areaId, from: { year: 2026, month }, monthlyPrice },
+      TODAY.month,
+    );
 
   it('keeps the rent as it is when it does not change', () => {
     expect(newRenter()).toEqual({ ok: true });
@@ -554,6 +559,41 @@ describe('a new renter with a new rent or currency', () => {
     ).toEqual({ ok: true });
     expect(receipts()[0]).toMatchObject({ totalAmount: 6 * RENT, currency: 'IQD' });
     expect(repos.areas.get(areaId)?.renters[0]?.fullName).toBe('Ahmed Ali');
+  });
+
+  it('adds only the renter when they start before the rent does', () => {
+    const area = repos.areas.create(
+      areaInput(repos.categories.list()[0]?.id ?? 0, {
+        name: 'Shop 2',
+        rentStartsFrom: { year: 2026, month: 11 },
+        renter: null,
+      }),
+    );
+    if (!area.ok) throw new Error('area failed');
+    expect(
+      repos.priceChanges.changeRenter(
+        {
+          areaId: area.id,
+          fullName: 'Ahmed Ali',
+          phone: '',
+          startedOn: '2026-10-20',
+          monthlyPrice: RENT,
+        },
+        TODAY.month,
+      ),
+    ).toEqual({ ok: true });
+    expect(repos.areas.get(area.id)?.prices).toHaveLength(1);
+  });
+
+  it('new money starting in a vacant month takes the currency of the next rent', () => {
+    changePriceTo(5, 0);
+    expect(newRenter({ startedOn: '2026-07-01', monthlyPrice: USD_RENT, currency: 'USD' })).toEqual(
+      { ok: true },
+    );
+    const { id } = payOk({ amount: USD_RENT, from: { year: 2026, month: 5 } });
+    const receipt = receipts().find((each) => each.id === id);
+    expect(receipt).toMatchObject({ currency: 'USD' });
+    expect(receipt?.allocations).toEqual([{ year: 2026, month: 7, amount: USD_RENT }]);
   });
 
   it('changes nothing when the renter cannot be saved', () => {

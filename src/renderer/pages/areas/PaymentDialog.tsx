@@ -4,7 +4,7 @@ import type { AreaDetails } from '@shared/areas';
 import { FRACTION_DIGITS, type Currency } from '@shared/currency';
 import { dateStringFromLocal, formatYearMonth, yearMonthOf, type YearMonth } from '@shared/dates';
 import { formatAmount } from '@shared/formatNumber';
-import { currencyForMonth } from '@shared/prices';
+import { paymentCurrency } from '@shared/prices';
 import {
   formatReceiptNumber,
   PAYMENT_NOTE_MAX,
@@ -105,7 +105,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
   const [amount, setAmount] = useState<number | null>(editing?.totalAmount ?? null);
   const [from, setFrom] = useState<YearMonth>({ year: start.year, month: start.month });
   // A receipt is in one currency: a saved one keeps its own, new money takes that of its first month.
-  const currency = editing?.currency ?? currencyForMonth(area.prices, from) ?? area.currency;
+  const currency = editing?.currency ?? paymentCurrency(area.prices, from) ?? area.currency;
   const [paidOn, setPaidOn] = useState(editing?.paidOn ?? dateStringFromLocal(new Date()));
   const [note, setNote] = useState(editing?.note ?? '');
   const [showProblems, setShowProblems] = useState(false);
