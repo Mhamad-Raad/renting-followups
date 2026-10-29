@@ -29,7 +29,7 @@ UX matters more than anything else in this project.
 5. **Never lose data by mistake:**
    - Every delete asks for confirmation in plain words.
    - Deleting is a **soft delete** (moves to a "Deleted items" list that can be restored).
-   - After saving a payment, show an **Undo** option for it for as long as the screen is open, and the payment can be edited or removed later from the area's payment list.
+   - A saved payment can be edited or cancelled later from the area's payment list. The message after saving has **no Undo** button. *(Owner's decision, 2026-10-29.)*
    - Edits and cancellations are recorded in an audit log (section 5).
 6. **Always show the result of an action** with a clear message ("Payment saved. Receipt No. 0042").
 7. **Colour is never the only signal.** Month boxes show the month number on the status colour; the large boxes also show the amount and a status word, and every box has a spoken label. *(Owner's decision, 2026-10-25: numbers instead of symbols in the small strips too.)*
@@ -219,7 +219,7 @@ Form (large, single column):
 
 **Overpayment horizon:** allocation may run forward at most **24 months** past the current month. If the amount is larger than everything owed within that horizon, block saving and say so plainly ("This amount is more than 2 years of rent. Please check the number.").
 
-Buttons: **Save** and **Save and make receipt PDF**. After saving, show "Payment saved. Receipt No. 0042" with **Save receipt as PDF**, **Undo**, and **Close**. Receipts are only ever saved as PDF, never sent straight to a printer; the owner prints from the PDF if needed. *(Owner's decision, 2026-10-27.)*
+Buttons: **Save** and **Save and make receipt PDF**. After saving, show "Payment saved. Receipt No. 0042" with **Save receipt as PDF** and **Close** (no Undo; owner's decision, 2026-10-29). Receipts are only ever saved as PDF, never sent straight to a printer; the owner prints from the PDF if needed. *(Owner's decision, 2026-10-27.)*
 
 ### 7.2 Editing and cancelling
 
@@ -234,7 +234,7 @@ A second button on the area page, **Record past payment**, lets the user mark mo
 On the area page and in the Areas list, every month box that has rent is a button:
 - **A month not fully paid** (late, due, partial or upcoming): after a short question ("Mark month 5 of 2026 as paid? 825,000 IQD"), the rest of that month's rent is recorded as a normal payment dated today, **with a receipt number**, filling only that month.
 - **A paid month**: after a short question that lists what will change, that month is taken out of the receipts that paid it. A receipt that paid only this month is cancelled; a receipt that paid other months too keeps its number and its other months, and its amount goes down by this month's share. Its months may then have a gap (for example 1-2 and 4-8). The change is in the Activity log.
-- A month marked as paid can be undone like any new payment. Editing a receipt with a gap only for its date or note keeps its months; changing its amount or start month, or a price change from an earlier month, shares its money out again oldest month first (with the usual preview or warning), which fills the gap.
+- A month marked as paid is taken out again by clicking its box (or by cancelling its receipt). Editing a receipt with a gap only for its date or note keeps its months; changing its amount or start month, or a price change from an earlier month, shares its money out again oldest month first (with the usual preview or warning), which fills the gap.
 - Vacant and not-started months are not buttons. Report screens and prints are not clickable.
 
 ---
@@ -451,6 +451,6 @@ The app is done when all of these are true:
 - [ ] Settings change font family, font size, theme colours, and light/dark mode immediately and persistently.
 - [ ] Notifications appear on open (late rent, month reminder, backup reminder) and on the Notifications page with the same content.
 - [ ] Monthly backup reminder works; Back up now and Restore work; a safety copy is made before restoring; a damaged database offers restore.
-- [ ] Every delete is confirmed and recoverable; saved payments can be undone; edits and cancellations appear in the activity log.
+- [ ] Every delete is confirmed and recoverable; saved payments can be cancelled; edits and cancellations appear in the activity log.
 - [ ] With 200 areas and several years of payments, the Areas list and Reports open in under 1 second.
 - [ ] All unit, migration and end-to-end tests pass.
