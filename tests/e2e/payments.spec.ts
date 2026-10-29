@@ -144,6 +144,43 @@ test('a new renter can pay another rent in another currency from their first mon
   }
 });
 
+test('change price empties the rent when the month is in another currency', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    const { year, month } = await openNewArea(page);
+    // Dollars from next month, dinars before.
+    const next = month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 };
+    await page.evaluate(
+      async ({ from }) => {
+        const areas = await window.api.invoke('areas:list', { search: '', categoryId: null });
+        const areaId = areas.ok ? (areas.data[0]?.id ?? 0) : 0;
+        await window.api.invoke('areas:changePrice', {
+          areaId,
+          from,
+          monthlyPrice: 300_00,
+          currency: 'USD',
+        });
+      },
+      { from: next },
+    );
+    await reloadApp(page);
+    await page.getByRole('button', { name: en.area.changePrice }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByLabel(en.common.year, { exact: true }).selectOption(String(next.year));
+    await dialog.getByLabel(en.common.month, { exact: true }).selectOption(String(next.month));
+    await dialog.getByLabel(en.priceDialog.newRent).fill('500');
+    await expect(dialog.getByText('USD', { exact: true })).toBeVisible();
+    await dialog.getByLabel(en.common.year, { exact: true }).selectOption(String(year));
+    await dialog.getByLabel(en.common.month, { exact: true }).selectOption(String(month));
+    await expect(dialog.getByLabel(en.priceDialog.newRent)).toHaveValue('');
+    await expect(dialog.getByText('IQD', { exact: true })).toBeVisible();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
 test('edit and cancel a receipt, record a past payment, and refuse too much', async () => {
   const dataDir = createDataDir();
   const { app, page } = await launchUnlocked(dataDir);

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AreaDetails } from '@shared/areas';
-import { formatYearMonth, yearMonthOf } from '@shared/dates';
+import { formatYearMonth, yearMonthOf, type YearMonth } from '@shared/dates';
 import { currencyForMonth } from '@shared/prices';
 import { callIpc } from '../../app/ipc';
 import { useMountedRef } from '../../app/useMountedRef';
@@ -54,6 +54,12 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
   // A new price is in the currency of the month it starts from.
   const currency = currencyForMonth(area.prices, from) ?? area.currency;
   const rentStart = area.prices[0];
+
+  // A month in another currency empties the rent: a typed amount never changes currency silently.
+  const changeFrom = (next: YearMonth) => {
+    if ((currencyForMonth(area.prices, next) ?? area.currency) !== currency) setPrice(null);
+    setFrom(next);
+  };
 
   const edit =
     <T,>(set: (value: T) => void) =>
@@ -109,11 +115,13 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
       <MonthYearField
         label={t('priceDialog.from')}
         value={from}
-        onChange={edit(setFrom)}
+        onChange={edit(changeFrom)}
         hint={t(mode === 'vacant' ? 'priceDialog.vacantHint' : 'priceDialog.changeHint')}
       />
+      {/* A new key re-creates the amount box when the currency (and its decimals) changes. */}
       {needsPrice && (
         <AmountField
+          key={currency}
           label={t('priceDialog.newRent')}
           currency={currency}
           value={price}
