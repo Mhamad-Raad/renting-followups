@@ -68,8 +68,12 @@ function ReportPaper({ query }: { query: ReportQuery }) {
     .join(PART_SEPARATOR);
 
   // Named after the one place of the area page, else the chosen category, with its period.
-  const [onlyRow] = rows;
-  const name = query.onlyIds?.length === 1 && onlyRow ? areaLabel(onlyRow) : categoryName;
+  // Like the file name: the one place by its own record, even when its row is filtered out.
+  const onlyArea =
+    query.onlyIds?.length === 1
+      ? report.state.data.candidates.find((area) => area.id === query.onlyIds?.[0])
+      : undefined;
+  const name = onlyArea ? areaLabel(onlyArea) : categoryName;
   const heading = reportTitle(query, name, digits);
   const title = t(heading.key, heading.values);
 
