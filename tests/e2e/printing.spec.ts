@@ -9,10 +9,18 @@ import { createDataDir, launchUnlocked, removeDataDir, reloadApp } from './launc
 /** Answers the next "Save as" dialogs in the main process with `path`, as if the owner chose it. */
 async function chooseSavePath(app: ElectronApplication, path: string) {
   await app.evaluate(({ dialog }, file) => {
-    dialog.showSaveDialog = (() =>
-      Promise.resolve({ canceled: false, filePath: file })) as typeof dialog.showSaveDialog;
+    dialog.showSaveDialog = ((...args: { defaultPath?: string }[]) => {
+      // The name the app suggested, for the tests to read back.
+      (globalThis as { suggestedName?: string | undefined }).suggestedName =
+        args.at(-1)?.defaultPath;
+      return Promise.resolve({ canceled: false, filePath: file });
+    }) as typeof dialog.showSaveDialog;
   }, path);
 }
+
+/** The file name the app last suggested in the Save dialog. */
+const suggestedName = (app: ElectronApplication) =>
+  app.evaluate(() => (globalThis as { suggestedName?: string }).suggestedName ?? '');
 
 /** One area with one numbered payment. */
 async function seed(page: Page): Promise<number> {
@@ -163,6 +171,8 @@ test('the buttons on screen print and export, with a plain message each time', a
     await chooseSavePath(app, pdf);
     await page.getByRole('button', { name: en.print.actions.pdf }).click();
     await expect.poll(() => existsSync(pdf)).toBe(true);
+    // The area page's file is named after the place.
+    expect(await suggestedName(app)).toContain('دوکانی ١');
 
     // Areas list: tick one area, then Export to Excel.
     await page.getByRole('link', { name: en.nav.areas, exact: true }).click();
@@ -172,6 +182,11 @@ test('the buttons on screen print and export, with a plain message each time', a
     await page.getByRole('button', { name: en.print.actions.excel }).click();
     await expect(page.getByText(en.print.results.savedExcel)).toBeVisible();
     expect(existsSync(xlsx)).toBe(true);
+    // One place on its own: its name is in the file name and the sheet's title.
+    expect(await suggestedName(app)).toContain('دوکانی ١');
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(xlsx);
+    expect(workbook.worksheets[0]?.getRow(1).getCell(1).value).toBe('Rent report: دوکانی ١');
 
     // Home: Print report.
     await page.getByRole('link', { name: en.nav.home, exact: true }).click();

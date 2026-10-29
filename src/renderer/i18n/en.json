@@ -589,9 +589,11 @@
   },
   "print": {
     "reportTitle": "Rent report",
+    "areaReportTitle": "Rent report: {{name}}",
     "printedOn": "Printed on {{date}}",
     "page": "Page",
     "fileReport": "Rent report {{year}}",
+    "fileAreaReport": "Rent report {{name}} {{year}}",
     "pdfFiles": "PDF files",
     "excelFiles": "Excel files",
     "actions": {

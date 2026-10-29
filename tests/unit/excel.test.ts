@@ -171,6 +171,15 @@ describe('Excel report', () => {
     expect(titled?.views[0]).toMatchObject({ state: 'frozen', ySplit: 5 });
   });
 
+  it('names the one place of the area page in the title', () => {
+    const sheet = buildReportWorkbook(REPORT, QUERY, {
+      ...OPTIONS,
+      language: 'en',
+      areaName: 'Shop 1',
+    }).worksheets[0];
+    expect(sheet?.getRow(1).getCell(1).value).toBe('Rent report: Shop 1');
+  });
+
   it('uses the same status colours as the light theme', () => {
     const css = readFileSync(
       join(import.meta.dirname, '../../src/renderer/styles/themes.css'),

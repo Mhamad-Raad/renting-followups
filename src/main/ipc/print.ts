@@ -1,3 +1,4 @@
+import { areaLabel } from '@shared/areas';
 import {
   exportReportSchema,
   PRINT_ROUTES,
@@ -6,6 +7,7 @@ import {
   type PrintOutput,
   type PrintResult,
 } from '@shared/printing';
+import type { ReportQuery } from '@shared/reports';
 import type { Repositories } from '../db/repositories';
 import { businessToday, currentYearMonth } from '../services/clock';
 import { buildReportWorkbook } from '../services/excel';
@@ -21,7 +23,7 @@ import {
 import { translate } from '../services/translate';
 import { handle } from './handle';
 
-export function registerPrintIpc({ categories, reports, settings }: Repositories): void {
+export function registerPrintIpc({ areas, categories, reports, settings }: Repositories): void {
   const t = (key: string, values?: Record<string, string>) =>
     translate(settings.getAll().language, key, values);
 
@@ -47,7 +49,16 @@ export function registerPrintIpc({ categories, reports, settings }: Repositories
     return { ok: true, done: 'saved' };
   };
 
-  const reportFileName = (year: number) => t('print.fileReport', { year: String(year) });
+  /** The one place a report is limited to (the area page), named in its title and file name. */
+  const onlyAreaName = ({ onlyIds }: ReportQuery): string | null => {
+    const area = onlyIds?.length === 1 && onlyIds[0] !== undefined ? areas.get(onlyIds[0]) : null;
+    return area ? areaLabel({ name: area.name, categoryName: area.category.name }) : null;
+  };
+  const reportFileName = (query: ReportQuery) => {
+    const name = onlyAreaName(query);
+    const year = String(query.year);
+    return name ? t('print.fileAreaReport', { name, year }) : t('print.fileReport', { year });
+  };
 
   handle('print:ready', printReadySchema, ({ ok }, sender) => {
     printPageReady(sender.webContentsId, ok);
@@ -55,11 +66,11 @@ export function registerPrintIpc({ categories, reports, settings }: Repositories
   });
 
   handle('print:report', printReportSchema, ({ query, output }) =>
-    printOrSave(PRINT_ROUTES.report(query), output, true, reportFileName(query.year)),
+    printOrSave(PRINT_ROUTES.report(query), output, true, reportFileName(query)),
   );
 
   handle('export:reportExcel', exportReportSchema, async ({ query }): Promise<PrintResult> => {
-    const path = await askWhereToSave(reportFileName(query.year), {
+    const path = await askWhereToSave(reportFileName(query), {
       name: t('print.excelFiles'),
       extension: 'xlsx',
     });
@@ -78,6 +89,7 @@ export function registerPrintIpc({ categories, reports, settings }: Repositories
         categoryName,
         printedOn: businessToday().date,
         printTitle,
+        areaName: onlyAreaName(query),
       },
     );
     const saved = await saveFile(path, new Uint8Array(await workbook.xlsx.writeBuffer()));

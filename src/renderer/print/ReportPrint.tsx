@@ -67,10 +67,17 @@ function ReportPaper({ query }: { query: ReportQuery }) {
     )
     .join(PART_SEPARATOR);
 
+  // The area page prints one place: its name leads the title.
+  const [onlyRow] = rows;
+  const title =
+    query.onlyIds?.length === 1 && onlyRow
+      ? t('print.areaReportTitle', { name: areaLabel(onlyRow) })
+      : t('print.reportTitle');
+
   return (
     <PrintFrame
       landscape
-      title={t('print.reportTitle')}
+      title={title}
       details={[
         filters,
         t('print.printedOn', { date: formatDate(dateStringFromLocal(new Date()), digits) }),
