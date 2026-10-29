@@ -26,6 +26,9 @@ asarUnpack:
   - node_modules/better-sqlite3/**
   - resources/**
 
+# The app never updates itself, so no update files are made.
+publish: null
+
 npmRebuild: false
 buildDependenciesFromSource: false
 
