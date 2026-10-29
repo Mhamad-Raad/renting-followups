@@ -31,6 +31,7 @@
 - Currency (2026-10-27): amounts say IQD / USD in every language; lists and reports (screen, PDF, Excel) have a Currency column with bare amounts lined up on the right; totals stay separate per currency, never converted (no exchange rates, the business confirmed); an area's currency can be corrected on Edit until its first payment that counts (migration 005; the rent keeps its written number).
 - Fix (2026-10-27): no empty last page in report and receipt PDFs.
 - Month colours (2026-10-28, the business): no yellow; this month not fully paid is red at once ("Not paid"), a coming month paid in part is grey; darker green and red; list strips a little deeper; Home warning cards without the red fade. 703 unit tests and 61 end-to-end tests pass.
+- Marking vacant over paid months (2026-10-29, owner's request, fewer clicks): instead of only refusing, the dialog lists each receipt paying a month that would become vacant (months, amount, cancelled or lowered) and one button, **Take out and save**, takes those months out and marks the area vacant together (ARCHITECTURE.md section on price changes updated). 706 unit tests pass; payments and areas end-to-end tests pass.
 - Dev data: `test-1` … `test-10` were added to the dev data folder in a `Test` category (5 IQD, 5 USD, payments as past records); the data before that is kept as `rent-tracker.before-test-data.db` in the same folder.
 
 ## Next
