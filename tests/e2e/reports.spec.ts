@@ -63,6 +63,10 @@ test('the report lists every area with totals per currency, and filters by statu
     await seed(page);
     await expect(rows(page)).toHaveCount(3);
     await expect(totals(page)).toHaveCount(2);
+    // Only PDF and Excel here: no direct Print button.
+    await expect(
+      page.getByRole('button', { name: en.print.actions.print, exact: true }),
+    ).toHaveCount(0);
     await expect(totals(page).nth(0)).toContainText('IQD');
     await expect(totals(page).nth(0)).toContainText(areasCount(2));
     await expect(totals(page).nth(1)).toContainText('USD');

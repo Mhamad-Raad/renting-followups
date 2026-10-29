@@ -71,7 +71,8 @@ function ReportView({ initialFilters }: { initialFilters: ReportFilters | undefi
               excludedIds={excludedIds}
               onChange={setExcludedIds}
             />
-            {rows.length > 0 && <ReportOutputButtons query={query} />}
+            {/* No direct Print here (owner's decision): the PDF is printed when paper is needed. */}
+            {rows.length > 0 && <ReportOutputButtons query={query} withPrint={false} />}
           </div>
         )}
       </div>
