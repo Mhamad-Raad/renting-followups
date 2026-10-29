@@ -137,7 +137,7 @@
 }
 
 /* A coming month paid in part: half green, cut corner to corner, whatever the share paid. */
-.cell[data-part-paid] {
+:is(.box, .cell)[data-part-paid] {
   background-image: linear-gradient(
     to bottom right,
     transparent calc(50% - 0.5px),

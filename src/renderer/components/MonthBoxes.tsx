@@ -9,7 +9,7 @@ import styles from './MonthBoxes.module.css';
 type MonthWord = Exclude<MonthStatus, 'not_applicable'> | 'vacant' | 'notStarted';
 
 /** The word for a month. One that is not applicable says why: vacant (rent 0), or rent not started. */
-/** A coming month paid in part: grey like the others, so the strip fills it half green, corner to corner. */
+/** A coming month paid in part: grey like the others, so its box is filled half green, corner to corner. */
 const isPartPaid = (box: MonthBox) => box.status === 'partial' && box.paid > 0;
 
 /** Lets a line of a month box shrink to fit the box instead of breaking (see `--chars` in the CSS). */
@@ -121,6 +121,7 @@ export const MonthBoxes = memo(function MonthBoxes({
             className: styles.box,
             'data-status': box.status,
             'data-selected': box.month === selected || undefined,
+            'data-part-paid': isPartPaid(box) || undefined,
             'aria-current': box.month === selected || undefined,
             style: { '--index': index } as CSSProperties,
           };
