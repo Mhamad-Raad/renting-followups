@@ -135,7 +135,7 @@ Database settings: WAL mode, `foreign_keys = ON`, all multi-row writes inside tr
 ### renters (renter history per area)
 `id, area_id, full_name, full_name_normalized, phone, started_on (date), ended_on (nullable date)`
 - The current renter is the row with `ended_on IS NULL`. **Change renter** only adds a new renter: it closes the old row and opens a new one. A renter leaving is recorded by **Mark as vacant** (section 4, prices). History stays visible on the area page.
-- Change renter also asks the **monthly rent and its currency** (IQD / USD), filled in with the place's rent for the start month (its last rent while vacant). If either changes, a new price row from the renter's start month is saved together with the renter, with the same warning and **Take out and save** as Change price (section 7) for months already paid. *(Owner's decision, 2026-10-29.)*
+- Change renter has two parts with a line between them: the new renter (name, phone, start date), then the rent. The rent part is one ticked box, **"Same rent as now: 250,000 IQD"** ("as before" with the last rent while vacant); unticking it shows the **currency** (IQD / USD) and the **monthly rent**. If the rent or currency changes, a new price row from the renter's start month is saved together with the renter, with the same warning and **Take out and save** as Change price (section 7) for months already paid. A renter who starts before the rent starts adds only the renter, and the rent part is not shown. *(Owner's decisions, 2026-10-29.)*
 
 ### receipts
 `id, receipt_number (unique, sequential, displayed zero-padded as 0001; NULL for backfilled payments), is_backfill (bool), area_id, renter_name_snapshot, renter_phone_snapshot, currency, total_amount, paid_on (date), note, voided_at (nullable), print_count`
@@ -179,7 +179,7 @@ This one module decides every colour and every total. Everything (UI, print, Exc
 
 Rules:
 - A month turns red on **the 1st of the next month** (no grace period).
-- No month is ever orange *(owner's decision, 2026-10-28)*: the current month not fully paid is red at once (word "Not paid"; it is called "Late" only once it has passed), and a future month paid in part stays grey with its amount shown. Paid green and unpaid red are a little darker than before. The statuses themselves (due, partial) are unchanged, so totals, "Still owed" and reminders work as before.
+- No month is ever orange *(owner's decision, 2026-10-28)*: the current month not fully paid is red at once (word "Not paid"; it is called "Late" only once it has passed), and a future month paid in part stays grey with its amount shown, its box filled half green, corner to corner, so the part payment is seen at a glance *(owner's decision, 2026-10-29)*. Paid green and unpaid red are a little darker than before. The statuses themselves (due, partial) are unchanged, so totals, "Still owed" and reminders work as before.
 - "Today" comes from the Windows clock. At startup, if the clock date is earlier than the latest recorded payment date or the last backup date, show a plain warning ("The computer date looks wrong. Late rent colours may be incorrect.").
 - Overpayment on one month is never silently kept in that month: allocation fills each month only up to its expected amount (see section 7).
 
@@ -282,6 +282,8 @@ Result table, one row per area, with these columns:
 **Area name, Category, Renter name, Renter phone, Currency (IQD / USD), Monthly price, Received, Still owed, the 12 month boxes (coloured), Notes.**
 
 In print, PDF and Excel the **totals per currency** are at the bottom, in separate rows (IQD total, USD total), for price, received and still owed. A one-sentence footer explains what "received" means (section 6).
+
+Titles and file names say what the report covers: the place (from its area page) or the chosen category, and the year or the chosen month, for example "Rent report: Shops, 10/2026" (the file name uses "10-2026"). *(Owner's decision, 2026-10-29.)*
 
 Buttons: **Export PDF** and **Export Excel** (no direct Print button on the Reports page; owner's decision, 2026-10-29). Print, PDF and Excel contain **exactly the same fields and the totals at the bottom**. Printing uses the logo and title from settings. A4, landscape for the wide report table.
 

@@ -78,7 +78,7 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 
 - [ ] Record payment: the amount box has the cursor; typing 300,000 for a 250,000 rent previews "full" for one month and "partial, 50,000 of 250,000" for the next.
 - [ ] Save shows "Payment saved. Receipt No. 0001" and the month turns green; the receipt appears under Payments.
-- [ ] Undo crosses the receipt out ("Cancelled") and the month goes back to orange; the next payment gets No. 0002.
+- [ ] Cancel receipt crosses it out ("Cancelled") and the month goes back to orange; the next payment gets No. 0002. The message after saving has no Undo button (owner's decision, 2026-10-29).
 - [ ] Edit a receipt: change the amount and the month colours follow; the number stays the same.
 - [ ] Cancel receipt asks first ("Cancel receipt" / "Keep it"), then crosses it out and stops it counting.
 - [ ] Record past payment explains it gets no number, and shows as "Past record".
@@ -99,7 +99,7 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] Area page: choosing another year shows its boxes, figures and receipts; choosing a month shows "Total for the month" and outlines that month.
 - [ ] A price change over paid months lists them ("Month 2/2025: Paid 100,000 → Late 100,000") and needs "Save anyway"; afterwards the month shows its new colour.
 - [ ] _manual_ A lower rent moves the extra money on to the next months; a higher rent fills fewer months; the receipt keeps its number and total.
-- [ ] _manual_ Marking vacant months that are paid, with no rent later, is refused with "would have no month to go to".
+- [ ] Marking vacant months that are paid lists each receipt and its months; Take out and save takes them out and marks the area vacant in one step.
 - [ ] _manual_ Still owed does not count months after this one; a prepaid future month counts as Received.
 - [ ] _manual_ Changing year or month updates without blinking; the boxes change colour softly.
 - [ ] _manual_ Large amounts fit in the figure cards at 1100×700 and with extra-large text.
@@ -108,7 +108,7 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 
 Automated (`npm run test:e2e`) unless marked _manual_.
 
-- [ ] Reports lists every area with rent, received, still owed, the month strip and status, and one total row per currency.
+- [ ] Reports shows one totals card per currency first, then one slim row per area with rent, received, still owed, the month strip and status; there is no Print button, only PDF and Excel.
 - [ ] Status Late / Paid / Due or partly paid and Currency narrow the list; the totals follow.
 - [ ] The area picker leaves areas out; Select none shows "No areas match"; Select all brings them back.
 - [ ] Filters except the year are remembered after a restart.
@@ -120,13 +120,11 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 
 Automated (`npm run test:e2e`) unless marked _manual_.
 
-- [ ] A receipt saves as PDF; it then counts as printed, and the next print shows "Copy".
-- [ ] Cancelling the Save dialog changes nothing; a past record cannot print as a receipt.
+- [ ] Receipts are never printed or saved as PDF (owner's decision, 2026-10-29); a PDF that cannot be written says so; cancelling the Save dialog changes nothing.
 - [ ] The report saves as PDF and as Excel; the Excel sheet reads right to left in Sorani.
-- [ ] Save and print receipt, the area page's Export to PDF, the Areas list's ticked Export to Excel and Home's Print report each end with a plain message; every hidden window closes.
+- [ ] The area page's Export to PDF, the Areas list's ticked Export to Excel and Home's Print report each end with a plain message; every hidden window closes. One place exported alone is named in the title and file name.
 - [ ] _manual_ On Windows, Print opens the Windows print dialog; choosing a printer prints; Cancel shows no message.
 - [ ] _manual_ The printed report is A4 landscape with the header row on every page, page numbers, ✓ ½ ✗ – symbols and the totals only at the end.
-- [ ] _manual_ The receipt is one A4 page with title, number, date, area, renter, phone, months, amount, note and a signature line; Sorani and Arabic read right to left.
 - [ ] _manual_ With Arabic-Indic digits, phone numbers read in the right order on screen, in print and in PDF.
 
 ## Iteration 9: Notifications
@@ -215,3 +213,17 @@ Automated (`npm run test:e2e` and unit tests) unless marked _manual_.
 - [ ] Taking one month out of a receipt for several months keeps the receipt number and its other months (unit test).
 - [ ] In the Areas list, clicking a month box does not open the area (end-to-end).
 - [ ] The area page has Export to PDF and Export to Excel, and no Print button (end-to-end).
+
+## Iteration 14: Packaging, and the owner's changes of 2026-10-26 to 2026-10-29
+
+Automated (`npm run test:e2e` and unit tests) unless marked _manual_.
+
+- [ ] The sidebar always shows each page as an icon with its name under it, Settings at the bottom; there is no open/close button.
+- [ ] Change renter: "Same rent as now" is ticked; unticking shows IQD/USD and the rent; a new currency from the renter's start month makes later payments in that currency; dinar payments for the new dollar months are listed with Take out and save.
+- [ ] A year with two currencies shows both amounts on separate lines (area page, Areas list, Reports, Home), never added together; Excel has one row per currency.
+- [ ] A coming month paid in part is filled half green, corner to corner, in list strips and on the area page.
+- [ ] Report titles and file names name the place (area page) or the chosen category, and the year or the chosen month.
+- [ ] `npm run dist` builds `release/Rent-Tracker-Setup-<version>.exe`; the package holds only `out/`, `resources/`, `package.json`, production dependencies and the Windows x64 SQLite file.
+- [ ] _manual_ On Windows with no internet: the installer runs (SmartScreen: More info, Run anyway), installs for the user without an administrator password, makes desktop and Start menu shortcuts and opens the app with a fresh password setup.
+- [ ] _manual_ Uninstall says the data is kept; installing again finds the same data.
+- [ ] _manual_ The installed app's title bar has no "[DEV]".
