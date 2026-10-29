@@ -272,7 +272,7 @@ Then, for the selected year:
 - Buttons: **Export to PDF**, **Export to Excel**. *(Owner's decision, 2026-10-25: no direct Print button here.)*
 
 ### 8.5 Reports
-On screen, the **totals per currency come first**: one slim card per currency (its number of areas, monthly rent, received, still owed). Then one card holds the filters, the area picker and the Print / PDF / Excel buttons, then the table with one slim row per area, its money in separate columns like the Areas list. *(Owner's decision, 2026-10-29.)*
+On screen, the **totals per currency come first**: one slim card per currency (its number of areas, monthly rent, received, still owed). Then one card holds the filters, the area picker and the PDF / Excel buttons, then the table with one slim row per area, its money in separate columns like the Areas list. *(Owner's decision, 2026-10-29.)*
 
 Filter container:
 - **Year** (default current year, always), **Month** (All or a specific one), **Category** (All or one), **Currency** (All / IQD / USD), **Status** (All / Paid / Partial / Late). The last-used filters except the year are remembered.
@@ -283,7 +283,7 @@ Result table, one row per area, with these columns:
 
 In print, PDF and Excel the **totals per currency** are at the bottom, in separate rows (IQD total, USD total), for price, received and still owed. A one-sentence footer explains what "received" means (section 6).
 
-Buttons: **Print**, **Export PDF**, **Export Excel**. Print, PDF and Excel contain **exactly the same fields and the totals at the bottom**. Printing uses the logo and title from settings. A4, landscape for the wide report table.
+Buttons: **Export PDF** and **Export Excel** (no direct Print button on the Reports page; owner's decision, 2026-10-29). Print, PDF and Excel contain **exactly the same fields and the totals at the bottom**. Printing uses the logo and title from settings. A4, landscape for the wide report table.
 
 When a specific month is chosen in the filter, the table shows that month's status per area and totals for that month.
 
