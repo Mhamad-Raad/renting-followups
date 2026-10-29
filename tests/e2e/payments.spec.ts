@@ -119,6 +119,8 @@ test('a new renter can pay another rent in another currency from their first mon
     await page.getByRole('button', { name: en.area.changeRenter }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByLabel(en.renterDialog.name).fill('Ahmed Ali');
+    // The same rent is ticked; unticking it shows the currency and the rent.
+    await dialog.getByRole('checkbox', { name: /250,000 IQD/ }).uncheck();
     await dialog.getByRole('radio', { name: 'USD' }).check();
     await dialog.getByLabel(en.renterDialog.rent).fill('300');
     await dialog.getByRole('button', { name: en.common.save }).click();

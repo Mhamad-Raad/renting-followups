@@ -108,6 +108,27 @@
   color: var(--color-text-muted);
 }
 
+/* A dialog form in titled parts with a thin line between them. */
+.formPart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.formPart + .formPart {
+  padding-block-start: var(--space-5);
+  border-block-start: 1px solid var(--color-border);
+}
+
+.partTitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 /* A wide dialog form: two fields per row, lined up, one under the other when there is no room. */
 .formGrid {
   display: grid;

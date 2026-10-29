@@ -9,7 +9,7 @@ import {
   type RenterChange,
   type RenterChangeResult,
 } from '@shared/areas';
-import { CURRENCIES, type Currency } from '@shared/currency';
+import { CURRENCIES, FRACTION_DIGITS, type Currency } from '@shared/currency';
 import {
   compareYearMonth,
   dateStringFromLocal,
@@ -19,12 +19,15 @@ import {
   yearMonthOf,
   type YearMonth,
 } from '@shared/dates';
+import { isolateNumber } from '@shared/digits';
+import { formatAmount } from '@shared/formatNumber';
 import { currencyForMonth, priceRowForMonth, type PriceRow } from '@shared/prices';
 import { callIpc } from '../../app/ipc';
 import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { AmountField } from '../../components/AmountField';
 import { BigButton } from '../../components/BigButton';
+import { Checkbox } from '../../components/Checkbox';
 import { ChoiceGroup } from '../../components/ChoiceGroup';
 import { DateField } from '../../components/DateField';
 import { Dialog, DialogActions } from '../../components/Dialog';
@@ -64,12 +67,12 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
   const [phone, setPhone] = useState('');
   const [date, setDate] = useState(dateStringFromLocal(new Date()));
   const start = monthOfDate(date);
-  // Filled in with the rent the place has, so a renter on the same rent needs no typing.
-  const [rent, setRent] = useState(() => rentBefore(area.prices, start, area.currency));
-  // Until the rent is typed or the currency chosen, it follows the start date's month.
-  const [rentTouched, setRentTouched] = useState(false);
-  // Counts refills, so the amount box shows the refilled rent.
-  const [refills, setRefills] = useState(0);
+  // Most new renters pay what the place costs now: a ticked box, with no rent to type.
+  const sameRent = rentBefore(area.prices, start, area.currency);
+  const [keepRent, setKeepRent] = useState(sameRent.monthlyPrice !== null);
+  // The rent typed after unticking it.
+  const [newRent, setNewRent] = useState(sameRent);
+  const rent = keepRent ? sameRent : newRent;
   const [showProblems, setShowProblems] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -80,15 +83,13 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
     now !== null &&
     (rent.monthlyPrice !== now.monthlyPrice ||
       rent.currency !== (currencyForMonth(area.prices, start) ?? area.currency));
-  const changeDate = (value: string) => {
-    setDate(value);
-    if (rentTouched) return;
-    setRent(rentBefore(area.prices, monthOfDate(value), area.currency));
-    setRefills((count) => count + 1);
-  };
-  const changeRent = (next: typeof rent) => {
-    setRent(next);
-    setRentTouched(true);
+  const digits = settings.digitStyle;
+  const money = (amount: number, currency: Currency) =>
+    `${isolateNumber(formatAmount(amount, FRACTION_DIGITS[currency], digits), digits)} ${t(`currency.${currency}`)}`;
+  const untickRent = (keep: boolean) => {
+    // Unticked, the fields start from the same rent, ready to be changed.
+    if (!keep) setNewRent(sameRent);
+    setKeepRent(keep);
   };
 
   const edit =
@@ -120,10 +121,10 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
     setShowProblems(true);
     if (nameProblem || phoneProblem || !rent.monthlyPrice || busy) return;
     setBusy(true);
-    const newRent = { monthlyPrice: rent.monthlyPrice, currency: rent.currency };
+    const chosen = { monthlyPrice: rent.monthlyPrice, currency: rent.currency };
     if (rentChanges) {
       // What the new rent does to months already paid is shown before anything is saved.
-      const checked = await rentCheck.check({ areaId: area.id, from: start, ...newRent });
+      const checked = await rentCheck.check({ areaId: area.id, from: start, ...chosen });
       if (!mounted.current) return;
       if (checked.kind !== 'save') {
         setBusy(false);
@@ -136,7 +137,7 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
       fullName,
       phone,
       startedOn: date,
-      ...newRent,
+      ...chosen,
       ...(rentCheck.takeOut && { takeOutVacantMonths: true }),
     };
     const result = await callIpc('areas:changeRenter', change);
@@ -153,48 +154,84 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
 
   return (
     <Form className={styles.dialogForm} onSubmit={() => void submit()}>
-      {/* An even grid without boxes: two fields per row, the date across the whole width. */}
-      <div className={styles.formGrid}>
-        <TextField
-          label={t('renterDialog.name')}
-          value={fullName}
-          onChange={setFullName}
-          error={showProblems ? nameProblem : null}
-          maxLength={PERSON_NAME_MAX}
-          autoFocus
-          dir="auto"
-        />
-        <TextField
-          label={t('renterDialog.phone')}
-          value={phone}
-          onChange={setPhone}
-          error={showProblems ? phoneProblem : null}
-          maxLength={PHONE_MAX}
-          inputMode="tel"
-          dir="ltr"
-        />
-        <div className={styles.fullRow}>
-          <DateField label={t('renterDialog.startsOn')} value={date} onChange={edit(changeDate)} />
+      <section className={styles.formPart} aria-labelledby="renter-part">
+        <h3 id="renter-part" className={styles.partTitle}>
+          {t('renterDialog.who')}
+        </h3>
+        {/* Two fields per row, the date across the whole width. */}
+        <div className={styles.formGrid}>
+          <TextField
+            label={t('renterDialog.name')}
+            value={fullName}
+            onChange={setFullName}
+            error={showProblems ? nameProblem : null}
+            maxLength={PERSON_NAME_MAX}
+            autoFocus
+            dir="auto"
+          />
+          <TextField
+            label={t('renterDialog.phone')}
+            value={phone}
+            onChange={setPhone}
+            error={showProblems ? phoneProblem : null}
+            maxLength={PHONE_MAX}
+            inputMode="tel"
+            dir="ltr"
+          />
+          <div className={styles.fullRow}>
+            <DateField label={t('renterDialog.startsOn')} value={date} onChange={edit(setDate)} />
+          </div>
         </div>
-        <ChoiceGroup
-          label={t('areaForm.currency')}
-          value={rent.currency}
-          choices={CURRENCIES.map((code) => ({ value: code, label: t(`currency.${code}`) }))}
-          onChange={edit((currency: Currency) => changeRent({ currency, monthlyPrice: null }))}
-        />
-        {/* A new key re-creates the amount box when the currency (and its decimals) or the filled-in rent changes. */}
-        <AmountField
-          key={`${rent.currency}-${refills}`}
-          label={t('renterDialog.rent')}
-          currency={rent.currency}
-          value={rent.monthlyPrice}
-          onChange={edit((monthlyPrice: number | null) => changeRent({ ...rent, monthlyPrice }))}
-          error={showProblems && !rent.monthlyPrice ? t('areaForm.problems.rentRequired') : null}
-        />
-        <p className={`${styles.hint} ${styles.fullRow}`}>
-          {t('renterDialog.rentHint', { month: formatYearMonth(start, settings.digitStyle) })}
-        </p>
-      </div>
+      </section>
+      {/* Before the rent starts there is no rent to keep or change. */}
+      {now !== null && (
+        <section className={styles.formPart} aria-labelledby="rent-part">
+          <h3 id="rent-part" className={styles.partTitle}>
+            {t('renterDialog.pays')}
+          </h3>
+          {sameRent.monthlyPrice !== null && (
+            <Checkbox
+              label={t(
+                now.monthlyPrice > 0 ? 'renterDialog.sameRent' : 'renterDialog.sameRentBefore',
+                {
+                  amount: money(sameRent.monthlyPrice, sameRent.currency),
+                },
+              )}
+              checked={keepRent}
+              onChange={edit(untickRent)}
+            />
+          )}
+          {!keepRent && (
+            <div className={styles.formGrid}>
+              <ChoiceGroup
+                label={t('areaForm.currency')}
+                value={newRent.currency}
+                choices={CURRENCIES.map((code) => ({ value: code, label: t(`currency.${code}`) }))}
+                onChange={edit((currency: Currency) =>
+                  setNewRent({ currency, monthlyPrice: null }),
+                )}
+              />
+              {/* A new key re-creates the amount box when the currency (and its decimals) changes. */}
+              <AmountField
+                key={newRent.currency}
+                label={t('renterDialog.rent')}
+                currency={newRent.currency}
+                value={newRent.monthlyPrice}
+                onChange={edit((monthlyPrice: number | null) =>
+                  setNewRent({ ...newRent, monthlyPrice }),
+                )}
+                autoFocus
+                error={
+                  showProblems && !newRent.monthlyPrice ? t('areaForm.problems.rentRequired') : null
+                }
+              />
+            </div>
+          )}
+          <p className={styles.hint}>
+            {t('renterDialog.rentHint', { month: formatYearMonth(start, settings.digitStyle) })}
+          </p>
+        </section>
+      )}
       {rentCheck.warnings}
       {problem && <Notice tone="error">{problem}</Notice>}
       <DialogActions>
