@@ -222,6 +222,9 @@ export function areaStanding(
   return {
     owed: owedByCurrency(months),
     lateMonths: months.filter((month) => month.status === 'late').length,
+    lateIn: owedByCurrency(months.filter((month) => month.status === 'late')).map(
+      (owed) => owed.currency,
+    ),
     dueNow: months.some((month) => month.status === 'due'),
   };
 }
@@ -292,20 +295,21 @@ const sum = <T>(items: readonly T[], value: (item: T) => number) =>
 
 /**
  * Home's cards: received, still owed and late areas, one set per currency in
- * use. An area counts as late under its current currency.
+ * use. An area counts as late under the currency of its late months.
  */
 export function totalsByCurrency(areas: readonly AreaOverview[]): CurrencyTotals[] {
   const figures = areas.flatMap((area) => area.figures);
   return CURRENCIES.flatMap((currency) => {
     const inCurrency = figures.filter((part) => part.currency === currency);
-    const inUse = areas.filter((area) => area.currency === currency);
-    if (inCurrency.length === 0 && inUse.length === 0) return [];
+    const late = areas.filter((area) => area.standing.lateIn.includes(currency));
+    const inUse = inCurrency.length > 0 || late.length > 0;
+    if (!inUse && !areas.some((area) => area.currency === currency)) return [];
     return [
       {
         currency,
         received: sum(inCurrency, (part) => part.received),
         remaining: sum(inCurrency, (part) => part.remaining),
-        lateAreas: inUse.filter((area) => area.standing.lateMonths > 0).length,
+        lateAreas: late.length,
       },
     ];
   });
@@ -352,19 +356,16 @@ export function matchesReportStatus(
  * months first; then by currency (amounts in different currencies are never
  * compared), then most owed in that currency.
  */
-export function needsAttention<T extends { currency: Currency; standing: AreaStanding }>(
-  areas: readonly T[],
-): T[] {
+export function needsAttention<T extends { standing: AreaStanding }>(areas: readonly T[]): T[] {
+  // The first currency owed (IQD first) and its amount stand for the area.
+  const first = ({ standing }: T) => standing.owed[0];
+  const order = (area: T) => CURRENCIES.indexOf(first(area)?.currency ?? CURRENCIES[0]);
   return areas
     .filter(({ standing }) => standing.lateMonths > 0 || standing.dueNow)
     .sort(
       (a, b) =>
         b.standing.lateMonths - a.standing.lateMonths ||
-        CURRENCIES.indexOf(a.currency) - CURRENCIES.indexOf(b.currency) ||
-        owedIn(b.standing, b.currency) - owedIn(a.standing, a.currency),
+        order(a) - order(b) ||
+        (first(b)?.amount ?? 0) - (first(a)?.amount ?? 0),
     );
 }
-
-/** What an area owes in one currency. */
-export const owedIn = (standing: AreaStanding, currency: Currency): number =>
-  standing.owed.find((owed) => owed.currency === currency)?.amount ?? 0;

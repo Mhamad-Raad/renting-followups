@@ -74,6 +74,8 @@ export interface AreaStanding {
   owed: CurrencyAmount[];
   /** Past months not fully paid, in any year. */
   lateMonths: number;
+  /** The currencies of those late months, IQD first. */
+  lateIn: Currency[];
   /** This month is not fully paid yet. */
   dueNow: boolean;
 }

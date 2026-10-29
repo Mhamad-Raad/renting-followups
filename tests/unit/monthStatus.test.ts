@@ -393,6 +393,7 @@ describe('areaStanding', () => {
       owed: [{ currency: 'IQD', amount: 6 * RENT }],
       lateMonths: 5,
       dueNow: true,
+      lateIn: ['IQD'],
     });
   });
 
@@ -402,7 +403,12 @@ describe('areaStanding', () => {
       [{ year: 2026, month: 5 }, RENT],
       [{ year: 2026, month: 6 }, RENT],
     ]);
-    expect(areaStanding(prices, paid, TODAY)).toEqual({ owed: [], lateMonths: 0, dueNow: false });
+    expect(areaStanding(prices, paid, TODAY)).toEqual({
+      owed: [],
+      lateMonths: 0,
+      dueNow: false,
+      lateIn: [],
+    });
   });
 
   it('skips vacant months and has nothing for an area whose rent has not started', () => {
@@ -414,12 +420,14 @@ describe('areaStanding', () => {
       owed: [{ currency: 'IQD', amount: RENT }],
       lateMonths: 0,
       dueNow: true,
+      lateIn: [],
     });
     const later: PriceRow[] = [{ year: 2026, month: 9, monthlyPrice: RENT, currency: 'IQD' }];
     expect(areaStanding(later, new Map(), TODAY)).toEqual({
       owed: [],
       lateMonths: 0,
       dueNow: false,
+      lateIn: [],
     });
     expect(areaStanding([], new Map(), TODAY).owed).toEqual([]);
   });
@@ -446,6 +454,7 @@ describe('areaStanding', () => {
       ],
       lateMonths: 3,
       dueNow: true,
+      lateIn: ['IQD', 'USD'],
     });
   });
 });
@@ -602,7 +611,12 @@ describe('Home totals and attention list', () => {
   ) => ({
     currency,
     figures: [{ currency, rent: RENT, expected: 0, received, remaining }],
-    standing: { owed: owed > 0 ? [{ currency, amount: owed }] : [], lateMonths, dueNow },
+    standing: {
+      owed: owed > 0 ? [{ currency, amount: owed }] : [],
+      lateMonths,
+      dueNow,
+      lateIn: lateMonths > 0 ? [currency] : [],
+    },
   });
 
   it('adds up each currency on its own and counts late areas', () => {
