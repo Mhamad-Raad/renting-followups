@@ -363,9 +363,7 @@
     "before_current_renter": "This date is before the current renter started ({{date}}).",
     "saved": "Renter saved.",
     "rent": "Monthly rent",
-    "rentHint": "From {{month}}, the month the new renter starts. Change it if they pay a different rent or currency.",
-    "who": "New renter",
-    "pays": "Rent"
+    "rentHint": "From {{month}}, the month the new renter starts. Change it if they pay a different rent or currency."
   },
   "categories": {
     "title": "Categories",
