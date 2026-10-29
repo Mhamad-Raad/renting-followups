@@ -588,11 +588,12 @@
   },
   "print": {
     "reportTitle": "ڕاپۆرتی کرێ",
-    "areaReportTitle": "ڕاپۆرتی کرێ: {{name}}",
+    "title": "ڕاپۆرتی کرێ {{period}}",
+    "titleNamed": "ڕاپۆرتی کرێ: {{name}}، {{period}}",
+    "file": "ڕاپۆرتی کرێ {{period}}",
+    "fileNamed": "ڕاپۆرتی کرێ {{name}} {{period}}",
     "printedOn": "چاپکراوە لە {{date}}",
     "page": "لاپەڕە",
-    "fileReport": "ڕاپۆرتی کرێ {{year}}",
-    "fileAreaReport": "ڕاپۆرتی کرێ {{name}} {{year}}",
     "pdfFiles": "فایلی PDF",
     "excelFiles": "فایلی Excel",
     "actions": {

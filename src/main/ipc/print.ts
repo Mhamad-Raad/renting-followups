@@ -7,6 +7,7 @@ import {
   type PrintOutput,
   type PrintResult,
 } from '@shared/printing';
+import { reportTitle } from '@shared/reportText';
 import type { ReportQuery } from '@shared/reports';
 import type { Repositories } from '../db/repositories';
 import { businessToday, currentYearMonth } from '../services/clock';
@@ -54,10 +55,15 @@ export function registerPrintIpc({ areas, categories, reports, settings }: Repos
     const area = onlyIds?.length === 1 && onlyIds[0] !== undefined ? areas.get(onlyIds[0]) : null;
     return area ? areaLabel({ name: area.name, categoryName: area.category.name }) : null;
   };
+  const categoryName = ({ categoryId }: ReportQuery): string | null =>
+    categoryId === null
+      ? null
+      : (categories.list().find((category) => category.id === categoryId)?.name ?? null);
+  /** Named after the one place, else the chosen category, with the year or the chosen month. */
+  const reportName = (query: ReportQuery) => onlyAreaName(query) ?? categoryName(query);
   const reportFileName = (query: ReportQuery) => {
-    const name = onlyAreaName(query);
-    const year = String(query.year);
-    return name ? t('print.fileAreaReport', { name, year }) : t('print.fileReport', { year });
+    const file = reportTitle(query, reportName(query), 'western', true);
+    return t(file.key, file.values);
   };
 
   handle('print:ready', printReadySchema, ({ ok }, sender) => {
@@ -76,20 +82,16 @@ export function registerPrintIpc({ areas, categories, reports, settings }: Repos
     });
     if (!path) return { ok: true, done: 'cancelled' };
     const { language, digitStyle, printTitle } = settings.getAll();
-    const categoryName =
-      query.categoryId === null
-        ? null
-        : (categories.list().find((category) => category.id === query.categoryId)?.name ?? null);
     const workbook = buildReportWorkbook(
       reports.build(query, currentYearMonth(), language),
       query,
       {
         language,
         digitStyle,
-        categoryName,
+        categoryName: categoryName(query),
         printedOn: businessToday().date,
         printTitle,
-        areaName: onlyAreaName(query),
+        titleName: reportName(query),
       },
     );
     const saved = await saveFile(path, new Uint8Array(await workbook.xlsx.writeBuffer()));

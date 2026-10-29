@@ -588,11 +588,12 @@
   },
   "print": {
     "reportTitle": "تقرير الإيجارات",
-    "areaReportTitle": "تقرير الإيجار: {{name}}",
+    "title": "تقرير الإيجارات {{period}}",
+    "titleNamed": "تقرير الإيجارات: {{name}}، {{period}}",
+    "file": "تقرير الإيجارات {{period}}",
+    "fileNamed": "تقرير الإيجارات {{name}} {{period}}",
     "printedOn": "طُبع في {{date}}",
     "page": "صفحة",
-    "fileReport": "تقرير الإيجارات {{year}}",
-    "fileAreaReport": "تقرير الإيجار {{name}} {{year}}",
     "pdfFiles": "ملفات PDF",
     "excelFiles": "ملفات Excel",
     "actions": {

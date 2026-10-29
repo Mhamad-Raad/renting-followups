@@ -157,7 +157,7 @@ describe('Excel report', () => {
 
   it('puts the print title from Settings first and keeps the column names in view', () => {
     const plain = buildReportWorkbook(REPORT, QUERY, { ...OPTIONS, language: 'en' }).worksheets[0];
-    expect(plain?.getRow(1).getCell(1).value).toBe('Rent report');
+    expect(plain?.getRow(1).getCell(1).value).toBe('Rent report 2026');
     expect(plain?.views[0]).toMatchObject({ state: 'frozen', ySplit: 4 });
 
     const titled = buildReportWorkbook(REPORT, QUERY, {
@@ -166,18 +166,24 @@ describe('Excel report', () => {
       printTitle: 'Kawa Rentals',
     }).worksheets[0];
     expect(titled?.getRow(1).getCell(1).value).toBe('Kawa Rentals');
-    expect(titled?.getRow(2).getCell(1).value).toBe('Rent report');
+    expect(titled?.getRow(2).getCell(1).value).toBe('Rent report 2026');
     expect(titled?.getRow(5).getCell(1).value).toBe('Area');
     expect(titled?.views[0]).toMatchObject({ state: 'frozen', ySplit: 5 });
   });
 
-  it('names the one place of the area page in the title', () => {
+  it('names the place or category and the period in the title', () => {
     const sheet = buildReportWorkbook(REPORT, QUERY, {
       ...OPTIONS,
       language: 'en',
-      areaName: 'Shop 1',
+      titleName: 'Shop 1',
     }).worksheets[0];
-    expect(sheet?.getRow(1).getCell(1).value).toBe('Rent report: Shop 1');
+    expect(sheet?.getRow(1).getCell(1).value).toBe('Rent report: Shop 1, 2026');
+    const october = buildReportWorkbook(
+      REPORT,
+      { ...QUERY, month: 10 },
+      { ...OPTIONS, language: 'en', titleName: 'Shops' },
+    ).worksheets[0];
+    expect(october?.getRow(1).getCell(1).value).toBe('Rent report: Shops, 10/2026');
   });
 
   it('uses the same status colours as the light theme', () => {

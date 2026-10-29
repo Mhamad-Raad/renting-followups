@@ -186,7 +186,9 @@ test('the buttons on screen print and export, with a plain message each time', a
     expect(await suggestedName(app)).toContain('دوکانی ١');
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(xlsx);
-    expect(workbook.worksheets[0]?.getRow(1).getCell(1).value).toBe('Rent report: دوکانی ١');
+    expect(workbook.worksheets[0]?.getRow(1).getCell(1).value).toBe(
+      `Rent report: دوکانی ١, ${new Date().getFullYear()}`,
+    );
 
     // Home: Print report.
     await page.getByRole('link', { name: en.nav.home, exact: true }).click();

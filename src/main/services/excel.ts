@@ -5,7 +5,7 @@ import { formatDate, type DateString } from '@shared/dates';
 import type { DigitStyle } from '@shared/digits';
 import { formatPlain } from '@shared/formatNumber';
 import type { MonthStatus } from '@shared/months';
-import { PART_SEPARATOR, reportFilterParts } from '@shared/reportText';
+import { PART_SEPARATOR, reportFilterParts, reportTitle } from '@shared/reportText';
 import type { Report, ReportQuery } from '@shared/reports';
 import type { Language } from '@shared/settings';
 import { translate } from './translate';
@@ -39,14 +39,14 @@ export interface ExcelOptions {
   printedOn: DateString;
   /** The owner's print title from Settings, as the first line; empty for none. */
   printTitle: string;
-  /** The one place the report is limited to (the area page), named in its title; null otherwise. */
-  areaName?: string | null;
+  /** What the title names: the one place of the area page, else the chosen category; null for none. */
+  titleName?: string | null;
 }
 
 export function buildReportWorkbook(
   report: Report,
   query: ReportQuery,
-  { language, digitStyle, categoryName, printedOn, printTitle, areaName = null }: ExcelOptions,
+  { language, digitStyle, categoryName, printedOn, printTitle, titleName = null }: ExcelOptions,
 ): ExcelJS.Workbook {
   const t = (key: string, values?: Record<string, string>) => translate(language, key, values);
   const rtl = language !== 'en';
@@ -65,9 +65,8 @@ export function buildReportWorkbook(
   const toMajor = (amount: number, currency: Currency) => amount / 10 ** FRACTION_DIGITS[currency];
 
   if (printTitle) sheet.addRow([printTitle]).font = { bold: true, size: 12 };
-  sheet.addRow([
-    areaName ? t('print.areaReportTitle', { name: areaName }) : t('print.reportTitle'),
-  ]).font = { bold: true, size: 14 };
+  const title = reportTitle(query, titleName, digitStyle);
+  sheet.addRow([t(title.key, title.values)]).font = { bold: true, size: 14 };
   sheet.addRow([
     reportFilterParts(query, categoryName, digitStyle)
       .map(

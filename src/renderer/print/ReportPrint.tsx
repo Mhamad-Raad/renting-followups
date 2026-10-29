@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router';
 import { areaLabel, hasOwnName } from '@shared/areas';
 import { dateStringFromLocal, formatDate } from '@shared/dates';
 import { formatPlain } from '@shared/formatNumber';
-import { PART_SEPARATOR, reportFilterParts } from '@shared/reportText';
+import { PART_SEPARATOR, reportFilterParts, reportTitle } from '@shared/reportText';
 import { reportQuerySchema, type ReportQuery } from '@shared/reports';
 import { useIpcQuery } from '../app/ipc';
 import { useSettings } from '../app/SettingsContext';
@@ -67,12 +67,11 @@ function ReportPaper({ query }: { query: ReportQuery }) {
     )
     .join(PART_SEPARATOR);
 
-  // The area page prints one place: its name leads the title.
+  // Named after the one place of the area page, else the chosen category, with its period.
   const [onlyRow] = rows;
-  const title =
-    query.onlyIds?.length === 1 && onlyRow
-      ? t('print.areaReportTitle', { name: areaLabel(onlyRow) })
-      : t('print.reportTitle');
+  const name = query.onlyIds?.length === 1 && onlyRow ? areaLabel(onlyRow) : categoryName;
+  const heading = reportTitle(query, name, digits);
+  const title = t(heading.key, heading.values);
 
   return (
     <PrintFrame
