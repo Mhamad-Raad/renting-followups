@@ -9,10 +9,10 @@ import { PageHeader } from '../../components/PageHeader';
 import { ReportOutputButtons } from '../../print/ReportOutputButtons';
 import { AreaPicker } from './AreaPicker';
 import { ReportFiltersBar } from './ReportFiltersBar';
-import { ReportTable } from './ReportTable';
+import { ReportTable, ReportTotals } from './ReportTable';
 import styles from './ReportsPage.module.css';
 
-/** Reports: filters at the top, then one row per area with totals per currency. */
+/** Reports: the totals per currency first, then the filters, then one slim row per area. */
 export function ReportsPage() {
   const { t } = useTranslation();
   const lastFilters = useIpcQuery('reports:lastFilters');
@@ -54,24 +54,31 @@ function ReportView({ initialFilters }: { initialFilters: ReportFilters | undefi
 
   return (
     <div className={styles.stack}>
-      <ReportFiltersBar
-        year={year}
-        filters={filters}
-        categories={categories.state.status === 'ready' ? categories.state.data : []}
-        onYear={setYear}
-        onFilters={changeFilters}
-      />
+      {/* The totals first: what the owner looks for, before any row. */}
+      {report.state.status === 'ready' && <ReportTotals totals={report.state.data.totals} />}
+      <div className={styles.controls}>
+        <ReportFiltersBar
+          year={year}
+          filters={filters}
+          categories={categories.state.status === 'ready' ? categories.state.data : []}
+          onYear={setYear}
+          onFilters={changeFilters}
+        />
+        {report.state.status === 'ready' && (
+          <div className={styles.toolbar}>
+            <AreaPicker
+              candidates={candidates}
+              excludedIds={excludedIds}
+              onChange={setExcludedIds}
+            />
+            {rows.length > 0 && <ReportOutputButtons query={query} />}
+          </div>
+        )}
+      </div>
       {report.state.status === 'error' && <LoadError onRetry={report.reload} />}
       {report.state.status === 'ready' && (
         <>
-          <AreaPicker candidates={candidates} excludedIds={excludedIds} onChange={setExcludedIds} />
-          {rows.length > 0 && <ReportOutputButtons query={query} />}
-          <ReportTable
-            rows={rows}
-            totals={report.state.data.totals}
-            year={year}
-            month={filters.month}
-          />
+          <ReportTable rows={rows} year={year} month={filters.month} />
           <p className={styles.footer}>
             {t('reports.footer', {
               december: formatPlain(12, settings.digitStyle),

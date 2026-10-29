@@ -577,13 +577,14 @@
       "renter": "Renter",
       "rent": "Monthly rent",
       "received": "Received",
-      "remaining": "Still owed",
-      "money": "Money"
+      "remaining": "Still owed"
     },
     "total": "Total {{currency}} | Areas: {{number}}",
     "empty": "No areas match these filters.",
     "footer": "\"Received\" counts each payment under the month it pays for, not the day it arrived: rent for month {{december}} paid in month {{november}} counts under month {{december}}. \"Still owed\" counts rent up to this month.",
-    "caption": "Report: one row per area, then the totals per currency"
+    "caption": "Report: one row per area",
+    "totals": "Totals",
+    "areasCount": "Areas: {{number}}"
   },
   "print": {
     "reportTitle": "Rent report",
