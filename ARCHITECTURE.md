@@ -141,7 +141,7 @@ Database settings: WAL mode, `foreign_keys = ON`, all multi-row writes inside tr
 `id, receipt_number (unique, sequential, displayed zero-padded as 0001; NULL for backfilled payments), is_backfill (bool), area_id, renter_name_snapshot, renter_phone_snapshot, currency, total_amount, paid_on (date), note, voided_at (nullable), print_count`
 - Numbers never repeat and are never reused, even after a void. Backfilled (historical) payments do not consume a receipt number (section 7.3).
 - Snapshots keep old receipts correct even if the renter later changes.
-- `print_count` makes reprints stamped **"Copy"** (first print is the original).
+- `print_count` is no longer used: receipts are not printed or saved as PDF (owner's decision, 2026-10-29). The column stays so older data keeps opening.
 
 ### payment_allocations
 `id, receipt_id, area_id, year, month, amount`
@@ -219,7 +219,7 @@ Form (large, single column):
 
 **Overpayment horizon:** allocation may run forward at most **24 months** past the current month. If the amount is larger than everything owed within that horizon, block saving and say so plainly ("This amount is more than 2 years of rent. Please check the number.").
 
-Buttons: **Save** and **Save and make receipt PDF**. After saving, show "Payment saved. Receipt No. 0042" with **Save receipt as PDF** and **Close** (no Undo; owner's decision, 2026-10-29). Receipts are only ever saved as PDF, never sent straight to a printer; the owner prints from the PDF if needed. *(Owner's decision, 2026-10-27.)*
+Buttons: **Save** and **Cancel**. After saving, show "Payment saved. Receipt No. 0042", with no buttons: no Undo and no receipt PDF. Receipts keep their numbers on screen but are **not printed or saved as PDF**. *(Owner's decisions, 2026-10-29.)*
 
 ### 7.2 Editing and cancelling
 
@@ -267,7 +267,7 @@ Then, for the selected year:
 - Four figures: **Rent price**, **Total for the year** (expected), **Received**, **Still owed**.
 - **12 boxes** in a row/grid (2 rows of 6 on narrow widths). Each box shows the month number (1-12), the amount paid, and a status word. Colours per section 6: green / red / grey / hatched.
 - Notes field.
-- List of receipts for the year (number or "Past record", date, amount, months covered) with Save receipt as PDF / Edit / Cancel.
+- List of receipts for the year (number or "Past record", date, amount, months covered) with Edit / Cancel.
 - Price history and renter history (collapsible, plain).
 - Buttons: **Export to PDF**, **Export to Excel**. *(Owner's decision, 2026-10-25: no direct Print button here.)*
 
@@ -286,7 +286,7 @@ Buttons: **Print**, **Export PDF**, **Export Excel**. Print, PDF and Excel conta
 When a specific month is chosen in the filter, the table shows that month's status per area and totals for that month.
 
 ### 8.6 Receipt print
-A4 page: logo (if set), print title (if set), "Receipt No. 0042", date, area name, renter name and phone, months covered, amount (with currency), note, signature line. One receipt per page, saved as PDF. Saving it again is stamped **"Copy"**.
+Removed: receipts are not printed or saved as PDF. *(Owner's decision, 2026-10-29.)*
 
 ### 8.7 Notifications (see section 11)
 
@@ -423,7 +423,7 @@ Build and test each milestone before starting the next. After each one, make sur
 5. **Payments:** the Record Payment form with live allocation preview and horizon limit, receipts with sequential numbers, edit/void, undo, "Record past payment" (backfill).
 6. **Area page:** filter bar (year default current, month), the four figures, the 12 coloured boxes, receipts list, price-change warning.
 7. **Reports:** filter container, table, totals per currency, selection of areas, status filter.
-8. **Printing and exports:** receipt print (with "Copy" stamp), report print, PDF, Excel, logo and title.
+8. **Printing and exports:** report print, PDF, Excel, logo and title.
 9. **Notifications:** popup on open, notifications page, bell count, month reminders, backup reminder, clock warning.
 10. **Settings:** fonts, font size, theme colours, dark/light, digit style, print settings, reminder days, deleted items, activity log.
 11. **Backup and restore:** including safety snapshots, location warning, compatibility check, integrity check at startup.
@@ -445,7 +445,7 @@ The app is done when all of these are true:
 - [ ] Month boxes: **green** = fully paid, **red** = any month up to and including the current one that is not fully paid (the current one says "Not paid", past ones "Late"), **grey** for future months (also when paid in part ahead), **hatched** for vacant or not-yet-started months, which are excluded from late status and totals.
 - [ ] The area page shows price, year total, received, still owed, the 12 boxes, renter name and phone, and notes, and filters by year (default current) and month.
 - [ ] Reports filter by year, month, category, currency and status; print, PDF and Excel contain the same fields; **IQD and USD totals are separate** at the bottom.
-- [ ] Receipts are numbered sequentially (never reused), print on A4, show the logo and title when set in settings, and reprints are marked "Copy".
+- [ ] Receipts are numbered sequentially (never reused); reports print on A4 and show the logo and title when set in settings.
 - [ ] All three languages work, with Sorani as default; switching flips the layout correctly; months display as numbers; digit style is switchable.
 - [ ] Amounts typed in Western, Arabic-Indic or Persian digits are all understood; searching Sorani names works regardless of Arabic/Kurdish letter variants.
 - [ ] Settings change font family, font size, theme colours, and light/dark mode immediately and persistently.
