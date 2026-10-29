@@ -8,13 +8,13 @@ import styles from './MonthBoxes.module.css';
 
 type MonthWord = Exclude<MonthStatus, 'not_applicable'> | 'vacant' | 'notStarted';
 
-/** The word for a month. One that is not applicable says why: vacant (rent 0), or rent not started. */
 /** A coming month paid in part: grey like the others, so its box is filled half green, corner to corner. */
 const isPartPaid = (box: MonthBox) => box.status === 'partial' && box.paid > 0;
 
 /** Lets a line of a month box shrink to fit the box instead of breaking (see `--chars` in the CSS). */
 const fitted = (text: string) => ({ '--chars': Math.max(text.length, 1) }) as CSSProperties;
 
+/** The word for a month. One that is not applicable says why: vacant (rent 0), or rent not started. */
 export function monthWord({ status, expected }: Pick<MonthBox, 'status' | 'expected'>): MonthWord {
   if (status !== 'not_applicable') return status;
   return expected === 0 ? 'vacant' : 'notStarted';
