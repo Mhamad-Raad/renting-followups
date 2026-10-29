@@ -14,6 +14,7 @@ import { LoadError } from '../../components/LoadError';
 import { NoAreasYet } from '../areas/NoAreasYet';
 import { LinkButton } from '../../components/LinkButton';
 import { MoneyText } from '../../components/MoneyText';
+import { PerCurrency } from '../../components/PerCurrency';
 import { StatusPill } from '../../components/MonthBoxes';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
@@ -180,7 +181,9 @@ function AttentionRow({ item }: { item: AttentionItem }) {
       <div className={styles.owed}>
         <span className={styles.srOnly}>{t('home.owes')}</span>
         <strong className={styles.amount}>
-          <MoneyText amount={standing.owed} currency={item.currency} />
+          <PerCurrency items={standing.owed}>
+            {(owed) => <MoneyText amount={owed.amount} currency={owed.currency} />}
+          </PerCurrency>
         </strong>
         {standing.lateMonths > 0 ? (
           <StatusPill status="late">

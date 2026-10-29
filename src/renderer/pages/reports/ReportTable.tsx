@@ -8,6 +8,7 @@ import { CategoryDot } from '../../components/CategoryDot';
 import { CurrencyTag } from '../../components/CurrencyTag';
 import { EmptyState } from '../../components/EmptyState';
 import { MoneyText } from '../../components/MoneyText';
+import { PerCurrency } from '../../components/PerCurrency';
 import { MonthBoxes, monthWord, StatusPill, YearSummaryText } from '../../components/MonthBoxes';
 import { PhoneText } from '../../components/PhoneText';
 import { RentText } from '../areas/RentText';
@@ -145,25 +146,25 @@ function ReportTableRow({
         )}
       </td>
       <td>
-        <CurrencyTag currency={row.currency} />
+        <PerCurrency items={row.figures}>
+          {(part) => <CurrencyTag currency={part.currency} />}
+        </PerCurrency>
       </td>
       <td>
-        <MoneyLines
-          currency={row.currency}
-          rent={<RentText price={row.figures.rent} currency={row.currency} withCurrency={false} />}
-          received={row.figures.received}
-          remaining={row.figures.remaining}
-        />
+        <PerCurrency items={row.figures}>
+          {(part) => (
+            <MoneyLines
+              currency={part.currency}
+              rent={<RentText price={part.rent} currency={part.currency} withCurrency={false} />}
+              received={part.received}
+              remaining={part.remaining}
+            />
+          )}
+        </PerCurrency>
       </td>
       <td>
         <div className={styles.year}>
-          <MonthBoxes
-            boxes={row.boxes}
-            year={year}
-            currency={row.currency}
-            compact
-            selected={month}
-          />
+          <MonthBoxes boxes={row.boxes} year={year} compact selected={month} />
           {chosen ? (
             <StatusPill status={chosen.status}>
               {t(`months.status.${monthWord(chosen)}`)}

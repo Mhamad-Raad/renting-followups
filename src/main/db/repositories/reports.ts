@@ -54,7 +54,8 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
      LEFT JOIN renters r ON r.area_id = a.id AND r.ended_on IS NULL
      WHERE a.deleted_at IS NULL
        AND (@categoryId IS NULL OR a.category_id = @categoryId)
-       AND (@currency IS NULL OR a.currency = @currency)`,
+       AND (@currency IS NULL OR EXISTS (
+         SELECT 1 FROM area_prices p WHERE p.area_id = a.id AND p.currency = @currency))`,
   );
   const store = createKeyValueStore(db);
 
@@ -77,6 +78,11 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
           query.month,
         );
         if (!matchesReportStatus(year.boxes, query.status, query.month)) continue;
+        // Filtered by currency: only that currency's figures, and no row for a year without it.
+        const figures = year.figures.filter(
+          (part) => query.currency === null || part.currency === query.currency,
+        );
+        if (figures.length === 0) continue;
         rows.push({
           id: area.id,
           name: area.name,
@@ -86,7 +92,7 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
           renterName: area.renter_name,
           renterPhone: area.renter_phone,
           notes: area.notes,
-          figures: year.figures,
+          figures,
           boxes: year.boxes,
           summary: year.summary,
           monthStatus:

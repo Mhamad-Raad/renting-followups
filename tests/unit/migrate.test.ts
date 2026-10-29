@@ -190,6 +190,44 @@ describe('real schema upgrades keep existing data', () => {
     expect(() => addArea.run('Shop 1', 'shop 1')).toThrow(/UNIQUE/);
     expect(db.prepare('SELECT COUNT(*) AS n FROM areas').get()).toEqual({ n: 3 });
   });
+
+  it('6: every rent period takes its area currency, and a paid area can then change it', () => {
+    const db = memoryDb();
+    migrate(db, MIGRATIONS.slice(0, 5));
+    db.prepare(
+      "INSERT INTO categories (id, name, name_normalized) VALUES (1, 'Shops', 'shops')",
+    ).run();
+    const addArea = db.prepare(
+      `INSERT INTO areas (id, category_id, name, name_normalized, currency)
+       VALUES (?, 1, ?, ?, ?)`,
+    );
+    addArea.run(1, 'Shop 1', 'shop 1', 'USD');
+    addArea.run(2, 'Shop 2', 'shop 2', 'IQD');
+    const addPrice = db.prepare(
+      `INSERT INTO area_prices (area_id, monthly_price, effective_from_year, effective_from_month)
+       VALUES (?, ?, 2026, ?)`,
+    );
+    addPrice.run(1, 500_00, 1);
+    addPrice.run(1, 600_00, 6);
+    addPrice.run(2, 250_000, 1);
+    db.prepare(
+      `INSERT INTO receipts (receipt_number, area_id, currency, total_amount, paid_on)
+       VALUES (1, 1, 'USD', 50000, '2026-01-05')`,
+    ).run();
+
+    migrate(db, MIGRATIONS.slice(0, 6));
+    expect(
+      db.prepare('SELECT area_id, monthly_price, currency FROM area_prices ORDER BY id').all(),
+    ).toEqual([
+      { area_id: 1, monthly_price: 500_00, currency: 'USD' },
+      { area_id: 1, monthly_price: 600_00, currency: 'USD' },
+      { area_id: 2, monthly_price: 250_000, currency: 'IQD' },
+    ]);
+    db.prepare("UPDATE areas SET currency = 'IQD' WHERE id = 1").run();
+    expect(db.prepare('SELECT currency FROM areas WHERE id = 1').get()).toEqual({
+      currency: 'IQD',
+    });
+  });
 });
 
 describe('writeSafetySnapshot', () => {

@@ -32,7 +32,6 @@ const SUMMARY_COLOR: Record<YearSummary, MonthStatus> = {
 interface MonthBoxesProps {
   boxes: readonly MonthBox[];
   year: number;
-  currency: Currency;
   /** A thin strip of month numbers for lists and prints, instead of large boxes with amounts. */
   compact?: boolean;
   /** The month chosen in the filter, outlined. */
@@ -49,7 +48,6 @@ interface MonthBoxesProps {
 export const MonthBoxes = memo(function MonthBoxes({
   boxes,
   year,
-  currency,
   compact = false,
   selected = null,
   onPick,
@@ -57,13 +55,15 @@ export const MonthBoxes = memo(function MonthBoxes({
   const { t } = useTranslation();
   const { settings } = useSettings();
   const digits = settings.digitStyle;
-  const amountText = (amount: number) => formatAmount(amount, FRACTION_DIGITS[currency], digits);
+  // Each month's amounts are in its own currency (a new renter may pay in another one).
+  const amountText = (amount: number, currency: Currency) =>
+    formatAmount(amount, FRACTION_DIGITS[currency], digits);
   const label = (box: MonthBox) =>
     t(isPartPaid(box) ? 'months.boxPart' : 'months.box', {
       month: formatPlain(box.month, digits),
       status: t(`months.status.${monthWord(box)}`),
-      paid: amountText(box.paid),
-      expected: amountText(box.expected ?? 0),
+      paid: amountText(box.paid, box.currency),
+      expected: amountText(box.expected ?? 0, box.currency),
     });
   const canPick = (box: MonthBox) => onPick !== undefined && box.status !== 'not_applicable';
   // A click that just misses a box (a gap, a vacant month) must not open the area behind it either.
@@ -133,9 +133,9 @@ export const MonthBoxes = memo(function MonthBoxes({
               <span
                 className={styles.amount}
                 aria-hidden="true"
-                style={fitted(box.paid > 0 ? amountText(box.paid) : '')}
+                style={fitted(box.paid > 0 ? amountText(box.paid, box.currency) : '')}
               >
-                {box.paid > 0 && <bdi dir="ltr">{amountText(box.paid)}</bdi>}
+                {box.paid > 0 && <bdi dir="ltr">{amountText(box.paid, box.currency)}</bdi>}
               </span>
               <span
                 className={styles.word}

@@ -4,7 +4,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { areaLabel, type AreaDetails } from '@shared/areas';
 import { yearMonthOf } from '@shared/dates';
 import { useIpcQuery } from '../../app/ipc';
-import { priceForMonth } from '@shared/prices';
+import { currencyForMonth, priceForMonth } from '@shared/prices';
 import { flash, useFlashNotice } from '../../app/flash';
 import { BigButton } from '../../components/BigButton';
 import { LoadError } from '../../components/LoadError';
@@ -55,6 +55,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
 
   const today = yearMonthOf(new Date());
   const price = priceForMonth(area.prices, today);
+  const currency = currencyForMonth(area.prices, today) ?? area.currency;
   const period = useAreaPeriod(area.id, today.year);
 
   const actions = useAreaActions(area, {
@@ -100,7 +101,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
       <div className={styles.stack}>
         {actions.feedback}
 
-        <AreaFacts area={area} price={price} />
+        <AreaFacts area={area} price={price} currency={currency} />
 
         <div className={styles.actions}>
           <BigButton onClick={() => open(ACTION_DIALOGS.pastPayment)}>
@@ -134,7 +135,6 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
           onPickMonth={(box) =>
             void monthPick.pick({
               areaId: area.id,
-              currency: area.currency,
               year: period.year,
               box,
             })

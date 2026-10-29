@@ -3,7 +3,7 @@ import type { AreaNaming } from './areas';
 import type { CategoryColor } from './categories';
 import { CURRENCIES, type Currency } from './currency';
 import { monthSchema, yearSchema } from './dates';
-import type { MonthBox, MonthStatus, YearFigures, YearSummary } from './months';
+import type { CurrencyFigures, MonthBox, MonthStatus, YearSummary } from './months';
 
 export const REPORT_STATUSES = ['all', 'paid', 'partial', 'late'] as const;
 export type ReportStatus = (typeof REPORT_STATUSES)[number];
@@ -48,8 +48,11 @@ export interface ReportRow {
   renterName: string | null;
   renterPhone: string | null;
   notes: string;
-  /** For the year, or for the chosen month. */
-  figures: YearFigures;
+  /**
+   * For the year, or for the chosen month, per currency used in it (only the
+   * chosen currency when the report is filtered by one).
+   */
+  figures: CurrencyFigures[];
   boxes: MonthBox[];
   summary: YearSummary;
   /** The chosen month's status, when a month is chosen. */

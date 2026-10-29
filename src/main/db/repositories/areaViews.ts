@@ -5,7 +5,7 @@ import type { YearMonth } from '@shared/dates';
 import type { AttentionItem } from '@shared/home';
 import type { AreaYear } from '@shared/months';
 import { normalizePhone, normalizeText } from '@shared/normalizeText';
-import { priceForMonth } from '@shared/prices';
+import { currencyForMonth, priceForMonth } from '@shared/prices';
 import { areaStanding, areaYear, NO_PAYMENTS, type AreaOverview } from '../../services/monthStatus';
 import type { ReminderArea } from '../../services/notifications';
 import type { Db } from '../connection';
@@ -76,7 +76,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
             categoryId: row.category_id,
             categoryName: row.category_name,
             categoryColor: row.category_color,
-            currency: row.currency,
+            currency: currencyForMonth(history, today) ?? row.currency,
             renterName: row.renter_name,
             renterPhone: row.renter_phone,
             currentPrice: priceForMonth(history, today),
@@ -127,7 +127,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
             name: row.name,
             categoryName: row.category_name,
             categoryColor: row.category_color,
-            currency: row.currency,
+            currency: currencyForMonth(history, today) ?? row.currency,
             renterName: row.renter_name,
             renterPhone: row.renter_phone,
             figures: areaYear(history, paid, today.year, today).figures,

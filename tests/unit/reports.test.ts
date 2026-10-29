@@ -77,7 +77,9 @@ describe('reports', () => {
       name: 'Shop 1',
       categoryName: 'Shops',
       renterName: 'Karwan Ahmed',
-      figures: { rent: RENT, expected: 12 * RENT, received: 5 * RENT, remaining: 0 },
+      figures: [
+        { currency: 'IQD', rent: RENT, expected: 12 * RENT, received: 5 * RENT, remaining: 0 },
+      ],
       summary: 'paid',
       monthStatus: null,
     });
@@ -105,7 +107,15 @@ describe('reports', () => {
     pay(id, RENT + 100_000);
     const report = build({ month: 2 });
     expect(report.rows[0]).toMatchObject({
-      figures: { rent: RENT, expected: RENT, received: 100_000, remaining: RENT - 100_000 },
+      figures: [
+        {
+          currency: 'IQD',
+          rent: RENT,
+          expected: RENT,
+          received: 100_000,
+          remaining: RENT - 100_000,
+        },
+      ],
       monthStatus: 'late',
     });
     expect(report.totals[0]).toMatchObject({ received: 100_000, remaining: RENT - 100_000 });

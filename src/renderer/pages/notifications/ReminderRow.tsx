@@ -8,6 +8,7 @@ import type { AreaReminder } from '@shared/notifications';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
 import { MoneyText } from '../../components/MoneyText';
+import { PerCurrency } from '../../components/PerCurrency';
 import { StatusPill } from '../../components/MonthBoxes';
 import { PhoneText } from '../../components/PhoneText';
 import { areaLink, recordPaymentLink } from '../areas/links';
@@ -95,7 +96,13 @@ export function ReminderRow({ reminder, onOpen, compact = false }: ReminderRowPr
         )}
         {!compact && <span className={styles.second}>{t('notifications.owes')}</span>}
         <strong className={styles.owed}>
-          <MoneyText amount={reminder.owed} currency={reminder.currency} />
+          {reminder.kind === 'late' ? (
+            <PerCurrency items={reminder.owed}>
+              {(owed) => <MoneyText amount={owed.amount} currency={owed.currency} />}
+            </PerCurrency>
+          ) : (
+            <MoneyText amount={reminder.owed} currency={reminder.currency} />
+          )}
         </strong>
       </div>
       <BigButton

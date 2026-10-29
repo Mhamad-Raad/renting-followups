@@ -50,9 +50,9 @@ describe('dates', () => {
 
 describe('priceForMonth', () => {
   const prices: PriceRow[] = [
-    { year: 2026, month: 6, monthlyPrice: 300_000 },
-    { year: 2025, month: 11, monthlyPrice: 250_000 },
-    { year: 2026, month: 9, monthlyPrice: 0 },
+    { year: 2026, month: 6, monthlyPrice: 300_000, currency: 'IQD' },
+    { year: 2025, month: 11, monthlyPrice: 250_000, currency: 'IQD' },
+    { year: 2026, month: 9, monthlyPrice: 0, currency: 'IQD' },
   ];
 
   it.each([
@@ -79,8 +79,8 @@ describe('priceForMonth', () => {
 
 describe('withPriceFrom', () => {
   const prices: PriceRow[] = [
-    { year: 2026, month: 1, monthlyPrice: 100 },
-    { year: 2026, month: 6, monthlyPrice: 200 },
+    { year: 2026, month: 1, monthlyPrice: 100, currency: 'IQD' },
+    { year: 2026, month: 6, monthlyPrice: 200, currency: 'IQD' },
   ];
 
   it('adds a new row in order, like saving a price change', () => {
@@ -91,8 +91,8 @@ describe('withPriceFrom', () => {
 
   it('replaces a row for the same month and leaves the original untouched', () => {
     expect(withPriceFrom(prices, { year: 2026, month: 6 }, 0)).toEqual([
-      { year: 2026, month: 1, monthlyPrice: 100 },
-      { year: 2026, month: 6, monthlyPrice: 0 },
+      { year: 2026, month: 1, monthlyPrice: 100, currency: 'IQD' },
+      { year: 2026, month: 6, monthlyPrice: 0, currency: 'IQD' },
     ]);
     expect(prices[1]?.monthlyPrice).toBe(200);
   });

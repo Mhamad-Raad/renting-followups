@@ -15,7 +15,7 @@ import {
   type MonthEndReminder,
 } from '@shared/notifications';
 import type { PriceRow } from '@shared/prices';
-import { unpaidMonths, type PaidHistory } from './monthStatus';
+import { owedByCurrency, unpaidMonths, type PaidHistory } from './monthStatus';
 
 /**
  * The one function behind every reminder (ARCHITECTURE.md section 11), so
@@ -69,13 +69,14 @@ export function buildReminders(
         ...ref,
         kind: 'late',
         months: pastMonths.map(({ year, month }) => ({ year, month })),
-        owed: pastMonths.reduce((sum, month) => sum + month.owed, 0),
+        owed: owedByCurrency(pastMonths),
       });
     }
     const current = months.find((month) => month.status === 'due');
     if (current && remindNow) {
       monthEnd.push({
         ...ref,
+        currency: current.currency,
         kind: 'month_end',
         month: today.month,
         owed: current.owed,

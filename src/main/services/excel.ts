@@ -90,29 +90,38 @@ export function buildReportWorkbook(
   // The heading lines and the column names stay in view while scrolling.
   sheet.views = [{ rightToLeft: rtl, state: 'frozen', ySplit: header.number }];
 
+  // One line per currency, so every money column holds one currency and can be added up;
+  // an area that changed currency in the year has a line for each, with that currency's months.
   for (const row of report.rows) {
-    const line = sheet.addRow([
-      areaLabel(row),
-      row.categoryName,
-      row.renterName ?? '',
-      row.renterPhone ?? '',
-      t(`currency.${row.currency}`),
-      row.figures.rent === null ? '' : toMajor(row.figures.rent, row.currency),
-      toMajor(row.figures.received, row.currency),
-      toMajor(row.figures.remaining, row.currency),
-      ...row.boxes.map((box) => (box.paid > 0 ? toMajor(box.paid, row.currency) : '')),
-      row.notes,
-    ]);
-    for (const column of [...MONEY_COLUMNS, ...MONTHS.map((m) => FIRST_MONTH_COLUMN + m - 1)]) {
-      line.getCell(column).numFmt = moneyFormat(row.currency);
+    for (const part of row.figures) {
+      const { currency } = part;
+      const line = sheet.addRow([
+        areaLabel(row),
+        row.categoryName,
+        row.renterName ?? '',
+        row.renterPhone ?? '',
+        t(`currency.${currency}`),
+        part.rent === null ? '' : toMajor(part.rent, currency),
+        toMajor(part.received, currency),
+        toMajor(part.remaining, currency),
+        ...row.boxes.map((box) =>
+          box.paid > 0 && box.currency === currency ? toMajor(box.paid, currency) : '',
+        ),
+        row.notes,
+      ]);
+      for (const column of [...MONEY_COLUMNS, ...MONTHS.map((m) => FIRST_MONTH_COLUMN + m - 1)]) {
+        line.getCell(column).numFmt = moneyFormat(currency);
+      }
+      row.boxes.forEach((box, index) => {
+        line.getCell(FIRST_MONTH_COLUMN + index).fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: {
+            argb: `FF${STATUS_FILLS[box.currency === currency ? box.status : 'not_applicable']}`,
+          },
+        };
+      });
     }
-    row.boxes.forEach((box, index) => {
-      line.getCell(FIRST_MONTH_COLUMN + index).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: `FF${STATUS_FILLS[box.status]}` },
-      };
-    });
   }
 
   for (const total of report.totals) {

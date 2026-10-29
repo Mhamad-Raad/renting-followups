@@ -273,7 +273,7 @@
     "currency": "Currency",
     "currencyHint": "The currency can be corrected until the first payment.",
     "currencyEditHint": "Can be corrected until the first payment. The rent keeps its number: 250,000 IQD becomes 250,000 USD. Use Change price if the amount is wrong too.",
-    "currencyFixed": "The currency cannot be changed once the area has payments.",
+    "currencyFixed": "Months already paid keep their currency. A new renter can pay in another currency: use Change renter.",
     "monthlyRent": "Monthly rent",
     "vacantNow": "Vacant now (no rent for the moment)",
     "rentStartsFrom": "Rent starts from",
@@ -361,7 +361,9 @@
     "phone": "New renter phone",
     "startsOn": "Starts on",
     "before_current_renter": "This date is before the current renter started ({{date}}).",
-    "saved": "Renter saved."
+    "saved": "Renter saved.",
+    "rent": "Monthly rent",
+    "rentHint": "From {{month}}, the month the new renter starts. Change it if they pay a different rent or currency."
   },
   "categories": {
     "title": "Categories",

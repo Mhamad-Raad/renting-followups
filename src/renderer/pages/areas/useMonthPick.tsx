@@ -14,8 +14,8 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 /** A month box that was clicked, with the area it belongs to. */
 export interface PickedMonth {
   areaId: number;
-  currency: Currency;
   year: number;
+  /** Its amounts are in `box.currency`, the month's own currency. */
   box: MonthBox;
 }
 
@@ -156,7 +156,7 @@ export function useMonthPick(onDone: (outcome: MonthPickOutcome) => void) {
             <li key={change.receiptId}>
               {t(change.cancels ? 'monthPick.cancels' : 'monthPick.lowers', {
                 receipt: receiptName(change),
-                amount: money(change.amount, question.picked.currency),
+                amount: money(change.amount, question.picked.box.currency),
               })}
             </li>
           ))}
@@ -165,9 +165,9 @@ export function useMonthPick(onDone: (outcome: MonthPickOutcome) => void) {
       ) : (
         <p>
           {question.picked.box.paid > 0 &&
-            `${t('monthPick.alreadyPaid', { amount: money(question.picked.box.paid, question.picked.currency) })} `}
+            `${t('monthPick.alreadyPaid', { amount: money(question.picked.box.paid, question.picked.box.currency) })} `}
           {t('monthPick.payBody', {
-            amount: money(restOf(question.picked.box), question.picked.currency),
+            amount: money(restOf(question.picked.box), question.picked.box.currency),
           })}
         </p>
       )}

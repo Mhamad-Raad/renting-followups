@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AreaDetails } from '@shared/areas';
-import { FRACTION_DIGITS } from '@shared/currency';
+import { FRACTION_DIGITS, type Currency } from '@shared/currency';
 import { dateStringFromLocal, formatYearMonth, yearMonthOf, type YearMonth } from '@shared/dates';
 import { formatAmount } from '@shared/formatNumber';
+import { currencyForMonth } from '@shared/prices';
 import {
   formatReceiptNumber,
   PAYMENT_NOTE_MAX,
@@ -103,6 +104,8 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
   const editing = mode.kind === 'edit' ? mode.receipt : null;
   const [amount, setAmount] = useState<number | null>(editing?.totalAmount ?? null);
   const [from, setFrom] = useState<YearMonth>({ year: start.year, month: start.month });
+  // A receipt is in one currency: a saved one keeps its own, new money takes that of its first month.
+  const currency = editing?.currency ?? currencyForMonth(area.prices, from) ?? area.currency;
   const [paidOn, setPaidOn] = useState(editing?.paidOn ?? dateStringFromLocal(new Date()));
   const [note, setNote] = useState(editing?.note ?? '');
   const [showProblems, setShowProblems] = useState(false);
@@ -154,7 +157,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
       {mode.kind === 'past' && <p className={styles.hint}>{t('paymentDialog.pastHint')}</p>}
       <AmountField
         label={t('paymentDialog.amount')}
-        currency={area.currency}
+        currency={currency}
         value={amount}
         onChange={setAmount}
         autoFocus
@@ -168,7 +171,8 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
       />
       {amount ? (
         <AllocationPreview
-          area={area}
+          areaId={area.id}
+          currency={currency}
           amount={amount}
           from={from}
           receiptId={editing?.id ?? null}
@@ -199,32 +203,33 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
 }
 
 interface AllocationPreviewProps {
-  area: AreaDetails;
+  areaId: number;
+  currency: Currency;
   amount: number;
   from: YearMonth;
   receiptId: number | null;
 }
 
 /** Shows, before saving, which months the money will fill, worked out by the main process. */
-function AllocationPreview({ area, amount, from, receiptId }: AllocationPreviewProps) {
+function AllocationPreview({ areaId, currency, amount, from, receiptId }: AllocationPreviewProps) {
   // A stable object, so the delay only restarts when the amount or month really changes.
   const input = useMemo(
-    () => ({ areaId: area.id, amount, from, receiptId }),
-    [area.id, amount, from, receiptId],
+    () => ({ areaId, amount, from, receiptId }),
+    [areaId, amount, from, receiptId],
   );
   const query = useDebouncedValue(input, PREVIEW_DELAY_MS);
   const preview = useIpcQuery('payments:preview', query);
   // While typing, the shown months belong to an earlier amount: dim them until they catch up.
-  return <PreviewText state={preview.state} area={area} stale={query !== input} />;
+  return <PreviewText state={preview.state} currency={currency} stale={query !== input} />;
 }
 
 function PreviewText({
   state,
-  area,
+  currency,
   stale,
 }: {
   state: QueryState<AllocationResult | null>;
-  area: AreaDetails;
+  currency: Currency;
   stale: boolean;
 }) {
   const { t } = useTranslation();
@@ -236,7 +241,7 @@ function PreviewText({
   if (!state.data.ok)
     return <Notice tone="warning">{t(`paymentDialog.${state.data.reason}`)}</Notice>;
   const money = (value: number) =>
-    formatAmount(value, FRACTION_DIGITS[area.currency], settings.digitStyle);
+    formatAmount(value, FRACTION_DIGITS[currency], settings.digitStyle);
   return (
     <div className={styles.preview} data-stale={stale || undefined} aria-live="polite">
       <h3 className={styles.previewTitle}>{t('paymentDialog.preview')}</h3>

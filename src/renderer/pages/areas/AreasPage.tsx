@@ -31,6 +31,7 @@ import { MoneyText } from '../../components/MoneyText';
 import { MonthBoxes, YearSummaryText } from '../../components/MonthBoxes';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
+import { PerCurrency } from '../../components/PerCurrency';
 import { PhoneText } from '../../components/PhoneText';
 import { SearchField } from '../../components/SearchField';
 import styles from './AreasPage.module.css';
@@ -57,9 +58,7 @@ interface AreaStripProps {
 /** One row's month strip, drawn again only when that area's months change (not on every key press). */
 const AreaStrip = memo(function AreaStrip({ area, year, onPick }: AreaStripProps) {
   const pick = useCallback((box: MonthBox) => onPick(area, box), [area, onPick]);
-  return (
-    <MonthBoxes boxes={area.months} year={year} currency={area.currency} compact onPick={pick} />
-  );
+  return <MonthBoxes boxes={area.months} year={year} compact onPick={pick} />;
 });
 
 /** The ⋯ menu of one row: the area page's actions, opened here on the list. Edit is its own page. */
@@ -128,8 +127,7 @@ export function AreasPage() {
   const editArea = (areaId: number) =>
     void navigate(editAreaLink(areaId), { state: { returnTo: '/areas' } });
   const pickMonth = useCallback(
-    (area: AreaListItem, box: MonthBox) =>
-      void pick({ areaId: area.id, currency: area.currency, year, box }),
+    (area: AreaListItem, box: MonthBox) => void pick({ areaId: area.id, year, box }),
     [pick, year],
   );
 
@@ -325,39 +323,59 @@ export function AreasPage() {
                       )}
                     </td>
                     <td>
-                      <CurrencyTag currency={area.currency} />
+                      <PerCurrency items={area.figures}>
+                        {(part) => <CurrencyTag currency={part.currency} />}
+                      </PerCurrency>
                     </td>
                     <td className={styles.money}>
-                      <RentText
-                        price={area.currentPrice}
-                        currency={area.currency}
-                        withCurrency={false}
-                      />
+                      <PerCurrency items={area.figures}>
+                        {(part) => (
+                          <RentText
+                            price={part.rent}
+                            currency={part.currency}
+                            withCurrency={false}
+                          />
+                        )}
+                      </PerCurrency>
                     </td>
                     <td className={styles.money}>
-                      <MoneyText
-                        amount={area.figures.expected}
-                        currency={area.currency}
-                        withCurrency={false}
-                      />
+                      <PerCurrency items={area.figures}>
+                        {(part) => (
+                          <MoneyText
+                            amount={part.expected}
+                            currency={part.currency}
+                            withCurrency={false}
+                          />
+                        )}
+                      </PerCurrency>
                     </td>
                     <td className={styles.money}>
-                      <MoneyText
-                        amount={area.figures.received}
-                        currency={area.currency}
-                        withCurrency={false}
-                      />
+                      <PerCurrency items={area.figures}>
+                        {(part) => (
+                          <MoneyText
+                            amount={part.received}
+                            currency={part.currency}
+                            withCurrency={false}
+                          />
+                        )}
+                      </PerCurrency>
                     </td>
                     <td
                       className={
-                        area.figures.remaining > 0 ? `${styles.money} ${styles.owed}` : styles.money
+                        area.figures.some((part) => part.remaining > 0)
+                          ? `${styles.money} ${styles.owed}`
+                          : styles.money
                       }
                     >
-                      <MoneyText
-                        amount={area.figures.remaining}
-                        currency={area.currency}
-                        withCurrency={false}
-                      />
+                      <PerCurrency items={area.figures}>
+                        {(part) => (
+                          <MoneyText
+                            amount={part.remaining}
+                            currency={part.currency}
+                            withCurrency={false}
+                          />
+                        )}
+                      </PerCurrency>
                     </td>
                     <td>
                       <div className={styles.year}>

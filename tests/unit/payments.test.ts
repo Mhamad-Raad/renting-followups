@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { BusinessToday } from '@shared/dates';
+import type { RenterChange } from '@shared/areas';
 import type { PaymentCreate } from '@shared/payments';
 import type { Db } from '../../src/main/db/connection';
 import type { Repositories } from '../../src/main/db/repositories';
@@ -61,7 +62,7 @@ describe('recording payments', () => {
     expect(statuses()?.slice(0, 6)).toEqual(['paid', 'paid', 'late', 'late', 'due', 'upcoming']);
     const year = repos.areaViews.year(areaId, 2026, TODAY.month);
     expect(year?.boxes[2]).toMatchObject({ paid: 100_000, status: 'late' });
-    expect(year?.figures.received).toBe(2 * RENT + 100_000);
+    expect(year?.figures[0]?.received).toBe(2 * RENT + 100_000);
   });
 
   it('a partial payment for this month is orange, a full one green', () => {
@@ -80,7 +81,7 @@ describe('recording payments', () => {
     payOk({ amount: 5 * RENT });
     const [area] = repos.areaViews.list({ search: '', categoryId: null }, TODAY.month);
     expect(area?.summary).toBe('paid');
-    expect(area?.figures).toMatchObject({ rent: RENT, received: 5 * RENT, remaining: 0 });
+    expect(area?.figures).toMatchObject([{ rent: RENT, received: 5 * RENT, remaining: 0 }]);
     expect(area?.months.slice(0, 6).map((box) => box.status)).toEqual([
       ...Array<string>(5).fill('paid'),
       'upcoming',
@@ -218,6 +219,7 @@ describe('price changes share paid money out again', () => {
         {
           receiptId: id,
           receiptNumber: 1,
+          currency: 'IQD',
           months: [{ year: 2026, month: 6 }],
           amount: RENT,
           cancels: true,
@@ -242,6 +244,7 @@ describe('price changes share paid money out again', () => {
         {
           receiptId: early.id,
           receiptNumber: 1,
+          currency: 'IQD',
           months: [{ year: 2026, month: 6 }],
           amount: RENT,
           cancels: false,
@@ -249,6 +252,7 @@ describe('price changes share paid money out again', () => {
         {
           receiptId: later.id,
           receiptNumber: 2,
+          currency: 'IQD',
           months: [{ year: 2026, month: 7 }],
           amount: RENT,
           cancels: true,
@@ -396,7 +400,15 @@ describe('editing and cancelling receipts', () => {
     expect(repos.priceChanges.priceChangeImpact(change, TODAY.month)).toEqual({
       ok: true,
       changes: [
-        { year: 2026, month: 4, before: 'paid', after: 'late', paidBefore: RENT, paidAfter: RENT },
+        {
+          year: 2026,
+          month: 4,
+          currency: 'IQD',
+          before: 'paid',
+          after: 'late',
+          paidBefore: RENT,
+          paidAfter: RENT,
+        },
       ],
     });
     expect(
@@ -419,8 +431,8 @@ describe('editing and cancelling receipts', () => {
       name: 'Shop 1',
       currency: 'IQD',
       renterName: 'Karwan Ahmed',
-      figures: { rent: RENT, received: 2 * RENT, remaining: 3 * RENT },
-      standing: { owed: 3 * RENT, lateMonths: 2, dueNow: true },
+      figures: [{ currency: 'IQD', rent: RENT, received: 2 * RENT, remaining: 3 * RENT }],
+      standing: { owed: [{ currency: 'IQD', amount: 3 * RENT }], lateMonths: 2, dueNow: true },
     });
   });
 
@@ -442,7 +454,7 @@ describe('editing and cancelling receipts', () => {
       currency: 'IQD',
       renterName: 'Karwan Ahmed',
     });
-    expect(area?.prices).toEqual([{ year: 2026, month: 1, monthlyPrice: RENT }]);
+    expect(area?.prices).toEqual([{ year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' }]);
     expect([...(area?.paid.values() ?? [])]).toEqual([RENT, 10]);
   });
 
@@ -451,6 +463,104 @@ describe('editing and cancelling receipts', () => {
     payOk({ paidOn: '2026-03-02' });
     payOk({ paidOn: '2026-04-20' });
     expect(repos.paid.latestPaidOn()).toBe('2026-04-20');
+  });
+});
+
+describe('a new renter with a new rent or currency', () => {
+  const USD_RENT = 300_00;
+  const newRenter = (overrides: Partial<RenterChange> = {}) =>
+    repos.priceChanges.changeRenter(
+      {
+        areaId,
+        fullName: 'Ahmed Ali',
+        phone: '',
+        startedOn: '2026-07-01',
+        monthlyPrice: RENT,
+        ...overrides,
+      },
+      TODAY.month,
+    );
+  const prices = () => repos.areas.get(areaId)?.prices;
+
+  it('keeps the rent as it is when it does not change', () => {
+    expect(newRenter()).toEqual({ ok: true });
+    expect(prices()).toHaveLength(1);
+    expect(repos.areas.get(areaId)?.renters[0]?.fullName).toBe('Ahmed Ali');
+  });
+
+  it('sets a new rent from the month the renter starts', () => {
+    expect(newRenter({ monthlyPrice: 300_000 })).toEqual({ ok: true });
+    expect(prices()?.at(-1)).toEqual({
+      year: 2026,
+      month: 7,
+      monthlyPrice: 300_000,
+      currency: 'IQD',
+    });
+  });
+
+  it('switches currency from that month: new money is in it and never fills older months', () => {
+    expect(newRenter({ monthlyPrice: USD_RENT, currency: 'USD' })).toEqual({ ok: true });
+    expect(repos.areas.get(areaId)?.currency).toBe('USD');
+    // Paid from January in dinars: it fills January to June only, never the dollar months.
+    expect(pay({ amount: 7 * RENT })).toEqual({ ok: false, reason: 'too_much' });
+    payOk({ amount: 6 * RENT });
+    const dollars = payOk({ amount: USD_RENT, from: { year: 2026, month: 7 } });
+    const saved = receipts();
+    expect(saved.find((receipt) => receipt.id === dollars.id)?.currency).toBe('USD');
+    expect(saved.find((receipt) => receipt.id !== dollars.id)?.currency).toBe('IQD');
+    expect(repos.areaViews.year(areaId, 2026, TODAY.month)?.figures).toEqual([
+      { currency: 'IQD', rent: RENT, expected: 6 * RENT, received: 6 * RENT, remaining: 0 },
+      {
+        currency: 'USD',
+        rent: USD_RENT,
+        expected: 6 * USD_RENT,
+        received: USD_RENT,
+        remaining: 0,
+      },
+    ]);
+  });
+
+  it('lists dinar payments for the new dollar months, and can take them out in the same step', () => {
+    const prepaid = payOk({ amount: 8 * RENT });
+    const impact = repos.priceChanges.priceChangeImpact(
+      { areaId, from: { year: 2026, month: 7 }, monthlyPrice: USD_RENT, currency: 'USD' },
+      TODAY.month,
+    );
+    expect(impact).toMatchObject({
+      ok: false,
+      reason: 'no_room',
+      vacantPayments: [
+        {
+          receiptId: prepaid.id,
+          currency: 'IQD',
+          months: [
+            { year: 2026, month: 7 },
+            { year: 2026, month: 8 },
+          ],
+          amount: 2 * RENT,
+          cancels: false,
+        },
+      ],
+    });
+    // Without taking them out nothing is saved, not even the renter.
+    expect(newRenter({ monthlyPrice: USD_RENT, currency: 'USD' })).toEqual({
+      ok: false,
+      reason: 'no_room',
+    });
+    expect(repos.areas.get(areaId)?.renters).toHaveLength(1);
+    expect(prices()).toHaveLength(1);
+    expect(
+      newRenter({ monthlyPrice: USD_RENT, currency: 'USD', takeOutVacantMonths: true }),
+    ).toEqual({ ok: true });
+    expect(receipts()[0]).toMatchObject({ totalAmount: 6 * RENT, currency: 'IQD' });
+    expect(repos.areas.get(areaId)?.renters[0]?.fullName).toBe('Ahmed Ali');
+  });
+
+  it('changes nothing when the renter cannot be saved', () => {
+    expect(newRenter({ startedOn: '2025-12-01', monthlyPrice: 300_000 })).toMatchObject({
+      ok: false,
+    });
+    expect(prices()).toHaveLength(1);
   });
 });
 
@@ -475,7 +585,7 @@ describe('correcting an area currency', () => {
     // 250,000 dinar becomes 250,000.00 dollars (stored in cents).
     expect(repos.areas.get(areaId)).toMatchObject({
       currency: 'USD',
-      prices: [expect.objectContaining({ monthlyPrice: RENT * 100 })],
+      prices: [expect.objectContaining({ monthlyPrice: RENT * 100, currency: 'USD' })],
     });
     expect(edit('IQD')).toEqual({ ok: true, id: areaId });
     expect(repos.areas.get(areaId)?.prices[0]?.monthlyPrice).toBe(RENT);
@@ -488,12 +598,5 @@ describe('correcting an area currency', () => {
     expect(repos.areas.get(areaId)?.currency).toBe('IQD');
     repos.payments.void(id);
     expect(edit('USD')).toEqual({ ok: true, id: areaId });
-  });
-
-  it('is blocked by the database itself once a payment counts', () => {
-    payOk();
-    expect(() => db.prepare("UPDATE areas SET currency = 'USD' WHERE id = ?").run(areaId)).toThrow(
-      /cannot change once it has payments/,
-    );
   });
 });

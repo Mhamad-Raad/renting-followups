@@ -1,5 +1,6 @@
 import type { Currency } from './currency';
 import type { DateString, YearMonth } from './dates';
+import type { CurrencyAmount } from './months';
 
 /** How many days before the end of the month the reminder starts (setting `remind_days_before_month_end`). */
 export const DEFAULT_REMIND_DAYS = 7;
@@ -20,13 +21,15 @@ export interface LateRent extends AreaRef {
   kind: 'late';
   /** Oldest first. */
   months: YearMonth[];
-  owed: number;
+  /** Per currency, IQD first: two when a new renter pays in another currency. */
+  owed: CurrencyAmount[];
 }
 
 /** This month is not fully paid and it ends soon. */
 export interface MonthEndReminder extends AreaRef {
   kind: 'month_end';
   month: YearMonth;
+  /** In `currency`, this month's currency. */
   owed: number;
   /** Days left in the month, counting today (1 on the last day). */
   daysLeft: number;

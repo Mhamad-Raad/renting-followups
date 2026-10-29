@@ -9,6 +9,7 @@ import { reportQuerySchema, type ReportQuery } from '@shared/reports';
 import { useIpcQuery } from '../app/ipc';
 import { useSettings } from '../app/SettingsContext';
 import { MoneyText } from '../components/MoneyText';
+import { PerCurrency } from '../components/PerCurrency';
 import { MonthBoxes, monthWord } from '../components/MonthBoxes';
 import { PhoneText } from '../components/PhoneText';
 import { RentText } from '../pages/areas/RentText';
@@ -103,32 +104,42 @@ function ReportPaper({ query }: { query: ReportQuery }) {
                 <td className={styles.number}>
                   {row.renterPhone && <PhoneText phone={row.renterPhone} />}
                 </td>
-                <td className={styles.strong}>{t(`currency.${row.currency}`)}</td>
-                <td className={styles.money}>
-                  <RentText price={row.figures.rent} currency={row.currency} withCurrency={false} />
+                <td className={styles.strong}>
+                  <PerCurrency items={row.figures}>
+                    {(part) => t(`currency.${part.currency}`)}
+                  </PerCurrency>
                 </td>
                 <td className={styles.money}>
-                  <MoneyText
-                    amount={row.figures.received}
-                    currency={row.currency}
-                    withCurrency={false}
-                  />
+                  <PerCurrency items={row.figures}>
+                    {(part) => (
+                      <RentText price={part.rent} currency={part.currency} withCurrency={false} />
+                    )}
+                  </PerCurrency>
                 </td>
                 <td className={styles.money}>
-                  <MoneyText
-                    amount={row.figures.remaining}
-                    currency={row.currency}
-                    withCurrency={false}
-                  />
+                  <PerCurrency items={row.figures}>
+                    {(part) => (
+                      <MoneyText
+                        amount={part.received}
+                        currency={part.currency}
+                        withCurrency={false}
+                      />
+                    )}
+                  </PerCurrency>
+                </td>
+                <td className={styles.money}>
+                  <PerCurrency items={row.figures}>
+                    {(part) => (
+                      <MoneyText
+                        amount={part.remaining}
+                        currency={part.currency}
+                        withCurrency={false}
+                      />
+                    )}
+                  </PerCurrency>
                 </td>
                 <td>
-                  <MonthBoxes
-                    boxes={row.boxes}
-                    year={query.year}
-                    currency={row.currency}
-                    compact
-                    selected={query.month}
-                  />
+                  <MonthBoxes boxes={row.boxes} year={query.year} compact selected={query.month} />
                   <span className={styles.status}>
                     {chosen
                       ? t(`months.status.${monthWord(chosen)}`)

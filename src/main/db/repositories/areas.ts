@@ -7,7 +7,7 @@ import type {
   RenterChangeResult,
   RestoreResult,
 } from '@shared/areas';
-import { FRACTION_DIGITS, type Currency } from '@shared/currency';
+import { CURRENCIES, FRACTION_DIGITS, type Currency } from '@shared/currency';
 import { normalizeText } from '@shared/normalizeText';
 import type { Db } from '../connection';
 import type { AuditRepository } from './audit';
@@ -62,8 +62,9 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
     'UPDATE areas SET currency = ? WHERE id = ?',
   );
   // A corrected currency keeps the written rent: 1,100,000.00 USD becomes 1,100,000 IQD.
-  const rescalePrices = db.prepare<[number, number]>(
-    'UPDATE area_prices SET monthly_price = CAST(ROUND(monthly_price * ?) AS INTEGER) WHERE area_id = ?',
+  const correctPriceCurrency = db.prepare<[number, Currency, number, Currency]>(
+    `UPDATE area_prices SET monthly_price = CAST(ROUND(monthly_price * ?) AS INTEGER), currency = ?
+     WHERE area_id = ? AND currency = ?`,
   );
   const markDeleted = db.prepare<[number]>(`UPDATE areas SET deleted_at = ${NOW_SQL} WHERE id = ?`);
   const markRestored = db.prepare<[number]>('UPDATE areas SET deleted_at = NULL WHERE id = ?');
@@ -135,7 +136,7 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
           input.notes,
         ).lastInsertRowid,
       );
-      prices.set(id, input.rentStartsFrom, input.monthlyPrice);
+      prices.set(id, input.rentStartsFrom, input.monthlyPrice, input.currency);
       if (input.renter) renters.start(id, input.renter, input.renter.startedOn);
       audit.record('create', 'area', id, {
         name: input.name,
@@ -160,10 +161,15 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
       if (currency !== before.currency) {
         if (hasPayments(input.id)) return { ok: false, reason: 'has_payments' };
         updateCurrency.run(currency, input.id);
-        rescalePrices.run(
-          10 ** (FRACTION_DIGITS[currency] - FRACTION_DIGITS[before.currency]),
-          input.id,
-        );
+        // Every rent period takes the corrected currency (there are no payments to keep apart).
+        for (const other of CURRENCIES.filter((each) => each !== currency)) {
+          correctPriceCurrency.run(
+            10 ** (FRACTION_DIGITS[currency] - FRACTION_DIGITS[other]),
+            currency,
+            input.id,
+            other,
+          );
+        }
       }
       update.run(
         input.categoryId,

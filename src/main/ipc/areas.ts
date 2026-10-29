@@ -31,7 +31,9 @@ export function registerAreaIpc({
   handle('areas:changePrice', priceChangeSchema, (input) =>
     priceChanges.changePrice(input, currentYearMonth()),
   );
-  handle('areas:changeRenter', renterChangeSchema, (input) => areas.changeRenter(input));
+  handle('areas:changeRenter', renterChangeSchema, (input) =>
+    priceChanges.changeRenter(input, currentYearMonth()),
+  );
   handle('areas:delete', idInputSchema, ({ id }) => areas.softDelete(id));
   handle('areas:restore', idInputSchema, ({ id }) => areas.restore(id));
   handle('deleted:list', z.undefined(), () => ({

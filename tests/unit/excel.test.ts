@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import type { Currency } from '@shared/currency';
 import type { MonthBox } from '@shared/months';
 import type { Report, ReportQuery } from '@shared/reports';
 import { buildReportWorkbook, STATUS_FILLS } from '../../src/main/services/excel';
@@ -15,12 +16,13 @@ const QUERY: ReportQuery = {
   onlyIds: null,
 };
 
-const boxes = (paid: number[]): MonthBox[] =>
+const boxes = (paid: number[], currency: Currency = 'IQD'): MonthBox[] =>
   Array.from({ length: 12 }, (_, index) => ({
     month: index + 1,
     expected: 250_000,
     paid: paid[index] ?? 0,
     status: (paid[index] ?? 0) >= 250_000 ? 'paid' : index < 4 ? 'late' : 'upcoming',
+    currency,
   }));
 
 const REPORT: Report = {
@@ -35,7 +37,15 @@ const REPORT: Report = {
       renterName: 'Karwan Ahmed',
       renterPhone: '0750 123 4567',
       notes: 'Pays in cash',
-      figures: { rent: 250_000, expected: 3_000_000, received: 500_000, remaining: 500_000 },
+      figures: [
+        {
+          currency: 'IQD',
+          rent: 250_000,
+          expected: 3_000_000,
+          received: 500_000,
+          remaining: 500_000,
+        },
+      ],
       boxes: boxes([250_000, 250_000]),
       summary: 'late',
       monthStatus: null,
@@ -49,8 +59,8 @@ const REPORT: Report = {
       renterName: null,
       renterPhone: null,
       notes: '',
-      figures: { rent: 450_50, expected: 0, received: 450_50, remaining: 0 },
-      boxes: boxes([]),
+      figures: [{ currency: 'USD', rent: 450_50, expected: 0, received: 450_50, remaining: 0 }],
+      boxes: boxes([], 'USD'),
       summary: 'paid',
       monthStatus: null,
     },
