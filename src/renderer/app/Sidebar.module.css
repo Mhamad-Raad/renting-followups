@@ -69,7 +69,8 @@
 
 .name {
   max-width: 100%;
-  overflow-wrap: anywhere;
+  /* Words never break inside: that would split joined Sorani and Arabic letters. */
+  overflow-wrap: normal;
 }
 
 /* The icon holds the reminder count on its corner, like a bell with a number. */
