@@ -136,18 +136,13 @@
   line-height: 1;
 }
 
-/* A coming month paid in part: a green bar along the bottom, as long as the share already paid. */
-.cell:has(.paidBar) {
-  position: relative;
-  overflow: hidden;
-}
-
-.paidBar {
-  position: absolute;
-  inset-block-end: 0;
-  inset-inline-start: 0;
-  block-size: 4px;
-  background: var(--status-paid);
+/* A coming month paid in part: half green, cut corner to corner, whatever the share paid. */
+.cell[data-part-paid] {
+  background-image: linear-gradient(
+    to bottom right,
+    transparent calc(50% - 0.5px),
+    color-mix(in srgb, var(--status-paid) 30%, var(--status-paid-bg)) calc(50% + 0.5px)
+  );
 }
 
 .summary {

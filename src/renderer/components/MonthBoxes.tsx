@@ -9,7 +9,7 @@ import styles from './MonthBoxes.module.css';
 type MonthWord = Exclude<MonthStatus, 'not_applicable'> | 'vacant' | 'notStarted';
 
 /** The word for a month. One that is not applicable says why: vacant (rent 0), or rent not started. */
-/** A coming month paid in part: grey like the others, so the strip shows how much is in with a green bar. */
+/** A coming month paid in part: grey like the others, so the strip fills it half green, corner to corner. */
 const isPartPaid = (box: MonthBox) => box.status === 'partial' && box.paid > 0;
 
 /** Lets a line of a month box shrink to fit the box instead of breaking (see `--chars` in the CSS). */
@@ -90,20 +90,10 @@ export const MonthBoxes = memo(function MonthBoxes({
             className: styles.cell,
             'data-status': box.status,
             'data-selected': box.month === selected || undefined,
+            'data-part-paid': isPartPaid(box) || undefined,
             title: label(box),
           };
-          const number = (
-            <>
-              <span aria-hidden="true">{formatPlain(box.month, digits)}</span>
-              {isPartPaid(box) && (
-                <span
-                  className={styles.paidBar}
-                  style={{ inlineSize: `${(box.paid / (box.expected ?? box.paid)) * 100}%` }}
-                  aria-hidden="true"
-                />
-              )}
-            </>
-          );
+          const number = <span aria-hidden="true">{formatPlain(box.month, digits)}</span>;
           return canPick(box) ? (
             <li key={box.month} className={styles.slot}>
               <button {...cell} {...pickProps(box)}>
