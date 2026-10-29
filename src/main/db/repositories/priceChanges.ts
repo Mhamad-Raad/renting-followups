@@ -167,8 +167,9 @@ export function createPriceChangeRepository(
       audit.record('change_price', 'area', areaId, {
         from,
         previousPrice: priceForMonth(history, from),
+        previousCurrency: currencyForMonth(history, from),
         monthlyPrice,
-        ...(currency && { currency }),
+        currency: row?.currency ?? null,
         resharedReceipts: [...plan.byReceipt.keys()],
       });
       if (monthlyPrice === 0) endRenterForVacancy(areaId, from);
@@ -188,14 +189,13 @@ export function createPriceChangeRepository(
       const start = parseDateString(renter.startedOn);
       const from = start && { year: start.year, month: start.month };
       const history = prices.forArea(renter.areaId);
+      // A renter who starts before the rent does only adds the renter; the rent stays.
       const rentChanges =
         from !== null &&
         monthlyPrice !== undefined &&
+        !isBeforeRentStart(history, from) &&
         (priceForMonth(history, from) !== monthlyPrice ||
           (currency !== undefined && currencyForMonth(history, from) !== currency));
-      if (rentChanges && isBeforeRentStart(history, from)) {
-        return { ok: false, reason: 'before_rent_start' };
-      }
       const result = areas.changeRenter(renter);
       if (!result.ok || !rentChanges) return result;
       // Money with nowhere to go is thrown out of `save`, which undoes the renter too.

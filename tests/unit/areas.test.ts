@@ -227,7 +227,9 @@ describe('prices', () => {
       details: {
         from: { year: 2026, month: 6 },
         previousPrice: 250_000,
+        previousCurrency: 'IQD',
         monthlyPrice: 300_000,
+        currency: 'IQD',
         resharedReceipts: [],
       },
     });

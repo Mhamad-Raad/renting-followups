@@ -66,14 +66,30 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
   const start = monthOfDate(date);
   // Filled in with the rent the place has, so a renter on the same rent needs no typing.
   const [rent, setRent] = useState(() => rentBefore(area.prices, start, area.currency));
+  // Until the rent is typed or the currency chosen, it follows the start date's month.
+  const [rentTouched, setRentTouched] = useState(false);
+  // Counts refills, so the amount box shows the refilled rent.
+  const [refills, setRefills] = useState(0);
   const [showProblems, setShowProblems] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const rentCheck = useRentCheck();
   const now = priceRowForMonth(area.prices, start);
+  // Before the rent starts there is no rent to change: only the renter is added.
   const rentChanges =
-    rent.monthlyPrice !== now?.monthlyPrice ||
-    rent.currency !== (currencyForMonth(area.prices, start) ?? area.currency);
+    now !== null &&
+    (rent.monthlyPrice !== now.monthlyPrice ||
+      rent.currency !== (currencyForMonth(area.prices, start) ?? area.currency));
+  const changeDate = (value: string) => {
+    setDate(value);
+    if (rentTouched) return;
+    setRent(rentBefore(area.prices, monthOfDate(value), area.currency));
+    setRefills((count) => count + 1);
+  };
+  const changeRent = (next: typeof rent) => {
+    setRent(next);
+    setRentTouched(true);
+  };
 
   const edit =
     <T,>(set: (value: T) => void) =>
@@ -155,20 +171,20 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
         inputMode="tel"
         dir="ltr"
       />
-      <DateField label={t('renterDialog.startsOn')} value={date} onChange={edit(setDate)} />
+      <DateField label={t('renterDialog.startsOn')} value={date} onChange={edit(changeDate)} />
       <ChoiceGroup
         label={t('areaForm.currency')}
         value={rent.currency}
         choices={CURRENCIES.map((code) => ({ value: code, label: t(`currency.${code}`) }))}
-        onChange={edit((currency: Currency) => setRent({ currency, monthlyPrice: null }))}
+        onChange={edit((currency: Currency) => changeRent({ currency, monthlyPrice: null }))}
       />
-      {/* A new key re-creates the amount box when the currency (and its decimals) changes. */}
+      {/* A new key re-creates the amount box when the currency (and its decimals) or the filled-in rent changes. */}
       <AmountField
-        key={rent.currency}
+        key={`${rent.currency}-${refills}`}
         label={t('renterDialog.rent')}
         currency={rent.currency}
         value={rent.monthlyPrice}
-        onChange={edit((monthlyPrice: number | null) => setRent({ ...rent, monthlyPrice }))}
+        onChange={edit((monthlyPrice: number | null) => changeRent({ ...rent, monthlyPrice }))}
         hint={t('renterDialog.rentHint', {
           month: formatYearMonth(start, settings.digitStyle),
         })}

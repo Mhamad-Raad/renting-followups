@@ -7,7 +7,7 @@ import {
   type AuditAction,
   type AuditEntity,
 } from '@shared/audit';
-import type { Currency } from '@shared/currency';
+import { CURRENCIES, type Currency } from '@shared/currency';
 import { yearMonthSchema } from '@shared/dates';
 import { PART_SEPARATOR } from '@shared/reportText';
 import type { Db } from '../connection';
@@ -43,6 +43,8 @@ const detailsSchema = z.object({
   monthlyPrice: amount,
   previousPrice: amount,
   from: yearMonthSchema.optional().catch(undefined),
+  currency: z.enum(CURRENCIES).optional().catch(undefined),
+  previousCurrency: z.enum(CURRENCIES).optional().catch(undefined),
   renter: text,
   before: change,
   after: change,
@@ -75,7 +77,10 @@ function toEntry(row: ActivityRow): ActivityEntry {
             .filter(Boolean)
             .join(PART_SEPARATOR)) ??
       (details.name || details.after?.name || null),
-    currency: row.currency,
+    // Recorded with the entry since a new renter may pay in another currency; older entries
+    // have the area's first currency, the only one there was then.
+    currency: details.currency ?? row.currency,
+    previousCurrency: details.previousCurrency ?? details.currency ?? row.currency,
     amount: details.after?.amount ?? details.amount ?? details.monthlyPrice ?? null,
     previousAmount: details.before?.amount ?? details.previousPrice ?? null,
     month: details.from ?? null,
@@ -94,7 +99,9 @@ export function createActivityRepository(db: Db) {
             area_category.name AS area_category,
             r.renter_name_snapshot AS receipt_renter,
             area_renter.full_name AS renter_now,
-            COALESCE(r.currency, a.currency) AS currency,
+            COALESCE(r.currency, (
+              SELECT p.currency FROM area_prices p WHERE p.area_id = a.id
+              ORDER BY p.effective_from_year, p.effective_from_month LIMIT 1)) AS currency,
             r.receipt_number
        FROM audit_log l
        LEFT JOIN areas a ON l.entity = 'area' AND a.id = l.entity_id
