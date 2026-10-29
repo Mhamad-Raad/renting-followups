@@ -5,7 +5,7 @@ import { formatDate, type DateString } from '@shared/dates';
 import type { DigitStyle } from '@shared/digits';
 import { formatPlain } from '@shared/formatNumber';
 import type { MonthStatus } from '@shared/months';
-import { PART_SEPARATOR, reportFilterParts } from '@shared/reportText';
+import { PART_SEPARATOR, reportFilterParts, reportTitle } from '@shared/reportText';
 import type { Report, ReportQuery } from '@shared/reports';
 import type { Language } from '@shared/settings';
 import { translate } from './translate';
@@ -39,12 +39,14 @@ export interface ExcelOptions {
   printedOn: DateString;
   /** The owner's print title from Settings, as the first line; empty for none. */
   printTitle: string;
+  /** What the title names: the one place of the area page, else the chosen category; null for none. */
+  titleName?: string | null;
 }
 
 export function buildReportWorkbook(
   report: Report,
   query: ReportQuery,
-  { language, digitStyle, categoryName, printedOn, printTitle }: ExcelOptions,
+  { language, digitStyle, categoryName, printedOn, printTitle, titleName = null }: ExcelOptions,
 ): ExcelJS.Workbook {
   const t = (key: string, values?: Record<string, string>) => translate(language, key, values);
   const rtl = language !== 'en';
@@ -63,7 +65,8 @@ export function buildReportWorkbook(
   const toMajor = (amount: number, currency: Currency) => amount / 10 ** FRACTION_DIGITS[currency];
 
   if (printTitle) sheet.addRow([printTitle]).font = { bold: true, size: 12 };
-  sheet.addRow([t('print.reportTitle')]).font = { bold: true, size: 14 };
+  const title = reportTitle(query, titleName, digitStyle);
+  sheet.addRow([t(title.key, title.values)]).font = { bold: true, size: 14 };
   sheet.addRow([
     reportFilterParts(query, categoryName, digitStyle)
       .map(
@@ -90,29 +93,38 @@ export function buildReportWorkbook(
   // The heading lines and the column names stay in view while scrolling.
   sheet.views = [{ rightToLeft: rtl, state: 'frozen', ySplit: header.number }];
 
+  // One line per currency, so every money column holds one currency and can be added up;
+  // an area that changed currency in the year has a line for each, with that currency's months.
   for (const row of report.rows) {
-    const line = sheet.addRow([
-      areaLabel(row),
-      row.categoryName,
-      row.renterName ?? '',
-      row.renterPhone ?? '',
-      t(`currency.${row.currency}`),
-      row.figures.rent === null ? '' : toMajor(row.figures.rent, row.currency),
-      toMajor(row.figures.received, row.currency),
-      toMajor(row.figures.remaining, row.currency),
-      ...row.boxes.map((box) => (box.paid > 0 ? toMajor(box.paid, row.currency) : '')),
-      row.notes,
-    ]);
-    for (const column of [...MONEY_COLUMNS, ...MONTHS.map((m) => FIRST_MONTH_COLUMN + m - 1)]) {
-      line.getCell(column).numFmt = moneyFormat(row.currency);
+    for (const part of row.figures) {
+      const { currency } = part;
+      const line = sheet.addRow([
+        areaLabel(row),
+        row.categoryName,
+        row.renterName ?? '',
+        row.renterPhone ?? '',
+        t(`currency.${currency}`),
+        part.rent === null ? '' : toMajor(part.rent, currency),
+        toMajor(part.received, currency),
+        toMajor(part.remaining, currency),
+        ...row.boxes.map((box) =>
+          box.paid > 0 && box.currency === currency ? toMajor(box.paid, currency) : '',
+        ),
+        row.notes,
+      ]);
+      for (const column of [...MONEY_COLUMNS, ...MONTHS.map((m) => FIRST_MONTH_COLUMN + m - 1)]) {
+        line.getCell(column).numFmt = moneyFormat(currency);
+      }
+      row.boxes.forEach((box, index) => {
+        line.getCell(FIRST_MONTH_COLUMN + index).fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: {
+            argb: `FF${STATUS_FILLS[box.currency === currency ? box.status : 'not_applicable']}`,
+          },
+        };
+      });
     }
-    row.boxes.forEach((box, index) => {
-      line.getCell(FIRST_MONTH_COLUMN + index).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: `FF${STATUS_FILLS[box.status]}` },
-      };
-    });
   }
 
   for (const total of report.totals) {

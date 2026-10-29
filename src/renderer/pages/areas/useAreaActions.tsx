@@ -1,15 +1,11 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AreaDetails } from '@shared/areas';
-import { formatReceiptNumber, type Receipt } from '@shared/payments';
+import type { Receipt } from '@shared/payments';
 import { callIpc } from '../../app/ipc';
-import { useSettings } from '../../app/SettingsContext';
 import { useMountedRef } from '../../app/useMountedRef';
-import { BigButton } from '../../components/BigButton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Notice } from '../../components/Notice';
-import { usePrint } from '../../print/usePrint';
-import styles from './AreaPage.module.css';
 import type { AreaAction } from './links';
 import { PaymentDialog, type PaymentMode, type PaymentSaved } from './PaymentDialog';
 import { PriceDialog, type PriceMode } from './PriceDialog';
@@ -33,8 +29,6 @@ export const ACTION_DIALOGS: Record<AreaAction, AreaDialog> = {
   delete: { kind: 'delete' },
 };
 
-type Undoable = NonNullable<PaymentSaved['undo']>;
-
 interface AreaActionOptions {
   /** Something about the area changed: load it again. */
   onChanged: () => void;
@@ -46,7 +40,7 @@ interface AreaActionOptions {
 
 /**
  * The actions that change one area (payments, price, vacant, renter, delete),
- * their dialogs, and the message after them with Print receipt and Undo. The
+ * their dialogs, and the message after them. The
  * area page and the Areas list share it, so both behave the same.
  */
 export function useAreaActions(
@@ -54,24 +48,17 @@ export function useAreaActions(
   { onChanged, onDeleted, initialDialog = null, initialNotice = null }: AreaActionOptions,
 ) {
   const { t } = useTranslation();
-  const { settings } = useSettings();
   const mounted = useMountedRef();
   const [dialog, setDialog] = useState<AreaDialog | null>(initialDialog);
   const [notice, setNotice] = useState<string | null>(initialNotice);
   const [problem, setProblem] = useState<string | null>(null);
-  // The payment saved last on this screen; it can be undone for as long as the screen is open.
-  const [undoable, setUndoable] = useState<Undoable | null>(null);
-  const printing = usePrint();
-  // Receipts are only ever saved as PDF from here (owner's decision); printing is done from the PDF.
-  const saveReceiptPdf = (id: number) => void printing.run({ kind: 'receipt', id, output: 'pdf' });
   const close = () => setDialog(null);
 
-  /** A change was saved: say so, and offer Undo when it made a receipt. */
-  const done = (message: string, undo: Undoable | null = null) => {
+  /** A change was saved: say so. */
+  const done = (message: string) => {
     setDialog(null);
     setProblem(null);
     setNotice(message);
-    setUndoable(undo);
     onChanged();
   };
 
@@ -80,29 +67,15 @@ export function useAreaActions(
     setProblem(message);
   };
 
-  const paymentSaved = ({ message, undo, pdf }: PaymentSaved) => {
-    done(message, undo ?? null);
-    if (pdf && undo) saveReceiptPdf(undo.id);
-  };
+  const paymentSaved = ({ message }: PaymentSaved) => done(message);
 
-  // Undo and Cancel receipt both cancel the receipt: it stays listed, and its number is never reused.
+  // A cancelled receipt stays listed, and its number is never reused.
   const cancelReceipt = async (id: number, message: string) => {
     setDialog(null);
     const result = await callIpc('payments:void', { id });
     if (!mounted.current) return;
     if (result.ok && result.data.ok) done(message);
     else fail(t('errors.unexpected'));
-  };
-
-  const undo = () => {
-    if (!undoable) return;
-    const { id, receiptNumber } = undoable;
-    void cancelReceipt(
-      id,
-      receiptNumber === null
-        ? t('receipts.pastUndone')
-        : t('receipts.undone', { number: formatReceiptNumber(receiptNumber, settings.digitStyle) }),
-    );
   };
 
   const remove = async () => {
@@ -117,21 +90,8 @@ export function useAreaActions(
 
   const feedback: ReactNode = (
     <>
-      {notice && (
-        <Notice tone="success">
-          <div className={styles.saved}>
-            <span>{notice}</span>
-            {undoable && undoable.receiptNumber !== null && (
-              <BigButton disabled={printing.busy} onClick={() => saveReceiptPdf(undoable.id)}>
-                {t('print.actions.receiptPdf')}
-              </BigButton>
-            )}
-            {undoable && <BigButton onClick={undo}>{t('receipts.undo')}</BigButton>}
-          </div>
-        </Notice>
-      )}
+      {notice && <Notice tone="success">{notice}</Notice>}
       {problem && <Notice tone="error">{problem}</Notice>}
-      {printing.message && <Notice tone={printing.message.tone}>{printing.message.text}</Notice>}
     </>
   );
 
@@ -182,8 +142,6 @@ export function useAreaActions(
     open: setDialog,
     done,
     fail,
-    saveReceiptPdf,
-    saving: printing.busy,
     feedback,
     dialogs,
   };

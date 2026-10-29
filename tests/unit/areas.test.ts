@@ -52,7 +52,7 @@ describe('creating areas', () => {
       address: '',
       contractStart: null,
       notes: '',
-      prices: [{ year: 2026, month: 1, monthlyPrice: 250_000 }],
+      prices: [{ year: 2026, month: 1, monthlyPrice: 250_000, currency: 'IQD' }],
       renters: [
         {
           id: expect.any(Number),
@@ -219,15 +219,17 @@ describe('prices', () => {
       ),
     ).toEqual({ ok: true });
     expect(repos.areas.get(id)?.prices).toEqual([
-      { year: 2026, month: 1, monthlyPrice: 250_000 },
-      { year: 2026, month: 6, monthlyPrice: 300_000 },
+      { year: 2026, month: 1, monthlyPrice: 250_000, currency: 'IQD' },
+      { year: 2026, month: 6, monthlyPrice: 300_000, currency: 'IQD' },
     ]);
     expect(auditFor(id).at(-1)).toEqual({
       action: 'change_price',
       details: {
         from: { year: 2026, month: 6 },
         previousPrice: 250_000,
+        previousCurrency: 'IQD',
         monthlyPrice: 300_000,
+        currency: 'IQD',
         resharedReceipts: [],
       },
     });
@@ -287,12 +289,15 @@ describe('month boxes', () => {
     createArea({ rentStartsFrom: { year: 2026, month: 3 }, notes: 'Key with the guard' });
     const [area] = repos.areaViews.list({ search: '', categoryId: null }, TODAY);
     expect(area?.notes).toBe('Key with the guard');
-    expect(area?.figures).toEqual({
-      rent: 250_000,
-      expected: 10 * 250_000,
-      received: 0,
-      remaining: 8 * 250_000,
-    });
+    expect(area?.figures).toEqual([
+      {
+        currency: 'IQD',
+        rent: 250_000,
+        expected: 10 * 250_000,
+        received: 0,
+        remaining: 8 * 250_000,
+      },
+    ]);
     expect(statusesOf(area?.months)).toEqual([
       'not_applicable',
       'not_applicable',
@@ -323,12 +328,9 @@ describe('month boxes', () => {
     const next = repos.areaViews.year(id, 2027, TODAY);
     expect(next?.year).toBe(2027);
     expect(next?.summary).toBe('nothing_due');
-    expect(next?.figures).toEqual({
-      rent: 250_000,
-      expected: 12 * 250_000,
-      received: 0,
-      remaining: 0,
-    });
+    expect(next?.figures).toEqual([
+      { currency: 'IQD', rent: 250_000, expected: 12 * 250_000, received: 0, remaining: 0 },
+    ]);
     expect(repos.areaViews.year(999, 2026, TODAY)).toBeNull();
     repos.areas.softDelete(id);
     expect(repos.areaViews.year(id, 2026, TODAY)).toBeNull();

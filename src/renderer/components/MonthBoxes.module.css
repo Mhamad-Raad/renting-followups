@@ -136,6 +136,15 @@
   line-height: 1;
 }
 
+/* A coming month paid in part: half green, cut corner to corner, whatever the share paid. */
+:is(.box, .cell)[data-part-paid] {
+  background-image: linear-gradient(
+    to bottom right,
+    transparent calc(50% - 0.5px),
+    color-mix(in srgb, var(--status-paid) 30%, var(--status-paid-bg)) calc(50% + 0.5px)
+  );
+}
+
 .summary {
   display: inline-block;
   padding: var(--space-1) var(--space-3);

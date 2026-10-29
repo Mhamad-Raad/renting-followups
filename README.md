@@ -36,6 +36,7 @@ npm install
 | `npm run dev`       | Starts the app in development mode, with live reload.                 |
 | `npm run build`     | Builds the app into `out/`.                                           |
 | `npm run preview`   | Starts the built app.                                                 |
+| `npm run dist`      | Builds the Windows installer into `release/` (also works on a Mac).   |
 | `npm test`          | Runs the unit tests once (including the real SQLite database).        |
 | `npm run test:e2e`  | Builds the app and runs the end-to-end tests against it (Playwright). |
 | `npm run typecheck` | Checks TypeScript types.                                              |
@@ -48,6 +49,8 @@ Every push runs `npm run check`, the build and the end-to-end tests on Windows t
 ## Where the data lives
 
 The app keeps its database, logs and safety copies in the user's app data folder (`%APPDATA%\Rent Tracker` on Windows). Development runs use a separate `Rent Tracker-dev` folder, so testing never touches real data.
+
+Uninstalling the app never deletes this folder; the uninstall screen says so.
 
 ## Testing notes
 

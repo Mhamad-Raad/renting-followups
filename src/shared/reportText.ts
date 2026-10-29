@@ -1,3 +1,4 @@
+import { formatYearMonth } from './dates';
 import type { DigitStyle } from './digits';
 import { formatPlain } from './formatNumber';
 import type { Currency } from './currency';
@@ -51,4 +52,33 @@ export function reportFilterParts(
     },
     { labelKey: 'reports.status', value: { key: `reports.statuses.${query.status}` } },
   ];
+}
+
+/** A report title as a translation key and its values (see `reportTitle`). */
+export interface ReportTitle {
+  key: 'print.title' | 'print.titleNamed' | 'print.file' | 'print.fileNamed';
+  values: { period: string; name?: string };
+}
+
+/**
+ * A report's title, and with `forFile` its file name: what it covers (the one
+ * place of the area page, else the chosen category) and its period (the year,
+ * or the chosen month of it), so saved reports never get mixed up. A file name
+ * uses Western digits and "10-2026", as "/" cannot be in a file name.
+ */
+export function reportTitle(
+  query: Pick<ReportQuery, 'year' | 'month'>,
+  name: string | null,
+  digits: DigitStyle,
+  forFile = false,
+): ReportTitle {
+  const style = forFile ? 'western' : digits;
+  const period =
+    query.month === null
+      ? formatPlain(query.year, style)
+      : forFile
+        ? `${formatPlain(query.month, style)}-${formatPlain(query.year, style)}`
+        : formatYearMonth({ year: query.year, month: query.month }, style);
+  if (name === null) return { key: forFile ? 'print.file' : 'print.title', values: { period } };
+  return { key: forFile ? 'print.fileNamed' : 'print.titleNamed', values: { period, name } };
 }

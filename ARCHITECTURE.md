@@ -23,13 +23,13 @@ A fully **offline** Windows app for one person (the owner) who rents out many pr
 UX matters more than anything else in this project.
 
 1. **Few screens, plain words.** Use everyday wording ("Money received", "Still owed"), not technical terms. Every user-facing message, including errors, is plain and exists in all three languages.
-2. **Classic layout.** A fixed sidebar on the start side (right in RTL languages, left in English) with big labelled items. It opens collapsed to its icons (every item and the bell count stay visible); one button at its top shows or hides the names. No hidden menus (the one exception: the ⋯ menu on each row of the Areas list, whose actions are also visible buttons on the area page), no hamburger menus, no gestures, no hover-only actions.
+2. **Classic layout.** A fixed sidebar on the start side (right in RTL languages, left in English) with big labelled items. Each item is an icon with its name written under it, always visible; there is nothing to open or close. *(Owner's decision, 2026-10-29.)* No hidden menus (the one exception: the ⋯ menu on each row of the Areas list, whose actions are also visible buttons on the area page), no hamburger menus, no gestures, no hover-only actions.
 3. **One obvious main action per screen.** Every area page has one large primary button: **Record Payment**.
 4. **Readable by default:** base font 18px, buttons at least 48px tall, generous spacing. Font size can be raised in settings.
 5. **Never lose data by mistake:**
    - Every delete asks for confirmation in plain words.
    - Deleting is a **soft delete** (moves to a "Deleted items" list that can be restored).
-   - After saving a payment, show an **Undo** option for it for as long as the screen is open, and the payment can be edited or removed later from the area's payment list.
+   - A saved payment can be edited or cancelled later from the area's payment list. The message after saving has **no Undo** button. *(Owner's decision, 2026-10-29.)*
    - Edits and cancellations are recorded in an audit log (section 5).
 6. **Always show the result of an action** with a clear message ("Payment saved. Receipt No. 0042").
 7. **Colour is never the only signal.** Month boxes show the month number on the status colour; the large boxes also show the amount and a status word, and every box has a spoken label. *(Owner's decision, 2026-10-25: numbers instead of symbols in the small strips too.)*
@@ -118,27 +118,30 @@ Database settings: WAL mode, `foreign_keys = ON`, all multi-row writes inside tr
 
 ### areas
 `id, category_id → categories, name, name_normalized, currency ('IQD' | 'USD'), address (nullable), contract_start (nullable date, informational only), notes (text), deleted_at`
-- `currency` is chosen when the area is created. It can be **corrected on Edit until the area has a payment that counts** (cancelled receipts keep their own currency and do not block it); the rent keeps its written number (250,000 dinar becomes 250,000 dollars). From the first payment on it **cannot be changed**, enforced by the database. *(Owner's decision, 2026-10-27: a wrongly chosen currency must be fixable.)*
+- `currency` is chosen when the area is created and is always the currency of its **newest rent period** (`area_prices.currency`, kept in step by the app). It can be **corrected on Edit until the area has a payment that counts** (cancelled receipts keep their own currency and do not block it); the rent keeps its written number (250,000 dinar becomes 250,000 dollars). From the first payment on, Edit cannot change it. *(Owner's decision, 2026-10-27: a wrongly chosen currency must be fixable.)*
+- A **new renter may pay in another currency** from the month they start (**Change renter**, section 4 renters): the rent period from that month carries the new currency, and earlier months keep theirs. *(Owner's decision, 2026-10-29.)*
 - The area form requires **"Rent starts from" (month number + year, default current month)**. It becomes the first `area_prices` row and decides which months count as applicable.
 - The area name is **optional**: many owners know a place only by its category and its renter. An area without a name is shown everywhere by its **category** as its name, with the renter in their own column beside it (or on the line under it where there is no renter column), so places of one category are told apart by their renter. Lists sort by that name, then by renter. *(Owner's decision, iteration 13; the category replaced the renter as the name on 2026-10-26 at the client's request.)*
 - Area names that are filled in are unique within a category (warn, do not crash). Areas without a name never clash.
 - `name_normalized` supports search (section 9).
 
 ### area_prices (rent price history)
-`id, area_id, monthly_price (int), effective_from_year, effective_from_month`
+`id, area_id, monthly_price (int), currency ('IQD' | 'USD'), effective_from_year, effective_from_month`
 - The price for a given month is the row with the latest `(year, month)` that is ≤ that month. Months before the first row are **not applicable**.
+- **Each month has the currency of its row.** A receipt is in one currency (that of its first month) and only ever fills months in that currency; months in the other currency count as having no rent for it. Every figure (year totals, still owed, Home cards, reports, reminders) is worked out **per currency**: an area shows one line per currency used in the period (two only in the year the currency changed), and amounts in different currencies are never added together. Excel has one row per area and currency.
 - Creating an area creates its first row. "Change price" adds a new row from the chosen month; **old months keep their old price**.
 - A `monthly_price` of **0** means the area is **vacant** from that month (see section 6). The UI never shows the word "zero price"; it offers **Mark as vacant from month...** and **Set rent again from month...**. Marking an area vacant also ends its current renter, on the first day of the vacant month (or the day they started, if later); a vacant area never has a renter, and a new area marked vacant takes no renter. *(Owner's decision, 2026-10-27.)*
 
 ### renters (renter history per area)
 `id, area_id, full_name, full_name_normalized, phone, started_on (date), ended_on (nullable date)`
 - The current renter is the row with `ended_on IS NULL`. **Change renter** only adds a new renter: it closes the old row and opens a new one. A renter leaving is recorded by **Mark as vacant** (section 4, prices). History stays visible on the area page.
+- Change renter has two parts with a line between them: the new renter (name, phone, start date), then the rent. The rent part is one ticked box, **"Same rent as now: 250,000 IQD"** ("as before" with the last rent while vacant); unticking it shows the **currency** (IQD / USD) and the **monthly rent**. If the rent or currency changes, a new price row from the renter's start month is saved together with the renter, with the same warning and **Take out and save** as Change price (section 7) for months already paid. A renter who starts before the rent starts adds only the renter, and the rent part is not shown. *(Owner's decisions, 2026-10-29.)*
 
 ### receipts
 `id, receipt_number (unique, sequential, displayed zero-padded as 0001; NULL for backfilled payments), is_backfill (bool), area_id, renter_name_snapshot, renter_phone_snapshot, currency, total_amount, paid_on (date), note, voided_at (nullable), print_count`
 - Numbers never repeat and are never reused, even after a void. Backfilled (historical) payments do not consume a receipt number (section 7.3).
 - Snapshots keep old receipts correct even if the renter later changes.
-- `print_count` makes reprints stamped **"Copy"** (first print is the original).
+- `print_count` is no longer used: receipts are not printed or saved as PDF (owner's decision, 2026-10-29). The column stays so older data keeps opening.
 
 ### payment_allocations
 `id, receipt_id, area_id, year, month, amount`
@@ -176,7 +179,7 @@ This one module decides every colour and every total. Everything (UI, print, Exc
 
 Rules:
 - A month turns red on **the 1st of the next month** (no grace period).
-- No month is ever orange *(owner's decision, 2026-10-28)*: the current month not fully paid is red at once (word "Not paid"; it is called "Late" only once it has passed), and a future month paid in part stays grey with its amount shown. Paid green and unpaid red are a little darker than before. The statuses themselves (due, partial) are unchanged, so totals, "Still owed" and reminders work as before.
+- No month is ever orange *(owner's decision, 2026-10-28)*: the current month not fully paid is red at once (word "Not paid"; it is called "Late" only once it has passed), and a future month paid in part stays grey with its amount shown, its box filled half green, corner to corner, so the part payment is seen at a glance *(owner's decision, 2026-10-29)*. Paid green and unpaid red are a little darker than before. The statuses themselves (due, partial) are unchanged, so totals, "Still owed" and reminders work as before.
 - "Today" comes from the Windows clock. At startup, if the clock date is earlier than the latest recorded payment date or the last backup date, show a plain warning ("The computer date looks wrong. Late rent colours may be incorrect.").
 - Overpayment on one month is never silently kept in that month: allocation fills each month only up to its expected amount (see section 7).
 
@@ -192,7 +195,7 @@ Rules:
 - *Partial* = at least one orange month and no red month.
 - *Paid* = every applicable month up to and including the current month is green.
 
-**Changing a price:** the form asks "From which month?" and defaults to the **current month**. Money already paid for the chosen month or later is **shared out again with the new rent**, oldest receipt first, each receipt filling oldest month first from the later of the change month and the month it originally started at (the same rules as section 7.1). A higher rent fills fewer months; a lower rent moves the extra on to the next months. Each receipt keeps its number and total; only the months it covers change. Months before the change and cancelled receipts are not touched. Before saving, show a plain warning listing every month that gains or loses money or changes status (for example "Month 4: Paid 250,000 → Late 200,000") and require confirmation. If the money would have no month to go to (for example the area stays vacant), refuse and ask to cancel or edit those receipts first. Never silently rewrite the past. *(Owner's decision, iteration 6 review.)*
+**Changing a price:** the form asks "From which month?" and defaults to the **current month**. Money already paid for the chosen month or later is **shared out again with the new rent**, oldest receipt first, each receipt filling oldest month first from the later of the change month and the month it originally started at (the same rules as section 7.1). A higher rent fills fewer months; a lower rent moves the extra on to the next months. Each receipt keeps its number and total; only the months it covers change. Months before the change and cancelled receipts are not touched. Before saving, show a plain warning listing every month that gains or loses money or changes status (for example "Month 4: Paid 250,000 → Late 200,000") and require confirmation. If the money would have no month to go to (for example the area stays vacant), do not save: list each receipt that pays a month which would become vacant (months, amount, and whether the receipt is cancelled) and offer one button, **Take out and save**, which takes those months out of their receipts (as clicking a paid month box does, section 7.4) and saves the change in one step. Never silently rewrite the past. *(Owner's decision, iteration 6 review; the one-step button is the owner's request of 2026-10-29, for fewer clicks.)*
 
 **Totals in any report** are always shown **separately per currency**: one total row for IQD, one for USD. **No conversion, ever.**
 
@@ -207,7 +210,7 @@ Numbers display as thousands-separated. IQD has no decimals; USD shows 2 decimal
 Button: **Record Payment**, always visible on the area page and on rows of the "Needs attention" list.
 
 Form (large, single column):
-1. **Amount received** (big number field; currency label fixed by the area; parsing per section 9).
+1. **Amount received** (big number field; currency label from the month the payment starts from, or the receipt's own when editing; parsing per section 9).
 2. **From which month** (defaults to the oldest month that is not fully paid; year + month number selectors).
 3. **Date received** (defaults to today).
 4. **Note** (optional).
@@ -216,7 +219,7 @@ Form (large, single column):
 
 **Overpayment horizon:** allocation may run forward at most **24 months** past the current month. If the amount is larger than everything owed within that horizon, block saving and say so plainly ("This amount is more than 2 years of rent. Please check the number.").
 
-Buttons: **Save** and **Save and make receipt PDF**. After saving, show "Payment saved. Receipt No. 0042" with **Save receipt as PDF**, **Undo**, and **Close**. Receipts are only ever saved as PDF, never sent straight to a printer; the owner prints from the PDF if needed. *(Owner's decision, 2026-10-27.)*
+Buttons: **Save** and **Cancel**. After saving, show "Payment saved. Receipt No. 0042", with no buttons: no Undo and no receipt PDF. Receipts keep their numbers on screen but are **not printed or saved as PDF**. *(Owner's decisions, 2026-10-29.)*
 
 ### 7.2 Editing and cancelling
 
@@ -231,14 +234,14 @@ A second button on the area page, **Record past payment**, lets the user mark mo
 On the area page and in the Areas list, every month box that has rent is a button:
 - **A month not fully paid** (late, due, partial or upcoming): after a short question ("Mark month 5 of 2026 as paid? 825,000 IQD"), the rest of that month's rent is recorded as a normal payment dated today, **with a receipt number**, filling only that month.
 - **A paid month**: after a short question that lists what will change, that month is taken out of the receipts that paid it. A receipt that paid only this month is cancelled; a receipt that paid other months too keeps its number and its other months, and its amount goes down by this month's share. Its months may then have a gap (for example 1-2 and 4-8). The change is in the Activity log.
-- A month marked as paid can be undone like any new payment. Editing a receipt with a gap only for its date or note keeps its months; changing its amount or start month, or a price change from an earlier month, shares its money out again oldest month first (with the usual preview or warning), which fills the gap.
+- A month marked as paid is taken out again by clicking its box (or by cancelling its receipt). Editing a receipt with a gap only for its date or note keeps its months; changing its amount or start month, or a price change from an earlier month, shares its money out again oldest month first (with the usual preview or warning), which fills the gap.
 - Vacant and not-started months are not buttons. Report screens and prints are not clickable.
 
 ---
 
 ## 8. Screens
 
-Sidebar items (always visible, large, with icons; the names show when the sidebar is opened): **Home, Areas, Reports, Notifications, Settings.**
+Sidebar items (always visible, each an icon with its name under it): **Home, Areas, Reports, Notifications**, and **Settings** apart at the bottom.
 
 ### 8.1 Lock screen (app start only)
 Large password field and one **Open** button. A "Forgot password?" link goes to recovery (section 10). The app language is the last used.
@@ -264,26 +267,30 @@ Then, for the selected year:
 - Four figures: **Rent price**, **Total for the year** (expected), **Received**, **Still owed**.
 - **12 boxes** in a row/grid (2 rows of 6 on narrow widths). Each box shows the month number (1-12), the amount paid, and a status word. Colours per section 6: green / red / grey / hatched.
 - Notes field.
-- List of receipts for the year (number or "Past record", date, amount, months covered) with Save receipt as PDF / Edit / Cancel.
+- List of receipts for the year (number or "Past record", date, amount, months covered) with Edit / Cancel.
 - Price history and renter history (collapsible, plain).
 - Buttons: **Export to PDF**, **Export to Excel**. *(Owner's decision, 2026-10-25: no direct Print button here.)*
 
 ### 8.5 Reports
-Filter container at the top:
+On screen, the **totals per currency come first**: one slim card per currency (its number of areas, monthly rent, received, still owed). Then one card holds the filters, the area picker and the PDF / Excel buttons, then the table with one slim row per area, its money in separate columns like the Areas list. *(Owner's decision, 2026-10-29.)*
+
+Filter container:
 - **Year** (default current year, always), **Month** (All or a specific one), **Category** (All or one), **Currency** (All / IQD / USD), **Status** (All / Paid / Partial / Late). The last-used filters except the year are remembered.
 - Area picker with checkboxes ("Select all" / "Select none").
 
 Result table, one row per area, with these columns:
 **Area name, Category, Renter name, Renter phone, Currency (IQD / USD), Monthly price, Received, Still owed, the 12 month boxes (coloured), Notes.**
 
-At the bottom: **totals per currency**, in separate rows (IQD total, USD total), for price, received and still owed. A one-sentence footer explains what "received" means (section 6).
+In print, PDF and Excel the **totals per currency** are at the bottom, in separate rows (IQD total, USD total), for price, received and still owed. A one-sentence footer explains what "received" means (section 6).
 
-Buttons: **Print**, **Export PDF**, **Export Excel**. Print, PDF and Excel contain **exactly the same fields and the totals at the bottom**. Printing uses the logo and title from settings. A4, landscape for the wide report table.
+Titles and file names say what the report covers: the place (from its area page) or the chosen category, and the year or the chosen month, for example "Rent report: Shops, 10/2026" (the file name uses "10-2026"). *(Owner's decision, 2026-10-29.)*
+
+Buttons: **Export PDF** and **Export Excel** (no direct Print button on the Reports page; owner's decision, 2026-10-29). Print, PDF and Excel contain **exactly the same fields and the totals at the bottom**. Printing uses the logo and title from settings. A4, landscape for the wide report table.
 
 When a specific month is chosen in the filter, the table shows that month's status per area and totals for that month.
 
 ### 8.6 Receipt print
-A4 page: logo (if set), print title (if set), "Receipt No. 0042", date, area name, renter name and phone, months covered, amount (with currency), note, signature line. One receipt per page, saved as PDF. Saving it again is stamped **"Copy"**.
+Removed: receipts are not printed or saved as PDF. *(Owner's decision, 2026-10-29.)*
 
 ### 8.7 Notifications (see section 11)
 
@@ -420,7 +427,7 @@ Build and test each milestone before starting the next. After each one, make sur
 5. **Payments:** the Record Payment form with live allocation preview and horizon limit, receipts with sequential numbers, edit/void, undo, "Record past payment" (backfill).
 6. **Area page:** filter bar (year default current, month), the four figures, the 12 coloured boxes, receipts list, price-change warning.
 7. **Reports:** filter container, table, totals per currency, selection of areas, status filter.
-8. **Printing and exports:** receipt print (with "Copy" stamp), report print, PDF, Excel, logo and title.
+8. **Printing and exports:** report print, PDF, Excel, logo and title.
 9. **Notifications:** popup on open, notifications page, bell count, month reminders, backup reminder, clock warning.
 10. **Settings:** fonts, font size, theme colours, dark/light, digit style, print settings, reminder days, deleted items, activity log.
 11. **Backup and restore:** including safety snapshots, location warning, compatibility check, integrity check at startup.
@@ -442,12 +449,12 @@ The app is done when all of these are true:
 - [ ] Month boxes: **green** = fully paid, **red** = any month up to and including the current one that is not fully paid (the current one says "Not paid", past ones "Late"), **grey** for future months (also when paid in part ahead), **hatched** for vacant or not-yet-started months, which are excluded from late status and totals.
 - [ ] The area page shows price, year total, received, still owed, the 12 boxes, renter name and phone, and notes, and filters by year (default current) and month.
 - [ ] Reports filter by year, month, category, currency and status; print, PDF and Excel contain the same fields; **IQD and USD totals are separate** at the bottom.
-- [ ] Receipts are numbered sequentially (never reused), print on A4, show the logo and title when set in settings, and reprints are marked "Copy".
+- [ ] Receipts are numbered sequentially (never reused); reports print on A4 and show the logo and title when set in settings.
 - [ ] All three languages work, with Sorani as default; switching flips the layout correctly; months display as numbers; digit style is switchable.
 - [ ] Amounts typed in Western, Arabic-Indic or Persian digits are all understood; searching Sorani names works regardless of Arabic/Kurdish letter variants.
 - [ ] Settings change font family, font size, theme colours, and light/dark mode immediately and persistently.
 - [ ] Notifications appear on open (late rent, month reminder, backup reminder) and on the Notifications page with the same content.
 - [ ] Monthly backup reminder works; Back up now and Restore work; a safety copy is made before restoring; a damaged database offers restore.
-- [ ] Every delete is confirmed and recoverable; saved payments can be undone; edits and cancellations appear in the activity log.
+- [ ] Every delete is confirmed and recoverable; saved payments can be cancelled; edits and cancellations appear in the activity log.
 - [ ] With 200 areas and several years of payments, the Areas list and Reports open in under 1 second.
 - [ ] All unit, migration and end-to-end tests pass.

@@ -174,17 +174,23 @@ test('price changes, vacant and renter changes are kept as history', async () =>
     // Vacant also ends the renter: the page says No renter, and the old one is in the history.
     await expect(page.getByText(en.areas.noRenter)).toBeVisible();
 
-    // Change renter only adds a new renter; there is no "renter left" choice any more.
+    // A new renter of a vacant place starts on its last rent, already filled in.
     await page.getByRole('button', { name: en.area.changeRenter }).click();
-    await expect(page.getByRole('dialog').getByRole('radio')).toHaveCount(0);
-    await page.getByRole('dialog').getByLabel(en.renterDialog.name).fill('Sara Ali');
-    await page.getByRole('dialog').getByRole('button', { name: en.common.save }).click();
+    const renter = page.getByRole('dialog');
+    await expect(
+      renter.getByRole('checkbox', {
+        name: en.renterDialog.sameRentBefore.replace('{{amount}}', '300,000 IQD'),
+      }),
+    ).toBeChecked();
+    await expect(renter.getByLabel(en.renterDialog.rent)).toHaveCount(0);
+    await renter.getByLabel(en.renterDialog.name).fill('Sara Ali');
+    await renter.getByRole('button', { name: en.common.save }).click();
     await expect(page.getByText(en.renterDialog.saved)).toBeVisible();
     await expect(page.getByText('Sara Ali').first()).toBeVisible();
     await expect(page.getByText('Renter 0')).toBeVisible();
 
     await page.getByRole('link', { name: en.area.back }).click();
-    await expect(page.getByRole('row').nth(1)).toContainText(en.areas.vacant);
+    await expect(page.getByRole('row').nth(1)).toContainText('300,000');
     await expect(page.getByRole('row').nth(1)).toContainText('Sara Ali');
   } finally {
     await app.close();

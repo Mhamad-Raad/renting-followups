@@ -276,7 +276,9 @@ describe('importing', () => {
     ]);
     const shops = repos.areas.get(1);
     expect(shops).toMatchObject({ name: 'Shop 1', currency: 'IQD', address: 'Main street' });
-    expect(shops?.prices).toEqual([{ year: 2025, month: 1, monthlyPrice: 250_000 }]);
+    expect(shops?.prices).toEqual([
+      { year: 2025, month: 1, monthlyPrice: 250_000, currency: 'IQD' },
+    ]);
     expect(shops?.renters).toMatchObject([
       { fullName: 'Ahmad Ali', phone: '0750 123 4567', startedOn: '2025-01-01', endedOn: null },
     ]);

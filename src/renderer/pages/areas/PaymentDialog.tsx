@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AreaDetails } from '@shared/areas';
-import { FRACTION_DIGITS } from '@shared/currency';
+import { FRACTION_DIGITS, type Currency } from '@shared/currency';
 import { dateStringFromLocal, formatYearMonth, yearMonthOf, type YearMonth } from '@shared/dates';
 import { formatAmount } from '@shared/formatNumber';
+import { paymentCurrency } from '@shared/prices';
 import {
   formatReceiptNumber,
   PAYMENT_NOTE_MAX,
@@ -31,13 +32,9 @@ const PREVIEW_DELAY_MS = 200;
 /** A new payment, a past record (no receipt number), or a correction of a saved receipt. */
 export type PaymentMode = { kind: 'new' } | { kind: 'past' } | { kind: 'edit'; receipt: Receipt };
 
-/** What the area page needs after a save, to show the message and offer Undo. */
+/** What the area page shows after a save. */
 export interface PaymentSaved {
   message: string;
-  /** Set for a new payment, which can be undone. */
-  undo?: { id: number; receiptNumber: number | null };
-  /** "Save and make receipt PDF" was pressed: save the new receipt as a PDF now. */
-  pdf?: boolean;
 }
 
 interface PaymentDialogProps {
@@ -103,6 +100,8 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
   const editing = mode.kind === 'edit' ? mode.receipt : null;
   const [amount, setAmount] = useState<number | null>(editing?.totalAmount ?? null);
   const [from, setFrom] = useState<YearMonth>({ year: start.year, month: start.month });
+  // A receipt is in one currency: a saved one keeps its own, new money takes that of its first month.
+  const currency = editing?.currency ?? paymentCurrency(area.prices, from) ?? area.currency;
   const [paidOn, setPaidOn] = useState(editing?.paidOn ?? dateStringFromLocal(new Date()));
   const [note, setNote] = useState(editing?.note ?? '');
   const [showProblems, setShowProblems] = useState(false);
@@ -116,7 +115,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
         ? t('areaForm.problems.not_found')
         : t(`paymentDialog.${result.reason}`);
 
-  const submit = async (pdf = false) => {
+  const submit = async () => {
     setShowProblems(true);
     if (amount === null || amount === 0 || busy) return;
     setBusy(true);
@@ -136,7 +135,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
       setBusy(false);
       return setProblem(result.ok ? explain(result.data) : t('errors.unexpected'));
     }
-    const { id, receiptNumber } = result.data;
+    const { receiptNumber } = result.data;
     onSaved({
       message:
         receiptNumber === null
@@ -144,8 +143,6 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
           : t('paymentDialog.saved', {
               number: formatReceiptNumber(receiptNumber, settings.digitStyle),
             }),
-      undo: { id, receiptNumber },
-      pdf: pdf && receiptNumber !== null,
     });
   };
 
@@ -154,7 +151,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
       {mode.kind === 'past' && <p className={styles.hint}>{t('paymentDialog.pastHint')}</p>}
       <AmountField
         label={t('paymentDialog.amount')}
-        currency={area.currency}
+        currency={currency}
         value={amount}
         onChange={setAmount}
         autoFocus
@@ -168,7 +165,8 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
       />
       {amount ? (
         <AllocationPreview
-          area={area}
+          areaId={area.id}
+          currency={currency}
           amount={amount}
           from={from}
           receiptId={editing?.id ?? null}
@@ -187,11 +185,6 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
         <BigButton type="submit" variant="primary" disabled={busy}>
           {t('common.save')}
         </BigButton>
-        {mode.kind === 'new' && (
-          <BigButton disabled={busy} onClick={() => void submit(true)}>
-            {t('print.actions.saveWithPdf')}
-          </BigButton>
-        )}
         <BigButton onClick={onClose}>{t('common.cancel')}</BigButton>
       </DialogActions>
     </Form>
@@ -199,32 +192,33 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
 }
 
 interface AllocationPreviewProps {
-  area: AreaDetails;
+  areaId: number;
+  currency: Currency;
   amount: number;
   from: YearMonth;
   receiptId: number | null;
 }
 
 /** Shows, before saving, which months the money will fill, worked out by the main process. */
-function AllocationPreview({ area, amount, from, receiptId }: AllocationPreviewProps) {
+function AllocationPreview({ areaId, currency, amount, from, receiptId }: AllocationPreviewProps) {
   // A stable object, so the delay only restarts when the amount or month really changes.
   const input = useMemo(
-    () => ({ areaId: area.id, amount, from, receiptId }),
-    [area.id, amount, from, receiptId],
+    () => ({ areaId, amount, from, receiptId }),
+    [areaId, amount, from, receiptId],
   );
   const query = useDebouncedValue(input, PREVIEW_DELAY_MS);
   const preview = useIpcQuery('payments:preview', query);
   // While typing, the shown months belong to an earlier amount: dim them until they catch up.
-  return <PreviewText state={preview.state} area={area} stale={query !== input} />;
+  return <PreviewText state={preview.state} currency={currency} stale={query !== input} />;
 }
 
 function PreviewText({
   state,
-  area,
+  currency,
   stale,
 }: {
   state: QueryState<AllocationResult | null>;
-  area: AreaDetails;
+  currency: Currency;
   stale: boolean;
 }) {
   const { t } = useTranslation();
@@ -236,7 +230,7 @@ function PreviewText({
   if (!state.data.ok)
     return <Notice tone="warning">{t(`paymentDialog.${state.data.reason}`)}</Notice>;
   const money = (value: number) =>
-    formatAmount(value, FRACTION_DIGITS[area.currency], settings.digitStyle);
+    formatAmount(value, FRACTION_DIGITS[currency], settings.digitStyle);
   return (
     <div className={styles.preview} data-stale={stale || undefined} aria-live="polite">
       <h3 className={styles.previewTitle}>{t('paymentDialog.preview')}</h3>

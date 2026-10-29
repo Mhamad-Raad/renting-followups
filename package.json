@@ -1,8 +1,9 @@
 {
   "name": "rent-tracker",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Offline Windows desktop app for tracking monthly rent.",
+  "author": "Mhamad Raad",
   "type": "module",
   "engines": {
     "node": ">=24 <25"
@@ -13,6 +14,7 @@
     "build": "electron-vite build",
     "prepreview": "install-electron",
     "preview": "electron-vite preview",
+    "dist": "electron-vite build && electron-builder --win --x64",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json && tsc --noEmit -p tsconfig.e2e.json",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",

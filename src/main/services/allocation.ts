@@ -1,3 +1,4 @@
+import type { Currency } from '@shared/currency';
 import { fromMonthIndex, monthIndex, type YearMonth } from '@shared/dates';
 import {
   HORIZON_MONTHS,
@@ -5,7 +6,7 @@ import {
   type AllocationResult,
   type PlannedMonth,
 } from '@shared/payments';
-import { priceForMonth, type PriceRow } from '@shared/prices';
+import { priceForMonth, pricesInCurrency, type PriceRow } from '@shared/prices';
 import type { PaidHistory } from './monthStatus';
 
 /**
@@ -78,6 +79,8 @@ export interface ReshareReceipt {
   /** Where its money starts filling: the change month, or later if the receipt started later. */
   start: YearMonth;
   amount: number;
+  /** The receipt's currency: its money only fills months in that currency. */
+  currency: Currency;
 }
 
 export type ReshareResult =
@@ -106,7 +109,8 @@ export function reshare(
   const paid = new Map(kept);
   const byReceipt = new Map<number, Allocation[]>();
   for (const receipt of receipts) {
-    const result = allocate(receipt.amount, receipt.start, prices, paid, today);
+    const inCurrency = pricesInCurrency(prices, receipt.currency);
+    const result = allocate(receipt.amount, receipt.start, inCurrency, paid, today);
     if (!result.ok) return { ok: false, reason: 'no_room' };
     const months = result.months.map(({ year, month, amount }) => ({ year, month, amount }));
     for (const month of months) {

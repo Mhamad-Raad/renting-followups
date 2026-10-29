@@ -8,10 +8,13 @@ import styles from './MonthBoxes.module.css';
 
 type MonthWord = Exclude<MonthStatus, 'not_applicable'> | 'vacant' | 'notStarted';
 
-/** The word for a month. One that is not applicable says why: vacant (rent 0), or rent not started. */
+/** A coming month paid in part: grey like the others, so its box is filled half green, corner to corner. */
+const isPartPaid = (box: MonthBox) => box.status === 'partial' && box.paid > 0;
+
 /** Lets a line of a month box shrink to fit the box instead of breaking (see `--chars` in the CSS). */
 const fitted = (text: string) => ({ '--chars': Math.max(text.length, 1) }) as CSSProperties;
 
+/** The word for a month. One that is not applicable says why: vacant (rent 0), or rent not started. */
 export function monthWord({ status, expected }: Pick<MonthBox, 'status' | 'expected'>): MonthWord {
   if (status !== 'not_applicable') return status;
   return expected === 0 ? 'vacant' : 'notStarted';
@@ -29,7 +32,6 @@ const SUMMARY_COLOR: Record<YearSummary, MonthStatus> = {
 interface MonthBoxesProps {
   boxes: readonly MonthBox[];
   year: number;
-  currency: Currency;
   /** A thin strip of month numbers for lists and prints, instead of large boxes with amounts. */
   compact?: boolean;
   /** The month chosen in the filter, outlined. */
@@ -46,7 +48,6 @@ interface MonthBoxesProps {
 export const MonthBoxes = memo(function MonthBoxes({
   boxes,
   year,
-  currency,
   compact = false,
   selected = null,
   onPick,
@@ -54,10 +55,15 @@ export const MonthBoxes = memo(function MonthBoxes({
   const { t } = useTranslation();
   const { settings } = useSettings();
   const digits = settings.digitStyle;
+  // Each month's amounts are in its own currency (a new renter may pay in another one).
+  const amountText = (amount: number, currency: Currency) =>
+    formatAmount(amount, FRACTION_DIGITS[currency], digits);
   const label = (box: MonthBox) =>
-    t('months.box', {
+    t(isPartPaid(box) ? 'months.boxPart' : 'months.box', {
       month: formatPlain(box.month, digits),
       status: t(`months.status.${monthWord(box)}`),
+      paid: amountText(box.paid, box.currency),
+      expected: amountText(box.expected ?? 0, box.currency),
     });
   const canPick = (box: MonthBox) => onPick !== undefined && box.status !== 'not_applicable';
   // A click that just misses a box (a gap, a vacant month) must not open the area behind it either.
@@ -84,6 +90,7 @@ export const MonthBoxes = memo(function MonthBoxes({
             className: styles.cell,
             'data-status': box.status,
             'data-selected': box.month === selected || undefined,
+            'data-part-paid': isPartPaid(box) || undefined,
             title: label(box),
           };
           const number = <span aria-hidden="true">{formatPlain(box.month, digits)}</span>;
@@ -103,8 +110,6 @@ export const MonthBoxes = memo(function MonthBoxes({
     );
   }
 
-  const amountText = (paid: number) => formatAmount(paid, FRACTION_DIGITS[currency], digits);
-
   return (
     <div className={styles.container}>
       <ol
@@ -116,6 +121,7 @@ export const MonthBoxes = memo(function MonthBoxes({
             className: styles.box,
             'data-status': box.status,
             'data-selected': box.month === selected || undefined,
+            'data-part-paid': isPartPaid(box) || undefined,
             'aria-current': box.month === selected || undefined,
             style: { '--index': index } as CSSProperties,
           };
@@ -127,9 +133,9 @@ export const MonthBoxes = memo(function MonthBoxes({
               <span
                 className={styles.amount}
                 aria-hidden="true"
-                style={fitted(box.paid > 0 ? amountText(box.paid) : '')}
+                style={fitted(box.paid > 0 ? amountText(box.paid, box.currency) : '')}
               >
-                {box.paid > 0 && <bdi dir="ltr">{amountText(box.paid)}</bdi>}
+                {box.paid > 0 && <bdi dir="ltr">{amountText(box.paid, box.currency)}</bdi>}
               </span>
               <span
                 className={styles.word}

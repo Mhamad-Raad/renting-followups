@@ -5,13 +5,21 @@ import type { ReportStatus, ReportTotal } from '@shared/reports';
 import type {
   AreaStanding,
   AreaYear,
+  CurrencyAmount,
+  CurrencyFigures,
   MonthBox,
   MonthStatus,
   StatusChange,
   YearFigures,
   YearSummary,
 } from '@shared/months';
-import { priceForMonth, type PriceRow } from '@shared/prices';
+import {
+  currencyForMonth,
+  priceForMonth,
+  pricesInCurrency,
+  priceRowForMonth,
+  type PriceRow,
+} from '@shared/prices';
 
 /**
  * The single source of truth for month colours and yearly totals
@@ -63,9 +71,13 @@ export function monthBoxes(
       expected,
       paid: paidAmount,
       status: monthStatus(expected, paidAmount, { year, month }, today),
+      currency: currencyForMonth(prices, { year, month }) ?? FALLBACK_CURRENCY,
     };
   });
 }
+
+/** Only for an area without any rent row, which the app never creates. */
+const FALLBACK_CURRENCY: Currency = CURRENCIES[0];
 
 /**
  * Rent, expected, received and still owed for the given boxes (a year, or one
@@ -120,21 +132,50 @@ export function areaYear(
   month: number | null = null,
 ): AreaYear {
   const boxes = monthBoxes(prices, paid, year, today);
-  const figures =
-    month === null
-      ? yearFigures(boxes, rentMonthOf(year, today))
-      : yearFigures(
-          boxes.filter((box) => box.month === month),
-          month,
-        );
+  const rentMonth = month ?? rentMonthOf(year, today);
+  const inPeriod = (all: MonthBox[]) =>
+    month === null ? all : all.filter((box) => box.month === month);
+  const currencies = periodCurrencies(inPeriod(boxes), prices, { year, month: rentMonth });
+  const figures = currencies.map((currency): CurrencyFigures => {
+    if (currencies.length === 1) return { currency, ...yearFigures(inPeriod(boxes), rentMonth) };
+    // Seen in one currency, the other currency's months count as vacant and add nothing.
+    const own = inPeriod(monthBoxes(pricesInCurrency(prices, currency), paid, year, today));
+    return { currency, ...yearFigures(own, ownRentMonth(own, rentMonth)) };
+  });
   return { year, month, boxes, figures, summary: yearSummary(boxes) };
+}
+
+/**
+ * The currencies of the period's months that have rent, oldest first; the
+ * currency of `rentMonth` alone when no month has rent (vacant, not started).
+ */
+function periodCurrencies(
+  boxes: readonly MonthBox[],
+  prices: readonly PriceRow[],
+  rentMonth: YearMonth,
+): Currency[] {
+  const used = [...new Set(boxes.filter((box) => box.expected).map((box) => box.currency))];
+  return used.length > 0 ? used : [currencyForMonth(prices, rentMonth) ?? FALLBACK_CURRENCY];
+}
+
+/**
+ * The month whose rent one currency's figures show: `rentMonth` when it is in
+ * that currency, otherwise the nearest earlier month with rent in it (or the
+ * first one, for a currency that only starts later).
+ */
+function ownRentMonth(own: readonly MonthBox[], rentMonth: number): number {
+  const withRent = own.filter((box) => box.expected);
+  if (withRent.some((box) => box.month === rentMonth)) return rentMonth;
+  const before = withRent.filter((box) => box.month < rentMonth).at(-1);
+  return (before ?? withRent[0])?.month ?? rentMonth;
 }
 
 /** A month that has come and is not fully paid: late (passed) or due (this month). */
 export interface UnpaidMonth extends YearMonth {
   status: 'late' | 'due';
-  /** The rent not yet paid for it. */
+  /** The rent not yet paid for it, in `currency`. */
   owed: number;
+  currency: Currency;
 }
 
 /**
@@ -152,11 +193,17 @@ export function unpaidMonths(
   const months: UnpaidMonth[] = [];
   for (let index = monthIndex(start); index <= monthIndex(today); index += 1) {
     const month = fromMonthIndex(index);
-    const expected = priceForMonth(prices, month);
+    const row = priceRowForMonth(prices, month);
+    const expected = row?.monthlyPrice ?? null;
     const paidAmount = paid.get(index) ?? 0;
     const status = monthStatus(expected, paidAmount, month, today);
-    if (status === 'late' || status === 'due') {
-      months.push({ ...month, status, owed: (expected ?? 0) - paidAmount });
+    if (row && (status === 'late' || status === 'due')) {
+      months.push({
+        ...month,
+        status,
+        owed: row.monthlyPrice - paidAmount,
+        currency: row.currency,
+      });
     }
   }
   return months;
@@ -173,10 +220,21 @@ export function areaStanding(
 ): AreaStanding {
   const months = unpaidMonths(prices, paid, today);
   return {
-    owed: months.reduce((sum, month) => sum + month.owed, 0),
+    owed: owedByCurrency(months),
     lateMonths: months.filter((month) => month.status === 'late').length,
+    lateIn: owedByCurrency(months.filter((month) => month.status === 'late')).map(
+      (owed) => owed.currency,
+    ),
     dueNow: months.some((month) => month.status === 'due'),
   };
+}
+
+/** What unpaid months owe, added up per currency, IQD first; currencies owing nothing are left out. */
+export function owedByCurrency(months: readonly UnpaidMonth[]): CurrencyAmount[] {
+  return byCurrency(months).map(([currency, inCurrency]) => ({
+    currency,
+    amount: sum(inCurrency, (month) => month.owed),
+  }));
 }
 
 /**
@@ -206,6 +264,7 @@ export function statusChanges(
     if (statusBefore !== statusAfter || was !== will) {
       changes.push({
         ...month,
+        currency: currencyForMonth(before, month) ?? FALLBACK_CURRENCY,
         before: statusBefore,
         after: statusAfter,
         paidBefore: was,
@@ -216,10 +275,10 @@ export function statusChanges(
   return changes;
 }
 
-/** An area as Home needs it: its currency, this year's figures and its standing today. */
+/** An area as Home needs it: its current currency, this year's figures and its standing today. */
 export interface AreaOverview {
   currency: Currency;
-  figures: YearFigures;
+  figures: CurrencyFigures[];
   standing: AreaStanding;
 }
 
@@ -234,25 +293,37 @@ function byCurrency<T extends { currency: Currency }>(items: readonly T[]): [Cur
 const sum = <T>(items: readonly T[], value: (item: T) => number) =>
   items.reduce((total, item) => total + value(item), 0);
 
-/** Home's cards: received, still owed and late areas, one set per currency in use. */
+/**
+ * Home's cards: received, still owed and late areas, one set per currency in
+ * use. An area counts as late under the currency of its late months.
+ */
 export function totalsByCurrency(areas: readonly AreaOverview[]): CurrencyTotals[] {
-  return byCurrency(areas).map(([currency, inCurrency]) => ({
-    currency,
-    received: sum(inCurrency, (area) => area.figures.received),
-    remaining: sum(inCurrency, (area) => area.figures.remaining),
-    lateAreas: inCurrency.filter((area) => area.standing.lateMonths > 0).length,
-  }));
+  const figures = areas.flatMap((area) => area.figures);
+  return CURRENCIES.flatMap((currency) => {
+    const inCurrency = figures.filter((part) => part.currency === currency);
+    const late = areas.filter((area) => area.standing.lateIn.includes(currency));
+    const inUse = inCurrency.length > 0 || late.length > 0;
+    if (!inUse && !areas.some((area) => area.currency === currency)) return [];
+    return [
+      {
+        currency,
+        received: sum(inCurrency, (part) => part.received),
+        remaining: sum(inCurrency, (part) => part.remaining),
+        lateAreas: late.length,
+      },
+    ];
+  });
 }
 
 /** The report's total rows: rent, received and still owed, one row per currency in use. */
 export function reportTotals(
-  rows: readonly { currency: Currency; figures: YearFigures }[],
+  rows: readonly { figures: readonly CurrencyFigures[] }[],
 ): ReportTotal[] {
-  return byCurrency(rows).map(([currency, inCurrency]) => ({
+  return byCurrency(rows.flatMap((row) => row.figures)).map(([currency, inCurrency]) => ({
     currency,
-    rent: sum(inCurrency, (row) => row.figures.rent ?? 0),
-    received: sum(inCurrency, (row) => row.figures.received),
-    remaining: sum(inCurrency, (row) => row.figures.remaining),
+    rent: sum(inCurrency, (part) => part.rent ?? 0),
+    received: sum(inCurrency, (part) => part.received),
+    remaining: sum(inCurrency, (part) => part.remaining),
     areas: inCurrency.length,
   }));
 }
@@ -283,17 +354,18 @@ export function matchesReportStatus(
 /**
  * "Needs attention now": areas late in any year or due this month. Most late
  * months first; then by currency (amounts in different currencies are never
- * compared), then most owed.
+ * compared), then most owed in that currency.
  */
-export function needsAttention<T extends { currency: Currency; standing: AreaStanding }>(
-  areas: readonly T[],
-): T[] {
+export function needsAttention<T extends { standing: AreaStanding }>(areas: readonly T[]): T[] {
+  // The first currency owed (IQD first) and its amount stand for the area.
+  const first = ({ standing }: T) => standing.owed[0];
+  const order = (area: T) => CURRENCIES.indexOf(first(area)?.currency ?? CURRENCIES[0]);
   return areas
     .filter(({ standing }) => standing.lateMonths > 0 || standing.dueNow)
     .sort(
       (a, b) =>
         b.standing.lateMonths - a.standing.lateMonths ||
-        CURRENCIES.indexOf(a.currency) - CURRENCIES.indexOf(b.currency) ||
-        b.standing.owed - a.standing.owed,
+        order(a) - order(b) ||
+        (first(b)?.amount ?? 0) - (first(a)?.amount ?? 0),
     );
 }

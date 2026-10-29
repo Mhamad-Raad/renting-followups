@@ -52,9 +52,9 @@ async function seed(page: Page) {
 }
 
 const rows = (page: Page) => page.locator('tbody tr');
-/** "Total IQD | Areas: 2" for a currency and a number of areas. */
-const total = (currency: string, areas: number) =>
-  en.reports.total.replace('{{currency}}', currency).replace('{{number}}', String(areas));
+/** The totals at the top: one card per currency, each naming its number of areas. */
+const totals = (page: Page) => page.getByRole('region', { name: en.reports.totals }).locator('dl');
+const areasCount = (areas: number) => en.reports.areasCount.replace('{{number}}', String(areas));
 
 test('the report lists every area with totals per currency, and filters by status', async () => {
   const dataDir = createDataDir();
@@ -62,9 +62,15 @@ test('the report lists every area with totals per currency, and filters by statu
   try {
     await seed(page);
     await expect(rows(page)).toHaveCount(3);
-    await expect(page.locator('tfoot tr')).toHaveCount(2);
-    await expect(page.locator('tfoot')).toContainText(total('IQD', 2));
-    await expect(page.locator('tfoot')).toContainText(total('USD', 1));
+    await expect(totals(page)).toHaveCount(2);
+    // Only PDF and Excel here: no direct Print button.
+    await expect(
+      page.getByRole('button', { name: en.print.actions.print, exact: true }),
+    ).toHaveCount(0);
+    await expect(totals(page).nth(0)).toContainText('IQD');
+    await expect(totals(page).nth(0)).toContainText(areasCount(2));
+    await expect(totals(page).nth(1)).toContainText('USD');
+    await expect(totals(page).nth(1)).toContainText(areasCount(1));
 
     await page.getByLabel(en.reports.status).selectOption('late');
     await expect(rows(page)).toHaveCount(2);
@@ -75,7 +81,7 @@ test('the report lists every area with totals per currency, and filters by statu
     await page.getByLabel(en.reports.status).selectOption('all');
     await page.getByLabel(en.area.currency).selectOption('USD');
     await expect(rows(page)).toHaveCount(1);
-    await expect(page.locator('tfoot tr')).toHaveCount(1);
+    await expect(totals(page)).toHaveCount(1);
   } finally {
     await app.close();
     removeDataDir(dataDir);

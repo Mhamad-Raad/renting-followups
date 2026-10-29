@@ -1,14 +1,14 @@
-import { idInputSchema } from '@shared/categories';
-import { formatReceiptNumber } from '@shared/payments';
+import { areaLabel } from '@shared/areas';
 import {
   exportReportSchema,
   PRINT_ROUTES,
   printReadySchema,
-  printReceiptSchema,
   printReportSchema,
   type PrintOutput,
   type PrintResult,
 } from '@shared/printing';
+import { reportTitle } from '@shared/reportText';
+import type { ReportQuery } from '@shared/reports';
 import type { Repositories } from '../db/repositories';
 import { businessToday, currentYearMonth } from '../services/clock';
 import { buildReportWorkbook } from '../services/excel';
@@ -24,7 +24,7 @@ import {
 import { translate } from '../services/translate';
 import { handle } from './handle';
 
-export function registerPrintIpc({ categories, payments, reports, settings }: Repositories): void {
+export function registerPrintIpc({ areas, categories, reports, settings }: Repositories): void {
   const t = (key: string, values?: Record<string, string>) =>
     translate(settings.getAll().language, key, values);
 
@@ -50,58 +50,48 @@ export function registerPrintIpc({ categories, payments, reports, settings }: Re
     return { ok: true, done: 'saved' };
   };
 
-  const reportFileName = (year: number) => t('print.fileReport', { year: String(year) });
+  /** The one place a report is limited to (the area page), named in its title and file name. */
+  const onlyAreaName = ({ onlyIds }: ReportQuery): string | null => {
+    const area = onlyIds?.length === 1 && onlyIds[0] !== undefined ? areas.get(onlyIds[0]) : null;
+    return area ? areaLabel({ name: area.name, categoryName: area.category.name }) : null;
+  };
+  const categoryName = ({ categoryId }: ReportQuery): string | null =>
+    categoryId === null
+      ? null
+      : (categories.list().find((category) => category.id === categoryId)?.name ?? null);
+  /** Named after the one place, else the chosen category, with the year or the chosen month. */
+  const reportName = (query: ReportQuery) => onlyAreaName(query) ?? categoryName(query);
+  const reportFileName = (query: ReportQuery) => {
+    const file = reportTitle(query, reportName(query), 'western', true);
+    return t(file.key, file.values);
+  };
 
   handle('print:ready', printReadySchema, ({ ok }, sender) => {
     printPageReady(sender.webContentsId, ok);
     return null;
   });
 
-  handle('print:receiptData', idInputSchema, ({ id }) => {
-    const data = payments.printData(id, businessToday().date);
-    return typeof data === 'object' ? data : null;
-  });
-
-  handle('print:receipt', printReceiptSchema, async ({ id, output }) => {
-    const data = payments.printData(id, businessToday().date);
-    if (data === null) return { ok: false, reason: 'not_found' };
-    if (data === 'past_record') return { ok: false, reason: 'past_record' };
-    const number = formatReceiptNumber(data.receipt.receiptNumber ?? 0, 'western');
-    const result = await printOrSave(
-      PRINT_ROUTES.receipt(id),
-      output,
-      false,
-      t('print.fileReceipt', { number }),
-    );
-    // Only a finished print counts, so the next one is stamped "Copy".
-    if (result.ok && result.done !== 'cancelled') payments.markPrinted(id);
-    return result;
-  });
-
   handle('print:report', printReportSchema, ({ query, output }) =>
-    printOrSave(PRINT_ROUTES.report(query), output, true, reportFileName(query.year)),
+    printOrSave(PRINT_ROUTES.report(query), output, true, reportFileName(query)),
   );
 
   handle('export:reportExcel', exportReportSchema, async ({ query }): Promise<PrintResult> => {
-    const path = await askWhereToSave(reportFileName(query.year), {
+    const path = await askWhereToSave(reportFileName(query), {
       name: t('print.excelFiles'),
       extension: 'xlsx',
     });
     if (!path) return { ok: true, done: 'cancelled' };
     const { language, digitStyle, printTitle } = settings.getAll();
-    const categoryName =
-      query.categoryId === null
-        ? null
-        : (categories.list().find((category) => category.id === query.categoryId)?.name ?? null);
     const workbook = buildReportWorkbook(
       reports.build(query, currentYearMonth(), language),
       query,
       {
         language,
         digitStyle,
-        categoryName,
+        categoryName: categoryName(query),
         printedOn: businessToday().date,
         printTitle,
+        titleName: reportName(query),
       },
     );
     const saved = await saveFile(path, new Uint8Array(await workbook.xlsx.writeBuffer()));

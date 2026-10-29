@@ -51,8 +51,8 @@ function EntryDetails({ entry }: { entry: ActivityEntry }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const digits = settings.digitStyle;
-  const money = (amount: number) =>
-    entry.currency && <MoneyText amount={amount} currency={entry.currency} />;
+  const money = (amount: number, currency = entry.currency) =>
+    currency && <MoneyText amount={amount} currency={currency} />;
   const parts: ReactNode[] = [];
   if (entry.entity === 'receipt') {
     parts.push(
@@ -67,9 +67,11 @@ function EntryDetails({ entry }: { entry: ActivityEntry }) {
   if (entry.renter) parts.push(<bdi>{entry.renter}</bdi>);
   if (entry.amount !== null && entry.amount > 0) {
     parts.push(
-      entry.previousAmount !== null && entry.previousAmount !== entry.amount ? (
+      entry.previousAmount !== null &&
+        (entry.previousAmount !== entry.amount || entry.previousCurrency !== entry.currency) ? (
         <>
-          {money(entry.previousAmount)} {t('activity.arrow')} {money(entry.amount)}
+          {money(entry.previousAmount, entry.previousCurrency)} {t('activity.arrow')}{' '}
+          {money(entry.amount)}
         </>
       ) : (
         money(entry.amount)

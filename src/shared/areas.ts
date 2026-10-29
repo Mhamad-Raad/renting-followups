@@ -9,7 +9,7 @@ import {
   type YearMonth,
 } from './dates';
 import type { CategoryColor } from './categories';
-import type { MonthBox, StatusChange, YearFigures, YearSummary } from './months';
+import type { CurrencyFigures, MonthBox, StatusChange, YearSummary } from './months';
 import { normalizeText } from './normalizeText';
 import { priceForMonth, type PriceRow } from './prices';
 
@@ -125,13 +125,31 @@ export type AreaUpdate = z.infer<typeof areaUpdateSchema>;
 
 /** A new price from a month onward; 0 marks the area vacant from that month. */
 export const priceChangeSchema = z
-  .object({ areaId: id, from: yearMonthSchema, monthlyPrice })
+  .object({
+    areaId: id,
+    from: yearMonthSchema,
+    monthlyPrice,
+    /** A new currency from that month (a new renter); left out, the month's currency stays. */
+    currency: z.enum(CURRENCIES).optional(),
+    /** Take paid months that would be left without rent out of their receipts first (see `VacantPayment`). */
+    takeOutVacantMonths: z.boolean().optional(),
+  })
   .strict();
 export type PriceChange = z.infer<typeof priceChangeSchema>;
 
-/** A new renter; a renter leaving is recorded by marking the area vacant (see `changePrice`). */
+/**
+ * A new renter; a renter leaving is recorded by marking the area vacant (see
+ * `changePrice`). The rent, and its currency, may change with them from the
+ * month they start; left as it is, the rent stays.
+ */
 export const renterChangeSchema = renterDetails
-  .extend({ areaId: id, startedOn: dateStringSchema })
+  .extend({
+    areaId: id,
+    startedOn: dateStringSchema,
+    monthlyPrice: monthlyPrice.min(1).optional(),
+    currency: z.enum(CURRENCIES).optional(),
+    takeOutVacantMonths: z.boolean().optional(),
+  })
   .strict();
 export type RenterChange = z.infer<typeof renterChangeSchema>;
 
@@ -159,6 +177,7 @@ export interface AreaListItem {
   categoryId: number;
   categoryName: string;
   categoryColor: CategoryColor | null;
+  /** This month's currency, that of `currentPrice`. */
   currency: Currency;
   renterName: string | null;
   renterPhone: string | null;
@@ -167,8 +186,8 @@ export interface AreaListItem {
   notes: string;
   /** The 12 months of the current year. */
   months: MonthBox[];
-  /** Rent, total, received and still owed for the current year. */
-  figures: YearFigures;
+  /** Rent, total, received and still owed for the current year, per currency used in it. */
+  figures: CurrencyFigures[];
   summary: YearSummary;
 }
 
@@ -208,14 +227,35 @@ export type AreaSaveResult =
 export type PriceChangeResult =
   { ok: true } | { ok: false; reason: 'not_found' | 'before_rent_start' | 'no_room' };
 
+/**
+ * A receipt that pays months which a price change would leave without rent in
+ * its currency (vacant, or rent now in another currency), and what taking
+ * those months out of it does: it is cancelled when they are all it pays.
+ */
+export interface VacantPayment {
+  receiptId: number;
+  /** Null for a past record. */
+  receiptNumber: number | null;
+  /** The receipt's currency, that of `amount`. */
+  currency: Currency;
+  months: YearMonth[];
+  amount: number;
+  cancels: boolean;
+}
+
 /** What a price change would do to money already paid (see `areas:priceChangeImpact`). */
 export type PriceChangeImpact =
   | { ok: true; changes: StatusChange[] }
-  /** Money already paid would have no month to go to (for example vacant from then on). */
-  | { ok: false; reason: 'no_room' };
+  /**
+   * Money already paid would have no month to go to (for example vacant from
+   * then on). `vacantPayments` lists the receipts paying months that would
+   * become vacant; saving with `takeOutVacantMonths` takes those months out.
+   */
+  | { ok: false; reason: 'no_room'; vacantPayments: VacantPayment[] };
 
 export type RenterChangeResult =
-  { ok: true } | { ok: false; reason: 'not_found' | 'before_current_renter' };
+  | { ok: true }
+  | { ok: false; reason: 'not_found' | 'before_current_renter' | 'before_rent_start' | 'no_room' };
 
 export type RestoreResult = { ok: true } | { ok: false; reason: 'not_found' | 'duplicate_name' };
 

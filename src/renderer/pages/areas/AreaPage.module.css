@@ -108,6 +108,39 @@
   color: var(--color-text-muted);
 }
 
+/* A dialog form in titled parts with a thin line between them. */
+.formPart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.formPart + .formPart {
+  padding-block-start: var(--space-5);
+  border-block-start: 1px solid var(--color-border);
+}
+
+.partTitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* A wide dialog form: two fields per row, lined up, one under the other when there is no room. */
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-5) var(--space-6);
+  align-items: start;
+}
+
+.fullRow {
+  grid-column: 1 / -1;
+}
+
 /* The live "how the money is shared out" list in the payment form. */
 .preview {
   padding: var(--space-3) var(--space-4);
@@ -128,14 +161,6 @@
 .previewTitle {
   margin: 0;
   font-size: var(--text-md);
-}
-
-/* The saved message with its Undo button beside it. */
-.saved {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3) var(--space-5);
 }
 
 .filter {

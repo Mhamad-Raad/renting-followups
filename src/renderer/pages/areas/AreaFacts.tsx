@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { currentRenter, type AreaDetails } from '@shared/areas';
+import type { Currency } from '@shared/currency';
 import { formatDate } from '@shared/dates';
 import { useSettings } from '../../app/SettingsContext';
 import { CategoryDot } from '../../components/CategoryDot';
@@ -8,7 +9,16 @@ import styles from './AreaPage.module.css';
 import { RentText } from './RentText';
 
 /** The area's details at the top of its page: rent, renter, category, currency, address, notes. */
-export function AreaFacts({ area, price }: { area: AreaDetails; price: number | null }) {
+export function AreaFacts({
+  area,
+  price,
+  currency,
+}: {
+  area: AreaDetails;
+  price: number | null;
+  /** This month's currency, that of `price`. */
+  currency: Currency;
+}) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const renter = currentRenter(area.renters);
@@ -19,7 +29,7 @@ export function AreaFacts({ area, price }: { area: AreaDetails; price: number | 
         <div>
           <dt>{t('area.rent')}</dt>
           <dd className={styles.big}>
-            <RentText price={price} currency={area.currency} />
+            <RentText price={price} currency={currency} />
           </dd>
         </div>
         <div>
@@ -39,7 +49,7 @@ export function AreaFacts({ area, price }: { area: AreaDetails; price: number | 
         </div>
         <div>
           <dt>{t('area.currency')}</dt>
-          <dd>{t(`currency.${area.currency}`)}</dd>
+          <dd>{t(`currency.${currency}`)}</dd>
         </div>
         {area.address && (
           <div>

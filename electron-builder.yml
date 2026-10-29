@@ -1,0 +1,55 @@
+# Builds the Windows installer (npm run dist). The installer goes to release/,
+# which git ignores; it is attached to a GitHub Release, never committed.
+appId: app.renttracker.desktop
+productName: Rent Tracker
+copyright: Copyright © 2026 Mhamad Raad
+
+directories:
+  output: release
+  buildResources: build
+
+# Only what the app runs: the built code, its icon and package.json, plus the
+# production dependencies electron-builder adds. Never demo data, scripts or tests.
+files:
+  - out/**/*
+  - resources/**/*
+  - package.json
+  - '!**/*.map'
+  # SQLite ships ready-made builds; only the Windows x64 one is needed, and nothing is compiled.
+  - '!node_modules/better-sqlite3/{deps,src}/**'
+  - '!node_modules/better-sqlite3/binding.gyp'
+  - '!node_modules/better-sqlite3/prebuilds/{darwin,linux,linuxmusl}-*.node'
+  - '!node_modules/better-sqlite3/prebuilds/win32-arm64.node'
+
+# Native files and the icon must sit outside the archive to be loaded.
+asarUnpack:
+  - node_modules/better-sqlite3/**
+  - resources/**
+
+# The app never updates itself, so no update files are made.
+publish: null
+
+npmRebuild: false
+buildDependenciesFromSource: false
+
+win:
+  target:
+    - target: nsis
+      arch: x64
+  icon: build/icon.ico
+
+nsis:
+  # A short installer with Next buttons, for the current Windows user only (no administrator password).
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: Rent Tracker
+  runAfterFinish: true
+  # Uninstalling removes the app only: the rent data and backups always stay.
+  deleteAppDataOnUninstall: false
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  include: build/installer.nsh
+  artifactName: Rent-Tracker-Setup-${version}.${ext}

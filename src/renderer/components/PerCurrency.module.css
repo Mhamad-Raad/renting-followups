@@ -1,0 +1,6 @@
+/* Each currency on its own line, so amounts in different currencies stay apart. */
+.lines {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}

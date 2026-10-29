@@ -1,6 +1,5 @@
 import type { Currency } from '@shared/currency';
-import { monthIndex, type BusinessToday, type DateString, type YearMonth } from '@shared/dates';
-import type { ReceiptPrintData } from '@shared/printing';
+import { monthIndex, type BusinessToday, type YearMonth } from '@shared/dates';
 import type {
   Allocation,
   AllocationResult,
@@ -12,7 +11,7 @@ import type {
   PaymentVoidResult,
   Receipt,
 } from '@shared/payments';
-import { priceForMonth } from '@shared/prices';
+import { paymentCurrency, priceForMonth, pricesInCurrency } from '@shared/prices';
 import { allocate, oldestOpenMonth } from '../../services/allocation';
 import type { Db } from '../connection';
 import type { AllocationRepository } from './allocations';
@@ -92,25 +91,28 @@ export function createPaymentRepository(
   const updateReceipt = db.prepare<[number, string, string, number]>(
     'UPDATE receipts SET total_amount = ?, paid_on = ?, note = ? WHERE id = ?',
   );
-  const selectPrintExtra = db.prepare<
-    [number],
-    { area_name: string; renter_phone_snapshot: string | null; print_count: number }
-  >(
-    // The receipt already names the renter, so an area without a name is shown by its category.
-    `SELECT COALESCE(NULLIF(a.name, ''), c.name) AS area_name, r.renter_phone_snapshot, r.print_count
-     FROM receipts r
-     JOIN areas a ON a.id = r.area_id
-     JOIN categories c ON c.id = a.category_id
-     WHERE r.id = ?`,
-  );
-  const addPrint = db.prepare<[number]>(
-    'UPDATE receipts SET print_count = print_count + 1 WHERE id = ?',
-  );
   const markVoided = db.prepare<[number]>(
     `UPDATE receipts SET voided_at = ${NOW_SQL} WHERE id = ?`,
   );
-  const plan = (areaId: number, amount: number, from: YearMonth, today: YearMonth, except = 0) =>
-    allocate(amount, from, prices.forArea(areaId), paid.history(areaId, except), today);
+  /** A receipt is in one currency: new money takes that of the first month it can fill. */
+  const currencyFrom = (areaId: number, from: YearMonth, fallback: Currency): Currency =>
+    paymentCurrency(prices.forArea(areaId), from) ?? fallback;
+  // Months in another currency count as vacant for this money, so it never fills them.
+  const plan = (
+    areaId: number,
+    amount: number,
+    from: YearMonth,
+    today: YearMonth,
+    currency: Currency,
+    except = 0,
+  ) =>
+    allocate(
+      amount,
+      from,
+      pricesInCurrency(prices.forArea(areaId), currency),
+      paid.history(areaId, except),
+      today,
+    );
 
   /**
    * A receipt's own months, when an edit keeps its amount and start month (only the date or
@@ -148,9 +150,14 @@ export function createPaymentRepository(
       today: YearMonth,
       receiptId: number | null,
     ): AllocationResult | null {
-      if (!selectAreaCurrency.get(areaId)) return null;
+      const area = selectAreaCurrency.get(areaId);
+      if (!area) return null;
       const kept = receiptId === null ? null : keptMonths(receiptId, amount, from);
-      if (!kept) return plan(areaId, amount, from, today, receiptId ?? 0);
+      if (!kept) {
+        const receipt = receiptId === null ? undefined : selectReceipt.get(receiptId);
+        const currency = receipt?.currency ?? currencyFrom(areaId, from, area.currency);
+        return plan(areaId, amount, from, today, currency, receiptId ?? 0);
+      }
       const history = paid.history(areaId, receiptId ?? 0);
       const rents = prices.forArea(areaId);
       return {
@@ -174,7 +181,8 @@ export function createPaymentRepository(
       const area = selectAreaCurrency.get(input.areaId);
       if (!area) return { ok: false, reason: 'not_found' };
       if (input.paidOn > today.date) return { ok: false, reason: 'future_date' };
-      const planned = plan(input.areaId, input.amount, input.from, today.month);
+      const currency = currencyFrom(input.areaId, input.from, area.currency);
+      const planned = plan(input.areaId, input.amount, input.from, today.month, currency);
       if (!planned.ok) return planned;
       const receiptNumber = input.isBackfill ? null : nextReceiptNumber();
       const renter = renters.current(input.areaId);
@@ -185,7 +193,7 @@ export function createPaymentRepository(
           input.areaId,
           renter?.fullName ?? null,
           renter?.phone ?? null,
-          area.currency,
+          currency,
           input.amount,
           input.paidOn,
           input.note,
@@ -212,7 +220,14 @@ export function createPaymentRepository(
       const previousMonths = selectAllocationsForReceipt.all(input.id);
       let months: readonly Allocation[] = previousMonths;
       if (!keptMonths(input.id, input.amount, input.from)) {
-        const planned = plan(before.area_id, input.amount, input.from, today.month, input.id);
+        const planned = plan(
+          before.area_id,
+          input.amount,
+          input.from,
+          today.month,
+          before.currency,
+          input.id,
+        );
         if (!planned.ok) return planned;
         months = planned.months;
         allocations.replace(input.id, before.area_id, months);
@@ -266,30 +281,6 @@ export function createPaymentRepository(
         .all(areaId)
         .filter((row) => byReceipt.get(row.id)?.some(inPeriod))
         .map((row) => toReceipt(row, byReceipt.get(row.id) ?? []));
-    },
-
-    /**
-     * What a receipt page shows. Null when it does not exist, is cancelled or
-     * belongs to a deleted area; 'past_record' for a past payment, which has
-     * no receipt number and is never printed as a receipt.
-     */
-    printData(id: number, printedOn: DateString): ReceiptPrintData | 'past_record' | null {
-      const row = selectReceipt.get(id);
-      const extra = selectPrintExtra.get(id);
-      if (!row || !extra || row.voided_at !== null) return null;
-      if (row.is_backfill === 1) return 'past_record';
-      return {
-        receipt: toReceipt(row, selectAllocationsForReceipt.all(id)),
-        areaName: extra.area_name,
-        renterPhone: extra.renter_phone_snapshot,
-        printCount: extra.print_count,
-        printedOn,
-      };
-    },
-
-    /** Counts a finished print, so every later print is stamped "Copy". */
-    markPrinted(id: number): void {
-      addPrint.run(id);
     },
   };
 }

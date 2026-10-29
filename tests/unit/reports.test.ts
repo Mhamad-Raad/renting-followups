@@ -77,7 +77,9 @@ describe('reports', () => {
       name: 'Shop 1',
       categoryName: 'Shops',
       renterName: 'Karwan Ahmed',
-      figures: { rent: RENT, expected: 12 * RENT, received: 5 * RENT, remaining: 0 },
+      figures: [
+        { currency: 'IQD', rent: RENT, expected: 12 * RENT, received: 5 * RENT, remaining: 0 },
+      ],
       summary: 'paid',
       monthStatus: null,
     });
@@ -100,12 +102,43 @@ describe('reports', () => {
     expect(names({ status: 'late' })).toEqual(['Office late', 'Shop late']);
   });
 
+  it('filtered by currency, an area that changed currency shows and matches only that one', () => {
+    const id = area('Shop 1', shops);
+    // Late in dinars from January; a new renter pays dollars from April, paid up to May.
+    repos.priceChanges.changeRenter(
+      {
+        areaId: id,
+        fullName: 'Ahmed Ali',
+        phone: '',
+        startedOn: '2026-04-01',
+        monthlyPrice: 300_00,
+        currency: 'USD',
+      },
+      TODAY,
+    );
+    pay(id, 2 * 300_00, 4);
+    expect(names({ currency: 'USD', status: 'late' })).toEqual([]);
+    expect(names({ currency: 'USD', status: 'paid' })).toEqual(['Shop 1']);
+    expect(names({ currency: 'IQD', status: 'late' })).toEqual(['Shop 1']);
+    expect(build({ currency: 'USD' }).rows[0]?.figures.map((part) => part.currency)).toEqual([
+      'USD',
+    ]);
+  });
+
   it('with a month chosen, gives that month’s figures, status and totals', () => {
     const id = area('Shop 1', shops);
     pay(id, RENT + 100_000);
     const report = build({ month: 2 });
     expect(report.rows[0]).toMatchObject({
-      figures: { rent: RENT, expected: RENT, received: 100_000, remaining: RENT - 100_000 },
+      figures: [
+        {
+          currency: 'IQD',
+          rent: RENT,
+          expected: RENT,
+          received: 100_000,
+          remaining: RENT - 100_000,
+        },
+      ],
       monthStatus: 'late',
     });
     expect(report.totals[0]).toMatchObject({ received: 100_000, remaining: RENT - 100_000 });

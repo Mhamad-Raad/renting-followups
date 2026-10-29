@@ -39,6 +39,8 @@ export interface ActivityEntry {
   /** The new amount or rent; for a change, `previousAmount` is the old one. */
   amount: number | null;
   previousAmount: number | null;
+  /** The currency of `previousAmount` (another one when a new renter changed it). */
+  previousCurrency: Currency | null;
   /** The month a rent change starts from. */
   month: YearMonth | null;
   renter: string | null;

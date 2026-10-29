@@ -22,7 +22,7 @@ export function AreaHistory({ area }: { area: AreaDetails }) {
                 {t('area.priceFrom', { month: formatYearMonth(row, settings.digitStyle) })}
               </span>
               <strong>
-                <RentText price={row.monthlyPrice} currency={area.currency} />
+                <RentText price={row.monthlyPrice} currency={row.currency} />
               </strong>
             </li>
           ))}

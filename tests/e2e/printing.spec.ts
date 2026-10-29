@@ -9,12 +9,20 @@ import { createDataDir, launchUnlocked, removeDataDir, reloadApp } from './launc
 /** Answers the next "Save as" dialogs in the main process with `path`, as if the owner chose it. */
 async function chooseSavePath(app: ElectronApplication, path: string) {
   await app.evaluate(({ dialog }, file) => {
-    dialog.showSaveDialog = (() =>
-      Promise.resolve({ canceled: false, filePath: file })) as typeof dialog.showSaveDialog;
+    dialog.showSaveDialog = ((...args: { defaultPath?: string }[]) => {
+      // The name the app suggested, for the tests to read back.
+      (globalThis as { suggestedName?: string | undefined }).suggestedName =
+        args.at(-1)?.defaultPath;
+      return Promise.resolve({ canceled: false, filePath: file });
+    }) as typeof dialog.showSaveDialog;
   }, path);
 }
 
-/** One area with one numbered payment; returns the receipt id. */
+/** The file name the app last suggested in the Save dialog. */
+const suggestedName = (app: ElectronApplication) =>
+  app.evaluate(() => (globalThis as { suggestedName?: string }).suggestedName ?? '');
+
+/** One area with one numbered payment. */
 async function seed(page: Page): Promise<number> {
   const year = new Date().getFullYear();
   return page.evaluate(async (year) => {
@@ -56,32 +64,6 @@ const QUERY = (): ReportQuery => ({
   onlyIds: null,
 });
 
-test('a receipt saves as PDF; the print is counted, so the next one says Copy', async () => {
-  const dataDir = createDataDir();
-  const { app, page } = await launchUnlocked(dataDir);
-  try {
-    const receiptId = await seed(page);
-    const file = join(dataDir, 'receipt.pdf');
-    await chooseSavePath(app, file);
-    const first = await page.evaluate(
-      (id) => window.api.invoke('print:receipt', { id, output: 'pdf' }),
-      receiptId,
-    );
-    expect(first).toEqual({ ok: true, data: { ok: true, done: 'saved' } });
-    expect(readFileSync(file).subarray(0, 5).toString()).toBe('%PDF-');
-    const data = await page.evaluate(
-      (id) => window.api.invoke('print:receiptData', { id }),
-      receiptId,
-    );
-    expect(data.ok && data.data?.printCount).toBe(1);
-    // Every hidden print window is closed again.
-    expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)).toBe(1);
-  } finally {
-    await app.close();
-    removeDataDir(dataDir);
-  }
-});
-
 test('the report saves as PDF and as an Excel sheet that reads right to left', async () => {
   const dataDir = createDataDir();
   const { app, page } = await launchUnlocked(dataDir);
@@ -120,68 +102,38 @@ test('the report saves as PDF and as an Excel sheet that reads right to left', a
   }
 });
 
-test('a PDF that cannot be written says so plainly and does not count as printed', async () => {
+test('a PDF that cannot be written says so plainly', async () => {
   const dataDir = createDataDir();
   const { app, page } = await launchUnlocked(dataDir);
   try {
-    const receiptId = await seed(page);
+    await seed(page);
     // A folder that does not exist stands in for a file locked by another program.
-    await chooseSavePath(app, join(dataDir, 'missing', 'receipt.pdf'));
+    await chooseSavePath(app, join(dataDir, 'missing', 'report.pdf'));
     const result = await page.evaluate(
-      (id) => window.api.invoke('print:receipt', { id, output: 'pdf' }),
-      receiptId,
+      (query) => window.api.invoke('print:report', { query, output: 'pdf' }),
+      QUERY(),
     );
     expect(result).toEqual({ ok: true, data: { ok: false, reason: 'save_failed' } });
-    const data = await page.evaluate(
-      (id) => window.api.invoke('print:receiptData', { id }),
-      receiptId,
-    );
-    expect(data.ok && data.data?.printCount).toBe(0);
   } finally {
     await app.close();
     removeDataDir(dataDir);
   }
 });
 
-test('cancelling the Save dialog changes nothing; past records cannot print as receipts', async () => {
+test('cancelling the Save dialog changes nothing', async () => {
   const dataDir = createDataDir();
   const { app, page } = await launchUnlocked(dataDir);
   try {
-    const receiptId = await seed(page);
+    await seed(page);
     await app.evaluate(({ dialog }) => {
       dialog.showSaveDialog = (() =>
         Promise.resolve({ canceled: true, filePath: '' })) as typeof dialog.showSaveDialog;
     });
     const cancelled = await page.evaluate(
-      (id) => window.api.invoke('print:receipt', { id, output: 'pdf' }),
-      receiptId,
+      (query) => window.api.invoke('print:report', { query, output: 'pdf' }),
+      QUERY(),
     );
     expect(cancelled).toEqual({ ok: true, data: { ok: true, done: 'cancelled' } });
-    const data = await page.evaluate(
-      (id) => window.api.invoke('print:receiptData', { id }),
-      receiptId,
-    );
-    expect(data.ok && data.data?.printCount).toBe(0);
-    const missing = await page.evaluate(() =>
-      window.api.invoke('print:receipt', { id: 999, output: 'pdf' }),
-    );
-    expect(missing).toEqual({ ok: true, data: { ok: false, reason: 'not_found' } });
-    const past = await page.evaluate(async () => {
-      const year = new Date().getFullYear();
-      const areas = await window.api.invoke('areas:list', { search: '', categoryId: null });
-      const areaId = areas.ok ? (areas.data[0]?.id ?? 0) : 0;
-      const created = await window.api.invoke('payments:create', {
-        areaId,
-        isBackfill: true,
-        amount: 250_000,
-        from: { year, month: 3 },
-        paidOn: `${year}-01-05`,
-        note: '',
-      });
-      if (!created.ok || !created.data.ok) throw new Error('past record failed');
-      return window.api.invoke('print:receipt', { id: created.data.id, output: 'pdf' });
-    });
-    expect(past).toEqual({ ok: true, data: { ok: false, reason: 'past_record' } });
   } finally {
     await app.close();
     removeDataDir(dataDir);
@@ -207,26 +159,20 @@ test('the buttons on screen print and export, with a plain message each time', a
     await reloadApp(page);
     await fakePrinter(app);
 
-    // Area page: Save and make receipt PDF saves a file; receipts never go to the printer.
+    // Area page: receipts are not saved as PDF (owner's decision), only the area's report.
     await page.getByRole('link', { name: en.nav.areas, exact: true }).click();
     await page.getByRole('link', { name: 'دوکانی ١' }).click();
     await page.getByRole('button', { name: en.area.recordPayment }).click();
-    await page.getByRole('dialog').getByLabel(en.paymentDialog.amount).fill('250000');
-    const receiptPdf = join(dataDir, 'receipt.pdf');
-    await chooseSavePath(app, receiptPdf);
-    await page
-      .getByRole('dialog')
-      .getByRole('button', { name: en.print.actions.saveWithPdf })
-      .click();
-    await expect(page.getByText(en.print.results.savedPdf)).toBeVisible();
-    expect(existsSync(receiptPdf)).toBe(true);
-    await expect(page.getByText(en.print.results.printed)).toHaveCount(0);
+    await expect(page.getByRole('dialog').getByRole('button', { name: /PDF/ })).toHaveCount(0);
+    await page.getByRole('dialog').getByRole('button', { name: en.common.cancel }).click();
+    await expect(page.getByRole('button', { name: 'Save receipt as PDF' })).toHaveCount(0);
 
     const pdf = join(dataDir, 'area.pdf');
     await chooseSavePath(app, pdf);
     await page.getByRole('button', { name: en.print.actions.pdf }).click();
-    // The receipt's "saved" message is already showing, so wait for this file itself.
     await expect.poll(() => existsSync(pdf)).toBe(true);
+    // The area page's file is named after the place.
+    expect(await suggestedName(app)).toContain('دوکانی ١');
 
     // Areas list: tick one area, then Export to Excel.
     await page.getByRole('link', { name: en.nav.areas, exact: true }).click();
@@ -236,6 +182,13 @@ test('the buttons on screen print and export, with a plain message each time', a
     await page.getByRole('button', { name: en.print.actions.excel }).click();
     await expect(page.getByText(en.print.results.savedExcel)).toBeVisible();
     expect(existsSync(xlsx)).toBe(true);
+    // One place on its own: its name is in the file name and the sheet's title.
+    expect(await suggestedName(app)).toContain('دوکانی ١');
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(xlsx);
+    expect(workbook.worksheets[0]?.getRow(1).getCell(1).value).toBe(
+      `Rent report: دوکانی ١, ${new Date().getFullYear()}`,
+    );
 
     // Home: Print report.
     await page.getByRole('link', { name: en.nav.home, exact: true }).click();

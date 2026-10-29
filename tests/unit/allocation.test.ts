@@ -6,7 +6,7 @@ import type { PaidHistory } from '../../src/main/services/monthStatus';
 
 const TODAY = { year: 2026, month: 5 };
 const RENT = 250_000;
-const FROM_JANUARY: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: RENT }];
+const FROM_JANUARY: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' }];
 const NOTHING_PAID: PaidHistory = new Map();
 
 function paid(entries: [YearMonth, number][]): PaidHistory {
@@ -54,9 +54,9 @@ describe('allocate', () => {
 
   it('skips vacant months and months before the rent started', () => {
     const prices: PriceRow[] = [
-      { year: 2026, month: 3, monthlyPrice: RENT },
-      { year: 2026, month: 4, monthlyPrice: 0 },
-      { year: 2026, month: 6, monthlyPrice: RENT },
+      { year: 2026, month: 3, monthlyPrice: RENT, currency: 'IQD' },
+      { year: 2026, month: 4, monthlyPrice: 0, currency: 'IQD' },
+      { year: 2026, month: 6, monthlyPrice: RENT, currency: 'IQD' },
     ];
     expect(
       split(allocate(2 * RENT, { year: 2026, month: 1 }, prices, NOTHING_PAID, TODAY)),
@@ -65,8 +65,8 @@ describe('allocate', () => {
 
   it('uses each month its own price', () => {
     const prices: PriceRow[] = [
-      { year: 2026, month: 1, monthlyPrice: 100_000 },
-      { year: 2026, month: 2, monthlyPrice: 300_000 },
+      { year: 2026, month: 1, monthlyPrice: 100_000, currency: 'IQD' },
+      { year: 2026, month: 2, monthlyPrice: 300_000, currency: 'IQD' },
     ];
     expect(split(allocate(400_000, { year: 2026, month: 1 }, prices, NOTHING_PAID, TODAY))).toEqual(
       ['1/2026=100000', '2/2026=300000'],
@@ -94,13 +94,13 @@ describe('allocate', () => {
     expect(allocate(1, { year: 2028, month: 6 }, FROM_JANUARY, NOTHING_PAID, TODAY)).toEqual(
       nothing,
     );
-    const vacant: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: 0 }];
+    const vacant: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: 0, currency: 'IQD' }];
     expect(allocate(1, TODAY, vacant, NOTHING_PAID, TODAY)).toEqual(nothing);
   });
 
   it('never splits an amount into a fraction: the parts always add up exactly', () => {
     const cents = 33_333;
-    const prices: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: cents }];
+    const prices: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: cents, currency: 'IQD' }];
     const result = allocate(100_000, { year: 2026, month: 1 }, prices, NOTHING_PAID, TODAY);
     expect(result.ok && result.months.reduce((sum, m) => sum + m.amount, 0)).toBe(100_000);
     expect(result.ok && result.months.every((m) => Number.isInteger(m.amount))).toBe(true);
@@ -122,8 +122,8 @@ describe('oldestOpenMonth', () => {
 
   it('skips vacant months', () => {
     const prices: PriceRow[] = [
-      { year: 2026, month: 1, monthlyPrice: 0 },
-      { year: 2026, month: 4, monthlyPrice: RENT },
+      { year: 2026, month: 1, monthlyPrice: 0, currency: 'IQD' },
+      { year: 2026, month: 4, monthlyPrice: RENT, currency: 'IQD' },
     ];
     expect(oldestOpenMonth(prices, NOTHING_PAID, TODAY)).toEqual({ year: 2026, month: 4 });
   });
@@ -142,11 +142,11 @@ describe('reshare', () => {
 
   it('a higher rent: the same money fills fewer months', () => {
     const prices: PriceRow[] = [
-      { year: 2026, month: 1, monthlyPrice: RENT },
-      { year: 2026, month: 3, monthlyPrice: 300_000 },
+      { year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' },
+      { year: 2026, month: 3, monthlyPrice: 300_000, currency: 'IQD' },
     ];
     const result = reshare(
-      [{ id: 1, start: at(3), amount: 3 * RENT }],
+      [{ id: 1, start: at(3), amount: 3 * RENT, currency: 'IQD' }],
       NOTHING_PAID,
       prices,
       TODAY,
@@ -160,11 +160,11 @@ describe('reshare', () => {
 
   it('a lower rent: the extra moves on to the next months', () => {
     const prices: PriceRow[] = [
-      { year: 2026, month: 1, monthlyPrice: RENT },
-      { year: 2026, month: 3, monthlyPrice: 200_000 },
+      { year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' },
+      { year: 2026, month: 3, monthlyPrice: 200_000, currency: 'IQD' },
     ];
     const result = reshare(
-      [{ id: 1, start: at(3), amount: 3 * RENT }],
+      [{ id: 1, start: at(3), amount: 3 * RENT, currency: 'IQD' }],
       NOTHING_PAID,
       prices,
       TODAY,
@@ -181,8 +181,8 @@ describe('reshare', () => {
     const kept = paid([[at(3), 100_000]]);
     const result = reshare(
       [
-        { id: 1, start: at(3), amount: 200_000 },
-        { id: 2, start: at(3), amount: RENT },
+        { id: 1, start: at(3), amount: 200_000, currency: 'IQD' },
+        { id: 2, start: at(3), amount: RENT, currency: 'IQD' },
       ],
       kept,
       FROM_JANUARY,
@@ -201,7 +201,7 @@ describe('reshare', () => {
 
   it('a receipt for later months stays with those months', () => {
     const result = reshare(
-      [{ id: 1, start: at(7), amount: RENT }],
+      [{ id: 1, start: at(7), amount: RENT, currency: 'IQD' }],
       NOTHING_PAID,
       FROM_JANUARY,
       TODAY,
@@ -211,10 +211,17 @@ describe('reshare', () => {
 
   it('refuses when the money would have nowhere to go', () => {
     const vacant: PriceRow[] = [
-      { year: 2026, month: 1, monthlyPrice: RENT },
-      { year: 2026, month: 3, monthlyPrice: 0 },
+      { year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' },
+      { year: 2026, month: 3, monthlyPrice: 0, currency: 'IQD' },
     ];
-    expect(reshare([{ id: 1, start: at(3), amount: RENT }], NOTHING_PAID, vacant, TODAY)).toEqual({
+    expect(
+      reshare(
+        [{ id: 1, start: at(3), amount: RENT, currency: 'IQD' }],
+        NOTHING_PAID,
+        vacant,
+        TODAY,
+      ),
+    ).toEqual({
       ok: false,
       reason: 'no_room',
     });

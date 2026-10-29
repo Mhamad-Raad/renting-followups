@@ -19,7 +19,7 @@ export function appWebPreferences(): WebPreferences {
   };
 }
 
-/** Loads the app's page into a window, optionally at an in-app address such as `/print/receipt/4`. */
+/** Loads the app's page into a window, optionally at an in-app address such as `/print/report`. */
 export function loadRenderer(window: BrowserWindow, route = ''): Promise<void> {
   const hash = route ? `#${route}` : '';
   const devServerUrl = process.env['ELECTRON_RENDERER_URL'];
