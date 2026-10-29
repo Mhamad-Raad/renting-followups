@@ -108,6 +108,30 @@
   color: var(--color-text-muted);
 }
 
+/* A wide dialog in two side-by-side cards, one under the other when there is no room. */
+.dialogColumns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.dialogSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.dialogSection > legend {
+  padding: 0 var(--space-2);
+  font-weight: 700;
+}
+
 /* The live "how the money is shared out" list in the payment form. */
 .preview {
   padding: var(--space-3) var(--space-4);

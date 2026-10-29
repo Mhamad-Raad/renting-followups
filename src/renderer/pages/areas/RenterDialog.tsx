@@ -49,7 +49,7 @@ interface RenterDialogProps {
 export function RenterDialog({ area, open, onDone, onClose }: RenterDialogProps) {
   const { t } = useTranslation();
   return (
-    <Dialog open={open} title={t('renterDialog.title')} onClose={onClose}>
+    <Dialog open={open} title={t('renterDialog.title')} onClose={onClose} size="wide">
       <RenterForm area={area} onDone={onDone} onClose={onClose} />
     </Dialog>
   );
@@ -153,43 +153,53 @@ function RenterForm({ area, onDone, onClose }: Omit<RenterDialogProps, 'open'>) 
 
   return (
     <Form className={styles.dialogForm} onSubmit={() => void submit()}>
-      <TextField
-        label={t('renterDialog.name')}
-        value={fullName}
-        onChange={setFullName}
-        error={showProblems ? nameProblem : null}
-        maxLength={PERSON_NAME_MAX}
-        autoFocus
-        dir="auto"
-      />
-      <TextField
-        label={t('renterDialog.phone')}
-        value={phone}
-        onChange={setPhone}
-        error={showProblems ? phoneProblem : null}
-        maxLength={PHONE_MAX}
-        inputMode="tel"
-        dir="ltr"
-      />
+      {/* The start month decides from when the rent below applies, so it comes first. */}
       <DateField label={t('renterDialog.startsOn')} value={date} onChange={edit(changeDate)} />
-      <ChoiceGroup
-        label={t('areaForm.currency')}
-        value={rent.currency}
-        choices={CURRENCIES.map((code) => ({ value: code, label: t(`currency.${code}`) }))}
-        onChange={edit((currency: Currency) => changeRent({ currency, monthlyPrice: null }))}
-      />
-      {/* A new key re-creates the amount box when the currency (and its decimals) or the filled-in rent changes. */}
-      <AmountField
-        key={`${rent.currency}-${refills}`}
-        label={t('renterDialog.rent')}
-        currency={rent.currency}
-        value={rent.monthlyPrice}
-        onChange={edit((monthlyPrice: number | null) => changeRent({ ...rent, monthlyPrice }))}
-        hint={t('renterDialog.rentHint', {
-          month: formatYearMonth(start, settings.digitStyle),
-        })}
-        error={showProblems && !rent.monthlyPrice ? t('areaForm.problems.rentRequired') : null}
-      />
+      {/* Who the new renter is beside what they pay, so the form is wide rather than long. */}
+      <div className={styles.dialogColumns}>
+        <fieldset className={styles.dialogSection}>
+          <legend>{t('renterDialog.who')}</legend>
+          <TextField
+            label={t('renterDialog.name')}
+            value={fullName}
+            onChange={setFullName}
+            error={showProblems ? nameProblem : null}
+            maxLength={PERSON_NAME_MAX}
+            autoFocus
+            dir="auto"
+          />
+          <TextField
+            label={t('renterDialog.phone')}
+            value={phone}
+            onChange={setPhone}
+            error={showProblems ? phoneProblem : null}
+            maxLength={PHONE_MAX}
+            inputMode="tel"
+            dir="ltr"
+          />
+        </fieldset>
+        <fieldset className={styles.dialogSection}>
+          <legend>{t('renterDialog.pays')}</legend>
+          <ChoiceGroup
+            label={t('areaForm.currency')}
+            value={rent.currency}
+            choices={CURRENCIES.map((code) => ({ value: code, label: t(`currency.${code}`) }))}
+            onChange={edit((currency: Currency) => changeRent({ currency, monthlyPrice: null }))}
+          />
+          {/* A new key re-creates the amount box when the currency (and its decimals) or the filled-in rent changes. */}
+          <AmountField
+            key={`${rent.currency}-${refills}`}
+            label={t('renterDialog.rent')}
+            currency={rent.currency}
+            value={rent.monthlyPrice}
+            onChange={edit((monthlyPrice: number | null) => changeRent({ ...rent, monthlyPrice }))}
+            hint={t('renterDialog.rentHint', {
+              month: formatYearMonth(start, settings.digitStyle),
+            })}
+            error={showProblems && !rent.monthlyPrice ? t('areaForm.problems.rentRequired') : null}
+          />
+        </fieldset>
+      </div>
       {rentCheck.warnings}
       {problem && <Notice tone="error">{problem}</Notice>}
       <DialogActions>
