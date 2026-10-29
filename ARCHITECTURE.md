@@ -23,7 +23,7 @@ A fully **offline** Windows app for one person (the owner) who rents out many pr
 UX matters more than anything else in this project.
 
 1. **Few screens, plain words.** Use everyday wording ("Money received", "Still owed"), not technical terms. Every user-facing message, including errors, is plain and exists in all three languages.
-2. **Classic layout.** A fixed sidebar on the start side (right in RTL languages, left in English) with big labelled items. It opens collapsed to its icons (every item and the bell count stay visible); one button at its top shows or hides the names. No hidden menus (the one exception: the ⋯ menu on each row of the Areas list, whose actions are also visible buttons on the area page), no hamburger menus, no gestures, no hover-only actions.
+2. **Classic layout.** A fixed sidebar on the start side (right in RTL languages, left in English) with big labelled items. Each item is an icon with its name written under it, always visible; there is nothing to open or close. *(Owner's decision, 2026-10-29.)* No hidden menus (the one exception: the ⋯ menu on each row of the Areas list, whose actions are also visible buttons on the area page), no hamburger menus, no gestures, no hover-only actions.
 3. **One obvious main action per screen.** Every area page has one large primary button: **Record Payment**.
 4. **Readable by default:** base font 18px, buttons at least 48px tall, generous spacing. Font size can be raised in settings.
 5. **Never lose data by mistake:**
@@ -241,7 +241,7 @@ On the area page and in the Areas list, every month box that has rent is a butto
 
 ## 8. Screens
 
-Sidebar items (always visible, large, with icons; the names show when the sidebar is opened): **Home, Areas, Reports, Notifications, Settings.**
+Sidebar items (always visible, each an icon with its name under it): **Home, Areas, Reports, Notifications**, and **Settings** apart at the bottom.
 
 ### 8.1 Lock screen (app start only)
 Large password field and one **Open** button. A "Forgot password?" link goes to recovery (section 10). The app language is the last used.
