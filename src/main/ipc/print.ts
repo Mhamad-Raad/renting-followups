@@ -1,10 +1,7 @@
-import { idInputSchema } from '@shared/categories';
-import { formatReceiptNumber } from '@shared/payments';
 import {
   exportReportSchema,
   PRINT_ROUTES,
   printReadySchema,
-  printReceiptSchema,
   printReportSchema,
   type PrintOutput,
   type PrintResult,
@@ -24,7 +21,7 @@ import {
 import { translate } from '../services/translate';
 import { handle } from './handle';
 
-export function registerPrintIpc({ categories, payments, reports, settings }: Repositories): void {
+export function registerPrintIpc({ categories, reports, settings }: Repositories): void {
   const t = (key: string, values?: Record<string, string>) =>
     translate(settings.getAll().language, key, values);
 
@@ -55,27 +52,6 @@ export function registerPrintIpc({ categories, payments, reports, settings }: Re
   handle('print:ready', printReadySchema, ({ ok }, sender) => {
     printPageReady(sender.webContentsId, ok);
     return null;
-  });
-
-  handle('print:receiptData', idInputSchema, ({ id }) => {
-    const data = payments.printData(id, businessToday().date);
-    return typeof data === 'object' ? data : null;
-  });
-
-  handle('print:receipt', printReceiptSchema, async ({ id, output }) => {
-    const data = payments.printData(id, businessToday().date);
-    if (data === null) return { ok: false, reason: 'not_found' };
-    if (data === 'past_record') return { ok: false, reason: 'past_record' };
-    const number = formatReceiptNumber(data.receipt.receiptNumber ?? 0, 'western');
-    const result = await printOrSave(
-      PRINT_ROUTES.receipt(id),
-      output,
-      false,
-      t('print.fileReceipt', { number }),
-    );
-    // Only a finished print counts, so the next one is stamped "Copy".
-    if (result.ok && result.done !== 'cancelled') payments.markPrinted(id);
-    return result;
   });
 
   handle('print:report', printReportSchema, ({ query, output }) =>

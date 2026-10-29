@@ -58,14 +58,7 @@ import type {
   PaymentVoidResult,
   Receipt,
 } from './payments';
-import type {
-  ExportReportInput,
-  PrintReady,
-  PrintReceiptInput,
-  PrintReportInput,
-  PrintResult,
-  ReceiptPrintData,
-} from './printing';
+import type { ExportReportInput, PrintReady, PrintReportInput, PrintResult } from './printing';
 import type { Report, ReportFilters, ReportQuery } from './reports';
 import type { LogoChoiceResult, Settings, SettingsUpdate } from './settings';
 
@@ -140,8 +133,6 @@ export interface IpcContract {
   'reports:lastFilters': { input: undefined; output: ReportFilters };
   'reports:rememberFilters': { input: ReportFilters; output: null };
   'print:ready': { input: PrintReady; output: null };
-  'print:receiptData': { input: IdInput; output: ReceiptPrintData | null };
-  'print:receipt': { input: PrintReceiptInput; output: PrintResult };
   'print:report': { input: PrintReportInput; output: PrintResult };
   'export:reportExcel': { input: ExportReportInput; output: PrintResult };
   'notifications:list': { input: undefined; output: Reminder[] };
@@ -210,8 +201,6 @@ export const OPEN_WHILE_LOCKED: Record<IpcChannel, boolean> = {
   'reports:lastFilters': false,
   'reports:rememberFilters': false,
   'print:ready': false,
-  'print:receiptData': false,
-  'print:receipt': false,
   'print:report': false,
   'export:reportExcel': false,
   'notifications:list': false,
@@ -275,8 +264,6 @@ export const CHANGES_DATA: Record<IpcChannel, boolean> = {
   'reports:lastFilters': false,
   'reports:rememberFilters': false,
   'print:ready': false,
-  'print:receiptData': false,
-  'print:receipt': false,
   'print:report': false,
   'export:reportExcel': false,
   'notifications:list': false,

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatPlain } from '@shared/formatNumber';
-import { formatReceiptNumber } from '@shared/payments';
 import { LOGO_MAX_MEGABYTES, PRINT_TITLE_MAX } from '@shared/settings';
 import { callIpc, useIpcQuery } from '../../app/ipc';
 import { useMountedRef } from '../../app/useMountedRef';
@@ -117,9 +116,7 @@ export function PrintingSection() {
             logo={logoSrc}
             printTitle={title.trim()}
             titleAs="p"
-            title={t('print.receiptNumber', {
-              number: formatReceiptNumber(1, settings.digitStyle),
-            })}
+            title={t('print.reportTitle')}
           />
         </div>
       </figure>

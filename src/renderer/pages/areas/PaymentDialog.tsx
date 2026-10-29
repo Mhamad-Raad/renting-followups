@@ -32,13 +32,9 @@ const PREVIEW_DELAY_MS = 200;
 /** A new payment, a past record (no receipt number), or a correction of a saved receipt. */
 export type PaymentMode = { kind: 'new' } | { kind: 'past' } | { kind: 'edit'; receipt: Receipt };
 
-/** What the area page needs after a save, to show the message and offer the receipt as a PDF. */
+/** What the area page shows after a save. */
 export interface PaymentSaved {
   message: string;
-  /** Set for a new payment: its receipt. */
-  receipt?: { id: number; receiptNumber: number | null };
-  /** "Save and make receipt PDF" was pressed: save the new receipt as a PDF now. */
-  pdf?: boolean;
 }
 
 interface PaymentDialogProps {
@@ -119,7 +115,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
         ? t('areaForm.problems.not_found')
         : t(`paymentDialog.${result.reason}`);
 
-  const submit = async (pdf = false) => {
+  const submit = async () => {
     setShowProblems(true);
     if (amount === null || amount === 0 || busy) return;
     setBusy(true);
@@ -139,7 +135,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
       setBusy(false);
       return setProblem(result.ok ? explain(result.data) : t('errors.unexpected'));
     }
-    const { id, receiptNumber } = result.data;
+    const { receiptNumber } = result.data;
     onSaved({
       message:
         receiptNumber === null
@@ -147,8 +143,6 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
           : t('paymentDialog.saved', {
               number: formatReceiptNumber(receiptNumber, settings.digitStyle),
             }),
-      receipt: { id, receiptNumber },
-      pdf: pdf && receiptNumber !== null,
     });
   };
 
@@ -191,11 +185,6 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
         <BigButton type="submit" variant="primary" disabled={busy}>
           {t('common.save')}
         </BigButton>
-        {mode.kind === 'new' && (
-          <BigButton disabled={busy} onClick={() => void submit(true)}>
-            {t('print.actions.saveWithPdf')}
-          </BigButton>
-        )}
         <BigButton onClick={onClose}>{t('common.cancel')}</BigButton>
       </DialogActions>
     </Form>

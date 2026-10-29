@@ -6,7 +6,6 @@ import { callIpc } from '../app/ipc';
 import { useMountedRef } from '../app/useMountedRef';
 
 export type PrintJob =
-  | { kind: 'receipt'; id: number; output: PrintOutput }
   | { kind: 'report'; query: ReportQuery; output: PrintOutput }
   | { kind: 'excel'; query: ReportQuery };
 
@@ -44,11 +43,9 @@ export function usePrint() {
       setBusy(true);
       setMessage(null);
       const result =
-        job.kind === 'receipt'
-          ? await callIpc('print:receipt', { id: job.id, output: job.output })
-          : job.kind === 'report'
-            ? await callIpc('print:report', { query: job.query, output: job.output })
-            : await callIpc('export:reportExcel', { query: job.query });
+        job.kind === 'report'
+          ? await callIpc('print:report', { query: job.query, output: job.output })
+          : await callIpc('export:reportExcel', { query: job.query });
       if (!mounted.current) return;
       setBusy(false);
       setMessage(describe(t, result.ok ? result.data : null, job));

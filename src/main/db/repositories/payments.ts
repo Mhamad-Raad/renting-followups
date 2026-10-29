@@ -1,6 +1,5 @@
 import type { Currency } from '@shared/currency';
-import { monthIndex, type BusinessToday, type DateString, type YearMonth } from '@shared/dates';
-import type { ReceiptPrintData } from '@shared/printing';
+import { monthIndex, type BusinessToday, type YearMonth } from '@shared/dates';
 import type {
   Allocation,
   AllocationResult,
@@ -91,20 +90,6 @@ export function createPaymentRepository(
   );
   const updateReceipt = db.prepare<[number, string, string, number]>(
     'UPDATE receipts SET total_amount = ?, paid_on = ?, note = ? WHERE id = ?',
-  );
-  const selectPrintExtra = db.prepare<
-    [number],
-    { area_name: string; renter_phone_snapshot: string | null; print_count: number }
-  >(
-    // The receipt already names the renter, so an area without a name is shown by its category.
-    `SELECT COALESCE(NULLIF(a.name, ''), c.name) AS area_name, r.renter_phone_snapshot, r.print_count
-     FROM receipts r
-     JOIN areas a ON a.id = r.area_id
-     JOIN categories c ON c.id = a.category_id
-     WHERE r.id = ?`,
-  );
-  const addPrint = db.prepare<[number]>(
-    'UPDATE receipts SET print_count = print_count + 1 WHERE id = ?',
   );
   const markVoided = db.prepare<[number]>(
     `UPDATE receipts SET voided_at = ${NOW_SQL} WHERE id = ?`,
@@ -296,30 +281,6 @@ export function createPaymentRepository(
         .all(areaId)
         .filter((row) => byReceipt.get(row.id)?.some(inPeriod))
         .map((row) => toReceipt(row, byReceipt.get(row.id) ?? []));
-    },
-
-    /**
-     * What a receipt page shows. Null when it does not exist, is cancelled or
-     * belongs to a deleted area; 'past_record' for a past payment, which has
-     * no receipt number and is never printed as a receipt.
-     */
-    printData(id: number, printedOn: DateString): ReceiptPrintData | 'past_record' | null {
-      const row = selectReceipt.get(id);
-      const extra = selectPrintExtra.get(id);
-      if (!row || !extra || row.voided_at !== null) return null;
-      if (row.is_backfill === 1) return 'past_record';
-      return {
-        receipt: toReceipt(row, selectAllocationsForReceipt.all(id)),
-        areaName: extra.area_name,
-        renterPhone: extra.renter_phone_snapshot,
-        printCount: extra.print_count,
-        printedOn,
-      };
-    },
-
-    /** Counts a finished print, so every later print is stamped "Copy". */
-    markPrinted(id: number): void {
-      addPrint.run(id);
     },
   };
 }

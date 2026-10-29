@@ -3,7 +3,6 @@ import { AuthGate } from './AuthGate';
 import { CrashScreen } from './CrashScreen';
 import { ErrorBoundary } from './ErrorBoundary';
 import { PrintLayout } from '../print/PrintLayout';
-import { ReceiptPrint } from '../print/ReceiptPrint';
 import { ReportPrint } from '../print/ReportPrint';
 import { Layout } from './Layout';
 import { INNER_ROUTES, NAV_ITEMS } from './routes';
@@ -22,7 +21,6 @@ export function App() {
             <Routes>
               {/* Print pages: no sidebar; opened by the main process in hidden windows. */}
               <Route element={<PrintLayout />}>
-                <Route path="/print/receipt/:id" element={<ReceiptPrint />} />
                 <Route path="/print/report" element={<ReportPrint />} />
               </Route>
               <Route element={<Layout />}>

@@ -154,14 +154,6 @@
   font-size: var(--text-md);
 }
 
-/* The saved message with its receipt button beside it. */
-.saved {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3) var(--space-5);
-}
-
 .filter {
   display: flex;
   flex-wrap: wrap;

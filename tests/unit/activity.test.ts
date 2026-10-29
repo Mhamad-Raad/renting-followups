@@ -90,7 +90,6 @@ describe('activity log', () => {
       ['receipt', 'Shops | Aram'],
       ['area', 'Shops | Aram'],
     ]);
-    expect(repos.payments.printData(paid.id, '2026-05-10')).toMatchObject({ areaName: 'Shops' });
 
     // A new renter later does not rename the old entries.
     repos.areas.changeRenter({

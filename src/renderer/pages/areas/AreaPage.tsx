@@ -79,8 +79,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
       period.refresh();
       return;
     }
-    // A month marked as paid made a receipt, which the message offers as a PDF like any new payment.
-    actions.done(outcome.text, outcome.receipt ?? null);
+    actions.done(outcome.text);
   });
 
   return (
@@ -130,8 +129,6 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
           currentYear={today.year}
           onEdit={(receipt) => open({ kind: 'payment', mode: { kind: 'edit', receipt } })}
           onCancel={(receipt) => open({ kind: 'cancelReceipt', receipt })}
-          onSavePdf={(receipt) => actions.saveReceiptPdf(receipt.id)}
-          saving={actions.saving}
           onPickMonth={(box) =>
             void monthPick.pick({
               areaId: area.id,

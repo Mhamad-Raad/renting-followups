@@ -4,11 +4,8 @@ import type { AreaDetails } from '@shared/areas';
 import type { Receipt } from '@shared/payments';
 import { callIpc } from '../../app/ipc';
 import { useMountedRef } from '../../app/useMountedRef';
-import { BigButton } from '../../components/BigButton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Notice } from '../../components/Notice';
-import { usePrint } from '../../print/usePrint';
-import styles from './AreaPage.module.css';
 import type { AreaAction } from './links';
 import { PaymentDialog, type PaymentMode, type PaymentSaved } from './PaymentDialog';
 import { PriceDialog, type PriceMode } from './PriceDialog';
@@ -32,8 +29,6 @@ export const ACTION_DIALOGS: Record<AreaAction, AreaDialog> = {
   delete: { kind: 'delete' },
 };
 
-type SavedReceipt = NonNullable<PaymentSaved['receipt']>;
-
 interface AreaActionOptions {
   /** Something about the area changed: load it again. */
   onChanged: () => void;
@@ -45,7 +40,7 @@ interface AreaActionOptions {
 
 /**
  * The actions that change one area (payments, price, vacant, renter, delete),
- * their dialogs, and the message after them with Save receipt as PDF. The
+ * their dialogs, and the message after them. The
  * area page and the Areas list share it, so both behave the same.
  */
 export function useAreaActions(
@@ -57,19 +52,13 @@ export function useAreaActions(
   const [dialog, setDialog] = useState<AreaDialog | null>(initialDialog);
   const [notice, setNotice] = useState<string | null>(initialNotice);
   const [problem, setProblem] = useState<string | null>(null);
-  // The payment just saved, whose receipt the message offers as a PDF.
-  const [saved, setSaved] = useState<SavedReceipt | null>(null);
-  const printing = usePrint();
-  // Receipts are only ever saved as PDF from here (owner's decision); printing is done from the PDF.
-  const saveReceiptPdf = (id: number) => void printing.run({ kind: 'receipt', id, output: 'pdf' });
   const close = () => setDialog(null);
 
-  /** A change was saved: say so, and offer its receipt as a PDF when it made one. */
-  const done = (message: string, receipt: SavedReceipt | null = null) => {
+  /** A change was saved: say so. */
+  const done = (message: string) => {
     setDialog(null);
     setProblem(null);
     setNotice(message);
-    setSaved(receipt);
     onChanged();
   };
 
@@ -78,10 +67,7 @@ export function useAreaActions(
     setProblem(message);
   };
 
-  const paymentSaved = ({ message, receipt, pdf }: PaymentSaved) => {
-    done(message, receipt ?? null);
-    if (pdf && receipt) saveReceiptPdf(receipt.id);
-  };
+  const paymentSaved = ({ message }: PaymentSaved) => done(message);
 
   // A cancelled receipt stays listed, and its number is never reused.
   const cancelReceipt = async (id: number, message: string) => {
@@ -104,20 +90,8 @@ export function useAreaActions(
 
   const feedback: ReactNode = (
     <>
-      {notice && (
-        <Notice tone="success">
-          <div className={styles.saved}>
-            <span>{notice}</span>
-            {saved && saved.receiptNumber !== null && (
-              <BigButton disabled={printing.busy} onClick={() => saveReceiptPdf(saved.id)}>
-                {t('print.actions.receiptPdf')}
-              </BigButton>
-            )}
-          </div>
-        </Notice>
-      )}
+      {notice && <Notice tone="success">{notice}</Notice>}
       {problem && <Notice tone="error">{problem}</Notice>}
-      {printing.message && <Notice tone={printing.message.tone}>{printing.message.text}</Notice>}
     </>
   );
 
@@ -168,8 +142,6 @@ export function useAreaActions(
     open: setDialog,
     done,
     fail,
-    saveReceiptPdf,
-    saving: printing.busy,
     feedback,
     dialogs,
   };

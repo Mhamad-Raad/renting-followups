@@ -10,13 +10,10 @@ interface ReceiptListProps {
   receipts: readonly Receipt[];
   onEdit: (receipt: Receipt) => void;
   onCancel: (receipt: Receipt) => void;
-  onSavePdf: (receipt: Receipt) => void;
-  /** A PDF is being saved: its buttons wait. */
-  saving: boolean;
 }
 
 /** The area's payments, newest first. Cancelled ones stay listed, crossed out. */
-export function ReceiptList({ receipts, onEdit, onCancel, onSavePdf, saving }: ReceiptListProps) {
+export function ReceiptList({ receipts, onEdit, onCancel }: ReceiptListProps) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const digits = settings.digitStyle;
@@ -54,12 +51,6 @@ export function ReceiptList({ receipts, onEdit, onCancel, onSavePdf, saving }: R
           </div>
           {!receipt.voided && (
             <div className={styles.actions}>
-              {/* Past records have no receipt number and are never printed as receipts. */}
-              {receipt.receiptNumber !== null && (
-                <BigButton disabled={saving} onClick={() => onSavePdf(receipt)}>
-                  {t('print.actions.receiptPdf')}
-                </BigButton>
-              )}
               <BigButton onClick={() => onEdit(receipt)}>{t('common.edit')}</BigButton>
               <BigButton onClick={() => onCancel(receipt)}>{t('receipts.cancel')}</BigButton>
             </div>
