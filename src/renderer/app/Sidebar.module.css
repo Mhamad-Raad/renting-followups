@@ -3,50 +3,27 @@
   top: 0;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: var(--space-5);
   width: var(--sidebar-width);
   height: 100vh;
-  padding: var(--space-5) var(--space-3);
+  padding: var(--space-4) var(--space-2);
   background: var(--color-surface);
   border-inline-end: 1px solid var(--color-border);
   overflow-x: hidden;
   overflow-y: auto;
-  transition: width var(--duration-normal) var(--ease);
-}
-
-/* Icons only, still every item and the bell count: nothing is hidden behind the button. */
-.collapsed {
-  width: var(--sidebar-width-collapsed);
-}
-
-/* The logo above the name, so a long name never squeezes beside it. */
-.appName {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-2);
-  padding-inline: var(--space-3);
-  font-size: var(--text-lg);
-  font-weight: 700;
-  color: var(--color-accent);
 }
 
 .logo {
-  width: 3.5rem;
-  height: 3.5rem;
+  align-self: center;
+  width: 3rem;
+  height: 3rem;
   flex-shrink: 0;
-  transition:
-    width var(--duration-normal) var(--ease),
-    height var(--duration-normal) var(--ease);
-}
-
-.collapsed .logo {
-  width: 2.5rem;
-  height: 2.5rem;
 }
 
 .list {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: var(--space-2);
   margin: 0;
@@ -54,37 +31,35 @@
   list-style: none;
 }
 
+/* Settings stands apart at the bottom, away from the everyday pages. */
+.last {
+  margin-block-start: auto;
+}
+
+/* Each page: its icon with the name written under it, a large target. */
 .link {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-3);
-  min-height: calc(var(--control-height) + 0.5rem);
-  padding-inline: var(--space-4);
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-1);
   border-radius: var(--radius-md);
-  border-inline-start: 4px solid transparent;
-  background: none;
-  border-block: 0;
-  border-inline-end: 0;
   color: var(--color-text);
-  font: inherit;
-  font-size: var(--text-lg);
-  text-align: start;
+  font-size: var(--text-sm);
+  line-height: 1.25;
+  text-align: center;
   text-decoration: none;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background-color var(--duration-fast) var(--ease),
-    border-color var(--duration-fast) var(--ease);
+  transition: background-color var(--duration-fast) var(--ease);
 }
 
 .link:hover {
   background: var(--color-surface-muted);
 }
 
-/* The current page: tinted, bold and marked with a bar, not by colour alone. */
+/* The current page: a filled block in the theme colour, bold, not marked by colour alone. */
 .active {
   background: var(--color-accent-soft);
-  border-inline-start-color: var(--color-accent);
+  color: var(--color-accent);
   font-weight: 700;
 }
 
@@ -92,17 +67,23 @@
   background: var(--color-accent-soft);
 }
 
+.name {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
 /* The icon holds the reminder count on its corner, like a bell with a number. */
 .icon {
   position: relative;
   display: inline-flex;
+  font-size: 1.5rem;
 }
 
 /* The number of reminders on the bell: one soft pulse when it changes, never looping. */
 .badge {
   position: absolute;
   /* Starts at the bell's middle and grows away from it, so even "99+" leaves the bell visible. */
-  inset-block-start: -0.8rem;
+  inset-block-start: -0.6rem;
   inset-inline-start: 55%;
   min-width: 1.4rem;
   padding: 0 0.3rem;

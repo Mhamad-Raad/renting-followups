@@ -142,24 +142,21 @@ test('the window starts maximized and never gets smaller than 1100×700', async 
   }
 });
 
-test('the sidebar opens collapsed to its icons and shows the names on request', async () => {
+test('the sidebar always shows every page by icon and name, Settings last', async () => {
   const dataDir = createDataDir();
   const { app, page } = await launchUnlocked(dataDir);
   try {
     const sidebar = page.getByRole('navigation');
-    const toggle = sidebar.getByRole('button');
-    const widthOf = async () => (await sidebar.boundingBox())?.width ?? 0;
-    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    await expect(sidebar.getByRole('link')).toHaveCount(5);
-    const collapsedWidth = await widthOf();
-
-    await toggle.click();
-    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    await expect.poll(widthOf).toBeGreaterThan(collapsedWidth * 2);
-
-    await toggle.click();
-    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    await expect.poll(widthOf).toBeCloseTo(collapsedWidth, 0);
+    await expect(sidebar.getByRole('button')).toHaveCount(0);
+    const links = sidebar.getByRole('link');
+    await expect(links).toHaveCount(5);
+    for (const link of await links.all()) await expect(link).toBeVisible();
+    // Settings stands apart at the bottom.
+    const notifications = await links.nth(3).boundingBox();
+    const settings = await links.nth(4).boundingBox();
+    expect(
+      (settings?.y ?? 0) - ((notifications?.y ?? 0) + (notifications?.height ?? 0)),
+    ).toBeGreaterThan(100);
   } finally {
     await app.close();
     removeDataDir(dataDir);
