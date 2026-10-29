@@ -211,9 +211,86 @@ describe('price changes share paid money out again', () => {
         { areaId, from: { year: 2026, month: 6 }, monthlyPrice: 0 },
         TODAY.month,
       ),
-    ).toEqual({ ok: false, reason: 'no_room' });
+    ).toEqual({
+      ok: false,
+      reason: 'no_room',
+      vacantPayments: [
+        {
+          receiptId: id,
+          receiptNumber: 1,
+          months: [{ year: 2026, month: 6 }],
+          amount: RENT,
+          cancels: true,
+        },
+      ],
+    });
     expect(repos.areas.get(areaId)?.prices).toHaveLength(1);
     expect(months(id)).toEqual([[6, RENT]]);
+  });
+
+  it('lists each receipt paying months that would become vacant', () => {
+    const early = payOk({ amount: 3 * RENT, from: { year: 2026, month: 4 } });
+    const later = payOk({ amount: RENT, from: { year: 2026, month: 7 } });
+    const impact = repos.priceChanges.priceChangeImpact(
+      { areaId, from: { year: 2026, month: 6 }, monthlyPrice: 0 },
+      TODAY.month,
+    );
+    expect(impact).toEqual({
+      ok: false,
+      reason: 'no_room',
+      vacantPayments: [
+        {
+          receiptId: early.id,
+          receiptNumber: 1,
+          months: [{ year: 2026, month: 6 }],
+          amount: RENT,
+          cancels: false,
+        },
+        {
+          receiptId: later.id,
+          receiptNumber: 2,
+          months: [{ year: 2026, month: 7 }],
+          amount: RENT,
+          cancels: true,
+        },
+      ],
+    });
+  });
+
+  it('can take the paid vacant months out and mark vacant in one step', () => {
+    const early = payOk({ amount: 3 * RENT, from: { year: 2026, month: 4 } });
+    const later = payOk({ amount: RENT, from: { year: 2026, month: 7 } });
+    expect(
+      repos.priceChanges.changePrice(
+        { areaId, from: { year: 2026, month: 6 }, monthlyPrice: 0, takeOutVacantMonths: true },
+        TODAY.month,
+      ),
+    ).toEqual({ ok: true });
+    expect(months(early.id)).toEqual([
+      [4, RENT],
+      [5, RENT],
+    ]);
+    const after = receipts();
+    expect(after.find((receipt) => receipt.id === early.id)).toMatchObject({
+      receiptNumber: 1,
+      totalAmount: 2 * RENT,
+      voided: false,
+    });
+    expect(after.find((receipt) => receipt.id === later.id)?.voided).toBe(true);
+    expect(repos.areas.get(areaId)?.prices.at(-1)).toMatchObject({ month: 6, monthlyPrice: 0 });
+    expect(repos.areas.get(areaId)?.renters[0]?.endedOn).toBe('2026-06-01');
+  });
+
+  it('taking out leaves months that keep their rent alone', () => {
+    const { id } = payOk({ amount: 2 * RENT, from: { year: 2026, month: 6 } });
+    changePrice(7, RENT);
+    expect(
+      repos.priceChanges.changePrice(
+        { areaId, from: { year: 2026, month: 6 }, monthlyPrice: 0, takeOutVacantMonths: true },
+        TODAY.month,
+      ),
+    ).toEqual({ ok: true });
+    expect(months(id)).toEqual([[7, RENT]]);
   });
 
   it('marking vacant moves the money to the next month with rent', () => {

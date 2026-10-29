@@ -3,6 +3,7 @@ import {
   type PriceChange,
   type PriceChangeImpact,
   type PriceChangeResult,
+  type VacantPayment,
 } from '@shared/areas';
 import { monthIndex, toDateString, type YearMonth } from '@shared/dates';
 import { priceForMonth, withPriceFrom, type PriceRow } from '@shared/prices';
@@ -12,6 +13,7 @@ import type { Db } from '../connection';
 import type { AllocationRepository } from './allocations';
 import type { AreaRepository } from './areas';
 import type { AuditRepository } from './audit';
+import type { MonthPaymentRepository } from './monthPayments';
 import type { PriceRepository } from './prices';
 import type { RenterRepository } from './renters';
 
@@ -19,14 +21,18 @@ interface Dependencies {
   allocations: AllocationRepository;
   areas: AreaRepository;
   audit: AuditRepository;
+  monthPayments: MonthPaymentRepository;
   prices: PriceRepository;
   renters: RenterRepository;
 }
 
+/** Money that would have no month to go to; thrown so the whole save is undone. */
+class NoRoom extends Error {}
+
 /** Changing an area's rent from a month onward, and sharing paid money out again. */
 export function createPriceChangeRepository(
   db: Db,
-  { allocations, areas, audit, prices, renters }: Dependencies,
+  { allocations, areas, audit, monthPayments, prices, renters }: Dependencies,
 ) {
   /**
    * A vacant area has no renter: the current one leaves on the first day of
@@ -79,6 +85,75 @@ export function createPriceChangeRepository(
     return { now, plan: reshare(affected, kept, newPrices, today) };
   };
 
+  /**
+   * The receipts paying months from `from` onward that `newPrices` make vacant,
+   * oldest receipt first; such money has nowhere to go. A receipt that pays
+   * nothing else would be cancelled by taking those months out.
+   */
+  const vacantPayments = (
+    areaId: number,
+    from: YearMonth,
+    newPrices: readonly PriceRow[],
+  ): VacantPayment[] => {
+    const fromIndex = monthIndex(from);
+    const payments = new Map<number, VacantPayment>();
+    const paysOtherMonths = new Set<number>();
+    for (const row of allocations.countingForArea(areaId)) {
+      if (monthIndex(row) < fromIndex || priceForMonth(newPrices, row) !== 0) {
+        paysOtherMonths.add(row.receiptId);
+        continue;
+      }
+      const payment = payments.get(row.receiptId) ?? {
+        receiptId: row.receiptId,
+        receiptNumber: row.receiptNumber,
+        months: [],
+        amount: 0,
+        cancels: false,
+      };
+      payment.months.push({ year: row.year, month: row.month });
+      payment.amount += row.amount;
+      payments.set(row.receiptId, payment);
+    }
+    return [...payments.values()].map((payment) => ({
+      ...payment,
+      cancels: !paysOtherMonths.has(payment.receiptId),
+    }));
+  };
+
+  const save = db.transaction(
+    (
+      { areaId, from, monthlyPrice, takeOutVacantMonths }: PriceChange,
+      today: YearMonth,
+    ): PriceChangeResult => {
+      if (!areas.isActive(areaId)) return { ok: false, reason: 'not_found' };
+      const history = prices.forArea(areaId);
+      if (isBeforeRentStart(history, from)) return { ok: false, reason: 'before_rent_start' };
+      const after = withPriceFrom(history, from, monthlyPrice);
+      if (takeOutVacantMonths) {
+        const months = new Map<number, YearMonth>();
+        for (const payment of vacantPayments(areaId, from, after)) {
+          for (const month of payment.months) months.set(monthIndex(month), month);
+        }
+        for (const month of months.values()) monthPayments.takeOut({ areaId, ...month });
+      }
+      const { plan } = planReshare(areaId, from, after, today);
+      // Thrown so that any months already taken out are put back.
+      if (!plan.ok) throw new NoRoom();
+      prices.set(areaId, from, monthlyPrice);
+      for (const [receiptId, months] of plan.byReceipt) {
+        allocations.replaceFrom(receiptId, areaId, from, months);
+      }
+      audit.record('change_price', 'area', areaId, {
+        from,
+        previousPrice: priceForMonth(history, from),
+        monthlyPrice,
+        resharedReceipts: [...plan.byReceipt.keys()],
+      });
+      if (monthlyPrice === 0) endRenterForVacancy(areaId, from);
+      return { ok: true };
+    },
+  );
+
   return {
     /**
      * What a price change would do to money already paid: the receipts from
@@ -91,7 +166,9 @@ export function createPriceChangeRepository(
       const before = prices.forArea(change.areaId);
       const after = withPriceFrom(before, change.from, change.monthlyPrice);
       const { now, plan } = planReshare(change.areaId, change.from, after, today);
-      if (!plan.ok) return plan;
+      if (!plan.ok) {
+        return { ...plan, vacantPayments: vacantPayments(change.areaId, change.from, after) };
+      }
       return {
         ok: true,
         changes: statusChanges(before, after, now, plan.paid, change.from, today),
@@ -100,31 +177,19 @@ export function createPriceChangeRepository(
 
     /**
      * A new price from a month onward. Earlier months keep their price; 0 means
-     * vacant, which also ends the current renter. Money already paid from that month onward is shared out again
-     * with the new rent, in the same transaction.
+     * vacant, which also ends the current renter. Money already paid from that
+     * month onward is shared out again with the new rent, in the same
+     * transaction; with `takeOutVacantMonths`, paid months that become vacant
+     * are first taken out of their receipts (as clicking their month box does).
      */
-    changePrice: db.transaction(
-      ({ areaId, from, monthlyPrice }: PriceChange, today: YearMonth): PriceChangeResult => {
-        if (!areas.isActive(areaId)) return { ok: false, reason: 'not_found' };
-        const history = prices.forArea(areaId);
-        if (isBeforeRentStart(history, from)) return { ok: false, reason: 'before_rent_start' };
-        const after = withPriceFrom(history, from, monthlyPrice);
-        const { plan } = planReshare(areaId, from, after, today);
-        if (!plan.ok) return plan;
-        prices.set(areaId, from, monthlyPrice);
-        for (const [receiptId, months] of plan.byReceipt) {
-          allocations.replaceFrom(receiptId, areaId, from, months);
-        }
-        audit.record('change_price', 'area', areaId, {
-          from,
-          previousPrice: priceForMonth(history, from),
-          monthlyPrice,
-          resharedReceipts: [...plan.byReceipt.keys()],
-        });
-        if (monthlyPrice === 0) endRenterForVacancy(areaId, from);
-        return { ok: true };
-      },
-    ),
+    changePrice(change: PriceChange, today: YearMonth): PriceChangeResult {
+      try {
+        return save(change, today);
+      } catch (error) {
+        if (error instanceof NoRoom) return { ok: false, reason: 'no_room' };
+        throw error;
+      }
+    },
   };
 }
 

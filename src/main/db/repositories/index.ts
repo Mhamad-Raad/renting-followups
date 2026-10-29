@@ -28,6 +28,7 @@ export function createRepositories(db: Db) {
   const allocations = createAllocationRepository(db);
   const payments = createPaymentRepository(db, { allocations, audit, paid, prices, renters });
   const areas = createAreaRepository(db, { audit, categories, prices, renters });
+  const monthPayments = createMonthPaymentRepository(db, { areas, audit, payments });
   return {
     settings: createSettingsRepository(db),
     credentials: createCredentialsRepository(db),
@@ -35,10 +36,17 @@ export function createRepositories(db: Db) {
     categories,
     areas,
     areaViews: createAreaViewRepository(db, { areas, paid, prices }),
-    priceChanges: createPriceChangeRepository(db, { allocations, areas, audit, prices, renters }),
+    priceChanges: createPriceChangeRepository(db, {
+      allocations,
+      areas,
+      audit,
+      monthPayments,
+      prices,
+      renters,
+    }),
     paid,
     payments,
-    monthPayments: createMonthPaymentRepository(db, { areas, audit, payments }),
+    monthPayments,
     reports: createReportRepository(db, { paid, prices }),
     activity: createActivityRepository(db),
   };

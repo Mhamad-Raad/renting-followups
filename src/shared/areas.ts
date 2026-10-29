@@ -125,7 +125,13 @@ export type AreaUpdate = z.infer<typeof areaUpdateSchema>;
 
 /** A new price from a month onward; 0 marks the area vacant from that month. */
 export const priceChangeSchema = z
-  .object({ areaId: id, from: yearMonthSchema, monthlyPrice })
+  .object({
+    areaId: id,
+    from: yearMonthSchema,
+    monthlyPrice,
+    /** Take paid months that would become vacant out of their receipts first (see `VacantPayment`). */
+    takeOutVacantMonths: z.boolean().optional(),
+  })
   .strict();
 export type PriceChange = z.infer<typeof priceChangeSchema>;
 
@@ -208,11 +214,28 @@ export type AreaSaveResult =
 export type PriceChangeResult =
   { ok: true } | { ok: false; reason: 'not_found' | 'before_rent_start' | 'no_room' };
 
+/**
+ * A receipt that pays months which a price change would make vacant, and what
+ * taking those months out of it does: it is cancelled when they are all it pays.
+ */
+export interface VacantPayment {
+  receiptId: number;
+  /** Null for a past record. */
+  receiptNumber: number | null;
+  months: YearMonth[];
+  amount: number;
+  cancels: boolean;
+}
+
 /** What a price change would do to money already paid (see `areas:priceChangeImpact`). */
 export type PriceChangeImpact =
   | { ok: true; changes: StatusChange[] }
-  /** Money already paid would have no month to go to (for example vacant from then on). */
-  | { ok: false; reason: 'no_room' };
+  /**
+   * Money already paid would have no month to go to (for example vacant from
+   * then on). `vacantPayments` lists the receipts paying months that would
+   * become vacant; saving with `takeOutVacantMonths` takes those months out.
+   */
+  | { ok: false; reason: 'no_room'; vacantPayments: VacantPayment[] };
 
 export type RenterChangeResult =
   { ok: true } | { ok: false; reason: 'not_found' | 'before_current_renter' };

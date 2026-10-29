@@ -79,6 +79,36 @@ test('record a payment, see the preview and colours, then undo it', async () => 
   }
 });
 
+test('marking a paid area vacant lists the payments and takes them out in one step', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    const { year, month } = await openNewArea(page);
+    await page.getByRole('button', { name: en.area.recordPayment }).click();
+    await page.getByRole('dialog').getByLabel(en.paymentDialog.amount).fill('300000');
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: en.common.save, exact: true })
+      .click();
+    await expect(page.getByText('Payment saved. Receipt No. 0001')).toBeVisible();
+
+    await page.getByRole('button', { name: en.area.markVacant }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: en.common.save }).click();
+    await expect(dialog.getByText(en.priceDialog.vacantPaid)).toBeVisible();
+    await expect(dialog.getByText(/Receipt No\. 0001 is cancelled \(300,000 IQD\)/)).toBeVisible();
+
+    await dialog.getByRole('button', { name: en.priceDialog.takeOutAndSave }).click();
+    await expect(page.getByText(en.priceDialog.vacantSaved)).toBeVisible();
+    const boxes = page.getByRole('list', { name: new RegExp(`${year}`) });
+    await expect(boxes.getByLabel(boxLabel(month, en.months.status.vacant))).toBeVisible();
+    await expect(page.getByText(en.receipts.cancelledLabel, { exact: true })).toBeVisible();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
 test('edit and cancel a receipt, record a past payment, and refuse too much', async () => {
   const dataDir = createDataDir();
   const { app, page } = await launchUnlocked(dataDir);

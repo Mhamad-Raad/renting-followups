@@ -349,7 +349,11 @@
     "warning": "If you save, the money already paid is spread over the months again using the new rent:",
     "statusChange": "Month {{month}}: {{before}} {{paidBefore}} → {{after}} {{paidAfter}}",
     "saveAnyway": "Save anyway",
-    "no_room": "The money already paid from this month would have no month to go to (for example, the area stays vacant). Please cancel or edit those receipts first."
+    "no_room": "The money already paid from this month would have no month to go to (for example, the area stays vacant). Please cancel or edit those receipts first.",
+    "vacantPaid": "These months are already paid, but a vacant area has no rent. To save, their money is taken out of the receipts:",
+    "vacantPaidCancels": "Month {{months}}: {{receipt}} is cancelled ({{amount}}).",
+    "vacantPaidLowers": "Month {{months}}: {{amount}} is taken off {{receipt}}. Its other months stay paid.",
+    "takeOutAndSave": "Take out and save"
   },
   "renterDialog": {
     "title": "Change renter",

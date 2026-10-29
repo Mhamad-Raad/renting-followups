@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AreaDetails } from '@shared/areas';
+import type { AreaDetails, VacantPayment } from '@shared/areas';
 import { FRACTION_DIGITS } from '@shared/currency';
 import type { StatusChange } from '@shared/months';
-import { formatYearMonth, yearMonthOf } from '@shared/dates';
+import { formatMonthRuns, formatYearMonth, yearMonthOf } from '@shared/dates';
+import { isolateNumber } from '@shared/digits';
 import { formatAmount } from '@shared/formatNumber';
+import { formatReceiptNumber } from '@shared/payments';
 import { callIpc } from '../../app/ipc';
 import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
@@ -53,6 +55,8 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
   const [busy, setBusy] = useState(false);
   // Paid months this change would alter; once shown, saving again means "save anyway".
   const [changes, setChanges] = useState<StatusChange[] | null>(null);
+  // Paid months that would become vacant; once shown, saving again takes them out first.
+  const [vacantPayments, setVacantPayments] = useState<VacantPayment[] | null>(null);
   const needsPrice = mode !== 'vacant';
   const rentStart = area.prices[0];
 
@@ -61,14 +65,22 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
     (value: T) => {
       set(value);
       setChanges(null);
+      setVacantPayments(null);
+      setProblem(null);
     };
 
   const submit = async () => {
     setShowProblems(true);
     if ((needsPrice && price === null) || busy) return;
     setBusy(true);
-    const change = { areaId: area.id, from, monthlyPrice: needsPrice ? (price ?? 0) : 0 };
-    if (changes === null) {
+    const takeOut = vacantPayments !== null;
+    const change = {
+      areaId: area.id,
+      from,
+      monthlyPrice: needsPrice ? (price ?? 0) : 0,
+      ...(takeOut && { takeOutVacantMonths: true }),
+    };
+    if (changes === null && !takeOut) {
       const impact = await callIpc('areas:priceChangeImpact', change);
       if (!mounted.current) return;
       // Never save without the check: if it fails, say so and change nothing.
@@ -80,6 +92,8 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
       if (!impact.data.ok || impact.data.changes.length > 0) {
         setBusy(false);
         if (impact.data.ok) setChanges(impact.data.changes);
+        else if (impact.data.vacantPayments.length > 0)
+          setVacantPayments(impact.data.vacantPayments);
         else setProblem(t('priceDialog.no_room'));
         return;
       }
@@ -127,10 +141,15 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
         />
       )}
       {changes && changes.length > 0 && <ChangeWarning changes={changes} area={area} />}
+      {vacantPayments && <VacantPaymentsWarning payments={vacantPayments} area={area} />}
       {problem && <Notice tone="error">{problem}</Notice>}
       <DialogActions>
-        <BigButton type="submit" variant="primary" disabled={busy}>
-          {changes ? t('priceDialog.saveAnyway') : t('common.save')}
+        <BigButton type="submit" variant={vacantPayments ? 'danger' : 'primary'} disabled={busy}>
+          {vacantPayments
+            ? t('priceDialog.takeOutAndSave')
+            : changes
+              ? t('priceDialog.saveAnyway')
+              : t('common.save')}
         </BigButton>
         <BigButton onClick={onClose}>{t('common.cancel')}</BigButton>
       </DialogActions>
@@ -165,6 +184,47 @@ function ChangeWarning({ changes, area }: { changes: readonly StatusChange[]; ar
             })}
           </li>
         ))}
+      </ul>
+    </Notice>
+  );
+}
+
+/**
+ * Paid months that would have no rent once saved, per receipt, for example
+ * "Month 12/2026: Receipt No. 1 is cancelled (20,000 IQD)". Saving again takes
+ * them out of their receipts first.
+ */
+function VacantPaymentsWarning({
+  payments,
+  area,
+}: {
+  payments: readonly VacantPayment[];
+  area: AreaDetails;
+}) {
+  const { t } = useTranslation();
+  const { settings } = useSettings();
+  const digits = settings.digitStyle;
+  const money = (amount: number) =>
+    `${isolateNumber(formatAmount(amount, FRACTION_DIGITS[area.currency], digits), digits)} ${t(`currency.${area.currency}`)}`;
+  return (
+    <Notice tone="error">
+      <p className={styles.warningTitle}>{t('priceDialog.vacantPaid')}</p>
+      <ul className={styles.warningList}>
+        {payments.map((payment) => (
+          <li key={payment.receiptId}>
+            {t(payment.cancels ? 'priceDialog.vacantPaidCancels' : 'priceDialog.vacantPaidLowers', {
+              months: formatMonthRuns(payment.months, digits, t('receipts.separator')),
+              receipt:
+                payment.receiptNumber === null
+                  ? t('receipts.pastRecord')
+                  : t('receipts.number', {
+                      number: formatReceiptNumber(payment.receiptNumber, digits),
+                    }),
+              amount: money(payment.amount),
+            })}
+          </li>
+        ))}
+        <li>{t('monthPick.noUndo')}</li>
       </ul>
     </Notice>
   );

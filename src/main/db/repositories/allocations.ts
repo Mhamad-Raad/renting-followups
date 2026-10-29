@@ -5,6 +5,8 @@ import type { Db } from '../connection';
 /** One month's share of one receipt. */
 export interface AllocationRow extends Allocation {
   receiptId: number;
+  /** Null for a past record. */
+  receiptNumber: number | null;
 }
 
 /** Writes which months each receipt pays. Callers run these inside their own transaction. */
@@ -19,7 +21,7 @@ export function createAllocationRepository(db: Db) {
      WHERE receipt_id = ? AND year * 12 + (month - 1) >= ?`,
   );
   const selectCounting = db.prepare<[number], AllocationRow>(
-    `SELECT a.receipt_id AS receiptId, a.year, a.month, a.amount
+    `SELECT a.receipt_id AS receiptId, r.receipt_number AS receiptNumber, a.year, a.month, a.amount
      FROM payment_allocations a JOIN receipts r ON r.id = a.receipt_id
      WHERE a.area_id = ? AND r.voided_at IS NULL
      ORDER BY r.paid_on, r.id, a.year, a.month`,
