@@ -463,6 +463,7 @@
   "months": {
     "title": "Months of {{year}}",
     "box": "Month {{month}}: {{status}}",
+    "boxPart": "Month {{month}}: {{status}}, {{paid}} of {{expected}}",
     "status": {
       "paid": "Paid",
       "due": "Not paid",

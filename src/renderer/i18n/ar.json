@@ -463,6 +463,7 @@
   "months": {
     "title": "أشهر {{year}}",
     "box": "الشهر {{month}}: {{status}}",
+    "boxPart": "الشهر {{month}}: {{status}}، {{paid}} من {{expected}}",
     "status": {
       "paid": "مدفوع",
       "due": "غير مدفوع",

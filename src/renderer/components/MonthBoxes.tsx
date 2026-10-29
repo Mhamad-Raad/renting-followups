@@ -9,6 +9,9 @@ import styles from './MonthBoxes.module.css';
 type MonthWord = Exclude<MonthStatus, 'not_applicable'> | 'vacant' | 'notStarted';
 
 /** The word for a month. One that is not applicable says why: vacant (rent 0), or rent not started. */
+/** A coming month paid in part: grey like the others, so the strip shows how much is in with a green bar. */
+const isPartPaid = (box: MonthBox) => box.status === 'partial' && box.paid > 0;
+
 /** Lets a line of a month box shrink to fit the box instead of breaking (see `--chars` in the CSS). */
 const fitted = (text: string) => ({ '--chars': Math.max(text.length, 1) }) as CSSProperties;
 
@@ -54,10 +57,13 @@ export const MonthBoxes = memo(function MonthBoxes({
   const { t } = useTranslation();
   const { settings } = useSettings();
   const digits = settings.digitStyle;
+  const amountText = (amount: number) => formatAmount(amount, FRACTION_DIGITS[currency], digits);
   const label = (box: MonthBox) =>
-    t('months.box', {
+    t(isPartPaid(box) ? 'months.boxPart' : 'months.box', {
       month: formatPlain(box.month, digits),
       status: t(`months.status.${monthWord(box)}`),
+      paid: amountText(box.paid),
+      expected: amountText(box.expected ?? 0),
     });
   const canPick = (box: MonthBox) => onPick !== undefined && box.status !== 'not_applicable';
   // A click that just misses a box (a gap, a vacant month) must not open the area behind it either.
@@ -86,7 +92,18 @@ export const MonthBoxes = memo(function MonthBoxes({
             'data-selected': box.month === selected || undefined,
             title: label(box),
           };
-          const number = <span aria-hidden="true">{formatPlain(box.month, digits)}</span>;
+          const number = (
+            <>
+              <span aria-hidden="true">{formatPlain(box.month, digits)}</span>
+              {isPartPaid(box) && (
+                <span
+                  className={styles.paidBar}
+                  style={{ inlineSize: `${(box.paid / (box.expected ?? box.paid)) * 100}%` }}
+                  aria-hidden="true"
+                />
+              )}
+            </>
+          );
           return canPick(box) ? (
             <li key={box.month} className={styles.slot}>
               <button {...cell} {...pickProps(box)}>
@@ -102,8 +119,6 @@ export const MonthBoxes = memo(function MonthBoxes({
       </ol>
     );
   }
-
-  const amountText = (paid: number) => formatAmount(paid, FRACTION_DIGITS[currency], digits);
 
   return (
     <div className={styles.container}>

@@ -463,6 +463,7 @@
   "months": {
     "title": "مانگەکانی {{year}}",
     "box": "مانگی {{month}}: {{status}}",
+    "boxPart": "مانگی {{month}}: {{status}}، {{paid}} لە {{expected}}",
     "status": {
       "paid": "دراوە",
       "due": "نەدراوە",
