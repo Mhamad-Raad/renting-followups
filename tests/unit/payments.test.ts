@@ -155,6 +155,14 @@ describe('recording payments', () => {
     });
     expect(receipts()).toEqual([]);
     expect(repos.payments.preview(999, 1, TODAY.month, TODAY.month, null)).toBeNull();
+    // A receipt id from another area is not used for this area's preview.
+    const { id } = payOk();
+    const other = repos.areas.create(
+      areaInput(repos.categories.list()[0]?.id ?? 0, { name: 'Shop 2', monthlyPrice: 100_000 }),
+    );
+    if (!other.ok) throw new Error('area failed');
+    const foreign = repos.payments.preview(other.id, 1, { year: 2026, month: 1 }, TODAY.month, id);
+    expect(foreign).toMatchObject({ ok: true, months: [{ month: 1, amount: 100_000 }] });
   });
 });
 

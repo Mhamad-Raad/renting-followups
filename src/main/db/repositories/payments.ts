@@ -168,13 +168,15 @@ export function createPaymentRepository(
     ): AllocationResult | null {
       const area = selectAreaCurrency.get(areaId);
       if (!area) return null;
-      const receipt = receiptId === null ? undefined : selectReceipt.get(receiptId);
+      // A receipt of another area is ignored: only this area's receipts can be edited here.
+      const found = receiptId === null ? undefined : selectReceipt.get(receiptId);
+      const receipt = found?.area_id === areaId ? found : undefined;
       const currency = receipt?.currency ?? currencyFrom(areaId, from, area.currency);
-      const planned = plan(areaId, monthCount, from, today, currency, receiptId ?? 0);
-      if (receiptId === null) return planned;
-      const kept = keptMonths(receiptId, monthCount, from);
+      const planned = plan(areaId, monthCount, from, today, currency, receipt?.id ?? 0);
+      if (!receipt) return planned;
+      const kept = keptMonths(receipt.id, monthCount, from);
       if (!kept) {
-        return planned.ok ? { ...planned, months: atOwnRent(receiptId, planned.months) } : planned;
+        return planned.ok ? { ...planned, months: atOwnRent(receipt.id, planned.months) } : planned;
       }
       // The receipt's own months are open to it, so at least that many can be paid.
       const open = Math.max(
