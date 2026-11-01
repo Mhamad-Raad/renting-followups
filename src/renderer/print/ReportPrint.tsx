@@ -18,7 +18,7 @@ import { PrintFrame } from './PrintFrame';
 import { usePrintReady } from './printPage';
 
 /** The share of the table's width each column gets; the notes have the most room of the text. */
-const COLUMN_WIDTHS = ['15%', '7%', '12%', '4.5%', '6.5%', '7%', '7%', '21%', '20.5%'];
+const COLUMN_WIDTHS = ['13.5%', '14%', '12%', '4.5%', '6.5%', '7%', '7%', '21%', '15%'];
 
 /**
  * The upright A4 page's writing area in mm (print.css: margins 14mm and 12mm),
