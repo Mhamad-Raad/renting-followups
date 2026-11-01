@@ -464,3 +464,15 @@ Named in ARCHITECTURE.md for Excel export; pure JavaScript, runs in the main pro
 - **The payment form starts from the current renter's first month:** earlier months and years are not in its selectors, and the main process refuses them (`before_renter`, with a plain message in the three languages).
 - **An earlier renter's unpaid month** (for example their June, after a new renter came in September) can still be paid by clicking its red box, one month at a time; the form does not offer it. This keeps the earlier decision that old debts can be paid.
 - **Note:** "Change renter" alone ends the earlier renter on the new renter's start date, so months between them count as the earlier renter's. When a renter left earlier, mark the place vacant from the month they left first, then add the new renter.
+
+### Whole months only (the business, 2026-11-01)
+
+- A month is paid whole or not at all. Record payment asks "How many months?" and works the amount out; there is no amount to type. This replaces the part payments and the "rest of the rent" wording in the iteration 5 and month-box entries above.
+- A rent change no longer shares paid money out again: months already paid stay paid at the rent they were paid at. This replaces "a price change … shares its money out again" in the entries above. Paid months that would become vacant or another currency still go through Take out and save.
+- Editing a receipt keeps the amount of the months it already paid; only months it newly pays take the current rent.
+
+### Empty places (owner's decisions, 2026-11-01)
+
+- An empty place (no renter now, no rent charged this month) offers no Change price, no Mark as vacant and no Set rent again (removed). Its rent and currency come back with **Add renter** (the Change renter dialog, named so while nobody rents). The main process refuses rent for an empty month without a renter.
+- A place marked empty from too early a month is corrected with Change renter (from the right month, with the rent), then Mark as vacant from the month it really became empty.
+- **Record past payment is not limited to the current renter's months:** a past record is history, so an earlier renter's months can be brought in from old notebooks.
