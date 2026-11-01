@@ -87,26 +87,14 @@
   white-space: nowrap;
 }
 
-/* Turned 90 degrees: field names down the side, fixed widths, a table never splits across pages. */
-.turned {
-  margin-block-end: 5mm;
-  table-layout: fixed;
-  break-inside: avoid;
-}
-
-.turned tbody th {
-  background: #eee;
-  font-weight: 700;
-}
-
 /* The status word under a place's months. */
 .status {
   display: block;
-  margin-block-start: 1mm;
+  margin-block-start: 0.5mm;
   font-weight: 700;
 }
 
-/* The 12 months in two rows of six, so they fit a place's narrow column. */
+/* The months in two rows of six, leaving the room to the text columns. */
 .months ol {
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
@@ -114,4 +102,48 @@
 .notes {
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+}
+
+/* The address under the place's name. */
+.second {
+  display: block;
+  margin-block-start: 0.5mm;
+  color: #333;
+  font-size: 8pt;
+}
+
+/* Fixed column widths, so a long name never pushes the table past the page edge. */
+.table {
+  table-layout: fixed;
+}
+
+/* One upright A4 writing area; print.css sets the margins. Sizes match PAGE in ReportPrint. */
+.uprightPage {
+  position: relative;
+  width: 186mm;
+  height: 269mm;
+  overflow: hidden;
+}
+
+.uprightPage:not(:last-child) {
+  break-after: page;
+}
+
+/* A landscape area turned to read from the bottom of the page to the top. */
+.turned {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 268mm;
+  height: 185mm;
+  transform-origin: top left;
+  transform: translateY(269mm) rotate(-90deg);
+}
+
+/* Measured at the turned page's width, never seen or printed. */
+.measure {
+  position: absolute;
+  width: 268mm;
+  visibility: hidden;
+  pointer-events: none;
 }

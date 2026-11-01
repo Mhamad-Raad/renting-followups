@@ -1,17 +1,11 @@
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
-import { areaLabel } from '@shared/areas';
+import { areaLabel, areaLines } from '@shared/areas';
 import { dateStringFromLocal, formatDate } from '@shared/dates';
 import { formatPlain } from '@shared/formatNumber';
 import { PART_SEPARATOR, reportFilterParts, reportTitle } from '@shared/reportText';
-import type { CurrencyFigures } from '@shared/months';
-import {
-  reportQuerySchema,
-  type ReportQuery,
-  type ReportRow,
-  type ReportTotal,
-} from '@shared/reports';
+import { reportQuerySchema, type ReportQuery, type ReportRow } from '@shared/reports';
 import { useIpcQuery } from '../app/ipc';
 import { useSettings } from '../app/SettingsContext';
 import { MoneyText } from '../components/MoneyText';
@@ -23,20 +17,15 @@ import styles from './print.module.css';
 import { PrintFrame } from './PrintFrame';
 import { usePrintReady } from './printPage';
 
-/** Places side by side in one table; more would squeeze their columns too far. */
-const PLACES_PER_TABLE = 3;
-/** The column of field names down the side, then the share of each place, in percent. */
-const LABEL_WIDTH = 19;
-const PLACE_WIDTH = (100 - LABEL_WIDTH) / PLACES_PER_TABLE;
+/** The share of the table's width each column gets; the notes have the most room of the text. */
+const COLUMN_WIDTHS = ['15%', '8%', '11%', '9.5%', '5%', '7%', '7.5%', '7.5%', '13%', '16.5%'];
 
-/** Splits the places into the groups that share one table. */
-function inTables<T>(rows: readonly T[]): T[][] {
-  const tables: T[][] = [];
-  for (let start = 0; start < rows.length; start += PLACES_PER_TABLE) {
-    tables.push(rows.slice(start, start + PLACES_PER_TABLE));
-  }
-  return tables;
-}
+/**
+ * The upright A4 page's writing area in mm (print.css: margins 14mm and 12mm),
+ * less a little, so a full page never spills onto an empty one.
+ */
+const PAGE = { long: 268, short: 185 };
+const PX_PER_MM = 96 / 25.4;
 
 /** The query in the address, checked like every other input; null when it is not valid. */
 function parseQuery(raw: string | null): ReportQuery | null {
@@ -50,9 +39,9 @@ function parseQuery(raw: string | null): ReportQuery | null {
 }
 
 /**
- * The printed report (ARCHITECTURE.md sections 8.5 and 14): A4 upright, turned
- * 90 degrees (field names down the side, each place a column), the totals per
- * currency at the end and page numbers.
+ * The printed report (ARCHITECTURE.md sections 8.5 and 14): its table turned
+ * sideways on upright A4 pages, the column names repeated on every page,
+ * totals per currency at the end and page numbers.
  */
 export function ReportPrint() {
   const [params] = useSearchParams();
@@ -77,10 +66,13 @@ export function ReportPaper({ query, preview = false }: { query: ReportQuery; pr
   const report = useIpcQuery('reports:build', query);
   const categories = useIpcQuery('categories:list');
   const loaded = report.state.status !== 'loading' && categories.state.status !== 'loading';
-  usePrintReady(loaded && !preview ? report.state.status === 'ready' : null);
+  // The print page is ready once its pages are laid out (or there is nothing to lay out).
+  const [laidOut, setLaidOut] = useState(false);
+  const failed = report.state.status === 'error';
+  usePrintReady(loaded && !preview && (laidOut || failed) ? !failed : null);
   if (report.state.status !== 'ready') return null;
 
-  const { rows } = report.state.data;
+  const { rows, totals } = report.state.data;
   const categoryName =
     categories.state.status === 'ready'
       ? (categories.state.data.find((category) => category.id === query.categoryId)?.name ?? null)
@@ -110,172 +102,246 @@ export function ReportPaper({ query, preview = false }: { query: ReportQuery; pr
         t('print.printedOn', { date: formatDate(dateStringFromLocal(new Date()), digits) }),
       ]}
     >
-      {inTables(rows).map((places) => (
-        <PlacesTable key={places[0]?.id} places={places} year={query.year} month={query.month} />
-      ))}
-      <TotalsTable totals={report.state.data.totals} />
-      <p className={styles.detail}>
-        {t('reports.footer', {
-          december: formatPlain(12, digits),
-          november: formatPlain(11, digits),
-        })}
-      </p>
+      {(heading) => (
+        <SidewaysPages
+          heading={heading}
+          rows={rows}
+          onLaidOut={() => setLaidOut(true)}
+          table={(pageRows, last) => (
+            <table className={styles.table}>
+              <colgroup>
+                {COLUMN_WIDTHS.map((width, index) => (
+                  <col key={index} style={{ width }} />
+                ))}
+              </colgroup>
+              <thead>
+                <tr>
+                  <th scope="col">{t('reports.columns.area')}</th>
+                  <th scope="col">{t('area.category')}</th>
+                  <th scope="col">{t('reports.columns.renter')}</th>
+                  <th scope="col">{t('area.phone')}</th>
+                  <th scope="col">{t('areaForm.currency')}</th>
+                  <th scope="col">{t('reports.columns.rent')}</th>
+                  <th scope="col">{t('reports.columns.received')}</th>
+                  <th scope="col">{t('reports.columns.remaining')}</th>
+                  <th scope="col">
+                    {t('months.title', { year: formatPlain(query.year, digits) })}
+                  </th>
+                  <th scope="col">{t('area.notes')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageRows.map((row) => (
+                  <PlaceRow key={row.id} row={row} query={query} />
+                ))}
+              </tbody>
+              {last && (
+                <tfoot>
+                  {totals.map((total) => (
+                    <tr key={total.currency}>
+                      <th scope="row" colSpan={4}>
+                        {t('reports.total', {
+                          currency: t(`currency.${total.currency}`),
+                          number: formatPlain(total.areas, digits),
+                        })}
+                      </th>
+                      <td>{t(`currency.${total.currency}`)}</td>
+                      <td className={styles.money}>
+                        <MoneyText
+                          amount={total.rent}
+                          currency={total.currency}
+                          withCurrency={false}
+                        />
+                      </td>
+                      <td className={styles.money}>
+                        <MoneyText
+                          amount={total.received}
+                          currency={total.currency}
+                          withCurrency={false}
+                        />
+                      </td>
+                      <td className={styles.money}>
+                        <MoneyText
+                          amount={total.remaining}
+                          currency={total.currency}
+                          withCurrency={false}
+                        />
+                      </td>
+                      <td colSpan={2} />
+                    </tr>
+                  ))}
+                </tfoot>
+              )}
+            </table>
+          )}
+          footer={
+            <p className={styles.detail}>
+              {t('reports.footer', {
+                december: formatPlain(12, digits),
+                november: formatPlain(11, digits),
+              })}
+            </p>
+          }
+        />
+      )}
     </PrintFrame>
   );
 }
 
-interface PlacesTableProps {
-  places: readonly ReportRow[];
-  year: number;
-  month: number | null;
+/** One place's row: the columns of the printed report. */
+function PlaceRow({ row, query }: { row: ReportRow; query: ReportQuery }) {
+  const { t } = useTranslation();
+  const chosen = query.month === null ? null : row.boxes.find((box) => box.month === query.month);
+  const lines = areaLines(row);
+  return (
+    <tr>
+      <td>
+        <span className={styles.strong}>
+          <bdi>{lines.title}</bdi>
+        </span>
+        {lines.subline && !lines.sublineIsCategory && (
+          <span className={styles.second}>
+            <bdi>{lines.subline}</bdi>
+          </span>
+        )}
+      </td>
+      <td>
+        <bdi>{row.categoryName}</bdi>
+      </td>
+      <td>
+        <bdi>{row.renterName ?? '—'}</bdi>
+      </td>
+      <td className={styles.number}>{row.renterPhone && <PhoneText phone={row.renterPhone} />}</td>
+      <td className={styles.strong}>
+        <PerCurrency items={row.figures}>{(part) => t(`currency.${part.currency}`)}</PerCurrency>
+      </td>
+      <td className={styles.money}>
+        <PerCurrency items={row.figures}>
+          {(part) => <RentText price={part.rent} currency={part.currency} withCurrency={false} />}
+        </PerCurrency>
+      </td>
+      <td className={styles.money}>
+        <PerCurrency items={row.figures}>
+          {(part) => (
+            <MoneyText amount={part.received} currency={part.currency} withCurrency={false} />
+          )}
+        </PerCurrency>
+      </td>
+      <td className={styles.money}>
+        <PerCurrency items={row.figures}>
+          {(part) => (
+            <MoneyText amount={part.remaining} currency={part.currency} withCurrency={false} />
+          )}
+        </PerCurrency>
+      </td>
+      <td className={styles.months}>
+        <MonthBoxes boxes={row.boxes} year={query.year} compact selected={query.month} />
+        <span className={styles.status}>
+          {chosen ? t(`months.status.${monthWord(chosen)}`) : t(`months.summary.${row.summary}`)}
+        </span>
+      </td>
+      <td className={styles.notes}>
+        <bdi>{row.notes}</bdi>
+      </td>
+    </tr>
+  );
+}
+
+interface SidewaysPagesProps<T> {
+  heading: ReactNode;
+  rows: readonly T[];
+  table: (rows: readonly T[], last: boolean) => ReactNode;
+  footer: ReactNode;
+  onLaidOut: () => void;
 }
 
 /**
- * Up to three places side by side, turned 90 degrees: the field names run down
- * the side and each place is a column (the business, 2026-11-01). One table
- * never splits across pages; a short last one keeps the same column widths.
+ * The table turned sideways on upright A4 pages, running along the long edge
+ * (the business's picture, 2026-11-01). A turned page cannot flow by itself, so
+ * the whole table is first measured at that width, out of sight, and shared
+ * into pages; no row splits, and every page repeats the column names.
  */
-function PlacesTable({ places, year, month }: PlacesTableProps) {
-  const { t } = useTranslation();
-  const { settings } = useSettings();
-  const field = (label: string, cell: (place: ReportRow) => ReactNode, className?: string) => (
-    <tr>
-      <th scope="row">{label}</th>
-      {places.map((place) => (
-        <td key={place.id} className={className}>
-          {cell(place)}
-        </td>
-      ))}
-    </tr>
+function SidewaysPages<T>({ heading, rows, table, footer, onLaidOut }: SidewaysPagesProps<T>) {
+  const measure = useRef<HTMLDivElement>(null);
+  // Remembered with the rows they were worked out for: new rows are measured again.
+  const [laidOut, setLaidOut] = useState<{ rows: readonly T[]; pages: (readonly T[])[] } | null>(
+    null,
   );
-  const money = (cell: (part: CurrencyFigures) => ReactNode) => (place: ReportRow) => (
-    <PerCurrency items={place.figures}>{cell}</PerCurrency>
-  );
-  const status = (place: ReportRow) => {
-    const chosen = month === null ? null : place.boxes.find((box) => box.month === month);
-    return chosen ? t(`months.status.${monthWord(chosen)}`) : t(`months.summary.${place.summary}`);
-  };
+  const pages = laidOut?.rows === rows ? laidOut.pages : null;
+  const latestDone = useRef(onLaidOut);
+  useEffect(() => {
+    latestDone.current = onLaidOut;
+  });
+
+  useEffect(() => {
+    const box = measure.current;
+    if (!box) return;
+    let cancelled = false;
+    const layOut = () => {
+      if (cancelled) return;
+      const sheet = box.querySelector('table');
+      const part = (name: string) =>
+        box.querySelector<HTMLElement>(`[data-part='${name}']`)?.offsetHeight ?? 0;
+      const heights = [...(sheet?.tBodies[0]?.rows ?? [])].map((row) => row.offsetHeight);
+      const end = (sheet?.tFoot?.offsetHeight ?? 0) + part('footer');
+      const columnNames = sheet?.tHead?.offsetHeight ?? 0;
+      setLaidOut({ rows, pages: sharePages(rows, heights, part('heading'), columnNames, end) });
+    };
+    void document.fonts.ready.then(() => {
+      layOut();
+      if (!cancelled) latestDone.current();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [rows]);
+
   return (
-    <table
-      className={`${styles.table} ${styles.turned}`}
-      style={{ width: `${LABEL_WIDTH + places.length * PLACE_WIDTH}%` }}
-    >
-      <colgroup>
-        <col
-          style={{ width: `${(LABEL_WIDTH * 100) / (LABEL_WIDTH + places.length * PLACE_WIDTH)}%` }}
-        />
-        {places.map((place) => (
-          <col key={place.id} />
-        ))}
-      </colgroup>
-      <thead>
-        <tr>
-          <th scope="col">{t('reports.columns.area')}</th>
-          {places.map((place) => (
-            <th key={place.id} scope="col">
-              <bdi>{areaLabel(place)}</bdi>
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {field(t('area.address'), (place) => (
-          <bdi>{place.address.trim() || '—'}</bdi>
-        ))}
-        {field(t('area.category'), (place) => (
-          <bdi>{place.categoryName}</bdi>
-        ))}
-        {field(t('reports.columns.renter'), (place) => (
-          <bdi>{place.renterName ?? '—'}</bdi>
-        ))}
-        {field(
-          t('area.phone'),
-          (place) => (place.renterPhone ? <PhoneText phone={place.renterPhone} /> : '—'),
-          styles.number,
-        )}
-        {field(
-          t('areaForm.currency'),
-          money((part) => t(`currency.${part.currency}`)),
-          styles.strong,
-        )}
-        {field(
-          t('reports.columns.rent'),
-          money((part) => (
-            <RentText price={part.rent} currency={part.currency} withCurrency={false} />
-          )),
-          styles.money,
-        )}
-        {field(
-          t('reports.columns.received'),
-          money((part) => (
-            <MoneyText amount={part.received} currency={part.currency} withCurrency={false} />
-          )),
-          styles.money,
-        )}
-        {field(
-          t('reports.columns.remaining'),
-          money((part) => (
-            <MoneyText amount={part.remaining} currency={part.currency} withCurrency={false} />
-          )),
-          styles.money,
-        )}
-        {field(
-          t('months.title', { year: formatPlain(year, settings.digitStyle) }),
-          (place) => (
-            <>
-              <MonthBoxes boxes={place.boxes} year={year} compact selected={month} />
-              <span className={styles.status}>{status(place)}</span>
-            </>
-          ),
-          styles.months,
-        )}
-        {field(
-          t('area.notes'),
-          (place) => (
-            <bdi>{place.notes || '—'}</bdi>
-          ),
-          styles.notes,
-        )}
-      </tbody>
-    </table>
+    <>
+      {/* Out of sight, as wide as a turned page: the heights the pages are worked out from. */}
+      {!pages && (
+        <div ref={measure} className={styles.measure} aria-hidden="true">
+          <div data-part="heading">{heading}</div>
+          {table(rows, true)}
+          <div data-part="footer">{footer}</div>
+        </div>
+      )}
+      {pages?.map((pageRows, index) => {
+        const last = index === pages.length - 1;
+        return (
+          <section key={index} className={styles.uprightPage}>
+            <div className={styles.turned}>
+              {index === 0 && heading}
+              {table(pageRows, last)}
+              {last && footer}
+            </div>
+          </section>
+        );
+      })}
+    </>
   );
 }
 
-/** The totals, turned like the places: one column per currency, never added together. */
-function TotalsTable({ totals }: { totals: readonly ReportTotal[] }) {
-  const { t } = useTranslation();
-  const { settings } = useSettings();
-  if (totals.length === 0) return null;
-  const amount = (label: string, value: (total: ReportTotal) => number) => (
-    <tr>
-      <th scope="row">{label}</th>
-      {totals.map((total) => (
-        <td key={total.currency} className={styles.money}>
-          <MoneyText amount={value(total)} currency={total.currency} withCurrency={false} />
-        </td>
-      ))}
-    </tr>
-  );
-  return (
-    <table className={`${styles.table} ${styles.turned}`}>
-      <thead>
-        <tr>
-          <th scope="col" />
-          {totals.map((total) => (
-            <th key={total.currency} scope="col">
-              {t('reports.total', {
-                currency: t(`currency.${total.currency}`),
-                number: formatPlain(total.areas, settings.digitStyle),
-              })}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {amount(t('reports.columns.rent'), (total) => total.rent)}
-        {amount(t('reports.columns.received'), (total) => total.received)}
-        {amount(t('reports.columns.remaining'), (total) => total.remaining)}
-      </tbody>
-    </table>
-  );
+/** Shares rows into pages by height; the heading takes room on the first, the totals on the last. */
+function sharePages<T>(
+  rows: readonly T[],
+  heights: readonly number[],
+  heading: number,
+  columnNames: number,
+  end: number,
+): (readonly T[])[] {
+  const room = PAGE.short * PX_PER_MM;
+  const pages: T[][] = [[]];
+  let used = heading + columnNames;
+  rows.forEach((row, index) => {
+    const height = heights[index] ?? 0;
+    if (used + height > room && pages.at(-1)?.length) {
+      pages.push([]);
+      used = columnNames;
+    }
+    pages.at(-1)?.push(row);
+    used += height;
+  });
+  if (used + end > room && rows.length > 0) pages.push([]);
+  return pages;
 }

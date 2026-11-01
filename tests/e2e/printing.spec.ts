@@ -172,7 +172,7 @@ test('the buttons on screen print and export, with a plain message each time', a
     // Export to PDF opens the report in a pop-up first; Save as PDF and Print are in it.
     await page.getByRole('button', { name: en.print.actions.pdf }).click();
     const preview = page.getByRole('dialog', { name: en.print.preview.title });
-    await expect(preview.getByRole('columnheader', { name: /دوکانی ١/ })).toBeVisible();
+    await expect(preview.getByRole('cell', { name: /دوکانی ١/ }).last()).toBeVisible();
     expect(existsSync(pdf)).toBe(false);
     await preview.getByRole('button', { name: en.print.actions.savePdf }).click();
     await expect(preview.getByText(en.print.results.savedPdf)).toBeVisible();
