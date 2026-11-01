@@ -56,9 +56,9 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] Change price offers IQD / USD; choosing the other one empties the rent; later payments are in the new currency; months paid in the old currency go through Take out and save.
 - [ ] The address box is in the Place section of the area form; the area page's top card always shows the address, a dash when empty.
 - [ ] Record payment from a paid or empty month says which months it skipped and why.
-- [ ] First column on the Areas list, Reports, Home and the printed report: name with the address under it; no address → the category; no name → the category with the address; neither → the category alone. A place without an address never breaks a screen.
+- [ ] First column on the Areas list, Reports and Home: name with the address under it; no address → the category; no name → the category with the address; neither → the category alone. A place without an address never breaks a screen.
 - [ ] Export to PDF opens a pop-up with the report on white paper (also in dark mode), with Save as PDF, Print and Close; nothing is saved until Save as PDF.
-- [ ] The printed report is A4 upright: each place's figures, then its months, then its notes across the whole width; places never split across pages. Excel has an Address column.
+- [ ] The printed report is A4 upright and turned 90 degrees: field names down the side, each place a column (three to a table), all fields there; a table never splits across pages; totals at the end, one column per currency. Excel has an Address column.
 - [ ] Change renter: the new renter shows on the list; the old one stays in Renter history with an end date.
 - [ ] Delete an area (with confirmation), then Settings → Deleted items → Restore brings it back.
 - [ ] 200 areas open in under a second; search with Arabic letters (ي ك ه) finds Kurdish names.
