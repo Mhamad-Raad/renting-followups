@@ -19,6 +19,8 @@ export interface AttentionItem {
   name: string;
   categoryName: string;
   categoryColor: CategoryColor | null;
+  /** Shown under the name (`areaLines`). */
+  address: string;
   currency: Currency;
   renterName: string | null;
   renterPhone: string | null;

@@ -67,6 +67,35 @@ export function areaSubline(area: AreaNaming): string | null {
   return area.name !== '' ? area.categoryName : area.renterName;
 }
 
+/** The two lines of an area's first column in tables and the printed report. */
+export interface AreaLines {
+  /** The name, or the category when the place has no name. */
+  title: string;
+  titleIsCategory: boolean;
+  /** The address, else the category under a name; null when there is nothing more to say. */
+  subline: string | null;
+  sublineIsCategory: boolean;
+}
+
+/**
+ * What the first column shows (the business, 2026-11-01): the name with the
+ * address under it; without an address, the category under the name; without
+ * a name, the category with the address under it; with neither, the category
+ * alone.
+ */
+export function areaLines(
+  area: Pick<AreaNaming, 'name' | 'categoryName'> & { address: string },
+): AreaLines {
+  const named = area.name !== '';
+  const address = area.address.trim();
+  return {
+    title: named ? area.name : area.categoryName,
+    titleIsCategory: !named,
+    subline: address !== '' ? address : named ? area.categoryName : null,
+    sublineIsCategory: address === '' && named,
+  };
+}
+
 /** True when the area has its own name, so its category is worth showing under it. */
 export function hasOwnName(area: Pick<AreaNaming, 'name'>): boolean {
   return area.name !== '';
@@ -190,6 +219,8 @@ export interface AreaListItem {
   categoryId: number;
   categoryName: string;
   categoryColor: CategoryColor | null;
+  /** Shown under the name in the first column (`areaLines`). */
+  address: string;
   /** This month's currency, that of `currentPrice`. */
   currency: Currency;
   renterName: string | null;

@@ -28,8 +28,8 @@ export const STATUS_FILLS: Record<MonthStatus, string> = {
 
 const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
 /** Rent, received and still owed, after the currency column. */
-const MONEY_COLUMNS = [6, 7, 8];
-const FIRST_MONTH_COLUMN = 9;
+const MONEY_COLUMNS = [7, 8, 9];
+const FIRST_MONTH_COLUMN = 10;
 
 export interface ExcelOptions {
   language: Language;
@@ -79,6 +79,7 @@ export function buildReportWorkbook(
   const header = sheet.addRow([
     t('reports.columns.area'),
     t('area.category'),
+    t('area.address'),
     t('reports.columns.renter'),
     t('area.phone'),
     t('areaForm.currency'),
@@ -100,6 +101,7 @@ export function buildReportWorkbook(
       const line = sheet.addRow([
         areaLabel(row),
         row.categoryName,
+        row.address,
         row.renterName ?? '',
         row.renterPhone ?? '',
         t(`currency.${currency}`),
@@ -132,6 +134,7 @@ export function buildReportWorkbook(
         currency: t(`currency.${total.currency}`),
         number: formatPlain(total.areas, digitStyle),
       }),
+      '',
       '',
       '',
       '',

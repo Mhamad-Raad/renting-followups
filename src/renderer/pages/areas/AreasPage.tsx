@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import {
   areaLabel,
-  areaSubline,
   compareAreaLabels,
-  hasOwnName,
+  areaLines,
   isEmptyPlace,
   nameCollator,
   SEARCH_MAX,
@@ -22,6 +21,7 @@ import { useFlashNotice } from '../../app/flash';
 import { useSettings } from '../../app/SettingsContext';
 import { useDebouncedValue } from '../../app/useDebouncedValue';
 import { ActionMenu, type ActionMenuItem } from '../../components/ActionMenu';
+import { AreaSubline } from '../../components/AreaSubline';
 import { CategoryDot } from '../../components/CategoryDot';
 import { CurrencyTag } from '../../components/CurrencyTag';
 import { Checkbox } from '../../components/Checkbox';
@@ -276,135 +276,131 @@ export function AreasPage() {
                 </tr>
               </thead>
               <tbody>
-                {sorted.map((area) => (
-                  <tr key={area.id} onClick={() => void navigate(`/areas/${area.id}`)}>
-                    <td className={styles.tick} onClick={(event) => event.stopPropagation()}>
-                      <Checkbox
-                        hideLabel
-                        label={t('print.actions.select', {
-                          name: [areaLabel(area), areaSubline(area)]
-                            .filter(Boolean)
-                            .join(PART_SEPARATOR),
-                        })}
-                        checked={selected.has(area.id)}
-                        onChange={(checked) =>
-                          setSelected((current) => {
-                            const next = new Set(current);
-                            if (checked) next.add(area.id);
-                            else next.delete(area.id);
-                            return next;
-                          })
+                {sorted.map((area) => {
+                  const lines = areaLines(area);
+                  return (
+                    <tr key={area.id} onClick={() => void navigate(`/areas/${area.id}`)}>
+                      <td className={styles.tick} onClick={(event) => event.stopPropagation()}>
+                        <Checkbox
+                          hideLabel
+                          label={t('print.actions.select', {
+                            name: [lines.title, lines.subline].filter(Boolean).join(PART_SEPARATOR),
+                          })}
+                          checked={selected.has(area.id)}
+                          onChange={(checked) =>
+                            setSelected((current) => {
+                              const next = new Set(current);
+                              if (checked) next.add(area.id);
+                              else next.delete(area.id);
+                              return next;
+                            })
+                          }
+                        />
+                      </td>
+                      {/* The same under every category: a place without a name goes by its category. */}
+                      <td>
+                        <Link
+                          to={`/areas/${area.id}`}
+                          className={styles.name}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          {lines.titleIsCategory && <CategoryDot color={area.categoryColor} />}
+                          {lines.title}
+                        </Link>
+                        <AreaSubline lines={lines} color={area.categoryColor} />
+                      </td>
+                      <td>
+                        {area.renterName ?? (
+                          <span className={styles.muted}>{t('areas.noRenter')}</span>
+                        )}
+                        {area.renterPhone && (
+                          <span className={`${styles.second} ${styles.number}`}>
+                            <PhoneText phone={area.renterPhone} />
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <PerCurrency items={area.figures}>
+                          {(part) => <CurrencyTag currency={part.currency} />}
+                        </PerCurrency>
+                      </td>
+                      <td className={styles.money}>
+                        <PerCurrency items={area.figures}>
+                          {(part) => (
+                            <RentText
+                              price={part.rent}
+                              currency={part.currency}
+                              withCurrency={false}
+                            />
+                          )}
+                        </PerCurrency>
+                      </td>
+                      <td className={styles.money}>
+                        <PerCurrency items={area.figures}>
+                          {(part) => (
+                            <MoneyText
+                              amount={part.expected}
+                              currency={part.currency}
+                              withCurrency={false}
+                            />
+                          )}
+                        </PerCurrency>
+                      </td>
+                      <td className={styles.money}>
+                        <PerCurrency items={area.figures}>
+                          {(part) => (
+                            <MoneyText
+                              amount={part.received}
+                              currency={part.currency}
+                              withCurrency={false}
+                            />
+                          )}
+                        </PerCurrency>
+                      </td>
+                      <td
+                        className={
+                          area.figures.some((part) => part.remaining > 0)
+                            ? `${styles.money} ${styles.owed}`
+                            : styles.money
                         }
-                      />
-                    </td>
-                    {/* The same under every category: a place without a name goes by its category. */}
-                    <td>
-                      <Link
-                        to={`/areas/${area.id}`}
-                        className={styles.name}
-                        onClick={(event) => event.stopPropagation()}
                       >
-                        {!hasOwnName(area) && <CategoryDot color={area.categoryColor} />}
-                        {areaLabel(area)}
-                      </Link>
-                      {hasOwnName(area) && (
-                        <span className={`${styles.second} ${styles.category}`}>
-                          <CategoryDot color={area.categoryColor} />
-                          {area.categoryName}
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      {area.renterName ?? (
-                        <span className={styles.muted}>{t('areas.noRenter')}</span>
-                      )}
-                      {area.renterPhone && (
-                        <span className={`${styles.second} ${styles.number}`}>
-                          <PhoneText phone={area.renterPhone} />
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <PerCurrency items={area.figures}>
-                        {(part) => <CurrencyTag currency={part.currency} />}
-                      </PerCurrency>
-                    </td>
-                    <td className={styles.money}>
-                      <PerCurrency items={area.figures}>
-                        {(part) => (
-                          <RentText
-                            price={part.rent}
-                            currency={part.currency}
-                            withCurrency={false}
-                          />
+                        <PerCurrency items={area.figures}>
+                          {(part) => (
+                            <MoneyText
+                              amount={part.remaining}
+                              currency={part.currency}
+                              withCurrency={false}
+                            />
+                          )}
+                        </PerCurrency>
+                      </td>
+                      <td>
+                        <div className={styles.year}>
+                          <AreaStrip area={area} year={year} onPick={pickMonth} />
+                          <YearSummaryText summary={area.summary} />
+                        </div>
+                      </td>
+                      <td>
+                        {area.notes && (
+                          <span className={styles.notes} title={area.notes} dir="auto">
+                            {area.notes}
+                          </span>
                         )}
-                      </PerCurrency>
-                    </td>
-                    <td className={styles.money}>
-                      <PerCurrency items={area.figures}>
-                        {(part) => (
-                          <MoneyText
-                            amount={part.expected}
-                            currency={part.currency}
-                            withCurrency={false}
-                          />
-                        )}
-                      </PerCurrency>
-                    </td>
-                    <td className={styles.money}>
-                      <PerCurrency items={area.figures}>
-                        {(part) => (
-                          <MoneyText
-                            amount={part.received}
-                            currency={part.currency}
-                            withCurrency={false}
-                          />
-                        )}
-                      </PerCurrency>
-                    </td>
-                    <td
-                      className={
-                        area.figures.some((part) => part.remaining > 0)
-                          ? `${styles.money} ${styles.owed}`
-                          : styles.money
-                      }
-                    >
-                      <PerCurrency items={area.figures}>
-                        {(part) => (
-                          <MoneyText
-                            amount={part.remaining}
-                            currency={part.currency}
-                            withCurrency={false}
-                          />
-                        )}
-                      </PerCurrency>
-                    </td>
-                    <td>
-                      <div className={styles.year}>
-                        <AreaStrip area={area} year={year} onPick={pickMonth} />
-                        <YearSummaryText summary={area.summary} />
-                      </div>
-                    </td>
-                    <td>
-                      {area.notes && (
-                        <span className={styles.notes} title={area.notes} dir="auto">
-                          {area.notes}
-                        </span>
-                      )}
-                    </td>
-                    <td className={styles.menuCell} onClick={(event) => event.stopPropagation()}>
-                      <ActionMenu
-                        label={t('areas.actionsFor', { name: areaLabel(area) })}
-                        items={rowActions(
-                          area,
-                          t,
-                          (areaId, action) => void chooseAction(areaId, action),
-                          editArea,
-                        )}
-                      />
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className={styles.menuCell} onClick={(event) => event.stopPropagation()}>
+                        <ActionMenu
+                          label={t('areas.actionsFor', { name: areaLabel(area) })}
+                          items={rowActions(
+                            area,
+                            t,
+                            (areaId, action) => void chooseAction(areaId, action),
+                            editArea,
+                          )}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

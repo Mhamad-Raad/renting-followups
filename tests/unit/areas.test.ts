@@ -4,6 +4,7 @@ import type { Repositories } from '../../src/main/db/repositories';
 import {
   areaCreateSchema,
   areaLabel,
+  areaLines,
   compareAreaLabels,
   areaSubline,
   hasOwnName,
@@ -205,6 +206,49 @@ describe('editing areas', () => {
     );
     expect(repos.areaViews.list({ search: 'دوكاني', categoryId: null }, TODAY)).toHaveLength(1);
     expect(auditFor(id).at(-1)?.action).toBe('update');
+  });
+});
+
+describe('areaLines', () => {
+  const lines = (name: string, address: string) =>
+    areaLines({ name, categoryName: 'Shops', address });
+
+  it('shows the name with the address under it, else the category', () => {
+    expect(lines('Shop 3', 'Main street')).toEqual({
+      title: 'Shop 3',
+      titleIsCategory: false,
+      subline: 'Main street',
+      sublineIsCategory: false,
+    });
+    expect(lines('Shop 3', '')).toEqual({
+      title: 'Shop 3',
+      titleIsCategory: false,
+      subline: 'Shops',
+      sublineIsCategory: true,
+    });
+  });
+
+  it('without a name, shows the category with the address, or the category alone', () => {
+    expect(lines('', 'Main street')).toEqual({
+      title: 'Shops',
+      titleIsCategory: true,
+      subline: 'Main street',
+      sublineIsCategory: false,
+    });
+    expect(lines('', '  ')).toEqual({
+      title: 'Shops',
+      titleIsCategory: true,
+      subline: null,
+      sublineIsCategory: false,
+    });
+  });
+
+  it('the Areas list and the report carry the address', () => {
+    const id = createArea({ address: 'Main street' });
+    expect(repos.areaViews.list({ search: '', categoryId: null }, TODAY)[0]).toMatchObject({
+      id,
+      address: 'Main street',
+    });
   });
 });
 

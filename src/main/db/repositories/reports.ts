@@ -29,6 +29,7 @@ interface ReportRecord {
   notes: string;
   category_name: string;
   category_color: CategoryColor | null;
+  address: string;
   renter_name: string | null;
   renter_phone: string | null;
 }
@@ -46,7 +47,7 @@ export function createReportRepository(db: Db, { paid, rent }: Dependencies) {
     { categoryId: number | null; currency: Currency | null },
     ReportRecord
   >(
-    `SELECT a.id, a.name, a.currency, a.notes,
+    `SELECT a.id, a.name, a.currency, a.notes, a.address,
        c.name AS category_name, c.color AS category_color,
        r.full_name AS renter_name, r.phone AS renter_phone
      FROM areas a
@@ -96,6 +97,7 @@ export function createReportRepository(db: Db, { paid, rent }: Dependencies) {
           id: area.id,
           name: area.name,
           categoryName: area.category_name,
+          address: area.address,
           categoryColor: area.category_color,
           currency: area.currency,
           renterName: area.renter_name,

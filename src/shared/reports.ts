@@ -44,6 +44,8 @@ export interface ReportRow {
   name: string;
   categoryName: string;
   categoryColor: CategoryColor | null;
+  /** Shown under the name in the first column (`areaLines`). */
+  address: string;
   currency: Currency;
   renterName: string | null;
   renterPhone: string | null;

@@ -21,6 +21,7 @@ interface AreaListRecord {
   category_id: number;
   category_name: string;
   category_color: CategoryColor | null;
+  address: string;
   renter_name: string | null;
   renter_phone: string | null;
   notes: string;
@@ -38,7 +39,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, rent }: Dependen
     { categoryId: number | null; namePattern: string; phonePattern: string | null },
     AreaListRecord
   >(
-    `SELECT a.id, a.name, a.currency, a.category_id, a.notes,
+    `SELECT a.id, a.name, a.currency, a.category_id, a.notes, a.address,
        c.name AS category_name, c.color AS category_color,
        r.full_name AS renter_name, r.phone AS renter_phone
      FROM areas a
@@ -75,6 +76,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, rent }: Dependen
             name: row.name,
             categoryId: row.category_id,
             categoryName: row.category_name,
+            address: row.address,
             categoryColor: row.category_color,
             currency: currencyForMonth(history, today) ?? row.currency,
             renterName: row.renter_name,
@@ -126,6 +128,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, rent }: Dependen
             id: row.id,
             name: row.name,
             categoryName: row.category_name,
+            address: row.address,
             categoryColor: row.category_color,
             currency: currencyForMonth(history, today) ?? row.currency,
             renterName: row.renter_name,
