@@ -203,6 +203,18 @@ describe('reports', () => {
     expect(repos.reports.lastFilters().status).toBe('all');
   });
 
+  it('a remembered "partial" status from before whole months becomes "due", keeping the rest', () => {
+    const old = { month: 3, categoryId: shops, currency: 'USD', status: 'partial' };
+    db.prepare(
+      "INSERT OR REPLACE INTO settings (key, value) VALUES ('report_filters_last_used', ?)",
+    ).run(JSON.stringify(old));
+    expect(repos.reports.lastFilters()).toEqual({ ...old, status: 'due' });
+    db.prepare("UPDATE settings SET value = ? WHERE key = 'report_filters_last_used'").run(
+      JSON.stringify({ ...old, status: 'unknown' }),
+    );
+    expect(repos.reports.lastFilters()).toEqual({ ...old, status: 'all' });
+  });
+
   it('builds a report of 200 areas quickly', () => {
     for (let index = 0; index < 200; index += 1) pay(area(`Shop ${index}`, shops), 3);
     const started = performance.now();
