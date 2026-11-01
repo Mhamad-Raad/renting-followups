@@ -158,7 +158,7 @@ export const priceChangeSchema = z
     areaId: id,
     from: yearMonthSchema,
     monthlyPrice,
-    /** A new currency from that month (a new renter); left out, the month's currency stays. */
+    /** A new currency from that month; left out, the month's currency stays. */
     currency: z.enum(CURRENCIES).optional(),
     /** Take paid months that would be left without rent out of their receipts first (see `VacantPayment`). */
     takeOutVacantMonths: z.boolean().optional(),

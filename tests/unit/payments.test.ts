@@ -226,6 +226,51 @@ describe('price changes keep paid months as they are', () => {
     expect(receipts()[0]?.totalAmount).toBe(2 * RENT + 300_000);
   });
 
+  it('a price change can move the rent to another currency from that month', () => {
+    const { id } = payOk({ monthCount: 2, from: { year: 2026, month: 3 } });
+    const change = {
+      areaId,
+      from: { year: 2026, month: 5 },
+      monthlyPrice: 300_00,
+      currency: 'USD' as const,
+    };
+    expect(repos.priceChanges.changePrice(change)).toEqual({ ok: true });
+    expect(repos.areas.get(areaId)?.prices.at(-1)).toMatchObject({ month: 5, currency: 'USD' });
+    // Earlier months and their receipt stay in dinars; each currency has its own figures.
+    expect(receipts().find((r) => r.id === id)).toMatchObject({
+      currency: 'IQD',
+      totalAmount: 2 * RENT,
+    });
+    const dollars = payOk({ from: { year: 2026, month: 5 } });
+    expect(receipts().find((r) => r.id === dollars.id)).toMatchObject({
+      currency: 'USD',
+      totalAmount: 300_00,
+    });
+    expect(repos.areaViews.year(areaId, 2026, TODAY.month)?.figures.map((f) => f.currency)).toEqual(
+      ['IQD', 'USD'],
+    );
+  });
+
+  it('months already paid in the old currency are taken out first, never converted', () => {
+    const { id } = payOk({ monthCount: 2, from: { year: 2026, month: 5 } });
+    const change = {
+      areaId,
+      from: { year: 2026, month: 6 },
+      monthlyPrice: 300_00,
+      currency: 'USD' as const,
+    };
+    expect(repos.priceChanges.priceChangeImpact(change)).toMatchObject({
+      ok: false,
+      vacantPayments: [{ receiptId: id, months: [{ month: 6 }], cancels: false }],
+    });
+    expect(changePrice(6, 300_00)).toEqual({ ok: true }); // The same currency needs nothing.
+    expect(repos.priceChanges.changePrice(change)).toEqual({ ok: false, reason: 'no_room' });
+    expect(repos.priceChanges.changePrice({ ...change, takeOutVacantMonths: true })).toEqual({
+      ok: true,
+    });
+    expect(months(id)).toEqual([[5, RENT]]);
+  });
+
   it('says which paid months keep their old rent, without saving', () => {
     payOk({ monthCount: 2, from: { year: 2026, month: 3 } });
     const change = { areaId, from: { year: 2026, month: 4 }, monthlyPrice: 300_000 };

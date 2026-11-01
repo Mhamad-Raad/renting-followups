@@ -176,11 +176,39 @@ test('change price empties the rent when the month is in another currency', asyn
     await dialog.getByLabel(en.common.year, { exact: true }).selectOption(String(next.year));
     await dialog.getByLabel(en.common.month, { exact: true }).selectOption(String(next.month));
     await dialog.getByLabel(en.priceDialog.newRent).fill('500');
-    await expect(dialog.getByText('USD', { exact: true })).toBeVisible();
+    await expect(dialog.getByRole('radio', { name: 'USD' })).toBeChecked();
     await dialog.getByLabel(en.common.year, { exact: true }).selectOption(String(year));
     await dialog.getByLabel(en.common.month, { exact: true }).selectOption(String(month));
     await expect(dialog.getByLabel(en.priceDialog.newRent)).toHaveValue('');
-    await expect(dialog.getByText('IQD', { exact: true })).toBeVisible();
+    await expect(dialog.getByRole('radio', { name: 'IQD' })).toBeChecked();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
+test('change price can switch the currency, and the rent is typed again', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    const { year, month } = await openNewArea(page);
+    await page.getByRole('button', { name: en.area.changePrice }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByLabel(en.priceDialog.newRent).fill('500000');
+    await dialog.getByRole('radio', { name: 'USD' }).check();
+    await expect(dialog.getByLabel(en.priceDialog.newRent)).toHaveValue('');
+    await dialog.getByLabel(en.priceDialog.newRent).fill('300');
+    await dialog.getByRole('button', { name: en.common.save }).click();
+    await expect(page.getByText(en.priceDialog.priceSaved)).toBeVisible();
+    await page.getByRole('button', { name: en.area.recordPayment }).click();
+    await expect(page.getByRole('dialog').getByText('Amount received: 300.00 USD')).toBeVisible();
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: en.common.save, exact: true })
+      .click();
+    await expect(page.getByText('Payment saved. Receipt No. 0001')).toBeVisible();
+    const boxes = page.getByRole('list', { name: new RegExp(`${year}`) });
+    await expect(boxes.getByLabel(boxLabel(month, en.months.status.paid))).toBeVisible();
   } finally {
     await app.close();
     removeDataDir(dataDir);
