@@ -58,7 +58,7 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] Record payment from a paid or empty month says which months it skipped and why.
 - [ ] First column on the Areas list, Reports and Home: name with the address under it; no address → the category; no name → the category with the address; neither → the category alone. A place without an address never breaks a screen.
 - [ ] Export to PDF opens a pop-up with the report on white paper (also in dark mode), with Save as PDF, Print and Close; nothing is saved until Save as PDF.
-- [ ] The printed report is an upright A4 page with the table turned sideways along the long edge, one row per place with all columns; column names on every page, no row split, totals at the end, upright page numbers, no empty last page. Excel has an Address column.
+- [ ] The printed report is an upright A4 page with the table turned sideways along the long edge, one row per place with all columns and the 12 months on one line; column names on every page, no row split, totals at the end, upright page numbers, no empty last page. Excel has an Address column.
 - [ ] Change renter: the new renter shows on the list; the old one stays in Renter history with an end date.
 - [ ] Delete an area (with confirmation), then Settings → Deleted items → Restore brings it back.
 - [ ] 200 areas open in under a second; search with Arabic letters (ي ك ه) finds Kurdish names.

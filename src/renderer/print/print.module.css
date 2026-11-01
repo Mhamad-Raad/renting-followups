@@ -94,9 +94,9 @@
   font-weight: 700;
 }
 
-/* The months in two rows of six, leaving the room to the text columns. */
+/* The 12 months in one row, sharing the column's width evenly. */
 .months ol {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
 }
 
 .notes {
@@ -146,4 +146,9 @@
   width: 268mm;
   visibility: hidden;
   pointer-events: none;
+}
+
+/* Counts the margins of what is inside, so a measured part is as tall as on paper. */
+.measure > div {
+  display: flow-root;
 }

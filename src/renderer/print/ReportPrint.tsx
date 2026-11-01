@@ -18,13 +18,14 @@ import { PrintFrame } from './PrintFrame';
 import { usePrintReady } from './printPage';
 
 /** The share of the table's width each column gets; the notes have the most room of the text. */
-const COLUMN_WIDTHS = ['15%', '8%', '11%', '9.5%', '5%', '7%', '7.5%', '7.5%', '13%', '16.5%'];
+const COLUMN_WIDTHS = ['15%', '7%', '10%', '9%', '4.5%', '6.5%', '7%', '7%', '21%', '13.5%'];
 
 /**
  * The upright A4 page's writing area in mm (print.css: margins 14mm and 12mm),
  * less a little, so a full page never spills onto an empty one.
  */
 const PAGE = { long: 268, short: 185 };
+const PAGE_SPARE = 4;
 const PX_PER_MM = 96 / 25.4;
 
 /** The query in the address, checked like every other input; null when it is not valid. */
@@ -330,7 +331,8 @@ function sharePages<T>(
   columnNames: number,
   end: number,
 ): (readonly T[])[] {
-  const room = PAGE.short * PX_PER_MM;
+  // A little kept free: paper rounds heights differently from the screen.
+  const room = (PAGE.short - PAGE_SPARE) * PX_PER_MM;
   const pages: T[][] = [[]];
   let used = heading + columnNames;
   rows.forEach((row, index) => {
