@@ -87,34 +87,28 @@
   white-space: nowrap;
 }
 
-/* Fixed column widths, so a long name or phone never pushes the table past the page edge. */
-.upright {
+/* Turned 90 degrees: field names down the side, fixed widths, a table never splits across pages. */
+.turned {
+  margin-block-end: 5mm;
   table-layout: fixed;
-}
-
-/* A place's lines stay together on one page, with a firmer line above each place. */
-.place {
   break-inside: avoid;
-  border-top: 0.6mm solid #555;
 }
 
-/* The small line under a cell's main text: the address or category, the phone. */
-.second {
+.turned tbody th {
+  background: #eee;
+  font-weight: 700;
+}
+
+/* The status word under a place's months. */
+.status {
   display: block;
-  margin-block-start: 0.5mm;
-  color: #333;
-  font-size: 8pt;
+  margin-block-start: 1mm;
+  font-weight: 700;
 }
 
-.months {
-  display: flex;
-  align-items: center;
-  gap: 3mm;
-}
-
-.strip {
-  flex: 0 1 120mm;
-  min-width: 0;
+/* The 12 months in two rows of six, so they fit a place's narrow column. */
+.months ol {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 .notes {

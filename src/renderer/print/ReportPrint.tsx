@@ -1,11 +1,17 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
-import { areaLabel, areaLines } from '@shared/areas';
+import { areaLabel } from '@shared/areas';
 import { dateStringFromLocal, formatDate } from '@shared/dates';
 import { formatPlain } from '@shared/formatNumber';
 import { PART_SEPARATOR, reportFilterParts, reportTitle } from '@shared/reportText';
-import { reportQuerySchema, type ReportQuery } from '@shared/reports';
+import type { CurrencyFigures } from '@shared/months';
+import {
+  reportQuerySchema,
+  type ReportQuery,
+  type ReportRow,
+  type ReportTotal,
+} from '@shared/reports';
 import { useIpcQuery } from '../app/ipc';
 import { useSettings } from '../app/SettingsContext';
 import { MoneyText } from '../components/MoneyText';
@@ -17,10 +23,20 @@ import styles from './print.module.css';
 import { PrintFrame } from './PrintFrame';
 import { usePrintReady } from './printPage';
 
-/** The widths of the figures row's columns (place, renter, currency, rent, received, still owed). */
-const COLUMN_WIDTHS = ['27%', '23%', '8%', '14%', '14%', '14%'];
-/** The months and notes rows span every column. */
-const COLUMNS = COLUMN_WIDTHS.length;
+/** Places side by side in one table; more would squeeze their columns too far. */
+const PLACES_PER_TABLE = 3;
+/** The column of field names down the side, then the share of each place, in percent. */
+const LABEL_WIDTH = 19;
+const PLACE_WIDTH = (100 - LABEL_WIDTH) / PLACES_PER_TABLE;
+
+/** Splits the places into the groups that share one table. */
+function inTables<T>(rows: readonly T[]): T[][] {
+  const tables: T[][] = [];
+  for (let start = 0; start < rows.length; start += PLACES_PER_TABLE) {
+    tables.push(rows.slice(start, start + PLACES_PER_TABLE));
+  }
+  return tables;
+}
 
 /** The query in the address, checked like every other input; null when it is not valid. */
 function parseQuery(raw: string | null): ReportQuery | null {
@@ -34,10 +50,9 @@ function parseQuery(raw: string | null): ReportQuery | null {
 }
 
 /**
- * The printed report (ARCHITECTURE.md sections 8.5 and 14): A4 upright, each
- * place as one group of lines (figures, months, notes at full width), the
- * header row repeated on every page, totals per currency at the bottom and
- * page numbers.
+ * The printed report (ARCHITECTURE.md sections 8.5 and 14): A4 upright, turned
+ * 90 degrees (field names down the side, each place a column), the totals per
+ * currency at the end and page numbers.
  */
 export function ReportPrint() {
   const [params] = useSearchParams();
@@ -95,140 +110,10 @@ export function ReportPaper({ query, preview = false }: { query: ReportQuery; pr
         t('print.printedOn', { date: formatDate(dateStringFromLocal(new Date()), digits) }),
       ]}
     >
-      <table className={`${styles.table} ${styles.upright}`}>
-        <colgroup>
-          {COLUMN_WIDTHS.map((width, index) => (
-            <col key={index} style={{ width }} />
-          ))}
-        </colgroup>
-        <thead>
-          <tr>
-            <th scope="col">{t('reports.columns.area')}</th>
-            <th scope="col">{t('reports.columns.renter')}</th>
-            <th scope="col">{t('areaForm.currency')}</th>
-            <th scope="col">{t('reports.columns.rent')}</th>
-            <th scope="col">{t('reports.columns.received')}</th>
-            <th scope="col">{t('reports.columns.remaining')}</th>
-          </tr>
-        </thead>
-        {/* One group per place, never split across pages: its figures, then its months, then its notes. */}
-        {rows.map((row) => {
-          const chosen =
-            query.month === null ? null : row.boxes.find((box) => box.month === query.month);
-          const lines = areaLines(row);
-          return (
-            <tbody key={row.id} className={styles.place}>
-              <tr>
-                <td>
-                  <span className={styles.strong}>{lines.title}</span>
-                  {lines.subline && (
-                    <span className={styles.second}>
-                      <bdi>{lines.subline}</bdi>
-                    </span>
-                  )}
-                </td>
-                <td>
-                  {row.renterName ?? '—'}
-                  {row.renterPhone && (
-                    <span className={`${styles.second} ${styles.number}`}>
-                      <PhoneText phone={row.renterPhone} />
-                    </span>
-                  )}
-                </td>
-                <td className={styles.strong}>
-                  <PerCurrency items={row.figures}>
-                    {(part) => t(`currency.${part.currency}`)}
-                  </PerCurrency>
-                </td>
-                <td className={styles.money}>
-                  <PerCurrency items={row.figures}>
-                    {(part) => (
-                      <RentText price={part.rent} currency={part.currency} withCurrency={false} />
-                    )}
-                  </PerCurrency>
-                </td>
-                <td className={styles.money}>
-                  <PerCurrency items={row.figures}>
-                    {(part) => (
-                      <MoneyText
-                        amount={part.received}
-                        currency={part.currency}
-                        withCurrency={false}
-                      />
-                    )}
-                  </PerCurrency>
-                </td>
-                <td className={styles.money}>
-                  <PerCurrency items={row.figures}>
-                    {(part) => (
-                      <MoneyText
-                        amount={part.remaining}
-                        currency={part.currency}
-                        withCurrency={false}
-                      />
-                    )}
-                  </PerCurrency>
-                </td>
-              </tr>
-              <tr>
-                <td colSpan={COLUMNS}>
-                  <div className={styles.months}>
-                    <span className={styles.strip}>
-                      <MonthBoxes
-                        boxes={row.boxes}
-                        year={query.year}
-                        compact
-                        selected={query.month}
-                      />
-                    </span>
-                    <span className={styles.strong}>
-                      {chosen
-                        ? t(`months.status.${monthWord(chosen)}`)
-                        : t(`months.summary.${row.summary}`)}
-                    </span>
-                  </div>
-                </td>
-              </tr>
-              {/* The notes get the whole width, so they are never squeezed (the business, 2026-11-01). */}
-              {row.notes && (
-                <tr>
-                  <td colSpan={COLUMNS} className={styles.notes}>
-                    <span className={styles.strong}>{t('area.notes')}: </span>
-                    {/* Notes in another language keep their own direction, the label stays in place. */}
-                    <bdi>{row.notes}</bdi>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          );
-        })}
-        <tfoot>
-          {report.state.data.totals.map((total) => (
-            <tr key={total.currency}>
-              <th scope="row" colSpan={2}>
-                {t('reports.total', {
-                  currency: t(`currency.${total.currency}`),
-                  number: formatPlain(total.areas, digits),
-                })}
-              </th>
-              <td>{t(`currency.${total.currency}`)}</td>
-              <td className={styles.money}>
-                <MoneyText amount={total.rent} currency={total.currency} withCurrency={false} />
-              </td>
-              <td className={styles.money}>
-                <MoneyText amount={total.received} currency={total.currency} withCurrency={false} />
-              </td>
-              <td className={styles.money}>
-                <MoneyText
-                  amount={total.remaining}
-                  currency={total.currency}
-                  withCurrency={false}
-                />
-              </td>
-            </tr>
-          ))}
-        </tfoot>
-      </table>
+      {inTables(rows).map((places) => (
+        <PlacesTable key={places[0]?.id} places={places} year={query.year} month={query.month} />
+      ))}
+      <TotalsTable totals={report.state.data.totals} />
       <p className={styles.detail}>
         {t('reports.footer', {
           december: formatPlain(12, digits),
@@ -236,5 +121,161 @@ export function ReportPaper({ query, preview = false }: { query: ReportQuery; pr
         })}
       </p>
     </PrintFrame>
+  );
+}
+
+interface PlacesTableProps {
+  places: readonly ReportRow[];
+  year: number;
+  month: number | null;
+}
+
+/**
+ * Up to three places side by side, turned 90 degrees: the field names run down
+ * the side and each place is a column (the business, 2026-11-01). One table
+ * never splits across pages; a short last one keeps the same column widths.
+ */
+function PlacesTable({ places, year, month }: PlacesTableProps) {
+  const { t } = useTranslation();
+  const { settings } = useSettings();
+  const field = (label: string, cell: (place: ReportRow) => ReactNode, className?: string) => (
+    <tr>
+      <th scope="row">{label}</th>
+      {places.map((place) => (
+        <td key={place.id} className={className}>
+          {cell(place)}
+        </td>
+      ))}
+    </tr>
+  );
+  const money = (cell: (part: CurrencyFigures) => ReactNode) => (place: ReportRow) => (
+    <PerCurrency items={place.figures}>{cell}</PerCurrency>
+  );
+  const status = (place: ReportRow) => {
+    const chosen = month === null ? null : place.boxes.find((box) => box.month === month);
+    return chosen ? t(`months.status.${monthWord(chosen)}`) : t(`months.summary.${place.summary}`);
+  };
+  return (
+    <table
+      className={`${styles.table} ${styles.turned}`}
+      style={{ width: `${LABEL_WIDTH + places.length * PLACE_WIDTH}%` }}
+    >
+      <colgroup>
+        <col
+          style={{ width: `${(LABEL_WIDTH * 100) / (LABEL_WIDTH + places.length * PLACE_WIDTH)}%` }}
+        />
+        {places.map((place) => (
+          <col key={place.id} />
+        ))}
+      </colgroup>
+      <thead>
+        <tr>
+          <th scope="col">{t('reports.columns.area')}</th>
+          {places.map((place) => (
+            <th key={place.id} scope="col">
+              <bdi>{areaLabel(place)}</bdi>
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {field(t('area.address'), (place) => (
+          <bdi>{place.address.trim() || '—'}</bdi>
+        ))}
+        {field(t('area.category'), (place) => (
+          <bdi>{place.categoryName}</bdi>
+        ))}
+        {field(t('reports.columns.renter'), (place) => (
+          <bdi>{place.renterName ?? '—'}</bdi>
+        ))}
+        {field(
+          t('area.phone'),
+          (place) => (place.renterPhone ? <PhoneText phone={place.renterPhone} /> : '—'),
+          styles.number,
+        )}
+        {field(
+          t('areaForm.currency'),
+          money((part) => t(`currency.${part.currency}`)),
+          styles.strong,
+        )}
+        {field(
+          t('reports.columns.rent'),
+          money((part) => (
+            <RentText price={part.rent} currency={part.currency} withCurrency={false} />
+          )),
+          styles.money,
+        )}
+        {field(
+          t('reports.columns.received'),
+          money((part) => (
+            <MoneyText amount={part.received} currency={part.currency} withCurrency={false} />
+          )),
+          styles.money,
+        )}
+        {field(
+          t('reports.columns.remaining'),
+          money((part) => (
+            <MoneyText amount={part.remaining} currency={part.currency} withCurrency={false} />
+          )),
+          styles.money,
+        )}
+        {field(
+          t('months.title', { year: formatPlain(year, settings.digitStyle) }),
+          (place) => (
+            <>
+              <MonthBoxes boxes={place.boxes} year={year} compact selected={month} />
+              <span className={styles.status}>{status(place)}</span>
+            </>
+          ),
+          styles.months,
+        )}
+        {field(
+          t('area.notes'),
+          (place) => (
+            <bdi>{place.notes || '—'}</bdi>
+          ),
+          styles.notes,
+        )}
+      </tbody>
+    </table>
+  );
+}
+
+/** The totals, turned like the places: one column per currency, never added together. */
+function TotalsTable({ totals }: { totals: readonly ReportTotal[] }) {
+  const { t } = useTranslation();
+  const { settings } = useSettings();
+  if (totals.length === 0) return null;
+  const amount = (label: string, value: (total: ReportTotal) => number) => (
+    <tr>
+      <th scope="row">{label}</th>
+      {totals.map((total) => (
+        <td key={total.currency} className={styles.money}>
+          <MoneyText amount={value(total)} currency={total.currency} withCurrency={false} />
+        </td>
+      ))}
+    </tr>
+  );
+  return (
+    <table className={`${styles.table} ${styles.turned}`}>
+      <thead>
+        <tr>
+          <th scope="col" />
+          {totals.map((total) => (
+            <th key={total.currency} scope="col">
+              {t('reports.total', {
+                currency: t(`currency.${total.currency}`),
+                number: formatPlain(total.areas, settings.digitStyle),
+              })}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {amount(t('reports.columns.rent'), (total) => total.rent)}
+        {amount(t('reports.columns.received'), (total) => total.received)}
+        {amount(t('reports.columns.remaining'), (total) => total.remaining)}
+      </tbody>
+    </table>
   );
 }
