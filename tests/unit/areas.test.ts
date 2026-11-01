@@ -281,6 +281,37 @@ describe('prices', () => {
     expect(current()).toBe(260_000);
   });
 
+  it('an empty-from month set too early is corrected with Change renter, then Mark as vacant', () => {
+    // Marked empty from July by mistake: the renter really stayed until the end of August.
+    const id = createArea();
+    repos.priceChanges.changePrice({ areaId: id, from: { year: 2026, month: 7 }, monthlyPrice: 0 });
+    const statuses = () => repos.areaViews.year(id, 2026, TODAY)?.boxes.map((box) => box.status);
+    expect(statuses()?.slice(6, 8)).toEqual(['not_applicable', 'not_applicable']);
+    expect(
+      repos.priceChanges.changeRenter({
+        areaId: id,
+        fullName: 'Karwan Ahmed',
+        phone: '',
+        startedOn: '2026-07-01',
+        monthlyPrice: 250_000,
+      }),
+    ).toEqual({ ok: true });
+    expect(
+      repos.priceChanges.changePrice({
+        areaId: id,
+        from: { year: 2026, month: 9 },
+        monthlyPrice: 0,
+      }),
+    ).toEqual({ ok: true });
+    // July and August are owed again; from September the place is empty.
+    expect(statuses()?.slice(6, 10)).toEqual(['late', 'late', 'not_applicable', 'not_applicable']);
+    expect(repos.areas.get(id)?.renters[0]).toMatchObject({
+      fullName: 'Karwan Ahmed',
+      startedOn: '2026-07-01',
+      endedOn: '2026-09-01',
+    });
+  });
+
   it('refuses a change before the rent started', () => {
     const id = createArea();
     expect(
