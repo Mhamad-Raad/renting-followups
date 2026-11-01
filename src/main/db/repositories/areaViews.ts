@@ -11,7 +11,7 @@ import type { ReminderArea } from '../../services/notifications';
 import type { Db } from '../connection';
 import type { AreaRepository } from './areas';
 import type { PaidRepository } from './paid';
-import type { PriceRepository } from './prices';
+import type { RentRepository } from './rent';
 import { containsPattern } from './sql';
 
 interface AreaListRecord {
@@ -29,11 +29,11 @@ interface AreaListRecord {
 interface Dependencies {
   areas: AreaRepository;
   paid: PaidRepository;
-  prices: PriceRepository;
+  rent: RentRepository;
 }
 
 /** Areas as the screens read them, with their month colours and figures from `monthStatus.ts`. */
-export function createAreaViewRepository(db: Db, { areas, paid, prices }: Dependencies) {
+export function createAreaViewRepository(db: Db, { areas, paid, rent }: Dependencies) {
   const selectList = db.prepare<
     { categoryId: number | null; namePattern: string; phonePattern: string | null },
     AreaListRecord
@@ -58,7 +58,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
     list({ search, categoryId }: AreaListQuery, today: YearMonth): AreaListItem[] {
       const query = normalizeText(search);
       const digits = normalizePhone(search);
-      const pricesByArea = prices.forActiveAreas();
+      const pricesByArea = rent.forActiveAreas();
       const paidByArea = paid.inYear(today.year);
       return selectList
         .all({
@@ -91,12 +91,12 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
     /** One year of an area: its 12 month boxes, summary word, and figures for the year or one month. */
     year(id: number, year: number, today: YearMonth, month: number | null = null): AreaYear | null {
       if (!areas.isActive(id)) return null;
-      return areaYear(prices.forArea(id), paid.inAreaYear(id, year), year, today, month);
+      return areaYear(rent.forArea(id), paid.inAreaYear(id, year), year, today, month);
     },
 
     /** Every area in use with its whole price and payment history, for the reminders. */
     reminderAreas(): ReminderArea[] {
-      const pricesByArea = prices.forActiveAreas();
+      const pricesByArea = rent.forActiveAreas();
       const historyByArea = paid.historyForActiveAreas();
       return selectList
         .all({ categoryId: null, namePattern: containsPattern(''), phonePattern: null })
@@ -114,7 +114,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, prices }: Depend
 
     /** Every area in use with this year's figures and its standing today, for Home. */
     overviews(today: YearMonth): (AttentionItem & AreaOverview)[] {
-      const pricesByArea = prices.forActiveAreas();
+      const pricesByArea = rent.forActiveAreas();
       const historyByArea = paid.historyForActiveAreas();
       const paidThisYear = paid.inYear(today.year);
       return selectList

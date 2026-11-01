@@ -520,7 +520,8 @@
     "saved": "Payment saved. Receipt No. {{number}}",
     "pastSaved": "Past record saved.",
     "updated": "Receipt saved.",
-    "nothing_open": "There is no rent to fill from this month: it is vacant, or more than two years ahead. Please choose another month."
+    "nothing_open": "There is no rent to fill from this month: it is vacant, or more than two years ahead. Please choose another month.",
+    "before_renter": "This month is before the renter started. A renter pays only from the month they started."
   },
   "receipts": {
     "title": "Payments",

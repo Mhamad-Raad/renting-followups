@@ -1,4 +1,5 @@
 import type { Currency } from '@shared/currency';
+import { renterFirstMonth } from '@shared/areas';
 import { monthIndex, type BusinessToday, type YearMonth } from '@shared/dates';
 import {
   NOTHING_SKIPPED,
@@ -18,7 +19,7 @@ import type { Db } from '../connection';
 import type { AllocationRepository } from './allocations';
 import type { AuditRepository } from './audit';
 import type { PaidRepository } from './paid';
-import type { PriceRepository } from './prices';
+import type { RentRepository } from './rent';
 import type { RenterRepository } from './renters';
 import { createKeyValueStore } from './settings';
 import { NOW_SQL } from './sql';
@@ -47,7 +48,7 @@ interface Dependencies {
   allocations: AllocationRepository;
   audit: AuditRepository;
   paid: PaidRepository;
-  prices: PriceRepository;
+  rent: RentRepository;
   renters: RenterRepository;
 }
 
@@ -57,7 +58,7 @@ const LAST_NUMBER_KEY = 'last_receipt_number';
 
 export function createPaymentRepository(
   db: Db,
-  { allocations, audit, paid, prices, renters }: Dependencies,
+  { allocations, audit, paid, rent, renters }: Dependencies,
 ) {
   const selectAreaCurrency = db.prepare<[number], { currency: Currency }>(
     'SELECT currency FROM areas WHERE id = ? AND deleted_at IS NULL',
@@ -97,7 +98,7 @@ export function createPaymentRepository(
   );
   /** A receipt is in one currency: new money takes that of the first month it can fill. */
   const currencyFrom = (areaId: number, from: YearMonth, fallback: Currency): Currency =>
-    paymentCurrency(prices.forArea(areaId), from) ?? fallback;
+    paymentCurrency(rent.forArea(areaId), from) ?? fallback;
   // Months in another currency count as vacant for this money, so it never fills them.
   const plan = (
     areaId: number,
@@ -106,14 +107,30 @@ export function createPaymentRepository(
     today: YearMonth,
     currency: Currency,
     except = 0,
+    anyStart = false,
   ) =>
     allocate(
       monthCount,
       from,
-      pricesInCurrency(prices.forArea(areaId), currency),
+      pricesInCurrency(rent.forArea(areaId, except), currency),
       paid.history(areaId, except),
       today,
+      anyStart ? null : earliestMonth(areaId, except),
     );
+
+  /**
+   * The first month a payment may pay: the current renter's first month, so
+   * no one pays for a month before their renter started (owner's request,
+   * 2026-11-01). Past records and single month boxes are not limited (see `plan`'s `anyStart`). A receipt being edited may still start where it already does,
+   * for a receipt saved before this rule or for an earlier renter. Null while
+   * the place has no renter: an earlier renter's old debts can then be paid.
+   */
+  const earliestMonth = (areaId: number, receiptId = 0): YearMonth | null => {
+    const first = renterFirstMonth(renters.current(areaId));
+    const own = receiptId ? selectAllocationsForReceipt.get(receiptId) : undefined;
+    if (!first || !own) return first;
+    return monthIndex(own) < monthIndex(first) ? { year: own.year, month: own.month } : first;
+  };
 
   /**
    * A receipt's own months, when an edit keeps how many months it pays and its start month
@@ -166,6 +183,7 @@ export function createPaymentRepository(
       from: YearMonth,
       today: YearMonth,
       receiptId: number | null,
+      isBackfill = false,
     ): AllocationResult | null {
       const area = selectAreaCurrency.get(areaId);
       if (!area) return null;
@@ -173,7 +191,8 @@ export function createPaymentRepository(
       const found = receiptId === null ? undefined : selectReceipt.get(receiptId);
       const receipt = found?.area_id === areaId ? found : undefined;
       const currency = receipt?.currency ?? currencyFrom(areaId, from, area.currency);
-      const planned = plan(areaId, monthCount, from, today, currency, receipt?.id ?? 0);
+      const pastRecord = isBackfill || receipt?.is_backfill === 1;
+      const planned = plan(areaId, monthCount, from, today, currency, receipt?.id ?? 0, pastRecord);
       if (!receipt) return planned;
       const kept = keptMonths(receipt.id, monthCount, from);
       if (!kept) {
@@ -190,7 +209,12 @@ export function createPaymentRepository(
     /** The month the payment form suggests: the oldest one not paid. */
     suggestedStart(areaId: number, today: YearMonth): YearMonth | null {
       if (!selectAreaCurrency.get(areaId)) return null;
-      return oldestOpenMonth(prices.forArea(areaId), paid.history(areaId), today);
+      return oldestOpenMonth(
+        rent.forArea(areaId),
+        paid.history(areaId),
+        today,
+        earliestMonth(areaId),
+      );
     },
 
     /** Saves a payment, its receipt number (unless it is a past record) and its months, all at once. */
@@ -199,8 +223,21 @@ export function createPaymentRepository(
       if (!area) return { ok: false, reason: 'not_found' };
       if (input.paidOn > today.date) return { ok: false, reason: 'future_date' };
       const currency = currencyFrom(input.areaId, input.from, area.currency);
-      const planned = plan(input.areaId, input.monthCount, input.from, today.month, currency);
+      const planned = plan(
+        input.areaId,
+        input.monthCount,
+        input.from,
+        today.month,
+        currency,
+        0,
+        // A past record is history (an earlier renter's months too), so it may start anywhere.
+        input.isBackfill || (input.monthBox === true && input.monthCount === 1),
+      );
       if (!planned.ok) return { ok: false, reason: planned.reason };
+      // A month box pays that month itself, never a later one in its place.
+      const first = planned.months[0];
+      if (input.monthBox && (first?.year !== input.from.year || first.month !== input.from.month))
+        return { ok: false, reason: 'nothing_open' };
       const amount = totalOf(planned.months);
       const receiptNumber = input.isBackfill ? null : nextReceiptNumber();
       const renter = renters.current(input.areaId);
@@ -245,6 +282,7 @@ export function createPaymentRepository(
           today.month,
           before.currency,
           input.id,
+          before.is_backfill === 1,
         );
         if (!planned.ok) return { ok: false, reason: planned.reason };
         months = atOwnRent(input.id, planned.months);

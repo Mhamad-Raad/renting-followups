@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AreaDetails } from '@shared/areas';
+import { currentRenter, renterFirstMonth, type AreaDetails } from '@shared/areas';
 import { FRACTION_DIGITS, type Currency } from '@shared/currency';
 import {
   dateStringFromLocal,
   formatMonthRuns,
+  monthIndex,
   formatYearMonth,
   yearMonthOf,
   type YearMonth,
@@ -115,9 +116,22 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
   const [open, setOpen] = useState<number | undefined>(undefined);
   // A start month with fewer open months brings the count down with it.
   const monthCount = open === undefined ? chosenCount : Math.min(chosenCount, Math.max(open, 1));
-  const [from, setFrom] = useState<YearMonth>({ year: start.year, month: start.month });
+  // A past record is history: it may pay an earlier renter's months.
+  const isBackfill = mode.kind === 'past' || editing?.isBackfill === true;
+  // No month before the current renter started; a saved receipt may keep an earlier start of its own.
+  const renterStart = isBackfill ? null : renterFirstMonth(currentRenter(area.renters));
+  const ownStart = editing?.allocations[0];
+  const earliest =
+    renterStart && ownStart && monthIndex(ownStart) < monthIndex(renterStart)
+      ? { year: ownStart.year, month: ownStart.month }
+      : renterStart;
+  const [from, setFrom] = useState<YearMonth>(() =>
+    earliest && monthIndex(start) < monthIndex(earliest)
+      ? earliest
+      : { year: start.year, month: start.month },
+  );
   // A receipt is in one currency: a saved one keeps its own, new money takes that of its first month.
-  const currency = editing?.currency ?? paymentCurrency(area.prices, from) ?? area.currency;
+  const currency = editing?.currency ?? paymentCurrency(area.chargedPrices, from) ?? area.currency;
   const [paidOn, setPaidOn] = useState(editing?.paidOn ?? dateStringFromLocal(new Date()));
   const [note, setNote] = useState(editing?.note ?? '');
   const [problem, setProblem] = useState<string | null>(null);
@@ -132,8 +146,8 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
 
   // A stable object, so the preview's delay only restarts when the months really change.
   const previewInput = useMemo(
-    () => ({ areaId: area.id, monthCount, from, receiptId: editing?.id ?? null }),
-    [area.id, monthCount, from, editing?.id],
+    () => ({ areaId: area.id, monthCount, from, receiptId: editing?.id ?? null, isBackfill }),
+    [area.id, monthCount, from, editing?.id, isBackfill],
   );
   const previewQuery = useDebouncedValue(previewInput, PREVIEW_DELAY_MS);
   const preview = useIpcQuery('payments:preview', previewQuery);
@@ -154,7 +168,6 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
       setBusy(false);
       return setProblem(result.ok ? explain(result.data) : t('errors.unexpected'));
     }
-    const isBackfill = mode.kind === 'past';
     const result = await callIpc('payments:create', { areaId: area.id, isBackfill, ...details });
     if (!result.ok || !result.data.ok) {
       if (!mounted.current) return;
@@ -179,6 +192,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
         label={t('paymentDialog.from')}
         value={from}
         onChange={setFrom}
+        min={earliest}
         hint={t('paymentDialog.fromHint')}
       />
       <CountField

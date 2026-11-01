@@ -516,11 +516,18 @@ describe('a new renter with a new rent or currency', () => {
   });
 
   it('switches currency from that month: new money is in it and never fills older months', () => {
+    // January to May paid in dinars while the first renter was there.
+    payOk({ monthCount: 5 });
     expect(newRenter({ monthlyPrice: USD_RENT, currency: 'USD' })).toEqual({ ok: true });
     expect(repos.areas.get(areaId)?.currency).toBe('USD');
-    // Paid from January in dinars: it fills January to June only, never the dollar months.
-    expect(pay({ monthCount: 7 })).toEqual({ ok: false, reason: 'too_much' });
-    payOk({ monthCount: 6 });
+    // The form starts from the new renter's month; the first renter's June is paid from its box, alone.
+    const june = { year: 2026, month: 6 };
+    expect(pay({ from: june })).toEqual({ ok: false, reason: 'before_renter' });
+    expect(pay({ from: june, monthCount: 2, monthBox: true })).toEqual({
+      ok: false,
+      reason: 'before_renter',
+    });
+    payOk({ from: june, monthBox: true });
     const dollars = payOk({ from: { year: 2026, month: 7 } });
     const saved = receipts();
     expect(saved.find((receipt) => receipt.id === dollars.id)?.currency).toBe('USD');
@@ -596,12 +603,15 @@ describe('a new renter with a new rent or currency', () => {
     expect(repos.areas.get(area.id)?.prices).toHaveLength(1);
   });
 
-  it('new money starting in a vacant month takes the currency of the next rent', () => {
+  it('a new renter after an empty place pays from their own month, in their currency', () => {
     changePriceTo(5, 0);
     expect(newRenter({ startedOn: '2026-07-01', monthlyPrice: USD_RENT, currency: 'USD' })).toEqual(
       { ok: true },
     );
-    const { id } = payOk({ from: { year: 2026, month: 5 } });
+    // The empty months before them are not theirs to pay.
+    expect(pay({ from: { year: 2026, month: 5 } })).toEqual({ ok: false, reason: 'before_renter' });
+    expect(repos.payments.suggestedStart(areaId, TODAY.month)).toEqual({ year: 2026, month: 7 });
+    const { id } = payOk({ from: { year: 2026, month: 7 } });
     const receipt = receipts().find((each) => each.id === id);
     expect(receipt).toMatchObject({ currency: 'USD' });
     expect(receipt?.allocations).toEqual([{ year: 2026, month: 7, amount: USD_RENT }]);
@@ -649,5 +659,147 @@ describe('correcting an area currency', () => {
     expect(repos.areas.get(areaId)?.currency).toBe('IQD');
     repos.payments.void(id);
     expect(edit('USD')).toEqual({ ok: true, id: areaId });
+  });
+});
+
+describe('months without a renter (the business, 2026-11-01)', () => {
+  /** A place whose rent starts in January, with its renter from `startedOn`. */
+  function placeWithRenterFrom(startedOn: string) {
+    const category = repos.categories.list()[0];
+    if (!category) throw new Error('no category');
+    const area = repos.areas.create(
+      areaInput(category.id, {
+        name: 'Shop 9',
+        renter: { fullName: 'Shirin Omar', phone: '', startedOn },
+      }),
+    );
+    if (!area.ok) throw new Error('area failed');
+    return area.id;
+  }
+  const boxes = (id: number) =>
+    repos.areaViews.year(id, 2026, { year: 2026, month: 11 })?.boxes.map((box) => box.status);
+  const NOVEMBER: BusinessToday = { date: '2026-11-01', month: { year: 2026, month: 11 } };
+
+  it('a month nobody was in is an empty box, not owed', () => {
+    const id = placeWithRenterFrom('2026-09-01');
+    expect(boxes(id)).toEqual([
+      ...Array<string>(8).fill('not_applicable'),
+      'late',
+      'late',
+      'due',
+      'upcoming',
+    ]);
+    expect(repos.areaViews.year(id, 2026, NOVEMBER.month)?.figures[0]).toMatchObject({
+      expected: 4 * RENT,
+      remaining: 3 * RENT,
+    });
+  });
+
+  it("records an earlier renter's months as past records after a new renter came in", () => {
+    // The first renter from January, a new one from July: January–June are the first renter's.
+    const id = placeWithRenterFrom('2026-01-01');
+    repos.priceChanges.changeRenter({
+      areaId: id,
+      fullName: 'Aram Ali',
+      phone: '',
+      startedOn: '2026-07-01',
+      monthlyPrice: RENT,
+    });
+    const january = { year: 2026, month: 1 };
+    expect(repos.payments.preview(id, 6, january, NOVEMBER.month, null, true)).toMatchObject({
+      ok: true,
+    });
+    const past = repos.payments.create(
+      {
+        areaId: id,
+        isBackfill: true,
+        monthCount: 6,
+        from: january,
+        paidOn: '2026-06-30',
+        note: '',
+      },
+      NOVEMBER,
+    );
+    expect(past).toMatchObject({ ok: true, receiptNumber: null });
+    expect(boxes(id)?.slice(0, 6)).toEqual(Array<string>(6).fill('paid'));
+    // A normal payment still starts from the new renter's first month.
+    expect(repos.payments.preview(id, 1, january, NOVEMBER.month, null)).toEqual({
+      ok: false,
+      reason: 'before_renter',
+    });
+  });
+
+  it("pays from the renter's first month only", () => {
+    const id = placeWithRenterFrom('2026-09-15');
+    expect(repos.payments.suggestedStart(id, NOVEMBER.month)).toEqual({ year: 2026, month: 9 });
+    const august = { year: 2026, month: 8 };
+    expect(repos.payments.preview(id, 2, august, NOVEMBER.month, null)).toEqual({
+      ok: false,
+      reason: 'before_renter',
+    });
+    const create = (from: { year: number; month: number }, monthBox?: true) =>
+      repos.payments.create(
+        {
+          areaId: id,
+          isBackfill: false,
+          monthCount: 1,
+          from,
+          paidOn: '2026-11-01',
+          note: '',
+          monthBox,
+        },
+        NOVEMBER,
+      );
+    expect(create(august)).toEqual({ ok: false, reason: 'before_renter' });
+    // A month box of an empty month is no button; even so, it has no rent to pay.
+    expect(create(august, true)).toEqual({ ok: false, reason: 'nothing_open' });
+    expect(create({ year: 2026, month: 9 })).toMatchObject({ ok: true });
+  });
+
+  it('the months between a renter who left and the next one are empty', () => {
+    // The first renter (from January) left at the end of June; the next came in September.
+    expect(
+      repos.priceChanges.changeRenter({
+        areaId,
+        fullName: 'Ahmed Ali',
+        phone: '',
+        startedOn: '2026-09-01',
+        monthlyPrice: RENT,
+      }),
+    ).toEqual({ ok: true });
+    db.prepare(
+      "UPDATE renters SET ended_on = '2026-07-01' WHERE area_id = ? AND ended_on = '2026-09-01'",
+    ).run(areaId);
+    expect(boxes(areaId)?.slice(5, 9)).toEqual([
+      'late',
+      'not_applicable',
+      'not_applicable',
+      'late',
+    ]);
+  });
+
+  it('a month already paid keeps counting, renter or not', () => {
+    const id = placeWithRenterFrom('2026-01-01');
+    const paidMarch = repos.payments.create(
+      {
+        areaId: id,
+        isBackfill: true,
+        monthCount: 1,
+        from: { year: 2026, month: 3 },
+        paidOn: '2026-03-01',
+        note: '',
+      },
+      NOVEMBER,
+    );
+    expect(paidMarch).toMatchObject({ ok: true });
+    // The renter's start is corrected to May: March stays paid, April is empty.
+    db.prepare("UPDATE renters SET started_on = '2026-05-01' WHERE area_id = ?").run(id);
+    expect(boxes(id)?.slice(0, 5)).toEqual([
+      'not_applicable',
+      'not_applicable',
+      'paid',
+      'not_applicable',
+      'late',
+    ]);
   });
 });

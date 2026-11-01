@@ -274,3 +274,69 @@ test('edit and cancel a receipt, record a past payment, and refuse too much', as
     removeDataDir(dataDir);
   }
 });
+
+test('a renter pays from the month they came: earlier months are empty and not offered', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    // The rent was set from eight months before the renter came, two months ago.
+    const today = new Date();
+    const came = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+    const rentFrom = new Date(came.getFullYear(), came.getMonth() - 8, 1);
+    const ym = (date: Date) => ({ year: date.getFullYear(), month: date.getMonth() + 1 });
+    const start = ym(came);
+    await page.evaluate(
+      async ({ from, startedOn, rent }) => {
+        await window.api.invoke('settings:update', { language: 'en' });
+        const category = await window.api.invoke('categories:create', {
+          name: 'Shops',
+          color: null,
+        });
+        if (!category.ok || !category.data.ok) throw new Error('category failed');
+        await window.api.invoke('areas:create', {
+          categoryId: category.data.id,
+          name: 'Shop 9',
+          currency: 'IQD',
+          monthlyPrice: rent,
+          rentStartsFrom: from,
+          renter: { fullName: 'Shirin Omar', phone: '', startedOn },
+          address: '',
+          contractStart: null,
+          notes: '',
+        });
+      },
+      {
+        from: ym(rentFrom),
+        startedOn: `${start.year}-${String(start.month).padStart(2, '0')}-01`,
+        rent: RENT,
+      },
+    );
+    await reloadApp(page);
+    await page.getByRole('link', { name: en.nav.areas }).click();
+    await page.getByRole('link', { name: 'Shop 9' }).click();
+
+    // The month before the renter came is an empty box, not a red one.
+    const before = ym(new Date(came.getFullYear(), came.getMonth() - 1, 1));
+    if (before.year === today.getFullYear()) {
+      const boxes = page.getByRole('list', { name: new RegExp(`${before.year}`) });
+      await expect(boxes.getByLabel(boxLabel(before.month, en.months.status.vacant))).toBeVisible();
+    }
+
+    await page.getByRole('button', { name: en.area.recordPayment }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByText(previewMonth(start.month, start.year, '250,000'))).toBeVisible();
+    const from = dialog.getByRole('group', { name: en.paymentDialog.from });
+    const month = from.getByRole('combobox', { name: en.common.month, exact: true });
+    const year = from.getByRole('combobox', { name: en.common.year, exact: true });
+    await expect(month).toHaveValue(String(start.month));
+    await expect(year).toHaveValue(String(start.year));
+    // No earlier month or year is offered.
+    const months = (await month.locator('option').allTextContents()).map(Number);
+    expect(Math.min(...months)).toBe(start.month);
+    const years = (await year.locator('option').allTextContents()).map(Number);
+    expect(Math.min(...years)).toBe(start.year);
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});

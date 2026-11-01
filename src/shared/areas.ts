@@ -171,6 +171,19 @@ export interface Renter {
   endedOn: DateString | null;
 }
 
+/**
+ * The first month a renter pays for: the month they started. The payment
+ * form offers no month before it, and the main process refuses one (owner's
+ * request, 2026-11-01). Null without a renter.
+ */
+export function renterFirstMonth(
+  renter: Pick<Renter, 'startedOn'> | null | undefined,
+): YearMonth | null {
+  if (!renter) return null;
+  const [year, month] = renter.startedOn.split('-').map(Number);
+  return year && month ? { year, month } : null;
+}
+
 export interface AreaListItem {
   id: number;
   name: string;
@@ -204,8 +217,13 @@ export interface AreaDetails {
   address: string;
   contractStart: DateString | null;
   notes: string;
-  /** Oldest first. The first row is when the rent started. */
+  /** Oldest first. The first row is when the rent started. The saved history, for editing. */
   prices: PriceRow[];
+  /**
+   * The rent as charged (`chargedRent`: months no renter was in at 0), as the
+   * month boxes, figures and the Areas list read it. Oldest first.
+   */
+  chargedPrices: PriceRow[];
   /** Newest first; the current renter (if any) has no end date. */
   renters: Renter[];
   /** True once a payment counts for the area; from then on its currency is fixed. */
@@ -261,6 +279,16 @@ export type RenterChangeResult =
   | { ok: false; reason: 'not_found' | 'before_current_renter' | 'before_rent_start' | 'no_room' };
 
 export type RestoreResult = { ok: true } | { ok: false; reason: 'not_found' | 'duplicate_name' };
+
+/**
+ * An empty place: no renter now and no rent charged this month. It offers no
+ * Change price or Mark as vacant; its rent and currency come back with a new
+ * renter (owner's decision, 2026-11-01). A renter who starts later does not
+ * make a place empty.
+ */
+export function isEmptyPlace(rentNow: number | null, hasRenter: boolean): boolean {
+  return rentNow === 0 && !hasRenter;
+}
 
 /** True when a month comes before the area's rent started, where no price change can go. */
 export function isBeforeRentStart(prices: readonly PriceRow[], month: YearMonth): boolean {

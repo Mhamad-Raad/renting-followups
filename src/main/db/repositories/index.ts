@@ -10,6 +10,7 @@ import { createPaidRepository } from './paid';
 import { createPaymentRepository } from './payments';
 import { createPriceChangeRepository } from './priceChanges';
 import { createPriceRepository } from './prices';
+import { createRentRepository } from './rent';
 import { createReportRepository } from './reports';
 import { createRenterRepository } from './renters';
 import {
@@ -25,9 +26,10 @@ export function createRepositories(db: Db) {
   const prices = createPriceRepository(db);
   const renters = createRenterRepository(db);
   const paid = createPaidRepository(db);
+  const rent = createRentRepository({ paid, prices, renters });
   const allocations = createAllocationRepository(db);
-  const payments = createPaymentRepository(db, { allocations, audit, paid, prices, renters });
-  const areas = createAreaRepository(db, { audit, categories, prices, renters });
+  const payments = createPaymentRepository(db, { allocations, audit, paid, rent, renters });
+  const areas = createAreaRepository(db, { audit, categories, prices, rent, renters });
   const monthPayments = createMonthPaymentRepository(db, { areas, audit, payments });
   return {
     settings: createSettingsRepository(db),
@@ -35,7 +37,7 @@ export function createRepositories(db: Db) {
     backupSettings: createBackupSettingsRepository(db),
     categories,
     areas,
-    areaViews: createAreaViewRepository(db, { areas, paid, prices }),
+    areaViews: createAreaViewRepository(db, { areas, paid, rent }),
     priceChanges: createPriceChangeRepository(db, {
       allocations,
       areas,
@@ -47,7 +49,7 @@ export function createRepositories(db: Db) {
     paid,
     payments,
     monthPayments,
-    reports: createReportRepository(db, { paid, prices }),
+    reports: createReportRepository(db, { paid, rent }),
     activity: createActivityRepository(db),
   };
 }

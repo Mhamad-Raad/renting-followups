@@ -28,6 +28,8 @@ export const paymentPreviewSchema = z
     from: yearMonthSchema,
     /** When editing, the receipt being changed: its own months count as open again. */
     receiptId: id.nullable(),
+    /** A past record: history, so it may start before the current renter's first month. */
+    isBackfill: z.boolean(),
   })
   .strict();
 export type PaymentPreviewQuery = z.infer<typeof paymentPreviewSchema>;
@@ -41,7 +43,17 @@ const details = {
 
 /** A new payment. A past record (backfill) gets no receipt number. */
 export const paymentCreateSchema = z
-  .object({ areaId: id, isBackfill: z.boolean(), ...details })
+  .object({
+    areaId: id,
+    isBackfill: z.boolean(),
+    ...details,
+    /**
+     * One month box clicked (section 7.4): that month may be before the current
+     * renter started, so an earlier renter's unpaid month can still be paid.
+     * The payment form never sends it: it starts from the renter's first month.
+     */
+    monthBox: z.literal(true).optional(),
+  })
   .strict();
 export type PaymentCreate = z.infer<typeof paymentCreateSchema>;
 
@@ -105,7 +117,9 @@ export type AllocationResult =
   /** More months than are open up to the horizon. */
   | { ok: false; reason: 'too_much'; open: number }
   /** No month from the chosen one up to the horizon has rent to fill (vacant, or too far ahead). */
-  | { ok: false; reason: 'nothing_open' };
+  | { ok: false; reason: 'nothing_open' }
+  /** The chosen month is before the current renter started: they pay no month before theirs. */
+  | { ok: false; reason: 'before_renter' };
 
 export interface Receipt {
   id: number;
@@ -122,7 +136,7 @@ export interface Receipt {
   allocations: Allocation[];
 }
 
-type Problem = 'not_found' | 'too_much' | 'nothing_open' | 'future_date';
+type Problem = 'not_found' | 'too_much' | 'nothing_open' | 'before_renter' | 'future_date';
 
 export type PaymentCreateResult =
   { ok: true; id: number; receiptNumber: number | null } | { ok: false; reason: Problem };

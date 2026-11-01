@@ -7,8 +7,10 @@ import {
   compareAreaLabels,
   areaSubline,
   hasOwnName,
+  isEmptyPlace,
   nameCollator,
 } from '@shared/areas';
+import { priceForMonth } from '@shared/prices';
 import { areaInput, createTestDatabase } from './helpers';
 
 const TODAY = { year: 2026, month: 10 };
@@ -53,6 +55,7 @@ describe('creating areas', () => {
       contractStart: null,
       notes: '',
       prices: [{ year: 2026, month: 1, monthlyPrice: 250_000, currency: 'IQD' }],
+      chargedPrices: [{ year: 2026, month: 1, monthlyPrice: 250_000, currency: 'IQD' }],
       renters: [
         {
           id: expect.any(Number),
@@ -310,6 +313,19 @@ describe('prices', () => {
       startedOn: '2026-07-01',
       endedOn: '2026-09-01',
     });
+  });
+
+  it('an empty place is one with no renter now and no rent charged; a renter to come is not', () => {
+    expect(isEmptyPlace(0, false)).toBe(true);
+    expect(isEmptyPlace(0, true)).toBe(false);
+    expect(isEmptyPlace(250_000, false)).toBe(false);
+    expect(isEmptyPlace(null, false)).toBe(false);
+    // A renter who starts next month: this month is charged nothing, yet the place is not empty.
+    const id = createArea({ renter: { fullName: 'Sara', phone: '', startedOn: '2026-11-05' } });
+    const area = repos.areas.get(id);
+    expect(area?.chargedPrices.at(-1)).toMatchObject({ month: 11, monthlyPrice: 250_000 });
+    expect(priceForMonth(area?.chargedPrices ?? [], TODAY)).toBe(0);
+    expect(priceForMonth(area?.prices ?? [], TODAY)).toBe(250_000);
   });
 
   it('refuses a change before the rent started', () => {

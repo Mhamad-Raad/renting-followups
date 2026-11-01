@@ -13,6 +13,7 @@ import type { Db } from '../connection';
 import type { AuditRepository } from './audit';
 import type { CategoryRepository } from './categories';
 import type { PriceRepository } from './prices';
+import type { RentRepository } from './rent';
 import type { RenterRepository } from './renters';
 import { NOW_SQL } from './sql';
 
@@ -31,10 +32,14 @@ interface Dependencies {
   audit: AuditRepository;
   categories: CategoryRepository;
   prices: PriceRepository;
+  rent: RentRepository;
   renters: RenterRepository;
 }
 
-export function createAreaRepository(db: Db, { audit, categories, prices, renters }: Dependencies) {
+export function createAreaRepository(
+  db: Db,
+  { audit, categories, prices, rent, renters }: Dependencies,
+) {
   const selectById = db.prepare<[number], AreaRecord>(
     `SELECT id, category_id, name, currency, address, contract_start, notes, deleted_at
      FROM areas WHERE id = ?`,
@@ -115,6 +120,7 @@ export function createAreaRepository(db: Db, { audit, categories, prices, renter
         contractStart: area.contract_start,
         notes: area.notes,
         prices: prices.forArea(id),
+        chargedPrices: rent.forArea(id),
         renters: renters.forArea(id),
         hasPayments: hasPayments(id),
       };
