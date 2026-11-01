@@ -7,7 +7,7 @@ Scope: commits `e1021df` (feat) and `9c67cfe` (docs), made by another session: m
 - `npm run check`: typecheck, ESLint, Prettier, 727 unit tests pass.
 - `npm run test:e2e`: 65 end-to-end tests pass (ghost mode).
 - Probes on a real database for the cases most likely to break: an earlier renter's history brought in after a new renter, a renter who starts next month, a place that never had a renter.
-- A new long-run test (`tests/unit/longRun.test.ts`): 150 places over four years (2026–2029, with the leap year 2028), 4,956 payments, 233 renter changes, 128 vacancies, 188 receipt edits and cancellations, on a real SQLite database. After every month it checks that receipt totals match their months, that no month is paid twice, that no money sits on a month without rent, that receipt numbers never repeat, that year figures, Home cards and Report totals add up, and that colours match the dates. At the end it checks the database integrity and that the screens take under a second. The 7 refused payments were all correct refusals: more than two years ahead.
+- A new long-run test (`tests/unit/longRun.test.ts`): 150 places over four years (2026–2029, with the leap year 2028), 5,010 payments, 265 renter changes, 142 vacancies, 195 receipt edits and cancellations, on a real SQLite database. After every month it checks that receipt totals match their months, that no month is paid twice, that no money sits on a month without rent, that receipt numbers never repeat, that year figures, Home cards and Report totals add up, and that colours match the dates. At the end it checks the database integrity and that the screens take under a second. The 8 refused payments were all correct refusals: more than two years ahead.
 
 ## Findings and fixes
 
