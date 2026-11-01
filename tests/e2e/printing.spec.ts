@@ -169,10 +169,20 @@ test('the buttons on screen print and export, with a plain message each time', a
 
     const pdf = join(dataDir, 'area.pdf');
     await chooseSavePath(app, pdf);
+    // Export to PDF opens the report in a pop-up first; Save as PDF and Print are in it.
     await page.getByRole('button', { name: en.print.actions.pdf }).click();
-    await expect.poll(() => existsSync(pdf)).toBe(true);
+    const preview = page.getByRole('dialog', { name: en.print.preview.title });
+    await expect(preview.getByRole('cell', { name: /دوکانی ١/ }).first()).toBeVisible();
+    expect(existsSync(pdf)).toBe(false);
+    await preview.getByRole('button', { name: en.print.actions.savePdf }).click();
+    await expect(preview.getByText(en.print.results.savedPdf)).toBeVisible();
+    expect(existsSync(pdf)).toBe(true);
     // The area page's file is named after the place.
     expect(await suggestedName(app)).toContain('دوکانی ١');
+    await preview.getByRole('button', { name: en.print.actions.print, exact: true }).click();
+    await expect(preview.getByText(en.print.results.printed)).toBeVisible();
+    await preview.getByRole('button', { name: en.common.close }).click();
+    await expect(preview).toHaveCount(0);
 
     // Areas list: tick one area, then Export to Excel.
     await page.getByRole('link', { name: en.nav.areas, exact: true }).click();

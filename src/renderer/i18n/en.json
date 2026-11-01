@@ -86,6 +86,7 @@
   },
   "common": {
     "ok": "OK",
+    "close": "Close",
     "cancel": "Cancel",
     "loading": "Loading…",
     "tryAgain": "Try again",
@@ -595,8 +596,12 @@
     "page": "Page",
     "pdfFiles": "PDF files",
     "excelFiles": "Excel files",
+    "preview": {
+      "title": "Report preview"
+    },
     "actions": {
       "print": "Print",
+      "savePdf": "Save as PDF",
       "pdf": "Export to PDF",
       "excel": "Export to Excel",
       "printSelected": "Print selected",

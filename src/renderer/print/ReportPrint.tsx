@@ -51,14 +51,18 @@ function ReportNotReadable() {
   return null;
 }
 
-function ReportPaper({ query }: { query: ReportQuery }) {
+/**
+ * The report itself. The print page tells the main process when it is ready;
+ * in the preview pop-up (`preview`) it is only shown.
+ */
+export function ReportPaper({ query, preview = false }: { query: ReportQuery; preview?: boolean }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const digits = settings.digitStyle;
   const report = useIpcQuery('reports:build', query);
   const categories = useIpcQuery('categories:list');
   const loaded = report.state.status !== 'loading' && categories.state.status !== 'loading';
-  usePrintReady(loaded ? report.state.status === 'ready' : null);
+  usePrintReady(loaded && !preview ? report.state.status === 'ready' : null);
   if (report.state.status !== 'ready') return null;
 
   const { rows } = report.state.data;

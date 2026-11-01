@@ -86,6 +86,7 @@
   },
   "common": {
     "ok": "حسناً",
+    "close": "إغلاق",
     "cancel": "إلغاء",
     "loading": "جارٍ التحميل…",
     "tryAgain": "حاول مرة أخرى",
@@ -595,8 +596,12 @@
     "page": "صفحة",
     "pdfFiles": "ملفات PDF",
     "excelFiles": "ملفات Excel",
+    "preview": {
+      "title": "معاينة التقرير"
+    },
     "actions": {
       "print": "طباعة",
+      "savePdf": "حفظ كملف PDF",
       "pdf": "تصدير إلى PDF",
       "excel": "تصدير إلى Excel",
       "printSelected": "طباعة المحدد",

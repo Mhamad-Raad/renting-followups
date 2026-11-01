@@ -2,8 +2,10 @@
  * Colours for light and dark mode. Status colours (paid, due, late,
  * upcoming, not applicable) stay clearly different from each other in both.
  */
+/* Also any element marked light, such as the paper in the print preview, whatever the theme. */
 :root,
-:root[data-theme='light'] {
+:root[data-theme='light'],
+[data-theme='light'] {
   color-scheme: light;
   /* Calm, cool greys: colour is kept for the main action, the current page and the month statuses. */
   --color-background: #f4f6f9;
