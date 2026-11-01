@@ -54,6 +54,9 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] Change price from a month keeps earlier months' price; both rows show in Price history.
 - [ ] Mark as vacant shows "Vacant" on the list; the place then offers no Change price or Mark as vacant (rent comes back with Change renter).
 - [ ] Record payment from a paid or empty month says which months it skipped and why.
+- [ ] First column on the Areas list, Reports, Home and the printed report: name with the address under it; no address → the category; no name → the category with the address; neither → the category alone. A place without an address never breaks a screen.
+- [ ] Export to PDF opens a pop-up with the report on white paper (also in dark mode), with Save as PDF, Print and Close; nothing is saved until Save as PDF.
+- [ ] The printed report is A4 upright: each place's figures, then its months, then its notes across the whole width; places never split across pages. Excel has an Address column.
 - [ ] Change renter: the new renter shows on the list; the old one stays in Renter history with an end date.
 - [ ] Delete an area (with confirmation), then Settings → Deleted items → Restore brings it back.
 - [ ] 200 areas open in under a second; search with Arabic letters (ي ك ه) finds Kurdish names.

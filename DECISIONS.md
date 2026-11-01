@@ -476,3 +476,9 @@ Named in ARCHITECTURE.md for Excel export; pure JavaScript, runs in the main pro
 - An empty place (no renter now, no rent charged this month) offers no Change price, no Mark as vacant and no Set rent again (removed). Its rent and currency come back with **Add renter** (the Change renter dialog, named so while nobody rents). The main process refuses rent for an empty month without a renter.
 - A place marked empty from too early a month is corrected with Change renter (from the right month, with the rent), then Mark as vacant from the month it really became empty.
 - **Record past payment is not limited to the current renter's months:** a past record is history, so an earlier renter's months can be brought in from old notebooks.
+
+### Address, preview and upright report (the business, 2026-11-01)
+
+- The address (already a field of every place) now shows under the name in the first column of every table and the printed report (`areaLines`). An empty address is stored as NULL and read as empty text.
+- **Export to PDF opens a preview pop-up** that renders the same report page the PDF is made from, rather than showing the PDF file itself. Showing the file would need the PDF viewer plugin and a looser Content-Security-Policy; rendering the page needs neither, and the preview always matches the file. The paper is forced light (`data-theme="light"`), as print pages are.
+- **The printed report is A4 upright** with each place as a group of lines (figures, months, notes across the width), at fixed column widths. Nothing is printed sideways any more, so the landscape option was removed from the print code.
