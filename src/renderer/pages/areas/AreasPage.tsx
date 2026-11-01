@@ -82,7 +82,7 @@ function rowActions(
     action('pastPayment', t('area.recordPastPayment')),
     { label: t('common.edit'), onSelect: () => edit(area.id) },
     ...rentActions,
-    action('changeRenter', t('area.changeRenter')),
+    action('changeRenter', t(area.renterName === null ? 'area.addRenter' : 'area.changeRenter')),
     { ...action('delete', t('common.delete')), tone: 'danger' },
   ];
 }

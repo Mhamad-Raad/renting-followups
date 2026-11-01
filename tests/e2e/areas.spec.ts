@@ -177,7 +177,9 @@ test('price changes, vacant and renter changes are kept as history', async () =>
     await expect(page.getByText(en.areas.noRenter)).toBeVisible();
 
     // A new renter of a vacant place starts on its last rent, already filled in.
-    await page.getByRole('button', { name: en.area.changeRenter }).click();
+    // With nobody renting, the button says Add renter.
+    await expect(page.getByRole('button', { name: en.area.changeRenter })).toHaveCount(0);
+    await page.getByRole('button', { name: en.area.addRenter }).click();
     const renter = page.getByRole('dialog');
     await expect(
       renter.getByRole('checkbox', {

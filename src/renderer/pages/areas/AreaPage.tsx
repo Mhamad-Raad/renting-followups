@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { areaLabel, type AreaDetails } from '@shared/areas';
+import { areaLabel, currentRenter, type AreaDetails } from '@shared/areas';
 import { yearMonthOf } from '@shared/dates';
 import { useIpcQuery } from '../../app/ipc';
 import { currencyForMonth, priceForMonth } from '@shared/prices';
@@ -118,7 +118,8 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
             </>
           )}
           <BigButton onClick={() => open(ACTION_DIALOGS.changeRenter)}>
-            {t('area.changeRenter')}
+            {/* With nobody renting, the same dialog adds the first renter. */}
+            {t(currentRenter(area.renters) ? 'area.changeRenter' : 'area.addRenter')}
           </BigButton>
         </div>
 

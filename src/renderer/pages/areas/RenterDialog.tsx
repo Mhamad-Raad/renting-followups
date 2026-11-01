@@ -52,7 +52,12 @@ interface RenterDialogProps {
 export function RenterDialog({ area, open, onDone, onClose }: RenterDialogProps) {
   const { t } = useTranslation();
   return (
-    <Dialog open={open} title={t('renterDialog.title')} onClose={onClose} size="wide">
+    <Dialog
+      open={open}
+      title={t(currentRenter(area.renters) ? 'renterDialog.title' : 'area.addRenter')}
+      onClose={onClose}
+      size="wide"
+    >
       <RenterForm area={area} onDone={onDone} onClose={onClose} />
     </Dialog>
   );
