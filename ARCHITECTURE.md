@@ -171,6 +171,7 @@ This one module decides every colour and every total. Everything (UI, print, Exc
 | Condition | Status | Colour |
 |---|---|---|
 | Month is before the area's first price row, or its effective price is 0 (vacant) | **not applicable** | Light hatched/empty, excluded from totals, never late |
+| No renter was in the month (the area has had a renter, and none was there that month) and nothing was paid for it | **not applicable** (shown as vacant) | Same as vacant: nobody owes it and nobody can pay it |
 | `paid > 0` (and `expected > 0`) | **paid** | **Green** |
 | Month is in the **past** (before the current month) and `paid == 0` | **late** | **Red** |
 | Month is the **current month** and `paid == 0` | **due** (word: "Not paid") | **Red** |
@@ -196,6 +197,8 @@ Rules:
 - *Not paid this month* = the current month is not paid and no month is late.
 - *Paid* = every applicable month up to and including the current month is green.
 
+**Months without a renter (the business, 2026-11-01):** a month that no renter was in has no rent: it is an empty box (vacant), not red, not owed, and cannot be paid, whatever the price history says. A renter is in a month from the month they started to the last month before they left (one who left on the 1st was not in that month; one who left on the 20th was). This covers the months before a new place's first renter (rent set from January, renter from September: January–August are empty) and the months between a renter who left and the next one. A month already paid keeps its rent and counts, so money is never hidden. An area that never had a renter is unchanged. The price history is not rewritten: one function (`chargedRent` in `src/shared/prices.ts`) applies the rule when colours, figures, reminders, reports, exports and payments read the rent (`repositories/rent.ts`); the price history and its editing use the rows as saved.
+
 **Changing a price:** the form asks "From which month?" and defaults to the **current month**. Months already paid for the chosen month or later **stay paid at the rent they were paid at**; the new rent applies to the months not paid yet. Receipts are never changed by a price change (number, total and months stay). Before saving, if some paid months get a new rent, show a calm note listing them ("Already paid, so it stays paid at the old rent: month 11/2026 – 12/2026") and save on the next press. *(The business and owner, 2026-11-01; before, paid money was shared out again with the new rent.)* If a paid month would have no rent in its money's currency (the area becomes vacant, or the rent moves to the other currency), do not save: list each receipt that pays a month which would become vacant (months, amount, and whether the receipt is cancelled) and offer one button, **Take out and save**, which takes those months out of their receipts (as clicking a paid month box does, section 7.4) and saves the change in one step. Never silently rewrite the past. *(Owner's decision, iteration 6 review; the one-step button is the owner's request of 2026-10-29, for fewer clicks.)*
 
 **Totals in any report** are always shown **separately per currency**: one total row for IQD, one for USD. **No conversion, ever.**
@@ -211,12 +214,12 @@ Numbers display as thousands-separated. IQD has no decimals; USD shows 2 decimal
 Button: **Record Payment**, always visible on the area page and on rows of the "Needs attention" list.
 
 Form (large, single column):
-1. **From which month** (defaults to the oldest month that is not paid; year + month number selectors).
+1. **From which month** (defaults to the oldest month that is not paid; year + month number selectors). It offers no month before the **current renter's first month** (the month they started), and the main process refuses one (`before_renter`): a renter pays only from the month they came *(the business, 2026-11-01)*. Editing a saved receipt that already starts earlier may keep its start. Without a current renter there is no such limit.
 2. **How many months** (a number with − and + buttons, starting at 1; it can also be typed). There is no amount to type: the amount is worked out from the months *(owner's choice, 2026-11-01)*.
 3. **Date received** (defaults to today).
 4. **Note** (optional).
 
-**Preview**, shown live before saving: the months paid, **oldest unpaid month first starting from the chosen month**, each with its whole rent, and the amount received (their sum, in the currency of the month the payment starts from, or the receipt's own when editing), for example "Month 3/2026: 250,000, Month 4/2026: 250,000. Amount received: 500,000 IQD". Months that are already paid, vacant or not applicable are skipped, and the preview says which ones and why ("Skipped, already paid: month 6/2026", "Skipped, no rent (the place was empty…): month 7/2026 – 10/2026"). The months continue into following months and years. Old debts of an earlier renter can still be paid while the place is empty.
+**Preview**, shown live before saving: the months paid, **oldest unpaid month first starting from the chosen month**, each with its whole rent, and the amount received (their sum, in the currency of the month the payment starts from, or the receipt's own when editing), for example "Month 3/2026: 250,000, Month 4/2026: 250,000. Amount received: 500,000 IQD". Months that are already paid, vacant or not applicable are skipped, and the preview says which ones and why ("Skipped, already paid: month 6/2026", "Skipped, no rent (the place was empty…): month 7/2026 – 10/2026"). The months continue into following months and years. Old debts of an earlier renter can still be paid while the place is empty; once a new renter is in, such a month is paid by clicking its month box (section 7.4), which pays that one month only.
 
 **Horizon:** a payment may reach at most **24 months** past the current month. The number of months stops at the months still open up to then; a larger number is refused in plain words.
 
