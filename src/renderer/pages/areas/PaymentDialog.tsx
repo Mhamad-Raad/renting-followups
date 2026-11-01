@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AreaDetails } from '@shared/areas';
+import { currentRenter, renterFirstMonth, type AreaDetails } from '@shared/areas';
 import { FRACTION_DIGITS, type Currency } from '@shared/currency';
 import {
   dateStringFromLocal,
   formatMonthRuns,
+  monthIndex,
   formatYearMonth,
   yearMonthOf,
   type YearMonth,
@@ -115,7 +116,18 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
   const [open, setOpen] = useState<number | undefined>(undefined);
   // A start month with fewer open months brings the count down with it.
   const monthCount = open === undefined ? chosenCount : Math.min(chosenCount, Math.max(open, 1));
-  const [from, setFrom] = useState<YearMonth>({ year: start.year, month: start.month });
+  // No month before the current renter started; a saved receipt may keep an earlier start of its own.
+  const renterStart = renterFirstMonth(currentRenter(area.renters));
+  const ownStart = editing?.allocations[0];
+  const earliest =
+    renterStart && ownStart && monthIndex(ownStart) < monthIndex(renterStart)
+      ? { year: ownStart.year, month: ownStart.month }
+      : renterStart;
+  const [from, setFrom] = useState<YearMonth>(() =>
+    earliest && monthIndex(start) < monthIndex(earliest)
+      ? earliest
+      : { year: start.year, month: start.month },
+  );
   // A receipt is in one currency: a saved one keeps its own, new money takes that of its first month.
   const currency = editing?.currency ?? paymentCurrency(area.prices, from) ?? area.currency;
   const [paidOn, setPaidOn] = useState(editing?.paidOn ?? dateStringFromLocal(new Date()));
@@ -179,6 +191,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
         label={t('paymentDialog.from')}
         value={from}
         onChange={setFrom}
+        min={earliest}
         hint={t('paymentDialog.fromHint')}
       />
       <CountField

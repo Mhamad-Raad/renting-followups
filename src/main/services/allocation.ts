@@ -32,7 +32,8 @@ function* openMonths(
 /**
  * The first `count` months not paid yet from `from` onward, each at its
  * rent, moving forward into later months and years. Asking for more months
- * than are open up to the horizon is refused.
+ * than are open up to the horizon is refused, and so is starting before
+ * `earliest` (the current renter's first month: they pay none before it).
  */
 export function allocate(
   count: number,
@@ -40,7 +41,10 @@ export function allocate(
   prices: readonly PriceRow[],
   paid: PaidHistory,
   today: YearMonth,
+  earliest: YearMonth | null = null,
 ): AllocationResult {
+  if (earliest && monthIndex(from) < monthIndex(earliest))
+    return { ok: false, reason: 'before_renter' };
   const open = [...openMonths(prices, paid, monthIndex(from), today)];
   if (open.length === 0) return { ok: false, reason: 'nothing_open' };
   if (count > open.length) return { ok: false, reason: 'too_much', open: open.length };
@@ -72,17 +76,20 @@ function skippedBefore(
 
 /**
  * Where the payment form starts by default: the oldest month not paid, from
- * when the rent started (`prices` oldest first). Null when everything up to
- * the horizon is paid (or the area has no rent).
+ * when the rent started (`prices` oldest first), and not before `earliest`
+ * (the current renter's first month). Null when everything up to the horizon
+ * is paid (or the area has no rent).
  */
 export function oldestOpenMonth(
   prices: readonly PriceRow[],
   paid: PaidHistory,
   today: YearMonth,
+  earliest: YearMonth | null = null,
 ): YearMonth | null {
   const start = prices[0];
   if (!start) return null;
-  for (const open of openMonths(prices, paid, monthIndex(start), today)) {
+  const from = Math.max(monthIndex(start), earliest ? monthIndex(earliest) : -Infinity);
+  for (const open of openMonths(prices, paid, from, today)) {
     return { year: open.year, month: open.month };
   }
   return null;

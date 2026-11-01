@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { MAX_YEAR, MIN_YEAR, type YearMonth } from '@shared/dates';
+import { MAX_YEAR, MIN_YEAR, monthIndex, type YearMonth } from '@shared/dates';
 import { formatPlain } from '@shared/formatNumber';
 import { useSettings } from '../app/SettingsContext';
 import styles from './DateFields.module.css';
@@ -19,13 +19,22 @@ interface MonthYearFieldProps {
   onChange: (value: YearMonth) => void;
   error?: string | null | undefined;
   hint?: string | undefined;
+  /** The earliest month offered: earlier years and months are left out. */
+  min?: YearMonth | null | undefined;
 }
 
 /** Picks a month (as a number 1–12) and a year. */
-export function MonthYearField({ label, value, onChange, error, hint }: MonthYearFieldProps) {
+export function MonthYearField({ label, value, onChange, error, hint, min }: MonthYearFieldProps) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const format = (number: number) => formatPlain(number, settings.digitStyle);
+  // A year that brings the month before `min` moves the month up to it.
+  const change = (next: YearMonth) =>
+    onChange(
+      min && monthIndex(next) < monthIndex(min) ? { year: min.year, month: min.month } : next,
+    );
+  const months = min && value.year === min.year ? MONTHS.filter((m) => m >= min.month) : MONTHS;
+  const years = yearOptions(new Date().getFullYear()).filter((year) => !min || year >= min.year);
   return (
     <fieldset className={styles.group}>
       <legend className={styles.legend}>{label}</legend>
@@ -33,9 +42,9 @@ export function MonthYearField({ label, value, onChange, error, hint }: MonthYea
         <SelectField
           label={t('common.month')}
           value={String(value.month)}
-          onChange={(month) => onChange({ ...value, month: Number(month) })}
+          onChange={(month) => change({ ...value, month: Number(month) })}
         >
-          {MONTHS.map((month) => (
+          {months.map((month) => (
             <option key={month} value={month}>
               {format(month)}
             </option>
@@ -44,9 +53,9 @@ export function MonthYearField({ label, value, onChange, error, hint }: MonthYea
         <SelectField
           label={t('common.year')}
           value={String(value.year)}
-          onChange={(year) => onChange({ ...value, year: Number(year) })}
+          onChange={(year) => change({ ...value, year: Number(year) })}
         >
-          {yearOptions(new Date().getFullYear()).map((year) => (
+          {years.map((year) => (
             <option key={year} value={year}>
               {format(year)}
             </option>

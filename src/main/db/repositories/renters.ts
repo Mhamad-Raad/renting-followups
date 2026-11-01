@@ -32,6 +32,10 @@ export function createRenterRepository(db: Db) {
   const selectForArea = db.prepare<[number], RenterRecord>(
     `SELECT ${COLUMNS} FROM renters WHERE area_id = ? ORDER BY started_on DESC, id DESC`,
   );
+  const selectForActiveAreas = db.prepare<[], RenterRecord & { area_id: number }>(
+    `SELECT area_id, ${COLUMNS} FROM renters
+     WHERE area_id IN (SELECT id FROM areas WHERE deleted_at IS NULL)`,
+  );
   const selectCurrent = db.prepare<[number], RenterRecord>(
     `SELECT ${COLUMNS} FROM renters WHERE area_id = ? AND ended_on IS NULL`,
   );
@@ -52,6 +56,17 @@ export function createRenterRepository(db: Db) {
   return {
     /** Newest first. */
     forArea: (areaId: number): Renter[] => selectForArea.all(areaId).map(toRenter),
+
+    /** Every renter of every area in use, by area, in one query. */
+    forActiveAreas(): Map<number, Renter[]> {
+      const byArea = new Map<number, Renter[]>();
+      for (const row of selectForActiveAreas.all()) {
+        const list = byArea.get(row.area_id) ?? [];
+        list.push(toRenter(row));
+        byArea.set(row.area_id, list);
+      }
+      return byArea;
+    },
 
     current(areaId: number): Renter | null {
       const row = selectCurrent.get(areaId);

@@ -145,3 +145,28 @@ describe('oldestOpenMonth', () => {
     expect(oldestOpenMonth(FROM_JANUARY, history, TODAY)).toBeNull();
   });
 });
+
+describe("the current renter's first month", () => {
+  const SEPTEMBER = { year: 2026, month: 9 };
+  const NOVEMBER = { year: 2026, month: 11 };
+
+  it('refuses a payment starting before it', () => {
+    const result = allocate(
+      2,
+      { year: 2026, month: 8 },
+      FROM_JANUARY,
+      NOTHING_PAID,
+      NOVEMBER,
+      SEPTEMBER,
+    );
+    expect(split(result)).toBe('before_renter');
+    expect(split(allocate(1, SEPTEMBER, FROM_JANUARY, NOTHING_PAID, NOVEMBER, SEPTEMBER))).toEqual([
+      '9/2026=250000',
+    ]);
+  });
+
+  it('suggests no month before it', () => {
+    expect(oldestOpenMonth(FROM_JANUARY, NOTHING_PAID, NOVEMBER, SEPTEMBER)).toEqual(SEPTEMBER);
+    expect(oldestOpenMonth(FROM_JANUARY, NOTHING_PAID, NOVEMBER)).toEqual({ year: 2026, month: 1 });
+  });
+});

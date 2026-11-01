@@ -19,7 +19,7 @@ import {
 } from '../../services/monthStatus';
 import type { Db } from '../connection';
 import type { PaidRepository } from './paid';
-import type { PriceRepository } from './prices';
+import type { RentRepository } from './rent';
 import { createKeyValueStore } from './settings';
 
 interface ReportRecord {
@@ -37,11 +37,11 @@ const FILTERS_KEY = 'report_filters_last_used';
 
 interface Dependencies {
   paid: PaidRepository;
-  prices: PriceRepository;
+  rent: RentRepository;
 }
 
 /** The Reports page: one row per area with its figures and months, and totals per currency. */
-export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
+export function createReportRepository(db: Db, { paid, rent }: Dependencies) {
   const selectAreas = db.prepare<
     { categoryId: number | null; currency: Currency | null },
     ReportRecord
@@ -65,7 +65,7 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
       const areas = selectAreas.all({ categoryId: query.categoryId, currency: query.currency });
       const excluded = new Set(query.excludedIds);
       const only = query.onlyIds && new Set(query.onlyIds);
-      const pricesByArea = prices.forActiveAreas();
+      const pricesByArea = rent.forActiveAreas();
       const paidByArea = paid.inYear(query.year);
       const rows: ReportRow[] = [];
       for (const area of areas) {

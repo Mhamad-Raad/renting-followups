@@ -108,6 +108,7 @@ export function useMonthPick(onDone: (outcome: MonthPickOutcome) => void) {
       from: { year: picked.year, month: picked.box.month },
       paidOn: dateStringFromLocal(new Date()),
       note: '',
+      monthBox: true,
     });
     working.current = false;
     if (!mounted.current) return;

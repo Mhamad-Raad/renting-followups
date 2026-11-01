@@ -171,6 +171,19 @@ export interface Renter {
   endedOn: DateString | null;
 }
 
+/**
+ * The first month a renter pays for: the month they started. The payment
+ * form offers no month before it, and the main process refuses one (owner's
+ * request, 2026-11-01). Null without a renter.
+ */
+export function renterFirstMonth(
+  renter: Pick<Renter, 'startedOn'> | null | undefined,
+): YearMonth | null {
+  if (!renter) return null;
+  const [year, month] = renter.startedOn.split('-').map(Number);
+  return year && month ? { year, month } : null;
+}
+
 export interface AreaListItem {
   id: number;
   name: string;
