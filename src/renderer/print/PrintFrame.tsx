@@ -8,7 +8,6 @@ import { PrintHeader } from './PrintHeader';
 import { usePrintLogo } from './PrintLayout';
 
 interface PrintFrameProps {
-  landscape?: boolean;
   /** The report or receipt title, under the owner's print title. */
   title: string;
   /** Short lines under the title, such as the filters used and the date. */
@@ -17,11 +16,11 @@ interface PrintFrameProps {
 }
 
 /**
- * The frame of every printed page: paper size and orientation, page numbers
+ * The frame of every printed page: A4 upright, page numbers
  * in the chosen digits, and the heading with the logo and print title from
  * Settings.
  */
-export function PrintFrame({ landscape = false, title, details = [], children }: PrintFrameProps) {
+export function PrintFrame({ title, details = [], children }: PrintFrameProps) {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const logo = usePrintLogo();
@@ -42,7 +41,7 @@ export function PrintFrame({ landscape = false, title, details = [], children }:
   return (
     <div className={styles.paper}>
       <style>{`@page {
-        size: A4 ${landscape ? 'landscape' : 'portrait'};
+        size: A4 portrait;
         @bottom-center { content: ${pageNumbers}; font-family: "${FONT_NAMES[settings.fontFamily]}", sans-serif; font-size: 9pt; }
       }`}</style>
       <PrintHeader logo={logo} printTitle={settings.printTitle} title={title} details={details} />

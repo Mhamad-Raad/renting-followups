@@ -87,13 +87,37 @@
   white-space: nowrap;
 }
 
-.status {
+/* Fixed column widths, so a long name or phone never pushes the table past the page edge. */
+.upright {
+  table-layout: fixed;
+}
+
+/* A place's lines stay together on one page, with a firmer line above each place. */
+.place {
+  break-inside: avoid;
+  border-top: 0.6mm solid #555;
+}
+
+/* The small line under a cell's main text: the address or category, the phone. */
+.second {
   display: block;
   margin-block-start: 0.5mm;
-  font-weight: 700;
+  color: #333;
+  font-size: 8pt;
+}
+
+.months {
+  display: flex;
+  align-items: center;
+  gap: 3mm;
+}
+
+.strip {
+  flex: 0 1 120mm;
+  min-width: 0;
 }
 
 .notes {
-  max-width: 45mm;
   overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }

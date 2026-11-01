@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { areaLabel, hasOwnName } from '@shared/areas';
+import { areaLines } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
 import type { ReportRow, ReportTotal } from '@shared/reports';
 import { useSettings } from '../../app/SettingsContext';
+import { AreaSubline } from '../../components/AreaSubline';
 import { CategoryDot } from '../../components/CategoryDot';
 import { CurrencyTag } from '../../components/CurrencyTag';
 import { EmptyState } from '../../components/EmptyState';
@@ -108,19 +109,15 @@ function ReportTableRow({
 }) {
   const { t } = useTranslation();
   const chosen = month === null ? null : row.boxes.find((box) => box.month === month);
+  const lines = areaLines(row);
   return (
     <tr>
       <td>
         <span className={styles.name}>
-          {!hasOwnName(row) && <CategoryDot color={row.categoryColor} />}
-          {areaLabel(row)}
+          {lines.titleIsCategory && <CategoryDot color={row.categoryColor} />}
+          {lines.title}
         </span>
-        {hasOwnName(row) && (
-          <span className={`${styles.second} ${styles.category}`}>
-            <CategoryDot color={row.categoryColor} />
-            {row.categoryName}
-          </span>
-        )}
+        <AreaSubline lines={lines} color={row.categoryColor} />
         {row.notes && (
           <span className={styles.notes} title={row.notes} dir="auto">
             {row.notes}

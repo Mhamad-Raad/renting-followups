@@ -258,7 +258,7 @@ Large password field and one **Open** button. A "Forgot password?" link goes to 
 ### 8.3 Areas list
 - Category chips (All + each category, in its colour). Add / edit / delete categories from here.
 - Search box (by area name, renter name, phone), using normalized text matching (section 9).
-- Each row: area name, category, renter name, phone, **currency** (IQD / USD, in its own column, so the amounts beside it are bare numbers lined up on the right), monthly rent, then for the current year: **Total for the year**, **Received**, **Still owed**, the compact 12-box strip with a status word, then **Notes** (two lines at most) and a **⋯ menu** with the area page's actions (Record payment, Record past payment, Edit, Change price and Mark as vacant (not while empty), Change renter, Delete); each opens its form right on the list, without leaving it; Edit opens its own page and returns to the list after saving. Click a row to open the area page.
+- Each row: the place in its first column on two lines (`areaLines`, the business, 2026-11-01): the **name with the address under it**; without an address, the name with the category under it; without a name, the category with the address under it; with neither, the category alone. The same first column is used on Reports, Home's list and the printed report. Then renter name, phone, **currency** (IQD / USD, in its own column, so the amounts beside it are bare numbers lined up on the right), monthly rent, then for the current year: **Total for the year**, **Received**, **Still owed**, the compact 12-box strip with a status word, then **Notes** (two lines at most) and a **⋯ menu** with the area page's actions (Record payment, Record past payment, Edit, Change price and Mark as vacant (not while empty), Change renter, Delete); each opens its form right on the list, without leaving it; Edit opens its own page and returns to the list after saving. Click a row to open the area page.
 - Big **Add area** button and an **Import from Excel** button (section 16).
 - Checkboxes to select several areas, then **Print selected** / **Export selected**.
 
@@ -289,7 +289,7 @@ In print, PDF and Excel the **totals per currency** are at the bottom, in separa
 
 Titles and file names say what the report covers: the place (from its area page) or the chosen category, and the year or the chosen month, for example "Rent report: Shops, 10/2026" (the file name uses "10-2026"). *(Owner's decision, 2026-10-29.)*
 
-Buttons: **Export PDF** and **Export Excel** (no direct Print button on the Reports page; owner's decision, 2026-10-29). Print, PDF and Excel contain **exactly the same fields and the totals at the bottom**. Printing uses the logo and title from settings. A4, landscape for the wide report table.
+Buttons: **Export PDF** and **Export Excel** (no direct Print button on the Reports page; owner's decision, 2026-10-29). Print, PDF and Excel contain **exactly the same fields and the totals at the bottom**. Printing uses the logo and title from settings. A4 upright (portrait). **Export to PDF** first opens the report in a pop-up preview (the same page the PDF is made from, always on white paper), with **Save as PDF** and **Print** *(the business, 2026-11-01)*.
 
 When a specific month is chosen in the filter, the table shows that month's status per area and totals for that month.
 
@@ -384,12 +384,12 @@ Light and dark themes must both have adequate contrast, and the month status col
 
 ## 14. Printing and exporting details
 
-- Paper: **A4**. Reports use landscape; receipts portrait.
+- Paper: **A4 upright (portrait)**. The printed report shows each place as one group that never splits across pages: the figures row (place on two lines as on screen, renter with phone under it, currency, monthly rent, received, still owed), then the month strip with the status word across the whole width, then the **notes across the whole width** when there are any, so they are never squeezed *(the business, 2026-11-01)*.
 - The print layout is separate from the screen layout (`print.css` / `src/renderer/print/`). It must be RTL/LTR aware and use the chosen font.
 - Month boxes print with their colours and the month number, as on screen (owner's decision, 2026-10-25). Vacant and not-started months stay hatched. A black-and-white printer no longer tells the statuses apart; the Received and Still owed figures on every row still do.
 - Every printed report has: logo + title (if set), report title, filters used (year, month, category), generated date, the table, and the **totals per currency at the bottom**. Long tables repeat the header row on every page and add page numbers.
 - **PDF:** the same print HTML rendered to PDF; the user picks the save location.
-- **Excel:** one sheet with the same columns and totals rows; month columns contain the paid amount with the same colours as cell fills; the sheet is set right-to-left for Sorani and Arabic.
+- **Excel:** one sheet with the report's data in columns (area, category, **address**, renter, phone, currency, rent, received, still owed, the 12 months, notes) and totals rows; month columns contain the paid amount with the same colours as cell fills; the sheet is set right-to-left for Sorani and Arabic.
 
 ---
 

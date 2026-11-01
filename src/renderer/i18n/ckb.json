@@ -86,6 +86,7 @@
   },
   "common": {
     "ok": "باشە",
+    "close": "داخستن",
     "cancel": "پاشگەزبوونەوە",
     "loading": "چاوەڕێ بکە…",
     "tryAgain": "دووبارە هەوڵ بدەرەوە",
@@ -595,8 +596,12 @@
     "page": "لاپەڕە",
     "pdfFiles": "فایلی PDF",
     "excelFiles": "فایلی Excel",
+    "preview": {
+      "title": "پێشبینینی ڕاپۆرت"
+    },
     "actions": {
       "print": "چاپکردن",
+      "savePdf": "پاشەکەوتکردن وەک PDF",
       "pdf": "هەناردن بۆ PDF",
       "excel": "هەناردن بۆ Excel",
       "printSelected": "چاپکردنی هەڵبژێردراوەکان",

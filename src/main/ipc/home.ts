@@ -10,6 +10,7 @@ const toAttentionItem = (area: AttentionItem): AttentionItem => ({
   id: area.id,
   name: area.name,
   categoryName: area.categoryName,
+  address: area.address,
   categoryColor: area.categoryColor,
   currency: area.currency,
   renterName: area.renterName,

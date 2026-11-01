@@ -1,0 +1,18 @@
+/* The grey desk the white page lies on, scrolling inside the pop-up. */
+.desk {
+  max-height: min(65vh, 52rem);
+  overflow: auto;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+/* An A4 page: white paper with its print margins, whatever the theme. */
+.sheet {
+  max-width: 210mm;
+  min-height: 120mm;
+  margin-inline: auto;
+  padding: 12mm;
+  background: #fff;
+  box-shadow: var(--shadow-card);
+}

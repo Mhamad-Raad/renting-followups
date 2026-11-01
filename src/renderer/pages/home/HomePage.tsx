@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
-import { areaLabel, hasOwnName } from '@shared/areas';
+import { areaLines } from '@shared/areas';
 import { formatPlain } from '@shared/formatNumber';
 import type { AttentionItem, CurrencyTotals } from '@shared/home';
 import { DEFAULT_REPORT_FILTERS } from '@shared/reports';
@@ -8,6 +8,7 @@ import { flash } from '../../app/flash';
 import { useIpcQuery } from '../../app/ipc';
 import { useSettings } from '../../app/SettingsContext';
 import { BigButton } from '../../components/BigButton';
+import { AreaSubline } from '../../components/AreaSubline';
 import { CategoryDot } from '../../components/CategoryDot';
 import { FigureCards } from '../../components/FigureCards';
 import { LoadError } from '../../components/LoadError';
@@ -156,19 +157,15 @@ function AttentionRow({ item }: { item: AttentionItem }) {
   const { settings } = useSettings();
   const navigate = useNavigate();
   const { standing } = item;
+  const lines = areaLines(item);
   return (
     <li className={styles.row} data-status={standing.lateMonths > 0 ? 'late' : 'due'}>
       <div className={styles.who}>
         <Link to={areaLink(item.id)} className={styles.name}>
-          {!hasOwnName(item) && <CategoryDot color={item.categoryColor} />}
-          {areaLabel(item)}
+          {lines.titleIsCategory && <CategoryDot color={item.categoryColor} />}
+          {lines.title}
         </Link>
-        {hasOwnName(item) && (
-          <span className={styles.second}>
-            <CategoryDot color={item.categoryColor} />
-            {item.categoryName}
-          </span>
-        )}
+        <AreaSubline lines={lines} color={item.categoryColor} />
       </div>
       <div className={styles.who}>
         <span>{item.renterName ?? t('areas.noRenter')}</span>

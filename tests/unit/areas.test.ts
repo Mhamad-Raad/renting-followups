@@ -4,6 +4,7 @@ import type { Repositories } from '../../src/main/db/repositories';
 import {
   areaCreateSchema,
   areaLabel,
+  areaLines,
   compareAreaLabels,
   areaSubline,
   hasOwnName,
@@ -205,6 +206,66 @@ describe('editing areas', () => {
     );
     expect(repos.areaViews.list({ search: 'دوكاني', categoryId: null }, TODAY)).toHaveLength(1);
     expect(auditFor(id).at(-1)?.action).toBe('update');
+  });
+});
+
+describe('areaLines', () => {
+  const lines = (name: string, address: string) =>
+    areaLines({ name, categoryName: 'Shops', address });
+
+  it('shows the name with the address under it, else the category', () => {
+    expect(lines('Shop 3', 'Main street')).toEqual({
+      title: 'Shop 3',
+      titleIsCategory: false,
+      subline: 'Main street',
+      sublineIsCategory: false,
+    });
+    expect(lines('Shop 3', '')).toEqual({
+      title: 'Shop 3',
+      titleIsCategory: false,
+      subline: 'Shops',
+      sublineIsCategory: true,
+    });
+  });
+
+  it('without a name, shows the category with the address, or the category alone', () => {
+    expect(lines('', 'Main street')).toEqual({
+      title: 'Shops',
+      titleIsCategory: true,
+      subline: 'Main street',
+      sublineIsCategory: false,
+    });
+    expect(lines('', '  ')).toEqual({
+      title: 'Shops',
+      titleIsCategory: true,
+      subline: null,
+      sublineIsCategory: false,
+    });
+  });
+
+  it('the Areas list, Home and the report carry the address, empty when there is none', () => {
+    const id = createArea({ address: 'Main street' });
+    // An empty address is stored as nothing (NULL); it must still reach the screens as text.
+    const bare = createArea({ name: 'Shop 2', address: '' });
+    const list = repos.areaViews.list({ search: '', categoryId: null }, TODAY);
+    expect(list.find((area) => area.id === id)?.address).toBe('Main street');
+    expect(list.find((area) => area.id === bare)?.address).toBe('');
+    expect(repos.areaViews.overviews(TODAY).find((area) => area.id === bare)?.address).toBe('');
+    const report = repos.reports.build(
+      {
+        year: 2026,
+        month: null,
+        categoryId: null,
+        currency: null,
+        status: 'all',
+        excludedIds: [],
+        onlyIds: null,
+      },
+      TODAY,
+      'en',
+    );
+    expect(report.rows.find((row) => row.id === bare)?.address).toBe('');
+    expect(report.rows.find((row) => row.id === id)?.address).toBe('Main street');
   });
 });
 
