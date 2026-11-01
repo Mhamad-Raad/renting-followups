@@ -225,7 +225,9 @@ export type AreaSaveResult =
     };
 
 export type PriceChangeResult =
-  { ok: true } | { ok: false; reason: 'not_found' | 'before_rent_start' | 'no_room' };
+  | { ok: true }
+  /** `vacant`: rent for an empty month without a renter; it comes back with a new renter. */
+  | { ok: false; reason: 'not_found' | 'before_rent_start' | 'no_room' | 'vacant' };
 
 /**
  * A receipt that pays months which a price change would leave without rent in

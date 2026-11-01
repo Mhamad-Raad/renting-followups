@@ -15,13 +15,15 @@ import { Notice } from '../../components/Notice';
 import styles from './AreaPage.module.css';
 import { useRentCheck } from './RentCheck';
 
-/** 'change' sets a new price, 'vacant' sets no rent (price 0), 'rentAgain' ends a vacancy. */
-export type PriceMode = 'change' | 'vacant' | 'rentAgain';
+/**
+ * 'change' sets a new price, 'vacant' sets no rent (price 0). An empty place
+ * gets its rent again only with a new renter (Change renter).
+ */
+export type PriceMode = 'change' | 'vacant';
 
 const TITLES = {
   change: 'priceDialog.changeTitle',
   vacant: 'priceDialog.vacantTitle',
-  rentAgain: 'priceDialog.rentAgainTitle',
 } as const;
 
 interface PriceDialogProps {
@@ -103,8 +105,8 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
           ? t('priceDialog.before_rent_start', {
               month: formatYearMonth(rentStart, settings.digitStyle),
             })
-          : reason === 'no_room'
-            ? t('priceDialog.no_room')
+          : reason === 'no_room' || reason === 'vacant'
+            ? t(`priceDialog.${reason}`)
             : t('areaForm.problems.not_found'),
       );
     }

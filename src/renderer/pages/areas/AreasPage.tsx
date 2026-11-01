@@ -72,14 +72,16 @@ function rowActions(
     label,
     onSelect: () => choose(area.id, key),
   });
+  // An empty place keeps no rent: it comes back, with its currency, with a new renter.
+  const rentActions =
+    area.currentPrice === 0
+      ? []
+      : [action('changePrice', t('area.changePrice')), action('markVacant', t('area.markVacant'))];
   return [
     action('payment', t('area.recordPayment')),
     action('pastPayment', t('area.recordPastPayment')),
     { label: t('common.edit'), onSelect: () => edit(area.id) },
-    action('changePrice', t('area.changePrice')),
-    area.currentPrice === 0
-      ? action('setRentAgain', t('area.setRentAgain'))
-      : action('markVacant', t('area.markVacant')),
+    ...rentActions,
     action('changeRenter', t('area.changeRenter')),
     { ...action('delete', t('common.delete')), tone: 'danger' },
   ];

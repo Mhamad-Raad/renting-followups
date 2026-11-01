@@ -52,7 +52,8 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] Add area: name, category (or a new one typed in place), currency, monthly rent with live thousands separators, rent start month, optional renter, address, contract start and notes; then the area page shows "Area saved."
 - [ ] Missing name or rent, and a duplicate name in the same category, are explained in plain words; nothing is saved.
 - [ ] Change price from a month keeps earlier months' price; both rows show in Price history.
-- [ ] Mark as vacant shows "Vacant" on the list; the button becomes "Set rent again".
+- [ ] Mark as vacant shows "Vacant" on the list; the place then offers no Change price or Mark as vacant (rent comes back with Change renter).
+- [ ] Record payment from a paid or empty month says which months it skipped and why.
 - [ ] Change renter: the new renter shows on the list; the old one stays in Renter history with an end date.
 - [ ] Delete an area (with confirmation), then Settings → Deleted items → Restore brings it back.
 - [ ] 200 areas open in under a second; search with Arabic letters (ي ك ه) finds Kurdish names.

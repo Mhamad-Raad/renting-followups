@@ -246,18 +246,39 @@ describe('prices', () => {
     expect(repos.areas.get(id)?.prices.map((p) => p.monthlyPrice)).toEqual([250_000, 280_000]);
   });
 
-  it('marks vacant with 0 and sets rent again later', () => {
+  it('marks vacant with 0; rent comes back only with a new renter', () => {
     const id = createArea();
     repos.priceChanges.changePrice({ areaId: id, from: { year: 2026, month: 9 }, monthlyPrice: 0 });
-    expect(repos.areaViews.list({ search: '', categoryId: null }, TODAY)[0]?.currentPrice).toBe(0);
-    repos.priceChanges.changePrice({
-      areaId: id,
-      from: { year: 2026, month: 10 },
-      monthlyPrice: 260_000,
-    });
-    expect(repos.areaViews.list({ search: '', categoryId: null }, TODAY)[0]?.currentPrice).toBe(
-      260_000,
-    );
+    const current = () =>
+      repos.areaViews.list({ search: '', categoryId: null }, TODAY)[0]?.currentPrice;
+    expect(current()).toBe(0);
+    // An empty place without a renter takes no rent from Change price.
+    expect(
+      repos.priceChanges.changePrice({
+        areaId: id,
+        from: { year: 2026, month: 10 },
+        monthlyPrice: 260_000,
+      }),
+    ).toEqual({ ok: false, reason: 'vacant' });
+    expect(current()).toBe(0);
+    // A month before it stood empty can still be corrected.
+    expect(
+      repos.priceChanges.changePrice({
+        areaId: id,
+        from: { year: 2026, month: 8 },
+        monthlyPrice: 1,
+      }),
+    ).toEqual({ ok: true });
+    expect(
+      repos.priceChanges.changeRenter({
+        areaId: id,
+        fullName: 'Sara Ali',
+        phone: '',
+        startedOn: '2026-10-01',
+        monthlyPrice: 260_000,
+      }),
+    ).toEqual({ ok: true });
+    expect(current()).toBe(260_000);
   });
 
   it('refuses a change before the rent started', () => {

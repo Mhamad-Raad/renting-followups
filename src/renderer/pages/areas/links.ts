@@ -7,7 +7,6 @@ export const AREA_ACTIONS = [
   'pastPayment',
   'changePrice',
   'markVacant',
-  'setRentAgain',
   'changeRenter',
   'delete',
 ] as const;

@@ -311,7 +311,6 @@
     "notes": "Notes",
     "changePrice": "Change price",
     "markVacant": "Mark as vacant",
-    "setRentAgain": "Set rent again",
     "changeRenter": "Change renter",
     "priceHistory": "Price history",
     "renterHistory": "Renter history",
@@ -336,7 +335,6 @@
   "priceDialog": {
     "changeTitle": "Change price",
     "vacantTitle": "Mark as vacant",
-    "rentAgainTitle": "Set rent again",
     "from": "From which month?",
     "newRent": "New monthly rent",
     "changeHint": "Months before this keep their old price.",
@@ -346,6 +344,7 @@
     "vacantSaved": "The area is marked as vacant.",
     "keptPaid": "Already paid, so it stays paid at the old rent: month {{months}}. The new rent is for the months not paid yet.",
     "no_room": "The money already paid from this month would have no month to go to (for example, the area stays vacant). Please cancel or edit those receipts first.",
+    "vacant": "The place is empty in this month. Its rent comes back with a new renter: use Change renter.",
     "vacantPaid": "These months are already paid, but after this change they have no rent in that money's currency (the area is vacant, or the rent is now in another currency). To save, their money is taken out of the receipts:",
     "vacantPaidCancels": "Month {{months}}: {{receipt}} is cancelled ({{amount}}).",
     "vacantPaidLowers": "Month {{months}}: {{amount}} is taken off {{receipt}}. Its other months stay paid.",

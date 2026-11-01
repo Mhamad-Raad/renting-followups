@@ -106,17 +106,16 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
           <BigButton onClick={() => open(ACTION_DIALOGS.pastPayment)}>
             {t('area.recordPastPayment')}
           </BigButton>
-          <BigButton onClick={() => open(ACTION_DIALOGS.changePrice)}>
-            {t('area.changePrice')}
-          </BigButton>
-          {price === 0 ? (
-            <BigButton onClick={() => open(ACTION_DIALOGS.setRentAgain)}>
-              {t('area.setRentAgain')}
-            </BigButton>
-          ) : (
-            <BigButton onClick={() => open(ACTION_DIALOGS.markVacant)}>
-              {t('area.markVacant')}
-            </BigButton>
+          {/* An empty place keeps no rent: it comes back, with its currency, with a new renter. */}
+          {price !== 0 && (
+            <>
+              <BigButton onClick={() => open(ACTION_DIALOGS.changePrice)}>
+                {t('area.changePrice')}
+              </BigButton>
+              <BigButton onClick={() => open(ACTION_DIALOGS.markVacant)}>
+                {t('area.markVacant')}
+              </BigButton>
+            </>
           )}
           <BigButton onClick={() => open(ACTION_DIALOGS.changeRenter)}>
             {t('area.changeRenter')}

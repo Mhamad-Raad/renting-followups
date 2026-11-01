@@ -130,7 +130,7 @@ Database settings: WAL mode, `foreign_keys = ON`, all multi-row writes inside tr
 - The price for a given month is the row with the latest `(year, month)` that is ≤ that month. Months before the first row are **not applicable**.
 - **Each month has the currency of its row.** A receipt is in one currency (that of its first month) and only ever fills months in that currency; months in the other currency count as having no rent for it. Every figure (year totals, still owed, Home cards, reports, reminders) is worked out **per currency**: an area shows one line per currency used in the period (two only in the year the currency changed), and amounts in different currencies are never added together. Excel has one row per area and currency.
 - Creating an area creates its first row. "Change price" adds a new row from the chosen month; **old months keep their old price**.
-- A `monthly_price` of **0** means the area is **vacant** from that month (see section 6). The UI never shows the word "zero price"; it offers **Mark as vacant from month...** and **Set rent again from month...**. Marking an area vacant also ends its current renter, on the first day of the vacant month (or the day they started, if later); a vacant area never has a renter, and a new area marked vacant takes no renter. *(Owner's decision, 2026-10-27.)*
+- A `monthly_price` of **0** means the area is **vacant** from that month (see section 6). The UI never shows the word "zero price"; it offers **Mark as vacant from month...**. While a place stands empty it offers no **Change price**: its rent and currency come back only with a new renter (**Change renter**, which asks both), and the main process refuses rent for an empty month without a renter *(owner's decision, 2026-11-01)*. Marking an area vacant also ends its current renter, on the first day of the vacant month (or the day they started, if later); a vacant area never has a renter, and a new area marked vacant takes no renter. *(Owner's decision, 2026-10-27.)*
 
 ### renters (renter history per area)
 `id, area_id, full_name, full_name_normalized, phone, started_on (date), ended_on (nullable date)`
@@ -216,7 +216,7 @@ Form (large, single column):
 3. **Date received** (defaults to today).
 4. **Note** (optional).
 
-**Preview**, shown live before saving: the months paid, **oldest unpaid month first starting from the chosen month**, each with its whole rent, and the amount received (their sum, in the currency of the month the payment starts from, or the receipt's own when editing), for example "Month 3/2026: 250,000, Month 4/2026: 250,000. Amount received: 500,000 IQD". Months that are already paid, vacant or not applicable are skipped. The months continue into following months and years.
+**Preview**, shown live before saving: the months paid, **oldest unpaid month first starting from the chosen month**, each with its whole rent, and the amount received (their sum, in the currency of the month the payment starts from, or the receipt's own when editing), for example "Month 3/2026: 250,000, Month 4/2026: 250,000. Amount received: 500,000 IQD". Months that are already paid, vacant or not applicable are skipped, and the preview says which ones and why ("Skipped, already paid: month 6/2026", "Skipped, no rent (the place was empty…): month 7/2026 – 10/2026"). The months continue into following months and years. Old debts of an earlier renter can still be paid while the place is empty.
 
 **Horizon:** a payment may reach at most **24 months** past the current month. The number of months stops at the months still open up to then; a larger number is refused in plain words.
 
@@ -255,12 +255,12 @@ Large password field and one **Open** button. A "Forgot password?" link goes to 
 ### 8.3 Areas list
 - Category chips (All + each category, in its colour). Add / edit / delete categories from here.
 - Search box (by area name, renter name, phone), using normalized text matching (section 9).
-- Each row: area name, category, renter name, phone, **currency** (IQD / USD, in its own column, so the amounts beside it are bare numbers lined up on the right), monthly rent, then for the current year: **Total for the year**, **Received**, **Still owed**, the compact 12-box strip with a status word, then **Notes** (two lines at most) and a **⋯ menu** with the area page's actions (Record payment, Record past payment, Edit, Change price, Mark as vacant / Set rent again, Change renter, Delete); each opens its form right on the list, without leaving it; Edit opens its own page and returns to the list after saving. Click a row to open the area page.
+- Each row: area name, category, renter name, phone, **currency** (IQD / USD, in its own column, so the amounts beside it are bare numbers lined up on the right), monthly rent, then for the current year: **Total for the year**, **Received**, **Still owed**, the compact 12-box strip with a status word, then **Notes** (two lines at most) and a **⋯ menu** with the area page's actions (Record payment, Record past payment, Edit, Change price and Mark as vacant (not while empty), Change renter, Delete); each opens its form right on the list, without leaving it; Edit opens its own page and returns to the list after saving. Click a row to open the area page.
 - Big **Add area** button and an **Import from Excel** button (section 16).
 - Checkboxes to select several areas, then **Print selected** / **Export selected**.
 
 ### 8.4 Area page (the key screen)
-Top: area name, category, currency, address, notes, current renter (name + phone), current monthly price (or "Vacant"), and buttons **Record Payment** (primary), **Record past payment**, Edit, **Change price**, **Mark as vacant / Set rent again**, **Change renter**.
+Top: area name, category, currency, address, notes, current renter (name + phone), current monthly price (or "Vacant"), and buttons **Record Payment** (primary), **Record past payment**, Edit, **Change price** and **Mark as vacant** (both hidden while the place is empty), **Change renter**.
 
 Filter bar on top: **Year** selector (default **current year**, range from the earliest year with data, or the current year, up to the current year + 2) and optional **Month** selector (All / 1-12).
 
@@ -423,7 +423,7 @@ Build and test each milestone before starting the next. After each one, make sur
 
 1. **Project setup:** Electron + React + TS + Vite, the preload/IPC pattern with `zod`, SQLite connection, migration runner, base layout with sidebar, i18n with the three languages and the RTL/LTR switch, theme tokens (light/dark), `parseNumber` and `normalizeText` utilities with tests.
 2. **Auth:** first-run setup, lock screen, hashing, recovery flow, single-instance lock.
-3. **Categories and areas:** CRUD, currency fixed at creation, rent start month, price history, vacant/set rent again, renter history, soft delete + restore, search, audit log.
+3. **Categories and areas:** CRUD, currency fixed at creation, rent start month, price history, vacant (rent back with a new renter), renter history, soft delete + restore, search, audit log.
 4. **Month status engine:** `monthStatus.ts` with thorough unit tests (prepaid, price changes mid-year, year boundaries, current month vs past, not-applicable and vacant months).
 5. **Payments:** the Record Payment form with live allocation preview and horizon limit, receipts with sequential numbers, edit/void, undo, "Record past payment" (backfill).
 6. **Area page:** filter bar (year default current, month), the four figures, the 12 coloured boxes, receipts list, price-change warning.

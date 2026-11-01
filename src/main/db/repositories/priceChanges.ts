@@ -33,6 +33,9 @@ interface Dependencies {
   renters: RenterRepository;
 }
 
+/** What saving a price row can answer (money with nowhere to go is thrown as `NoRoom`). */
+type SaveResult = { ok: true } | { ok: false; reason: 'not_found' | 'before_rent_start' };
+
 /** Money that would have no month to go to; thrown so the whole save is undone. */
 class NoRoom extends Error {}
 
@@ -114,13 +117,7 @@ export function createPriceChangeRepository(
   };
 
   const save = db.transaction(
-    ({
-      areaId,
-      from,
-      monthlyPrice,
-      currency,
-      takeOutVacantMonths,
-    }: PriceChange): PriceChangeResult => {
+    ({ areaId, from, monthlyPrice, currency, takeOutVacantMonths }: PriceChange): SaveResult => {
       if (!areas.isActive(areaId)) return { ok: false, reason: 'not_found' };
       const history = prices.forArea(areaId);
       if (isBeforeRentStart(history, from)) return { ok: false, reason: 'before_rent_start' };
@@ -217,6 +214,12 @@ export function createPriceChangeRepository(
      * receipts (as clicking their month box does), in the same transaction.
      */
     changePrice(change: PriceChange): PriceChangeResult {
+      // An empty place gets rent again only with a new renter (see `changeRenter`).
+      const { areaId, from, monthlyPrice } = change;
+      if (monthlyPrice > 0 && !renters.current(areaId)) {
+        if (priceForMonth(prices.forArea(areaId), from) === 0)
+          return { ok: false, reason: 'vacant' };
+      }
       return refusingNoRoom(() => save(change));
     },
 
