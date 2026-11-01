@@ -1,5 +1,10 @@
 import { fromMonthIndex, monthIndex, type YearMonth } from '@shared/dates';
-import { HORIZON_MONTHS, type Allocation, type AllocationResult } from '@shared/payments';
+import {
+  HORIZON_MONTHS,
+  type Allocation,
+  type AllocationResult,
+  type SkippedMonths,
+} from '@shared/payments';
 import { priceForMonth, type PriceRow } from '@shared/prices';
 import type { PaidHistory } from './monthStatus';
 
@@ -39,7 +44,30 @@ export function allocate(
   const open = [...openMonths(prices, paid, monthIndex(from), today)];
   if (open.length === 0) return { ok: false, reason: 'nothing_open' };
   if (count > open.length) return { ok: false, reason: 'too_much', open: open.length };
-  return { ok: true, months: open.slice(0, count), open: open.length };
+  const months = open.slice(0, count);
+  return {
+    ok: true,
+    months,
+    open: open.length,
+    skipped: skippedBefore(prices, paid, from, months),
+  };
+}
+
+/** The months from `from` up to the first one paid for, each paid already or without rent. */
+function skippedBefore(
+  prices: readonly PriceRow[],
+  paid: PaidHistory,
+  from: YearMonth,
+  months: readonly Allocation[],
+): SkippedMonths {
+  const skipped: SkippedMonths = { paid: [], noRent: [] };
+  const first = months[0];
+  if (!first) return skipped;
+  for (let index = monthIndex(from); index < monthIndex(first); index += 1) {
+    const month = fromMonthIndex(index);
+    (priceForMonth(prices, month) ? skipped.paid : skipped.noRent).push(month);
+  }
+  return skipped;
 }
 
 /**

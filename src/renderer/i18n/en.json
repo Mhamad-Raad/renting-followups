@@ -510,6 +510,8 @@
     "note": "Note",
     "pastHint": "For money received before you started using the app. It gets no receipt number.",
     "preview": "Months paid",
+    "skippedPaid": "Skipped, already paid: month {{months}}.",
+    "skippedNoRent": "Skipped, no rent (the place was empty, or the rent had not started): month {{months}}.",
     "previewMonth": "Month {{month}}: {{amount}}",
     "total": "Amount received: {{amount}}",
     "too_much": "That is more months than can be paid from this month (up to two years ahead). Please choose fewer months.",

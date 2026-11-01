@@ -1,15 +1,16 @@
 import type { Currency } from '@shared/currency';
 import { monthIndex, type BusinessToday, type YearMonth } from '@shared/dates';
-import type {
-  Allocation,
-  AllocationResult,
-  PaymentCreate,
-  PaymentCreateResult,
-  PaymentUpdate,
-  PaymentUpdateResult,
-  AreaReceiptsQuery,
-  PaymentVoidResult,
-  Receipt,
+import {
+  NOTHING_SKIPPED,
+  type Allocation,
+  type AllocationResult,
+  type PaymentCreate,
+  type PaymentCreateResult,
+  type PaymentUpdate,
+  type PaymentUpdateResult,
+  type AreaReceiptsQuery,
+  type PaymentVoidResult,
+  type Receipt,
 } from '@shared/payments';
 import { paymentCurrency, pricesInCurrency } from '@shared/prices';
 import { allocate, oldestOpenMonth } from '../../services/allocation';
@@ -183,7 +184,7 @@ export function createPaymentRepository(
         kept.length,
         planned.ok || planned.reason === 'too_much' ? planned.open : 0,
       );
-      return { ok: true, months: kept, open };
+      return { ok: true, months: kept, open, skipped: NOTHING_SKIPPED };
     },
 
     /** The month the payment form suggests: the oldest one not paid. */

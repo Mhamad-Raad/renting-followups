@@ -54,6 +54,24 @@ describe('allocate', () => {
     ]);
   });
 
+  it('says which months it skipped before the first one paid, and why', () => {
+    // Paid up to June, empty from July to October, rent again from November.
+    const prices: PriceRow[] = [
+      { year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' },
+      { year: 2026, month: 7, monthlyPrice: 0, currency: 'IQD' },
+      { year: 2026, month: 11, monthlyPrice: RENT, currency: 'IQD' },
+    ];
+    const history = paid([[{ year: 2026, month: 6 }, RENT]]);
+    const result = allocate(1, { year: 2026, month: 6 }, prices, history, TODAY);
+    expect(split(result)).toEqual(['11/2026=250000']);
+    expect(result.ok && result.skipped).toEqual({
+      paid: [{ year: 2026, month: 6 }],
+      noRent: [7, 8, 9, 10].map((month) => ({ year: 2026, month })),
+    });
+    const straight = allocate(1, { year: 2026, month: 3 }, FROM_JANUARY, NOTHING_PAID, TODAY);
+    expect(straight.ok && straight.skipped).toEqual({ paid: [], noRent: [] });
+  });
+
   it('uses each month its own price', () => {
     const prices: PriceRow[] = [
       { year: 2026, month: 1, monthlyPrice: 100_000, currency: 'IQD' },

@@ -2,7 +2,13 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AreaDetails } from '@shared/areas';
 import { FRACTION_DIGITS, type Currency } from '@shared/currency';
-import { dateStringFromLocal, formatYearMonth, yearMonthOf, type YearMonth } from '@shared/dates';
+import {
+  dateStringFromLocal,
+  formatMonthRuns,
+  formatYearMonth,
+  yearMonthOf,
+  type YearMonth,
+} from '@shared/dates';
 import { isolateNumber } from '@shared/digits';
 import { formatAmount } from '@shared/formatNumber';
 import { paymentCurrency } from '@shared/prices';
@@ -234,8 +240,22 @@ function PreviewText({
   const money = (value: number) =>
     isolateNumber(formatAmount(value, FRACTION_DIGITS[currency], digits), digits);
   const total = state.data.months.reduce((sum, month) => sum + month.amount, 0);
+  const { skipped } = state.data;
+  const runs = (months: readonly YearMonth[]) =>
+    formatMonthRuns(months, digits, t('receipts.separator'));
   return (
     <div className={styles.preview} data-stale={stale || undefined} aria-live="polite">
+      {/* Why the payment starts later than the chosen month. */}
+      {skipped.paid.length > 0 && (
+        <p className={styles.previewSkipped}>
+          {t('paymentDialog.skippedPaid', { months: runs(skipped.paid) })}
+        </p>
+      )}
+      {skipped.noRent.length > 0 && (
+        <p className={styles.previewSkipped}>
+          {t('paymentDialog.skippedNoRent', { months: runs(skipped.noRent) })}
+        </p>
+      )}
       <h3 className={styles.previewTitle}>{t('paymentDialog.preview')}</h3>
       <ul>
         {state.data.months.map((paid) => (

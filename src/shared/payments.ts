@@ -87,8 +87,21 @@ export interface Allocation extends YearMonth {
  * The months a payment pays, each with its whole rent. `open` is how many
  * months could be paid from the chosen month, up to the horizon.
  */
+/**
+ * The months from the chosen one up to the first month paid that the payment
+ * skips, so the form can say why it starts later.
+ */
+export interface SkippedMonths {
+  /** Already paid. */
+  paid: YearMonth[];
+  /** Without rent: the place stood empty, or the rent had not started. */
+  noRent: YearMonth[];
+}
+
+export const NOTHING_SKIPPED: SkippedMonths = { paid: [], noRent: [] };
+
 export type AllocationResult =
-  | { ok: true; months: Allocation[]; open: number }
+  | { ok: true; months: Allocation[]; open: number; skipped: SkippedMonths }
   /** More months than are open up to the horizon. */
   | { ok: false; reason: 'too_much'; open: number }
   /** No month from the chosen one up to the horizon has rent to fill (vacant, or too far ahead). */
