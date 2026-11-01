@@ -12,6 +12,8 @@ const ICONS = {
   more: 'M5 12h.01M12 12h.01M19 12h.01',
   back: 'M19 12H5M11 6l-6 6 6 6',
   chevronDown: 'M6 9l6 6 6-6',
+  plus: 'M12 5v14M5 12h14',
+  minus: 'M5 12h14',
   alert: 'M12 3 2 20h20zM12 9v5M12 17h.01',
   check: 'M5 12.5l4.5 4.5L19 7',
   download: 'M12 4v11M7 10l5 5 5-5M5 20h14',

@@ -1,7 +1,6 @@
 /*
  * The one place that maps a month status to its colours (ARCHITECTURE.md section 6).
- * No yellow (owner's decision): this month not fully paid is red like a late month,
- * and a coming month paid in part stays grey like the other coming months.
+ * No yellow (owner's decision): this month not paid is red like a late month.
  */
 :is(.box, .cell, .summary)[data-status='paid'] {
   --box-text: var(--status-paid);
@@ -11,7 +10,7 @@
   --box-text: var(--status-late);
   --box-bg: var(--status-late-bg);
 }
-:is(.box, .cell, .summary):is([data-status='upcoming'], [data-status='partial']) {
+:is(.box, .cell, .summary)[data-status='upcoming'] {
   --box-text: var(--status-upcoming);
   --box-bg: var(--status-upcoming-bg);
 }
@@ -134,15 +133,6 @@
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   line-height: 1;
-}
-
-/* A coming month paid in part: half green, cut corner to corner, whatever the share paid. */
-:is(.box, .cell)[data-part-paid] {
-  background-image: linear-gradient(
-    to bottom right,
-    transparent calc(50% - 0.5px),
-    color-mix(in srgb, var(--status-paid) 30%, var(--status-paid-bg)) calc(50% + 0.5px)
-  );
 }
 
 .summary {

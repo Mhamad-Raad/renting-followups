@@ -425,7 +425,7 @@ test('the currency can be corrected on Edit until the first payment', async () =
       const paid = await window.api.invoke('payments:create', {
         areaId: id,
         isBackfill: true,
-        amount: 25_000_000,
+        monthCount: 1,
         from: { year, month: 1 },
         paidOn: `${year}-01-01`,
         note: '',

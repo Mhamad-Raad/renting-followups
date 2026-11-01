@@ -8,9 +8,6 @@ import styles from './MonthBoxes.module.css';
 
 type MonthWord = Exclude<MonthStatus, 'not_applicable'> | 'vacant' | 'notStarted';
 
-/** A coming month paid in part: grey like the others, so its box is filled half green, corner to corner. */
-const isPartPaid = (box: MonthBox) => box.status === 'partial' && box.paid > 0;
-
 /** Lets a line of a month box shrink to fit the box instead of breaking (see `--chars` in the CSS). */
 const fitted = (text: string) => ({ '--chars': Math.max(text.length, 1) }) as CSSProperties;
 
@@ -24,7 +21,6 @@ export function monthWord({ status, expected }: Pick<MonthBox, 'status' | 'expec
 const SUMMARY_COLOR: Record<YearSummary, MonthStatus> = {
   late: 'late',
   due: 'due',
-  partial: 'partial',
   paid: 'paid',
   nothing_due: 'upcoming',
 };
@@ -59,11 +55,9 @@ export const MonthBoxes = memo(function MonthBoxes({
   const amountText = (amount: number, currency: Currency) =>
     formatAmount(amount, FRACTION_DIGITS[currency], digits);
   const label = (box: MonthBox) =>
-    t(isPartPaid(box) ? 'months.boxPart' : 'months.box', {
+    t('months.box', {
       month: formatPlain(box.month, digits),
       status: t(`months.status.${monthWord(box)}`),
-      paid: amountText(box.paid, box.currency),
-      expected: amountText(box.expected ?? 0, box.currency),
     });
   const canPick = (box: MonthBox) => onPick !== undefined && box.status !== 'not_applicable';
   // A click that just misses a box (a gap, a vacant month) must not open the area behind it either.
@@ -90,7 +84,6 @@ export const MonthBoxes = memo(function MonthBoxes({
             className: styles.cell,
             'data-status': box.status,
             'data-selected': box.month === selected || undefined,
-            'data-part-paid': isPartPaid(box) || undefined,
             title: label(box),
           };
           const number = <span aria-hidden="true">{formatPlain(box.month, digits)}</span>;
@@ -121,7 +114,6 @@ export const MonthBoxes = memo(function MonthBoxes({
             className: styles.box,
             'data-status': box.status,
             'data-selected': box.month === selected || undefined,
-            'data-part-paid': isPartPaid(box) || undefined,
             'aria-current': box.month === selected || undefined,
             style: { '--index': index } as CSSProperties,
           };

@@ -5,7 +5,7 @@ import { CURRENCIES, type Currency } from './currency';
 import { monthSchema, yearSchema } from './dates';
 import type { CurrencyFigures, MonthBox, MonthStatus, YearSummary } from './months';
 
-export const REPORT_STATUSES = ['all', 'paid', 'partial', 'late'] as const;
+export const REPORT_STATUSES = ['all', 'paid', 'due', 'late'] as const;
 export type ReportStatus = (typeof REPORT_STATUSES)[number];
 
 const id = z.number().int().positive();

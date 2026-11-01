@@ -11,19 +11,20 @@ import {
 import { toDigitStyle, type DigitStyle } from './digits';
 
 export const PAYMENT_NOTE_MAX = 500;
-/** Far above any real payment, and still exact as a JavaScript number. */
-export const MAX_PAYMENT = 1_000_000_000_000_000;
 /** How far past the current month a payment may reach (ARCHITECTURE.md section 7.1). */
 export const HORIZON_MONTHS = 24;
+/** Far above any real payment (fifty years of rent), only to refuse nonsense. */
+export const MAX_MONTH_COUNT = 600;
 
 const id = z.number().int().positive();
-const amount = z.number().int().positive().max(MAX_PAYMENT);
+/** How many whole months a payment pays: a month is paid whole or not at all. */
+const monthCount = z.number().int().positive().max(MAX_MONTH_COUNT);
 
-/** What the payment form sends: the amount and the month it starts filling from. */
+/** What the payment form sends: how many months, and the month it starts from. */
 export const paymentPreviewSchema = z
   .object({
     areaId: id,
-    amount,
+    monthCount,
     from: yearMonthSchema,
     /** When editing, the receipt being changed: its own months count as open again. */
     receiptId: id.nullable(),
@@ -32,7 +33,7 @@ export const paymentPreviewSchema = z
 export type PaymentPreviewQuery = z.infer<typeof paymentPreviewSchema>;
 
 const details = {
-  amount,
+  monthCount,
   from: yearMonthSchema,
   paidOn: dateStringSchema,
   note: z.string().trim().max(PAYMENT_NOTE_MAX),
@@ -44,7 +45,7 @@ export const paymentCreateSchema = z
   .strict();
 export type PaymentCreate = z.infer<typeof paymentCreateSchema>;
 
-/** Every detail of a receipt can be corrected; the months are worked out again. */
+/** Every detail of a receipt can be corrected; its months (and amount) are worked out again. */
 export const paymentUpdateSchema = z.object({ id, ...details }).strict();
 export type PaymentUpdate = z.infer<typeof paymentUpdateSchema>;
 
@@ -82,18 +83,14 @@ export interface Allocation extends YearMonth {
   amount: number;
 }
 
-/** A month a payment will fill, with what the form needs to say "full" or "50,000 of 250,000". */
-export interface PlannedMonth extends Allocation {
-  /** The month's rent. */
-  expected: number;
-  /** Already paid towards it by other receipts. */
-  paidBefore: number;
-}
-
+/**
+ * The months a payment pays, each with its whole rent. `open` is how many
+ * months could be paid from the chosen month, up to the horizon.
+ */
 export type AllocationResult =
-  | { ok: true; months: PlannedMonth[] }
-  /** More than everything owed up to the horizon: almost certainly a typing mistake. */
-  | { ok: false; reason: 'too_much' }
+  | { ok: true; months: Allocation[]; open: number }
+  /** More months than are open up to the horizon. */
+  | { ok: false; reason: 'too_much'; open: number }
   /** No month from the chosen one up to the horizon has rent to fill (vacant, or too far ahead). */
   | { ok: false; reason: 'nothing_open' };
 

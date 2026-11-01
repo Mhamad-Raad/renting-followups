@@ -141,7 +141,7 @@
   grid-column: 1 / -1;
 }
 
-/* The live "how the money is shared out" list in the payment form. */
+/* The live list of the months a payment pays, and its amount, in the payment form. */
 .preview {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
@@ -161,6 +161,14 @@
 .previewTitle {
   margin: 0;
   font-size: var(--text-md);
+}
+
+.previewTotal {
+  margin: var(--space-3) 0 0;
+  padding-block-start: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-lg);
+  font-weight: 700;
 }
 
 .filter {

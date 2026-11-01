@@ -27,12 +27,9 @@ export interface MonthPickOutcome {
 
 type Question = { picked: PickedMonth; takeOut: MonthTakeOut[] | null };
 
-/** What is still owed for the month: all of its rent, or the rest of it. */
-const restOf = (box: MonthBox) => (box.expected ?? 0) - box.paid;
-
 /**
  * Clicking a month box (ARCHITECTURE.md section 7.4): a short question first,
- * then a month not fully paid gets the rest of its rent as a receipt dated
+ * then a month not paid gets its whole rent as a receipt dated
  * today, and a paid month is taken out of the receipts that paid it.
  */
 export function useMonthPick(onDone: (outcome: MonthPickOutcome) => void) {
@@ -107,7 +104,7 @@ export function useMonthPick(onDone: (outcome: MonthPickOutcome) => void) {
     const result = await callIpc('payments:create', {
       areaId: picked.areaId,
       isBackfill: false,
-      amount: restOf(picked.box),
+      monthCount: 1,
       from: { year: picked.year, month: picked.box.month },
       paidOn: dateStringFromLocal(new Date()),
       note: '',
@@ -161,10 +158,8 @@ export function useMonthPick(onDone: (outcome: MonthPickOutcome) => void) {
         </ul>
       ) : (
         <p>
-          {question.picked.box.paid > 0 &&
-            `${t('monthPick.alreadyPaid', { amount: money(question.picked.box.paid, question.picked.box.currency) })} `}
           {t('monthPick.payBody', {
-            amount: money(restOf(question.picked.box), question.picked.box.currency),
+            amount: money(question.picked.box.expected ?? 0, question.picked.box.currency),
           })}
         </p>
       )}

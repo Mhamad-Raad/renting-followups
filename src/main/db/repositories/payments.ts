@@ -1,5 +1,5 @@
 import type { Currency } from '@shared/currency';
-import { monthIndex, type BusinessToday, type YearMonth } from '@shared/dates';
+import type { BusinessToday, YearMonth } from '@shared/dates';
 import type {
   Allocation,
   AllocationResult,
@@ -11,7 +11,7 @@ import type {
   PaymentVoidResult,
   Receipt,
 } from '@shared/payments';
-import { paymentCurrency, priceForMonth, pricesInCurrency } from '@shared/prices';
+import { paymentCurrency, pricesInCurrency } from '@shared/prices';
 import { allocate, oldestOpenMonth } from '../../services/allocation';
 import type { Db } from '../connection';
 import type { AllocationRepository } from './allocations';
@@ -100,14 +100,14 @@ export function createPaymentRepository(
   // Months in another currency count as vacant for this money, so it never fills them.
   const plan = (
     areaId: number,
-    amount: number,
+    monthCount: number,
     from: YearMonth,
     today: YearMonth,
     currency: Currency,
     except = 0,
   ) =>
     allocate(
-      amount,
+      monthCount,
       from,
       pricesInCurrency(prices.forArea(areaId), currency),
       paid.history(areaId, except),
@@ -115,17 +115,16 @@ export function createPaymentRepository(
     );
 
   /**
-   * A receipt's own months, when an edit keeps its amount and start month (only the date or
-   * note change): they stay exactly as they are, so a month taken out of the receipt
-   * (ARCHITECTURE.md section 7.4) is not quietly filled again. Null when the money changes.
+   * A receipt's own months, when an edit keeps how many months it pays and its start month
+   * (only the date or note change): they stay exactly as they are, with the rent they were
+   * paid at, so a month taken out of the receipt (ARCHITECTURE.md section 7.4) is not quietly
+   * filled again. Null when the months change.
    */
-  const keptMonths = (receiptId: number, amount: number, from: YearMonth) => {
+  const keptMonths = (receiptId: number, monthCount: number, from: YearMonth) => {
     const months = selectAllocationsForReceipt.all(receiptId);
     const first = months[0];
     const same =
-      selectReceipt.get(receiptId)?.total_amount === amount &&
-      first?.year === from.year &&
-      first.month === from.month;
+      months.length === monthCount && first?.year === from.year && first.month === from.month;
     return same ? months : null;
   };
 
@@ -140,37 +139,34 @@ export function createPaymentRepository(
 
   const monthsOf = (months: readonly Allocation[]) =>
     months.map(({ year, month, amount }) => ({ year, month, amount }));
+  const totalOf = (months: readonly Allocation[]) =>
+    months.reduce((total, month) => total + month.amount, 0);
 
   return {
-    /** The months a payment would fill, before saving. Null when the area does not exist. */
+    /** The months a payment would pay, and their rent, before saving. Null when the area does not exist. */
     preview(
       areaId: number,
-      amount: number,
+      monthCount: number,
       from: YearMonth,
       today: YearMonth,
       receiptId: number | null,
     ): AllocationResult | null {
       const area = selectAreaCurrency.get(areaId);
       if (!area) return null;
-      const kept = receiptId === null ? null : keptMonths(receiptId, amount, from);
-      if (!kept) {
-        const receipt = receiptId === null ? undefined : selectReceipt.get(receiptId);
-        const currency = receipt?.currency ?? currencyFrom(areaId, from, area.currency);
-        return plan(areaId, amount, from, today, currency, receiptId ?? 0);
-      }
-      const history = paid.history(areaId, receiptId ?? 0);
-      const rents = prices.forArea(areaId);
-      return {
-        ok: true,
-        months: kept.map((paidMonth) => ({
-          ...paidMonth,
-          expected: priceForMonth(rents, paidMonth) ?? 0,
-          paidBefore: history.get(monthIndex(paidMonth)) ?? 0,
-        })),
-      };
+      const receipt = receiptId === null ? undefined : selectReceipt.get(receiptId);
+      const currency = receipt?.currency ?? currencyFrom(areaId, from, area.currency);
+      const planned = plan(areaId, monthCount, from, today, currency, receiptId ?? 0);
+      const kept = receiptId === null ? null : keptMonths(receiptId, monthCount, from);
+      if (!kept) return planned;
+      // The receipt's own months are open to it, so at least that many can be paid.
+      const open = Math.max(
+        kept.length,
+        planned.ok || planned.reason === 'too_much' ? planned.open : 0,
+      );
+      return { ok: true, months: kept, open };
     },
 
-    /** The month the payment form suggests: the oldest one not fully paid. */
+    /** The month the payment form suggests: the oldest one not paid. */
     suggestedStart(areaId: number, today: YearMonth): YearMonth | null {
       if (!selectAreaCurrency.get(areaId)) return null;
       return oldestOpenMonth(prices.forArea(areaId), paid.history(areaId), today);
@@ -182,8 +178,9 @@ export function createPaymentRepository(
       if (!area) return { ok: false, reason: 'not_found' };
       if (input.paidOn > today.date) return { ok: false, reason: 'future_date' };
       const currency = currencyFrom(input.areaId, input.from, area.currency);
-      const planned = plan(input.areaId, input.amount, input.from, today.month, currency);
-      if (!planned.ok) return planned;
+      const planned = plan(input.areaId, input.monthCount, input.from, today.month, currency);
+      if (!planned.ok) return { ok: false, reason: planned.reason };
+      const amount = totalOf(planned.months);
       const receiptNumber = input.isBackfill ? null : nextReceiptNumber();
       const renter = renters.current(input.areaId);
       const id = Number(
@@ -194,7 +191,7 @@ export function createPaymentRepository(
           renter?.fullName ?? null,
           renter?.phone ?? null,
           currency,
-          input.amount,
+          amount,
           input.paidOn,
           input.note,
         ).lastInsertRowid,
@@ -204,14 +201,14 @@ export function createPaymentRepository(
         areaId: input.areaId,
         receiptNumber,
         isBackfill: input.isBackfill,
-        amount: input.amount,
+        amount,
         paidOn: input.paidOn,
         months: monthsOf(planned.months),
       });
       return { ok: true, id, receiptNumber };
     }),
 
-    /** Corrects a receipt. It keeps its number; its months are worked out again. */
+    /** Corrects a receipt. It keeps its number; its months and amount are worked out again. */
     update: db.transaction((input: PaymentUpdate, today: BusinessToday): PaymentUpdateResult => {
       const before = selectReceipt.get(input.id);
       if (!before) return { ok: false, reason: 'not_found' };
@@ -219,20 +216,21 @@ export function createPaymentRepository(
       if (input.paidOn > today.date) return { ok: false, reason: 'future_date' };
       const previousMonths = selectAllocationsForReceipt.all(input.id);
       let months: readonly Allocation[] = previousMonths;
-      if (!keptMonths(input.id, input.amount, input.from)) {
+      if (!keptMonths(input.id, input.monthCount, input.from)) {
         const planned = plan(
           before.area_id,
-          input.amount,
+          input.monthCount,
           input.from,
           today.month,
           before.currency,
           input.id,
         );
-        if (!planned.ok) return planned;
+        if (!planned.ok) return { ok: false, reason: planned.reason };
         months = planned.months;
         allocations.replace(input.id, before.area_id, months);
       }
-      updateReceipt.run(input.amount, input.paidOn, input.note, input.id);
+      const amount = totalOf(months);
+      updateReceipt.run(amount, input.paidOn, input.note, input.id);
       audit.record('update', 'receipt', input.id, {
         before: {
           amount: before.total_amount,
@@ -241,7 +239,7 @@ export function createPaymentRepository(
           months: previousMonths,
         },
         after: {
-          amount: input.amount,
+          amount,
           paidOn: input.paidOn,
           note: input.note,
           months: monthsOf(months),

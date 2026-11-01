@@ -1,4 +1,3 @@
-import { monthIndex, type YearMonth } from '@shared/dates';
 import type { Currency } from '@shared/currency';
 import type { Allocation } from '@shared/payments';
 import type { Db } from '../connection';
@@ -18,10 +17,6 @@ export function createAllocationRepository(db: Db) {
      VALUES (?, ?, ?, ?, ?)`,
   );
   const deleteAll = db.prepare<[number]>('DELETE FROM payment_allocations WHERE receipt_id = ?');
-  const deleteFrom = db.prepare<[number, number]>(
-    `DELETE FROM payment_allocations
-     WHERE receipt_id = ? AND year * 12 + (month - 1) >= ?`,
-  );
   const selectCounting = db.prepare<[number], AllocationRow>(
     `SELECT a.receipt_id AS receiptId, r.receipt_number AS receiptNumber, r.currency,
        a.year, a.month, a.amount
@@ -41,12 +36,6 @@ export function createAllocationRepository(db: Db) {
     /** A receipt's months, replaced entirely (after an edit). */
     replace(receiptId: number, areaId: number, months: readonly Allocation[]): void {
       deleteAll.run(receiptId);
-      write(receiptId, areaId, months);
-    },
-
-    /** A receipt's months from `from` onward, replaced (after a price change). */
-    replaceFrom(receiptId: number, areaId: number, from: YearMonth, months: readonly Allocation[]) {
-      deleteFrom.run(receiptId, monthIndex(from));
       write(receiptId, areaId, months);
     },
 

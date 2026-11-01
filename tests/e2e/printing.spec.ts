@@ -44,7 +44,7 @@ async function seed(page: Page): Promise<number> {
     const payment = await window.api.invoke('payments:create', {
       areaId: area.data.id,
       isBackfill: false,
-      amount: 500_000,
+      monthCount: 2,
       from: { year, month: 1 },
       paidOn: `${year}-01-05`,
       note: '',

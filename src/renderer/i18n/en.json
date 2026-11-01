@@ -344,9 +344,7 @@
     "before_rent_start": "This month is before the rent started ({{month}}). Please choose a later month.",
     "priceSaved": "New price saved.",
     "vacantSaved": "The area is marked as vacant.",
-    "warning": "If you save, the money already paid is spread over the months again using the new rent:",
-    "statusChange": "Month {{month}}: {{before}} {{paidBefore}} → {{after}} {{paidAfter}}",
-    "saveAnyway": "Save anyway",
+    "keptPaid": "Already paid, so it stays paid at the old rent: month {{months}}. The new rent is for the months not paid yet.",
     "no_room": "The money already paid from this month would have no month to go to (for example, the area stays vacant). Please cancel or edit those receipts first.",
     "vacantPaid": "These months are already paid, but after this change they have no rent in that money's currency (the area is vacant, or the rent is now in another currency). To save, their money is taken out of the receipts:",
     "vacantPaidCancels": "Month {{months}}: {{receipt}} is cancelled ({{amount}}).",
@@ -467,11 +465,9 @@
   "months": {
     "title": "Months of {{year}}",
     "box": "Month {{month}}: {{status}}",
-    "boxPart": "Month {{month}}: {{status}}, {{paid}} of {{expected}}",
     "status": {
       "paid": "Paid",
       "due": "Not paid",
-      "partial": "Partly paid",
       "late": "Late",
       "upcoming": "Upcoming",
       "vacant": "Vacant",
@@ -480,14 +476,12 @@
     "summary": {
       "late": "Late",
       "due": "Not paid",
-      "partial": "Partly paid",
       "paid": "Paid",
       "nothing_due": "Nothing due"
     }
   },
   "monthPick": {
     "payTitle": "Mark month {{month}} of {{year}} as paid?",
-    "alreadyPaid": "{{amount}} is already paid.",
     "payBody": "{{amount}} will be recorded as a payment dated today, with a receipt number.",
     "payButton": "Mark as paid",
     "paid": "Month {{month}} is paid. Receipt No. {{number}}",
@@ -506,17 +500,18 @@
     "pastTitle": "Record past payment",
     "editTitle": "Edit receipt No. {{number}}",
     "editPastTitle": "Edit past record",
-    "amount": "Amount received",
     "from": "From which month?",
-    "fromHint": "The money fills this month first, then the next ones.",
+    "monthCount": "How many months?",
+    "fewer": "One month fewer",
+    "more": "One month more",
+    "fromHint": "The first month this payment pays. Months already paid are skipped.",
     "paidOn": "Date received",
     "note": "Note",
     "pastHint": "For money received before you started using the app. It gets no receipt number.",
-    "preview": "How the money is shared out",
-    "previewFull": "Month {{month}}: full",
-    "previewPartial": "Month {{month}}: partial, {{paid}} of {{expected}}",
-    "amountRequired": "Please enter the amount received.",
-    "too_much": "This amount is more than two years of rent. Please check the number.",
+    "preview": "Months paid",
+    "previewMonth": "Month {{month}}: {{amount}}",
+    "total": "Amount received: {{amount}}",
+    "too_much": "That is more months than can be paid from this month (up to two years ahead). Please choose fewer months.",
     "future_date": "The date received cannot be after today.",
     "cancelled": "This receipt was cancelled and can no longer be changed.",
     "saved": "Payment saved. Receipt No. {{number}}",
@@ -560,7 +555,7 @@
     "statuses": {
       "all": "All",
       "paid": "Paid",
-      "partial": "Due or partly paid",
+      "due": "Not paid this month",
       "late": "Late"
     },
     "picker": {

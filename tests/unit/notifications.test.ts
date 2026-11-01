@@ -31,12 +31,7 @@ const FROM_MARCH: PriceRow[] = [{ year: 2026, month: 3, monthlyPrice: RENT, curr
 
 describe('buildReminders', () => {
   it('reports late rent with its months and what is owed', () => {
-    const reminders = buildReminders(
-      [area('Shop', FROM_MARCH, [[{ year: 2026, month: 4 }, 100_000]])],
-      on('2026-05-10'),
-      7,
-      byName,
-    );
+    const reminders = buildReminders([area('Shop', FROM_MARCH)], on('2026-05-10'), 7, byName);
     expect(reminders).toEqual([
       expect.objectContaining({
         kind: 'late',
@@ -45,7 +40,7 @@ describe('buildReminders', () => {
           { year: 2026, month: 3 },
           { year: 2026, month: 4 },
         ],
-        owed: [{ currency: 'IQD', amount: RENT + RENT - 100_000 }],
+        owed: [{ currency: 'IQD', amount: 2 * RENT }],
       }),
     ]);
   });

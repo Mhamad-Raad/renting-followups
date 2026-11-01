@@ -9,7 +9,7 @@ import {
   type YearMonth,
 } from './dates';
 import type { CategoryColor } from './categories';
-import type { CurrencyFigures, MonthBox, StatusChange, YearSummary } from './months';
+import type { CurrencyFigures, MonthBox, YearSummary } from './months';
 import { normalizeText } from './normalizeText';
 import { priceForMonth, type PriceRow } from './prices';
 
@@ -245,7 +245,8 @@ export interface VacantPayment {
 
 /** What a price change would do to money already paid (see `areas:priceChangeImpact`). */
 export type PriceChangeImpact =
-  | { ok: true; changes: StatusChange[] }
+  /** `keptPaid`: paid months whose rent changes; they stay paid at the rent they had. */
+  | { ok: true; keptPaid: YearMonth[] }
   /**
    * Money already paid would have no month to go to (for example vacant from
    * then on). `vacantPayments` lists the receipts paying months that would
