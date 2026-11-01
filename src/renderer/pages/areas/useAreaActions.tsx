@@ -24,7 +24,6 @@ export const ACTION_DIALOGS: Record<AreaAction, AreaDialog> = {
   pastPayment: { kind: 'payment', mode: { kind: 'past' } },
   changePrice: { kind: 'price', mode: 'change' },
   markVacant: { kind: 'price', mode: 'vacant' },
-  setRentAgain: { kind: 'price', mode: 'rentAgain' },
   changeRenter: { kind: 'renter' },
   delete: { kind: 'delete' },
 };

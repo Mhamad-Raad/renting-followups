@@ -195,9 +195,8 @@ describe('Excel report', () => {
     const color = (name: string) =>
       new RegExp(`--status-${name}-bg:\\s*#([0-9a-f]{6})`).exec(light)?.[1];
     expect(STATUS_FILLS.paid).toBe(color('paid'));
-    // No yellow: this month unpaid looks late, a coming month paid in part looks upcoming.
+    // No yellow: this month unpaid looks late.
     expect(STATUS_FILLS.due).toBe(color('late'));
-    expect(STATUS_FILLS.partial).toBe(color('upcoming'));
     expect(STATUS_FILLS.late).toBe(color('late'));
     expect(STATUS_FILLS.upcoming).toBe(color('upcoming'));
     expect(STATUS_FILLS.not_applicable).toBe(color('na'));

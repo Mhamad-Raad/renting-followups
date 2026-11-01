@@ -9,7 +9,6 @@ import type {
   CurrencyFigures,
   MonthBox,
   MonthStatus,
-  StatusChange,
   YearFigures,
   YearSummary,
 } from '@shared/months';
@@ -38,8 +37,10 @@ export type PaidHistory = ReadonlyMap<number, number>;
 
 /**
  * The status of one month. `expected` is the month's rent: null before the
- * rent started and 0 while vacant, both of which are not applicable. Only the
- * month counts, not the day: a month turns late on the 1st of the next month.
+ * rent started and 0 while vacant, both of which are not applicable. A month
+ * is paid whole or not at all: any money for it means it is paid, at the rent
+ * it had when it was paid, even if the rent changed later. Only the month
+ * counts, not the day: a month turns late on the 1st of the next month.
  */
 export function monthStatus(
   expected: number | null,
@@ -48,11 +49,10 @@ export function monthStatus(
   today: YearMonth,
 ): MonthStatus {
   if (expected === null || expected === 0) return 'not_applicable';
-  if (paid >= expected) return 'paid';
+  if (paid > 0) return 'paid';
   const when = compareYearMonth(month, today);
   if (when < 0) return 'late';
-  if (when === 0) return 'due';
-  return paid > 0 ? 'partial' : 'upcoming';
+  return when === 0 ? 'due' : 'upcoming';
 }
 
 /** The 12 month boxes of one year, month 1 first. */
@@ -81,9 +81,10 @@ const FALLBACK_CURRENCY: Currency = CURRENCIES[0];
 
 /**
  * Rent, expected, received and still owed for the given boxes (a year, or one
- * month of it). Months that are not applicable count for nothing, and a month
- * never counts as more received than its rent. Still owed counts only months
- * that have already come (late or due), never months still to come.
+ * month of it). Months that are not applicable count for nothing. A paid
+ * month counts what was paid for it (its rent at the time, even if the rent
+ * changed since); any other month counts its rent. Still owed counts only
+ * months that have already come (late or due), never months still to come.
  * `rentMonth` is the month whose rent is shown.
  */
 export function yearFigures(boxes: readonly MonthBox[], rentMonth: number): YearFigures {
@@ -93,9 +94,13 @@ export function yearFigures(boxes: readonly MonthBox[], rentMonth: number): Year
   for (const box of boxes) {
     // Null or 0: before the rent started, or vacant.
     if (!box.expected) continue;
+    if (box.status === 'paid') {
+      expected += box.paid;
+      received += box.paid;
+      continue;
+    }
     expected += box.expected;
-    received += Math.min(box.paid, box.expected);
-    if (box.status === 'late' || box.status === 'due') remaining += box.expected - box.paid;
+    if (box.status === 'late' || box.status === 'due') remaining += box.expected;
   }
   const rent = boxes.find((box) => box.month === rentMonth)?.expected ?? null;
   return { rent, expected, received, remaining };
@@ -115,7 +120,6 @@ export function yearSummary(boxes: readonly MonthBox[]): YearSummary {
   const has = (status: MonthStatus) => boxes.some((box) => box.status === status);
   if (has('late')) return 'late';
   if (has('due')) return 'due';
-  if (has('partial')) return 'partial';
   if (has('paid')) return 'paid';
   return 'nothing_due';
 }
@@ -170,17 +174,17 @@ function ownRentMonth(own: readonly MonthBox[], rentMonth: number): number {
   return (before ?? withRent[0])?.month ?? rentMonth;
 }
 
-/** A month that has come and is not fully paid: late (passed) or due (this month). */
+/** A month that has come and is not paid: late (passed) or due (this month). */
 export interface UnpaidMonth extends YearMonth {
   status: 'late' | 'due';
-  /** The rent not yet paid for it, in `currency`. */
+  /** Its rent, not paid, in `currency`. */
   owed: number;
   currency: Currency;
 }
 
 /**
  * Every month from when the rent started (`prices` oldest first) up to and
- * including this one that is not fully paid, oldest first. Vacant months and
+ * including this one that is not paid, oldest first. Vacant months and
  * months before the rent started never appear. Uses `monthStatus` for each.
  */
 export function unpaidMonths(
@@ -198,12 +202,7 @@ export function unpaidMonths(
     const paidAmount = paid.get(index) ?? 0;
     const status = monthStatus(expected, paidAmount, month, today);
     if (row && (status === 'late' || status === 'due')) {
-      months.push({
-        ...month,
-        status,
-        owed: row.monthlyPrice - paidAmount,
-        currency: row.currency,
-      });
+      months.push({ ...month, status, owed: row.monthlyPrice, currency: row.currency });
     }
   }
   return months;
@@ -235,44 +234,6 @@ export function owedByCurrency(months: readonly UnpaidMonth[]): CurrencyAmount[]
     currency,
     amount: sum(inCurrency, (month) => month.owed),
   }));
-}
-
-/**
- * The months from `from` onward whose money or status would change when the
- * price history goes from `before` to `after` and the paid amounts go from
- * `paidBefore` to `paidAfter` (the money shared out again). Used to warn before
- * a price change so the past is never rewritten silently.
- */
-export function statusChanges(
-  before: readonly PriceRow[],
-  after: readonly PriceRow[],
-  paidBefore: PaidHistory,
-  paidAfter: PaidHistory,
-  from: YearMonth,
-  today: YearMonth,
-): StatusChange[] {
-  const indexes = [...new Set([...paidBefore.keys(), ...paidAfter.keys()])]
-    .filter((index) => index >= monthIndex(from))
-    .sort((a, b) => a - b);
-  const changes: StatusChange[] = [];
-  for (const index of indexes) {
-    const month = fromMonthIndex(index);
-    const was = paidBefore.get(index) ?? 0;
-    const will = paidAfter.get(index) ?? 0;
-    const statusBefore = monthStatus(priceForMonth(before, month), was, month, today);
-    const statusAfter = monthStatus(priceForMonth(after, month), will, month, today);
-    if (statusBefore !== statusAfter || was !== will) {
-      changes.push({
-        ...month,
-        currency: currencyForMonth(before, month) ?? FALLBACK_CURRENCY,
-        before: statusBefore,
-        after: statusAfter,
-        paidBefore: was,
-        paidAfter: will,
-      });
-    }
-  }
-  return changes;
 }
 
 /** An area as Home needs it: its current currency, this year's figures and its standing today. */
@@ -330,11 +291,11 @@ export function reportTotals(
 
 /**
  * The report's status filter (ARCHITECTURE.md section 6). For a year: Late =
- * at least one late month; Partial = at least one orange month (due or partly
- * paid) and none late; Paid = every applicable month up to and including this
- * month is paid (no late or due month) and at least one month is paid, so a
- * year with no rent yet is not called Paid. For one chosen month, that
- * month's own status decides.
+ * at least one late month; Not paid = this month is not paid and none is
+ * late; Paid = every applicable month up to and including this month is paid
+ * (no late or due month) and at least one month is paid, so a year with no
+ * rent yet is not called Paid. For one chosen month, that month's own status
+ * decides.
  */
 export function matchesReportStatus(
   boxes: readonly MonthBox[],
@@ -345,8 +306,8 @@ export function matchesReportStatus(
   const chosen = month === null ? boxes : boxes.filter((box) => box.month === month);
   const has = (...statuses: MonthStatus[]) => chosen.some((box) => statuses.includes(box.status));
   if (status === 'late') return has('late');
-  if (status === 'partial') return has('due', 'partial') && !has('late');
-  // Months up to now that are not fully paid are late or due, so "no late, no due" means
+  if (status === 'due') return has('due') && !has('late');
+  // Months up to now that are not paid are late or due, so "no late, no due" means
   // every applicable month up to now is paid.
   return has('paid') && !has('late', 'due');
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { monthIndex, type YearMonth } from '@shared/dates';
 import type { MonthBox, MonthStatus } from '@shared/months';
-import { withPriceFrom, type PriceRow } from '@shared/prices';
+import type { PriceRow } from '@shared/prices';
 import {
   areaStanding,
   unpaidMonths,
@@ -13,7 +13,6 @@ import {
   NO_PAYMENTS,
   type PaidHistory,
   reportTotals,
-  statusChanges,
   totalsByCurrency,
   yearFigures,
   yearSummary,
@@ -44,23 +43,18 @@ describe('monthStatus: the status table', () => {
     }
   });
 
-  it('more than the rent still counts as paid', () => {
+  it('a month paid at another rent (before the rent changed) is still paid', () => {
     expect(monthStatus(RENT, RENT + 1, past, TODAY)).toBe('paid');
+    expect(monthStatus(RENT, 200_000, past, TODAY)).toBe('paid');
+    expect(monthStatus(RENT, 200_000, future, TODAY)).toBe('paid');
   });
 
-  it('a past month with nothing or only part paid is late', () => {
+  it('a past month with nothing paid is late', () => {
     expect(monthStatus(RENT, 0, past, TODAY)).toBe('late');
-    expect(monthStatus(RENT, 50_000, past, TODAY)).toBe('late');
-    expect(monthStatus(RENT, RENT - 1, past, TODAY)).toBe('late');
   });
 
-  it('the current month with nothing or only part paid is due', () => {
+  it('the current month with nothing paid is due', () => {
     expect(monthStatus(RENT, 0, TODAY, TODAY)).toBe('due');
-    expect(monthStatus(RENT, 50_000, TODAY, TODAY)).toBe('due');
-  });
-
-  it('a future month with part paid is partial', () => {
-    expect(monthStatus(RENT, 50_000, future, TODAY)).toBe('partial');
   });
 
   it('a future month with nothing paid is upcoming', () => {
@@ -71,13 +65,6 @@ describe('monthStatus: the status table', () => {
     const may = { year: 2026, month: 5 };
     expect(monthStatus(RENT, 0, may, { year: 2026, month: 5 })).toBe('due');
     expect(monthStatus(RENT, 0, may, { year: 2026, month: 6 })).toBe('late');
-  });
-
-  it('a partial payment is orange until its month passes, then red', () => {
-    const june = { year: 2026, month: 6 };
-    expect(monthStatus(RENT, 50_000, june, { year: 2026, month: 5 })).toBe('partial');
-    expect(monthStatus(RENT, 50_000, june, { year: 2026, month: 6 })).toBe('due');
-    expect(monthStatus(RENT, 50_000, june, { year: 2026, month: 7 })).toBe('late');
   });
 
   it('compares across year boundaries', () => {
@@ -94,13 +81,13 @@ describe('monthBoxes', () => {
   const fromJanuary: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' }];
 
   it('always gives 12 boxes, month 1 first, with the price and amount paid', () => {
-    const boxes = monthBoxes(fromJanuary, paidMap([[3, 100_000]]), 2026, TODAY);
+    const boxes = monthBoxes(fromJanuary, paidMap([[3, RENT]]), 2026, TODAY);
     expect(boxes.map((box) => box.month)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     expect(boxes[2]).toEqual({
       month: 3,
       expected: RENT,
-      paid: 100_000,
-      status: 'late',
+      paid: RENT,
+      status: 'paid',
       currency: 'IQD',
     });
     expect(boxes[0]).toEqual({
@@ -175,22 +162,22 @@ describe('monthBoxes', () => {
     ]);
     const boxes = monthBoxes(prices, paid, 2026, { year: 2026, month: 8 });
     expect(boxes[5]).toMatchObject({ expected: RENT, status: 'paid' });
-    // The old amount no longer covers the new, higher price.
-    expect(boxes[6]).toMatchObject({ expected: 300_000, paid: RENT, status: 'late' });
+    // Paid before the rent went up: it stays paid at the old rent.
+    expect(boxes[6]).toMatchObject({ expected: 300_000, paid: RENT, status: 'paid' });
+    expect(boxes[7]).toMatchObject({ expected: 300_000, paid: 0, status: 'due' });
   });
 
-  it('prepaid future months show green, partly prepaid ones orange', () => {
+  it('prepaid future months show green', () => {
     const paid = paidMap([
       [5, RENT],
       [6, RENT],
       [7, RENT],
-      [8, 100_000],
     ]);
     expect(statuses(monthBoxes(fromJanuary, paid, 2026, TODAY)).slice(4, 9)).toEqual([
       'paid',
       'paid',
       'paid',
-      'partial',
+      'upcoming',
       'upcoming',
     ]);
   });
@@ -221,23 +208,38 @@ describe('yearFigures', () => {
     const prices: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' }];
     const paid = paidMap([
       [1, RENT],
-      [2, 100_000],
+      [2, RENT],
     ]);
     expect(figuresOf(prices, paid)).toMatchObject({
       rent: RENT,
       expected: 12 * RENT,
-      received: RENT + 100_000,
+      received: 2 * RENT,
+    });
+  });
+
+  it('a month paid before the rent changed counts what was paid for it', () => {
+    // Month 2 was paid 200,000 at the old rent; the rent is now 250,000.
+    const prices: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' }];
+    const paid = paidMap([
+      [1, RENT],
+      [2, 200_000],
+    ]);
+    expect(figuresOf(prices, paid)).toMatchObject({
+      rent: RENT,
+      expected: 11 * RENT + 200_000,
+      received: RENT + 200_000,
+      remaining: 3 * RENT,
     });
   });
 
   it('counts as still owed only the months that have come, never later ones', () => {
     const prices: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' }];
-    // Month 1 paid, month 2 part-paid, months 3–5 unpaid; 6–12 are not owed yet.
+    // Months 1 and 2 paid, months 3–5 unpaid; 6–12 are not owed yet.
     const paid = paidMap([
       [1, RENT],
-      [2, 100_000],
+      [2, RENT],
     ]);
-    expect(figuresOf(prices, paid).remaining).toBe(RENT - 100_000 + 3 * RENT);
+    expect(figuresOf(prices, paid).remaining).toBe(3 * RENT);
   });
 
   it('a prepaid future month counts as received but does not lower what is owed now', () => {
@@ -290,13 +292,13 @@ describe('yearFigures', () => {
     expect(figuresOf(prices).expected).toBe(6 * 100_000 + 6 * 200_000);
   });
 
-  it('never counts more than the rent as received, so still owed is never below 0', () => {
+  it('a month paid at a higher, older rent counts what was paid, and owes nothing', () => {
     const prices: PriceRow[] = [{ year: 2026, month: 5, monthlyPrice: RENT, currency: 'IQD' }];
     const figures = yearFigures(
-      monthBoxes(prices, paidMap([[5, RENT * 3]]), 2026, TODAY).filter((box) => box.month === 5),
+      monthBoxes(prices, paidMap([[5, 300_000]]), 2026, TODAY).filter((box) => box.month === 5),
       5,
     );
-    expect(figures).toEqual({ rent: RENT, expected: RENT, received: RENT, remaining: 0 });
+    expect(figures).toEqual({ rent: RENT, expected: 300_000, received: 300_000, remaining: 0 });
   });
 
   it('ignores money on a month that later became vacant', () => {
@@ -326,9 +328,8 @@ describe('yearSummary', () => {
   });
 
   it.each<[MonthStatus[], string]>([
-    [['paid', 'late', 'due', 'partial'], 'late'],
-    [['paid', 'due', 'partial', 'upcoming'], 'due'],
-    [['paid', 'partial', 'upcoming'], 'partial'],
+    [['paid', 'late', 'due'], 'late'],
+    [['paid', 'due', 'upcoming'], 'due'],
     [['paid', 'upcoming', 'not_applicable'], 'paid'],
     [['upcoming', 'not_applicable'], 'nothing_due'],
     [['not_applicable'], 'nothing_due'],
@@ -356,17 +357,14 @@ describe('areaYear', () => {
   });
 
   it('gives the figures of one month when a month is chosen, with all 12 boxes', () => {
-    const year = areaYear(prices, paidMap([[4, 100_000]]), 2026, TODAY, 4);
+    const year = areaYear(prices, paidMap([[3, RENT]]), 2026, TODAY, 4);
     expect(year.month).toBe(4);
     expect(year.boxes).toHaveLength(12);
     expect(year.figures).toEqual([
-      {
-        currency: 'IQD',
-        rent: RENT,
-        expected: RENT,
-        received: 100_000,
-        remaining: RENT - 100_000,
-      },
+      { currency: 'IQD', rent: RENT, expected: RENT, received: 0, remaining: RENT },
+    ]);
+    expect(areaYear(prices, paidMap([[3, RENT]]), 2026, TODAY, 3).figures).toEqual([
+      { currency: 'IQD', rent: RENT, expected: RENT, received: RENT, remaining: 0 },
     ]);
   });
 
@@ -432,12 +430,10 @@ describe('areaStanding', () => {
     expect(areaStanding([], new Map(), TODAY).owed).toEqual([]);
   });
 
-  it('counts only the unpaid part of a part-paid month', () => {
+  it('owes nothing for a month paid at an older rent', () => {
     const prices: PriceRow[] = [{ year: 2026, month: 4, monthlyPrice: RENT, currency: 'IQD' }];
     const paid = history([[{ year: 2026, month: 4 }, 100_000]]);
-    expect(areaStanding(prices, paid, TODAY).owed).toEqual([
-      { currency: 'IQD', amount: RENT - 100_000 + RENT },
-    ]);
+    expect(areaStanding(prices, paid, TODAY).owed).toEqual([{ currency: 'IQD', amount: RENT }]);
   });
 
   it('keeps what is owed in each currency apart after a new renter changed it', () => {
@@ -514,92 +510,6 @@ describe('a new renter paying in another currency', () => {
   });
 });
 
-describe('statusChanges', () => {
-  const history = (entries: [YearMonth, number][]): PaidHistory =>
-    new Map(entries.map(([month, amount]) => [monthIndex(month), amount]));
-  const before: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' }];
-  const at = (month: number) => ({ year: 2026, month });
-
-  it('lists months that gain or lose money or change colour', () => {
-    const after = withPriceFrom(before, at(3), 300_000);
-    const was = history([
-      [at(3), RENT],
-      [at(4), RENT],
-    ]);
-    const will = history([
-      [at(3), 300_000],
-      [at(4), 200_000],
-    ]);
-    expect(statusChanges(before, after, was, will, at(3), TODAY)).toEqual([
-      {
-        year: 2026,
-        month: 3,
-        currency: 'IQD',
-        before: 'paid',
-        after: 'paid',
-        paidBefore: RENT,
-        paidAfter: 300_000,
-      },
-      {
-        year: 2026,
-        month: 4,
-        currency: 'IQD',
-        before: 'paid',
-        after: 'late',
-        paidBefore: RENT,
-        paidAfter: 200_000,
-      },
-    ]);
-  });
-
-  it('includes a month that only now receives money', () => {
-    const after = withPriceFrom(before, at(3), 200_000);
-    const was = history([[at(3), RENT]]);
-    const will = history([
-      [at(3), 200_000],
-      [at(4), 50_000],
-    ]);
-    expect(statusChanges(before, after, was, will, at(3), TODAY)[1]).toEqual({
-      year: 2026,
-      month: 4,
-      currency: 'IQD',
-      before: 'late',
-      after: 'late',
-      paidBefore: 0,
-      paidAfter: 50_000,
-    });
-  });
-
-  it('ignores months before the change and months that do not change', () => {
-    const after = withPriceFrom(before, at(3), 300_000);
-    const same = history([
-      [at(2), RENT],
-      [at(3), 300_000],
-    ]);
-    const was = history([
-      [at(2), RENT],
-      [at(3), 300_000],
-    ]);
-    expect(statusChanges(before, after, was, same, at(3), TODAY)).toEqual([]);
-  });
-
-  it('a vacant month with its money moved away', () => {
-    const after = withPriceFrom(before, at(6), 0);
-    const was = history([[at(6), RENT]]);
-    expect(statusChanges(before, after, was, new Map(), at(6), TODAY)).toEqual([
-      {
-        year: 2026,
-        month: 6,
-        currency: 'IQD',
-        before: 'paid',
-        after: 'not_applicable',
-        paidBefore: RENT,
-        paidAfter: 0,
-      },
-    ]);
-  });
-});
-
 describe('Home totals and attention list', () => {
   const overview = (
     currency: 'IQD' | 'USD',
@@ -667,14 +577,13 @@ describe('report status filter', () => {
       currency: 'IQD',
     }));
 
-  it.each<[MonthStatus[], 'paid' | 'partial' | 'late', boolean]>([
+  it.each<[MonthStatus[], 'paid' | 'due' | 'late', boolean]>([
     [['paid', 'late', 'due'], 'late', true],
     [['paid', 'paid', 'due'], 'late', false],
-    [['paid', 'due', 'upcoming'], 'partial', true],
-    [['paid', 'paid', 'partial'], 'partial', true],
-    [['late', 'due'], 'partial', false],
+    [['paid', 'due', 'upcoming'], 'due', true],
+    [['paid', 'paid', 'upcoming'], 'due', false],
+    [['late', 'due'], 'due', false],
     [['paid', 'paid', 'upcoming'], 'paid', true],
-    [['paid', 'paid', 'partial'], 'paid', true],
     [['paid', 'due'], 'paid', false],
     [['not_applicable', 'upcoming'], 'paid', false],
   ])('%j matches %s: %s', (list, status, expected) => {
@@ -685,7 +594,7 @@ describe('report status filter', () => {
     const year = boxes('late', 'paid', 'due');
     expect(matchesReportStatus(year, 'paid', 2)).toBe(true);
     expect(matchesReportStatus(year, 'late', 2)).toBe(false);
-    expect(matchesReportStatus(year, 'partial', 3)).toBe(true);
+    expect(matchesReportStatus(year, 'due', 3)).toBe(true);
     expect(matchesReportStatus(year, 'all', 3)).toBe(true);
   });
 });
@@ -717,13 +626,10 @@ describe('unpaidMonths', () => {
 
   it('lists late and due months oldest first with what each still owes', () => {
     const prices: PriceRow[] = [{ year: 2025, month: 12, monthlyPrice: RENT, currency: 'IQD' }];
-    const paid = history([
-      [{ year: 2026, month: 1 }, RENT],
-      [{ year: 2026, month: 2 }, 100_000],
-    ]);
+    const paid = history([[{ year: 2026, month: 1 }, RENT]]);
     expect(unpaidMonths(prices, paid, { year: 2026, month: 3 })).toEqual([
       { year: 2025, month: 12, status: 'late', owed: RENT, currency: 'IQD' },
-      { year: 2026, month: 2, status: 'late', owed: RENT - 100_000, currency: 'IQD' },
+      { year: 2026, month: 2, status: 'late', owed: RENT, currency: 'IQD' },
       { year: 2026, month: 3, status: 'due', owed: RENT, currency: 'IQD' },
     ]);
   });

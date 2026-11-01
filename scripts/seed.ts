@@ -157,17 +157,14 @@ async function main(): Promise<void> {
         // About one area in six gets a new rent part way through.
         const months = monthIndex(thisMonth) - monthIndex(start);
         if (months > 6 && random.chance(1 / 6)) {
-          repos.priceChanges.changePrice(
-            {
-              areaId: area.id,
-              from: fromMonthIndex(monthIndex(start) + random.int(3, months)),
-              monthlyPrice: random.chance(0.2) ? 0 : Math.round(price * 1.1),
-            },
-            thisMonth,
-          );
+          repos.priceChanges.changePrice({
+            areaId: area.id,
+            from: fromMonthIndex(monthIndex(start) + random.int(3, months)),
+            monthlyPrice: random.chance(0.2) ? 0 : Math.round(price * 1.1),
+          });
         }
 
-        // Most months are paid on time, some only in part, some not yet (late).
+        // Most months are paid on time, some not yet (late).
         const reliable = random.next();
         for (let index = monthIndex(start); index <= monthIndex(thisMonth); index += 1) {
           if (random.next() > 0.6 + reliable * 0.38) continue;
@@ -180,7 +177,7 @@ async function main(): Promise<void> {
               areaId: area.id,
               // Payments before this year are past records, as when bringing in old notebooks.
               isBackfill: month.year < thisMonth.year,
-              amount: random.chance(0.1) ? Math.round(price / 2) : price,
+              monthCount: 1,
               from: month,
               paidOn,
               note: '',

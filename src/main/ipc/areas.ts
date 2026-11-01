@@ -26,14 +26,10 @@ export function registerAreaIpc({
   handle('areas:create', areaCreateSchema, (input) => areas.create(input));
   handle('areas:update', areaUpdateSchema, (input) => areas.update(input));
   handle('areas:priceChangeImpact', priceChangeSchema, (input) =>
-    priceChanges.priceChangeImpact(input, currentYearMonth()),
+    priceChanges.priceChangeImpact(input),
   );
-  handle('areas:changePrice', priceChangeSchema, (input) =>
-    priceChanges.changePrice(input, currentYearMonth()),
-  );
-  handle('areas:changeRenter', renterChangeSchema, (input) =>
-    priceChanges.changeRenter(input, currentYearMonth()),
-  );
+  handle('areas:changePrice', priceChangeSchema, (input) => priceChanges.changePrice(input));
+  handle('areas:changeRenter', renterChangeSchema, (input) => priceChanges.changeRenter(input));
   handle('areas:delete', idInputSchema, ({ id }) => areas.softDelete(id));
   handle('areas:restore', idInputSchema, ({ id }) => areas.restore(id));
   handle('deleted:list', z.undefined(), () => ({

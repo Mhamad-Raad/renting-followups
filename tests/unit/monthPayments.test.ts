@@ -21,12 +21,12 @@ beforeEach(() => {
 });
 afterEach(() => db.close());
 
-function pay(amount: number, month: number) {
+function pay(monthCount: number, month: number) {
   const result = repos.payments.create(
     {
       areaId,
       isBackfill: false,
-      amount,
+      monthCount,
       from: { year: 2026, month },
       paidOn: '2026-10-01',
       note: '',
@@ -48,7 +48,7 @@ const month = (value: number) => ({ areaId, year: 2026, month: value });
 
 describe('taking a paid month out (clicking a green month box)', () => {
   it('cancels a receipt that paid only that month', () => {
-    const { id } = pay(RENT, 3);
+    const { id } = pay(1, 3);
     expect(repos.monthPayments.takeOutPreview(month(3))).toEqual({
       ok: true,
       changes: [{ receiptId: id, receiptNumber: 1, amount: RENT, cancels: true }],
@@ -59,7 +59,7 @@ describe('taking a paid month out (clicking a green month box)', () => {
   });
 
   it('takes one month out of a receipt for several, keeping its number and other months', () => {
-    const { id } = pay(RENT * 8, 1);
+    const { id } = pay(8, 1);
     expect(repos.monthPayments.takeOut(month(3))).toEqual({
       ok: true,
       changes: [{ receiptId: id, receiptNumber: 1, amount: RENT, cancels: false }],
@@ -72,33 +72,18 @@ describe('taking a paid month out (clicking a green month box)', () => {
   });
 
   it('keeps the gap when the receipt is edited only for its date or note', () => {
-    const { id } = pay(RENT * 3, 1);
+    const { id } = pay(3, 1);
     repos.monthPayments.takeOut(month(2));
-    const edit = { id, amount: RENT * 2, from: { year: 2026, month: 1 }, paidOn: '2026-10-02' };
+    const edit = { id, monthCount: 2, from: { year: 2026, month: 1 }, paidOn: '2026-10-02' };
     expect(repos.payments.update({ ...edit, note: 'cash' }, TODAY)).toEqual({ ok: true });
     expect(receipt(id)).toMatchObject({ note: 'cash', paidOn: '2026-10-02' });
     expect(receipt(id)?.allocations.map((paid) => paid.month)).toEqual([1, 3]);
-    const preview = repos.payments.preview(areaId, RENT * 2, edit.from, TODAY.month, id);
+    const preview = repos.payments.preview(areaId, 2, edit.from, TODAY.month, id);
     expect(preview?.ok && preview.months.map((paid) => paid.month)).toEqual([1, 3]);
-    // A new amount shares the money out again from the start month, as any edit does.
-    repos.payments.update({ ...edit, amount: RENT * 3, note: 'cash' }, TODAY);
+    // A new number of months pays them again from the start month, as any edit does.
+    repos.payments.update({ ...edit, monthCount: 3, note: 'cash' }, TODAY);
     expect(receipt(id)?.allocations.map((paid) => paid.month)).toEqual([1, 2, 3]);
-  });
-
-  it('takes out every receipt that paid part of the month', () => {
-    const first = pay(100_000, 5);
-    const second = pay(RENT * 2, 5);
-    expect(repos.monthPayments.takeOut(month(5))).toEqual({
-      ok: true,
-      changes: [
-        { receiptId: first.id, receiptNumber: 1, amount: 100_000, cancels: true },
-        { receiptId: second.id, receiptNumber: 2, amount: 150_000, cancels: false },
-      ],
-    });
-    expect(receipt(second.id)?.allocations).toEqual([
-      { year: 2026, month: 6, amount: RENT },
-      { year: 2026, month: 7, amount: 100_000 },
-    ]);
+    expect(receipt(id)?.totalAmount).toBe(RENT * 3);
   });
 
   it('refuses a month that is not paid, or an area that is gone', () => {
@@ -111,7 +96,7 @@ describe('taking a paid month out (clicking a green month box)', () => {
   });
 
   it('a click on an unpaid month pays just that month, even with older months open', () => {
-    pay(RENT, 7);
+    pay(1, 7);
     expect(statuses()).toBe('llllllpllduu');
   });
 });

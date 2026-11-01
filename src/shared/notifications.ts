@@ -16,7 +16,7 @@ interface AreaRef {
   renterPhone: string | null;
 }
 
-/** An area with past months not fully paid. Vacant months never appear. */
+/** An area with past months not paid. Vacant months never appear. */
 export interface LateRent extends AreaRef {
   kind: 'late';
   /** Oldest first. */
@@ -25,7 +25,7 @@ export interface LateRent extends AreaRef {
   owed: CurrencyAmount[];
 }
 
-/** This month is not fully paid and it ends soon. */
+/** This month is not paid and it ends soon. */
 export interface MonthEndReminder extends AreaRef {
   kind: 'month_end';
   month: YearMonth;

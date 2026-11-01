@@ -30,12 +30,12 @@ function area(name: string, categoryId: number, overrides: Parameters<typeof are
   return result.id;
 }
 
-function pay(areaId: number, amount: number, month = 1) {
+function pay(areaId: number, monthCount: number, month = 1) {
   const result = repos.payments.create(
     {
       areaId,
       isBackfill: false,
-      amount,
+      monthCount,
       from: { year: 2026, month },
       paidOn: '2026-05-01',
       note: '',
@@ -68,9 +68,9 @@ const names = (query: Partial<ReportQuery> = {}) =>
 describe('reports', () => {
   it('gives each area its figures and months for the year, with totals per currency', () => {
     const paidUp = area('Shop 1', shops);
-    pay(paidUp, 5 * RENT);
+    pay(paidUp, 5);
     const dollars = area('Office 1', offices, { currency: 'USD', monthlyPrice: 500_00 });
-    pay(dollars, 500_00);
+    pay(dollars, 1);
     const report = build();
     const shop = report.rows.find((row) => row.id === paidUp);
     expect(shop).toMatchObject({
@@ -91,32 +91,29 @@ describe('reports', () => {
   });
 
   it('filters by category, currency and status', () => {
-    pay(area('Shop paid', shops), 5 * RENT);
-    pay(area('Shop partial', shops), 4 * RENT + 1);
+    pay(area('Shop paid', shops), 5);
+    pay(area('Shop not paid', shops), 4);
     area('Shop late', shops);
     area('Office late', offices, { currency: 'USD' });
     expect(names({ categoryId: offices })).toEqual(['Office late']);
-    expect(names({ currency: 'IQD' })).toEqual(['Shop late', 'Shop paid', 'Shop partial']);
+    expect(names({ currency: 'IQD' })).toEqual(['Shop late', 'Shop not paid', 'Shop paid']);
     expect(names({ status: 'paid' })).toEqual(['Shop paid']);
-    expect(names({ status: 'partial' })).toEqual(['Shop partial']);
+    expect(names({ status: 'due' })).toEqual(['Shop not paid']);
     expect(names({ status: 'late' })).toEqual(['Office late', 'Shop late']);
   });
 
   it('filtered by currency, an area that changed currency shows and matches only that one', () => {
     const id = area('Shop 1', shops);
     // Late in dinars from January; a new renter pays dollars from April, paid up to May.
-    repos.priceChanges.changeRenter(
-      {
-        areaId: id,
-        fullName: 'Ahmed Ali',
-        phone: '',
-        startedOn: '2026-04-01',
-        monthlyPrice: 300_00,
-        currency: 'USD',
-      },
-      TODAY,
-    );
-    pay(id, 2 * 300_00, 4);
+    repos.priceChanges.changeRenter({
+      areaId: id,
+      fullName: 'Ahmed Ali',
+      phone: '',
+      startedOn: '2026-04-01',
+      monthlyPrice: 300_00,
+      currency: 'USD',
+    });
+    pay(id, 2, 4);
     expect(names({ currency: 'USD', status: 'late' })).toEqual([]);
     expect(names({ currency: 'USD', status: 'paid' })).toEqual(['Shop 1']);
     expect(names({ currency: 'IQD', status: 'late' })).toEqual(['Shop 1']);
@@ -127,7 +124,7 @@ describe('reports', () => {
 
   it('with a month chosen, gives that month’s figures, status and totals', () => {
     const id = area('Shop 1', shops);
-    pay(id, RENT + 100_000);
+    pay(id, 1);
     const report = build({ month: 2 });
     expect(report.rows[0]).toMatchObject({
       figures: [
@@ -135,13 +132,13 @@ describe('reports', () => {
           currency: 'IQD',
           rent: RENT,
           expected: RENT,
-          received: 100_000,
-          remaining: RENT - 100_000,
+          received: 0,
+          remaining: RENT,
         },
       ],
       monthStatus: 'late',
     });
-    expect(report.totals[0]).toMatchObject({ received: 100_000, remaining: RENT - 100_000 });
+    expect(report.totals[0]).toMatchObject({ received: 0, remaining: RENT });
     expect(names({ month: 1, status: 'paid' })).toEqual(['Shop 1']);
     expect(names({ month: 2, status: 'paid' })).toEqual([]);
   });
@@ -206,8 +203,20 @@ describe('reports', () => {
     expect(repos.reports.lastFilters().status).toBe('all');
   });
 
+  it('a remembered "partial" status from before whole months becomes "due", keeping the rest', () => {
+    const old = { month: 3, categoryId: shops, currency: 'USD', status: 'partial' };
+    db.prepare(
+      "INSERT OR REPLACE INTO settings (key, value) VALUES ('report_filters_last_used', ?)",
+    ).run(JSON.stringify(old));
+    expect(repos.reports.lastFilters()).toEqual({ ...old, status: 'due' });
+    db.prepare("UPDATE settings SET value = ? WHERE key = 'report_filters_last_used'").run(
+      JSON.stringify({ ...old, status: 'unknown' }),
+    );
+    expect(repos.reports.lastFilters()).toEqual({ ...old, status: 'all' });
+  });
+
   it('builds a report of 200 areas quickly', () => {
-    for (let index = 0; index < 200; index += 1) pay(area(`Shop ${index}`, shops), 3 * RENT);
+    for (let index = 0; index < 200; index += 1) pay(area(`Shop ${index}`, shops), 3);
     const started = performance.now();
     const report = build();
     expect(report.rows).toHaveLength(200);

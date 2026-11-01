@@ -38,7 +38,7 @@ async function seed(page: Page) {
         const paid = await window.api.invoke('payments:create', {
           areaId: area.data.id,
           isBackfill: true,
-          amount: monthlyPrice,
+          monthCount: 1,
           from: current,
           paidOn: `${current.year}-${String(current.month).padStart(2, '0')}-01`,
           note: '',
@@ -107,10 +107,7 @@ test('paying everything owed clears the bell at once', async () => {
     await page.getByRole('button', { name: en.area.recordPayment }).first().click();
     // Every month from January last year up to last month (this month is already paid).
     const months = 12 + new Date().getMonth();
-    await page
-      .getByRole('dialog')
-      .getByLabel(en.paymentDialog.amount)
-      .fill(String(months * 100_000));
+    await page.getByRole('dialog').getByLabel(en.paymentDialog.monthCount).fill(String(months));
     await page
       .getByRole('dialog')
       .getByRole('button', { name: en.common.save, exact: true })

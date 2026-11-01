@@ -131,8 +131,14 @@ export function createReportRepository(db: Db, { paid, prices }: Dependencies) {
       const stored = store.read(FILTERS_KEY);
       if (!stored) return DEFAULT_REPORT_FILTERS;
       try {
-        const parsed = reportFiltersSchema.safeParse(JSON.parse(stored));
-        return parsed.success ? parsed.data : DEFAULT_REPORT_FILTERS;
+        const raw: unknown = JSON.parse(stored);
+        const parsed = reportFiltersSchema.safeParse(raw);
+        if (parsed.success) return parsed.data;
+        // A status that no longer exists ("partial", before months were paid whole) only
+        // resets the status: "partial" meant this month not paid, which is now "due".
+        const status = (raw as { status?: unknown } | null)?.status === 'partial' ? 'due' : 'all';
+        const kept = reportFiltersSchema.safeParse({ ...(raw as object), status });
+        return kept.success ? kept.data : DEFAULT_REPORT_FILTERS;
       } catch {
         return DEFAULT_REPORT_FILTERS;
       }

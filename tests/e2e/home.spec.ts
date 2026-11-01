@@ -36,7 +36,7 @@ async function createArea(page: Page, name: string, paidMonths: number): Promise
         await window.api.invoke('payments:create', {
           areaId: area.data.id,
           isBackfill: true,
-          amount: rent * paidMonths,
+          monthCount: paidMonths,
           from: { year, month: 1 },
           paidOn: `${year}-01-01`,
           note: '',
@@ -70,7 +70,7 @@ test('Home shows this year per currency and the areas that need attention', asyn
     // Record payment on the row opens that area with the payment form ready.
     await rows.first().getByRole('button', { name: en.area.recordPayment }).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Shop A');
-    await expect(page.getByRole('dialog').getByLabel(en.paymentDialog.amount)).toBeFocused();
+    await expect(page.getByRole('dialog').getByLabel(en.paymentDialog.monthCount)).toBeVisible();
   } finally {
     await app.close();
     removeDataDir(dataDir);
@@ -112,22 +112,21 @@ test('the area page filters by year and month, and warns before a price change',
     await expect(page.getByText(en.area.figures.expectedMonth)).toBeVisible();
     await expect(page.getByText(en.receipts.none)).toBeVisible();
 
-    // Raising the price from January last year would turn the two paid months late.
+    // Raising the price from February last year: the paid February stays paid at the old rent.
     await page.getByRole('button', { name: en.area.changePrice }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByLabel(en.common.year, { exact: true }).selectOption(String(lastYear));
     await dialog.getByLabel(en.common.month, { exact: true }).selectOption('2');
     await dialog.getByLabel(en.priceDialog.newRent).fill('150000');
     await dialog.getByRole('button', { name: en.common.save }).click();
-    await expect(dialog.getByText(en.priceDialog.warning)).toBeVisible();
     await expect(
-      dialog.getByText(`Month 2/${lastYear}: Paid 100,000 → Late 100,000`),
+      dialog.getByText(new RegExp(`stays paid at the old rent: month \\W*2/${lastYear}\\W*\\.`)),
     ).toBeVisible();
-    await dialog.getByRole('button', { name: en.priceDialog.saveAnyway }).click();
+    await dialog.getByRole('button', { name: en.common.save }).click();
     await expect(page.getByText(en.priceDialog.priceSaved)).toBeVisible();
     const february = en.months.box
       .replace('{{month}}', '2')
-      .replace('{{status}}', en.months.status.late);
+      .replace('{{status}}', en.months.status.paid);
     // The box's label also says what a click does ("… Mark as paid").
     await expect(page.getByLabel(new RegExp(`^${february}\\.`))).toBeVisible();
   } finally {

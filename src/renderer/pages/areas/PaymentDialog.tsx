@@ -2,11 +2,19 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AreaDetails } from '@shared/areas';
 import { FRACTION_DIGITS, type Currency } from '@shared/currency';
-import { dateStringFromLocal, formatYearMonth, yearMonthOf, type YearMonth } from '@shared/dates';
+import {
+  dateStringFromLocal,
+  formatMonthRuns,
+  formatYearMonth,
+  yearMonthOf,
+  type YearMonth,
+} from '@shared/dates';
+import { isolateNumber } from '@shared/digits';
 import { formatAmount } from '@shared/formatNumber';
 import { paymentCurrency } from '@shared/prices';
 import {
   formatReceiptNumber,
+  MAX_MONTH_COUNT,
   PAYMENT_NOTE_MAX,
   type AllocationResult,
   type PaymentCreateResult,
@@ -17,8 +25,8 @@ import { callIpc, useIpcQuery, type QueryState } from '../../app/ipc';
 import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { useDebouncedValue } from '../../app/useDebouncedValue';
-import { AmountField } from '../../components/AmountField';
 import { BigButton } from '../../components/BigButton';
+import { CountField } from '../../components/CountField';
 import { DateField } from '../../components/DateField';
 import { Dialog, DialogActions } from '../../components/Dialog';
 import { Form } from '../../components/Form';
@@ -75,7 +83,7 @@ export function PaymentDialog({ area, mode, onSaved, onClose }: PaymentDialogPro
   );
 }
 
-/** Waits for the suggested first month (the oldest not fully paid) before showing the form. */
+/** Waits for the suggested first month (the oldest not paid) before showing the form. */
 function NewPaymentForm(props: Omit<PaymentFormProps, 'start'>) {
   const { t } = useTranslation();
   const suggested = useIpcQuery('payments:suggestedStart', { areaId: props.area.id });
@@ -98,13 +106,20 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
   const mounted = useMountedRef();
   const { settings } = useSettings();
   const editing = mode.kind === 'edit' ? mode.receipt : null;
-  const [amount, setAmount] = useState<number | null>(editing?.totalAmount ?? null);
+  // A month is paid whole or not at all: the form asks how many months, and the amount follows.
+  const [chosenCount, setChosenCount] = useState(editing?.allocations.length || 1);
+  // False while the count box holds something that is not a number of months.
+  const [countTyped, setCountTyped] = useState(true);
+  const [showProblems, setShowProblems] = useState(false);
+  // How many months are open from the chosen month, once the preview knows.
+  const [open, setOpen] = useState<number | undefined>(undefined);
+  // A start month with fewer open months brings the count down with it.
+  const monthCount = open === undefined ? chosenCount : Math.min(chosenCount, Math.max(open, 1));
   const [from, setFrom] = useState<YearMonth>({ year: start.year, month: start.month });
   // A receipt is in one currency: a saved one keeps its own, new money takes that of its first month.
   const currency = editing?.currency ?? paymentCurrency(area.prices, from) ?? area.currency;
   const [paidOn, setPaidOn] = useState(editing?.paidOn ?? dateStringFromLocal(new Date()));
   const [note, setNote] = useState(editing?.note ?? '');
-  const [showProblems, setShowProblems] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -115,11 +130,22 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
         ? t('areaForm.problems.not_found')
         : t(`paymentDialog.${result.reason}`);
 
+  // A stable object, so the preview's delay only restarts when the months really change.
+  const previewInput = useMemo(
+    () => ({ areaId: area.id, monthCount, from, receiptId: editing?.id ?? null }),
+    [area.id, monthCount, from, editing?.id],
+  );
+  const previewQuery = useDebouncedValue(previewInput, PREVIEW_DELAY_MS);
+  const preview = useIpcQuery('payments:preview', previewQuery);
+  const plan = preview.state.status === 'ready' ? preview.state.data : null;
+  const planOpen = plan && (plan.ok || plan.reason === 'too_much') ? plan.open : undefined;
+  if (planOpen !== undefined && planOpen !== open) setOpen(planOpen);
+
   const submit = async () => {
     setShowProblems(true);
-    if (amount === null || amount === 0 || busy) return;
+    if (busy || !countTyped) return;
     setBusy(true);
-    const details = { amount, from, paidOn, note };
+    const details = { monthCount, from, paidOn, note };
     if (editing) {
       const result = await callIpc('payments:update', { id: editing.id, ...details });
       // A saved change always reaches the page, even if the dialog was closed meanwhile.
@@ -149,29 +175,30 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
   return (
     <Form className={styles.dialogForm} onSubmit={() => void submit()}>
       {mode.kind === 'past' && <p className={styles.hint}>{t('paymentDialog.pastHint')}</p>}
-      <AmountField
-        label={t('paymentDialog.amount')}
-        currency={currency}
-        value={amount}
-        onChange={setAmount}
-        autoFocus
-        error={showProblems && !amount ? t('paymentDialog.amountRequired') : null}
-      />
       <MonthYearField
         label={t('paymentDialog.from')}
         value={from}
         onChange={setFrom}
         hint={t('paymentDialog.fromHint')}
       />
-      {amount ? (
-        <AllocationPreview
-          areaId={area.id}
-          currency={currency}
-          amount={amount}
-          from={from}
-          receiptId={editing?.id ?? null}
-        />
-      ) : null}
+      <CountField
+        label={t('paymentDialog.monthCount')}
+        value={monthCount}
+        onChange={(count) => {
+          setCountTyped(count !== null);
+          if (count !== null) setChosenCount(count);
+        }}
+        max={open ?? MAX_MONTH_COUNT}
+        error={showProblems && !countTyped ? t('paymentDialog.monthCountRequired') : null}
+        lessLabel={t('paymentDialog.fewer')}
+        moreLabel={t('paymentDialog.more')}
+      />
+      {/* While the months change, the shown ones belong to the earlier choice: dimmed until they catch up. */}
+      <PreviewText
+        state={preview.state}
+        currency={currency}
+        stale={previewQuery !== previewInput}
+      />
       <DateField label={t('paymentDialog.paidOn')} value={paidOn} onChange={setPaidOn} />
       <TextField
         label={`${t('paymentDialog.note')} ${t('common.optional')}`}
@@ -191,27 +218,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
   );
 }
 
-interface AllocationPreviewProps {
-  areaId: number;
-  currency: Currency;
-  amount: number;
-  from: YearMonth;
-  receiptId: number | null;
-}
-
-/** Shows, before saving, which months the money will fill, worked out by the main process. */
-function AllocationPreview({ areaId, currency, amount, from, receiptId }: AllocationPreviewProps) {
-  // A stable object, so the delay only restarts when the amount or month really changes.
-  const input = useMemo(
-    () => ({ areaId, amount, from, receiptId }),
-    [areaId, amount, from, receiptId],
-  );
-  const query = useDebouncedValue(input, PREVIEW_DELAY_MS);
-  const preview = useIpcQuery('payments:preview', query);
-  // While typing, the shown months belong to an earlier amount: dim them until they catch up.
-  return <PreviewText state={preview.state} currency={currency} stale={query !== input} />;
-}
-
+/** Shows, before saving, which months will be paid and the amount, worked out by the main process. */
 function PreviewText({
   state,
   currency,
@@ -229,28 +236,40 @@ function PreviewText({
   }
   if (!state.data.ok)
     return <Notice tone="warning">{t(`paymentDialog.${state.data.reason}`)}</Notice>;
+  const digits = settings.digitStyle;
   const money = (value: number) =>
-    formatAmount(value, FRACTION_DIGITS[currency], settings.digitStyle);
+    isolateNumber(formatAmount(value, FRACTION_DIGITS[currency], digits), digits);
+  const total = state.data.months.reduce((sum, month) => sum + month.amount, 0);
+  const { skipped } = state.data;
+  const runs = (months: readonly YearMonth[]) =>
+    formatMonthRuns(months, digits, t('receipts.separator'));
   return (
     <div className={styles.preview} data-stale={stale || undefined} aria-live="polite">
+      {/* Why the payment starts later than the chosen month. */}
+      {skipped.paid.length > 0 && (
+        <p className={styles.previewSkipped}>
+          {t('paymentDialog.skippedPaid', { months: runs(skipped.paid) })}
+        </p>
+      )}
+      {skipped.noRent.length > 0 && (
+        <p className={styles.previewSkipped}>
+          {t('paymentDialog.skippedNoRent', { months: runs(skipped.noRent) })}
+        </p>
+      )}
       <h3 className={styles.previewTitle}>{t('paymentDialog.preview')}</h3>
       <ul>
-        {state.data.months.map((planned) => {
-          const month = formatYearMonth(planned, settings.digitStyle);
-          const after = planned.paidBefore + planned.amount;
-          return (
-            <li key={`${planned.year}-${planned.month}`}>
-              {after >= planned.expected
-                ? t('paymentDialog.previewFull', { month })
-                : t('paymentDialog.previewPartial', {
-                    month,
-                    paid: money(after),
-                    expected: money(planned.expected),
-                  })}
-            </li>
-          );
-        })}
+        {state.data.months.map((paid) => (
+          <li key={`${paid.year}-${paid.month}`}>
+            {t('paymentDialog.previewMonth', {
+              month: formatYearMonth(paid, digits),
+              amount: money(paid.amount),
+            })}
+          </li>
+        ))}
       </ul>
+      <p className={styles.previewTotal}>
+        {t('paymentDialog.total', { amount: `${money(total)} ${t(`currency.${currency}`)}` })}
+      </p>
     </div>
   );
 }

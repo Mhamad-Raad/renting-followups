@@ -31,10 +31,11 @@ describe('activity log', () => {
   });
 
   it('describes a rent change with the month and both amounts', () => {
-    repos.priceChanges.changePrice(
-      { areaId, from: { year: 2026, month: 6 }, monthlyPrice: 300_000 },
-      TODAY.month,
-    );
+    repos.priceChanges.changePrice({
+      areaId,
+      from: { year: 2026, month: 6 },
+      monthlyPrice: 300_000,
+    });
     expect(firstPage()[0]).toMatchObject({
       action: 'change_price',
       month: { year: 2026, month: 6 },
@@ -46,12 +47,12 @@ describe('activity log', () => {
   it('names a receipt by its number and area, also after it is edited and cancelled', () => {
     const payment = { areaId, isBackfill: false, from: { year: 2026, month: 1 }, note: '' };
     const created = repos.payments.create(
-      { ...payment, amount: 250_000, paidOn: '2026-05-10' },
+      { ...payment, monthCount: 1, paidOn: '2026-05-10' },
       TODAY,
     );
     if (!created.ok) throw new Error('payment not saved');
     repos.payments.update(
-      { id: created.id, amount: 500_000, from: payment.from, paidOn: '2026-05-10', note: '' },
+      { id: created.id, monthCount: 2, from: payment.from, paidOn: '2026-05-10', note: '' },
       TODAY,
     );
     repos.payments.void(created.id);
@@ -76,7 +77,7 @@ describe('activity log', () => {
         isBackfill: false,
         from: { year: 2026, month: 1 },
         note: '',
-        amount: 250_000,
+        monthCount: 1,
         paidOn: '2026-05-10',
       },
       TODAY,

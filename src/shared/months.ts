@@ -4,14 +4,7 @@ import type { Currency } from './currency';
  * The status of one rent month, as decided by `monthStatus.ts` in the main
  * process. The screen only shows these; it never works them out itself.
  */
-export const MONTH_STATUSES = [
-  'paid',
-  'due',
-  'partial',
-  'late',
-  'upcoming',
-  'not_applicable',
-] as const;
+export const MONTH_STATUSES = ['paid', 'due', 'late', 'upcoming', 'not_applicable'] as const;
 export type MonthStatus = (typeof MONTH_STATUSES)[number];
 
 /** One month box: the rent expected, the amount paid towards it, and its status. */
@@ -37,11 +30,11 @@ export interface YearFigures {
 }
 
 /**
- * One word for a whole year: late if any month is late, otherwise due or
- * partly paid if any month is orange, otherwise paid if any month is paid.
+ * One word for a whole year: late if any month is late, otherwise due if this
+ * month is not paid, otherwise paid if any month is paid.
  * `nothing_due` covers years where no rent applies yet (or the area is vacant).
  */
-export type YearSummary = 'late' | 'due' | 'partial' | 'paid' | 'nothing_due';
+export type YearSummary = 'late' | 'due' | 'paid' | 'nothing_due';
 
 /** One currency's figures. Amounts in different currencies are never added together. */
 export interface CurrencyFigures extends YearFigures {
@@ -72,26 +65,10 @@ export interface AreaYear {
 export interface AreaStanding {
   /** Unpaid rent of every month up to and including this one, per currency (none when nothing is owed). */
   owed: CurrencyAmount[];
-  /** Past months not fully paid, in any year. */
+  /** Past months not paid, in any year. */
   lateMonths: number;
   /** The currencies of those late months, IQD first. */
   lateIn: Currency[];
-  /** This month is not fully paid yet. */
+  /** This month is not paid yet. */
   dueNow: boolean;
-}
-
-/**
- * A month whose money or status a price change would alter, for the warning
- * before saving: the money of the receipts is shared out again with the new
- * rent, so a month can gain or lose money and change colour.
- */
-export interface StatusChange {
-  year: number;
-  month: number;
-  /** The currency of the amounts. */
-  currency: Currency;
-  before: MonthStatus;
-  after: MonthStatus;
-  paidBefore: number;
-  paidAfter: number;
 }

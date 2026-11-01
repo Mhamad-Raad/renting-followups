@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { monthIndex, type YearMonth } from '@shared/dates';
 import type { PriceRow } from '@shared/prices';
-import { allocate, oldestOpenMonth, reshare } from '../../src/main/services/allocation';
+import { allocate, oldestOpenMonth } from '../../src/main/services/allocation';
 import type { PaidHistory } from '../../src/main/services/monthStatus';
 
 const TODAY = { year: 2026, month: 5 };
@@ -20,35 +20,25 @@ function split(result: ReturnType<typeof allocate>): string[] | string {
 }
 
 describe('allocate', () => {
-  it('fills one month exactly', () => {
-    expect(
-      split(allocate(RENT, { year: 2026, month: 3 }, FROM_JANUARY, NOTHING_PAID, TODAY)),
-    ).toEqual(['3/2026=250000']);
-  });
-
-  it('fills several months at once, the last one partly', () => {
-    const result = allocate(
-      2 * RENT + 50_000,
-      { year: 2026, month: 3 },
-      FROM_JANUARY,
-      NOTHING_PAID,
-      TODAY,
+  it('pays one month with its whole rent', () => {
+    expect(split(allocate(1, { year: 2026, month: 3 }, FROM_JANUARY, NOTHING_PAID, TODAY))).toEqual(
+      ['3/2026=250000'],
     );
-    expect(split(result)).toEqual(['3/2026=250000', '4/2026=250000', '5/2026=50000']);
-    expect(result.ok && result.months[2]).toMatchObject({ expected: RENT, paidBefore: 0 });
   });
 
-  it('first tops up a month that is already partly paid', () => {
-    const history = paid([[{ year: 2026, month: 3 }, 100_000]]);
-    const result = allocate(200_000, { year: 2026, month: 3 }, FROM_JANUARY, history, TODAY);
-    expect(split(result)).toEqual(['3/2026=150000', '4/2026=50000']);
-    expect(result.ok && result.months[0]?.paidBefore).toBe(100_000);
+  it('pays several months at once, each whole', () => {
+    const result = allocate(3, { year: 2026, month: 3 }, FROM_JANUARY, NOTHING_PAID, TODAY);
+    expect(split(result)).toEqual(['3/2026=250000', '4/2026=250000', '5/2026=250000']);
   });
 
-  it('skips months that are already fully paid', () => {
-    const history = paid([[{ year: 2026, month: 3 }, RENT]]);
-    expect(split(allocate(RENT, { year: 2026, month: 3 }, FROM_JANUARY, history, TODAY))).toEqual([
-      '4/2026=250000',
+  it('skips months that are already paid, whatever was paid for them', () => {
+    // An older part payment (made before months were paid whole) still counts as paid.
+    const history = paid([
+      [{ year: 2026, month: 3 }, RENT],
+      [{ year: 2026, month: 4 }, 100_000],
+    ]);
+    expect(split(allocate(1, { year: 2026, month: 3 }, FROM_JANUARY, history, TODAY))).toEqual([
+      '5/2026=250000',
     ]);
   });
 
@@ -58,9 +48,28 @@ describe('allocate', () => {
       { year: 2026, month: 4, monthlyPrice: 0, currency: 'IQD' },
       { year: 2026, month: 6, monthlyPrice: RENT, currency: 'IQD' },
     ];
-    expect(
-      split(allocate(2 * RENT, { year: 2026, month: 1 }, prices, NOTHING_PAID, TODAY)),
-    ).toEqual(['3/2026=250000', '6/2026=250000']);
+    expect(split(allocate(2, { year: 2026, month: 1 }, prices, NOTHING_PAID, TODAY))).toEqual([
+      '3/2026=250000',
+      '6/2026=250000',
+    ]);
+  });
+
+  it('says which months it skipped before the first one paid, and why', () => {
+    // Paid up to June, empty from July to October, rent again from November.
+    const prices: PriceRow[] = [
+      { year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' },
+      { year: 2026, month: 7, monthlyPrice: 0, currency: 'IQD' },
+      { year: 2026, month: 11, monthlyPrice: RENT, currency: 'IQD' },
+    ];
+    const history = paid([[{ year: 2026, month: 6 }, RENT]]);
+    const result = allocate(1, { year: 2026, month: 6 }, prices, history, TODAY);
+    expect(split(result)).toEqual(['11/2026=250000']);
+    expect(result.ok && result.skipped).toEqual({
+      paid: [{ year: 2026, month: 6 }],
+      noRent: [7, 8, 9, 10].map((month) => ({ year: 2026, month })),
+    });
+    const straight = allocate(1, { year: 2026, month: 3 }, FROM_JANUARY, NOTHING_PAID, TODAY);
+    expect(straight.ok && straight.skipped).toEqual({ paid: [], noRent: [] });
   });
 
   it('uses each month its own price', () => {
@@ -68,42 +77,42 @@ describe('allocate', () => {
       { year: 2026, month: 1, monthlyPrice: 100_000, currency: 'IQD' },
       { year: 2026, month: 2, monthlyPrice: 300_000, currency: 'IQD' },
     ];
-    expect(split(allocate(400_000, { year: 2026, month: 1 }, prices, NOTHING_PAID, TODAY))).toEqual(
-      ['1/2026=100000', '2/2026=300000'],
-    );
+    expect(split(allocate(2, { year: 2026, month: 1 }, prices, NOTHING_PAID, TODAY))).toEqual([
+      '1/2026=100000',
+      '2/2026=300000',
+    ]);
   });
 
   it('continues across the end of the year', () => {
     expect(
-      split(allocate(2 * RENT, { year: 2026, month: 12 }, FROM_JANUARY, NOTHING_PAID, TODAY)),
+      split(allocate(2, { year: 2026, month: 12 }, FROM_JANUARY, NOTHING_PAID, TODAY)),
     ).toEqual(['12/2026=250000', '1/2027=250000']);
   });
 
   it('may reach 24 months past the current month, but no further', () => {
     // From May 2026, the horizon is May 2028: 25 months from May 2026 inclusive.
-    const all = allocate(25 * RENT, TODAY, FROM_JANUARY, NOTHING_PAID, TODAY);
+    const all = allocate(25, TODAY, FROM_JANUARY, NOTHING_PAID, TODAY);
     expect(all.ok && all.months.at(-1)).toMatchObject({ year: 2028, month: 5 });
-    expect(allocate(25 * RENT + 1, TODAY, FROM_JANUARY, NOTHING_PAID, TODAY)).toEqual({
+    expect(all).toMatchObject({ open: 25 });
+    expect(allocate(26, TODAY, FROM_JANUARY, NOTHING_PAID, TODAY)).toEqual({
       ok: false,
       reason: 'too_much',
+      open: 25,
     });
   });
 
-  it('says there is nothing to fill for a start beyond the horizon or a vacant area', () => {
+  it('says how many months could be paid from the chosen month', () => {
+    const history = paid([[{ year: 2026, month: 6 }, RENT]]);
+    expect(allocate(1, TODAY, FROM_JANUARY, history, TODAY)).toMatchObject({ ok: true, open: 24 });
+  });
+
+  it('says there is nothing to pay for a start beyond the horizon or a vacant area', () => {
     const nothing = { ok: false, reason: 'nothing_open' };
     expect(allocate(1, { year: 2028, month: 6 }, FROM_JANUARY, NOTHING_PAID, TODAY)).toEqual(
       nothing,
     );
     const vacant: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: 0, currency: 'IQD' }];
     expect(allocate(1, TODAY, vacant, NOTHING_PAID, TODAY)).toEqual(nothing);
-  });
-
-  it('never splits an amount into a fraction: the parts always add up exactly', () => {
-    const cents = 33_333;
-    const prices: PriceRow[] = [{ year: 2026, month: 1, monthlyPrice: cents, currency: 'IQD' }];
-    const result = allocate(100_000, { year: 2026, month: 1 }, prices, NOTHING_PAID, TODAY);
-    expect(result.ok && result.months.reduce((sum, m) => sum + m.amount, 0)).toBe(100_000);
-    expect(result.ok && result.months.every((m) => Number.isInteger(m.amount))).toBe(true);
   });
 });
 
@@ -112,10 +121,10 @@ describe('oldestOpenMonth', () => {
     expect(oldestOpenMonth(FROM_JANUARY, NOTHING_PAID, TODAY)).toEqual({ year: 2026, month: 1 });
   });
 
-  it('is the first month not fully paid, even a partly paid one', () => {
+  it('is the first month not paid', () => {
     const history = paid([
       [{ year: 2026, month: 1 }, RENT],
-      [{ year: 2026, month: 2 }, 10],
+      [{ year: 2026, month: 3 }, RENT],
     ]);
     expect(oldestOpenMonth(FROM_JANUARY, history, TODAY)).toEqual({ year: 2026, month: 2 });
   });
@@ -134,96 +143,5 @@ describe('oldestOpenMonth', () => {
       Array.from({ length: 29 }, (_, i) => [monthIndex({ year: 2026, month: 1 }) + i, RENT]),
     );
     expect(oldestOpenMonth(FROM_JANUARY, history, TODAY)).toBeNull();
-  });
-});
-
-describe('reshare', () => {
-  const at = (month: number, year = 2026) => ({ year, month });
-
-  it('a higher rent: the same money fills fewer months', () => {
-    const prices: PriceRow[] = [
-      { year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' },
-      { year: 2026, month: 3, monthlyPrice: 300_000, currency: 'IQD' },
-    ];
-    const result = reshare(
-      [{ id: 1, start: at(3), amount: 3 * RENT, currency: 'IQD' }],
-      NOTHING_PAID,
-      prices,
-      TODAY,
-    );
-    expect(result.ok && result.byReceipt.get(1)).toEqual([
-      { year: 2026, month: 3, amount: 300_000 },
-      { year: 2026, month: 4, amount: 300_000 },
-      { year: 2026, month: 5, amount: 150_000 },
-    ]);
-  });
-
-  it('a lower rent: the extra moves on to the next months', () => {
-    const prices: PriceRow[] = [
-      { year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' },
-      { year: 2026, month: 3, monthlyPrice: 200_000, currency: 'IQD' },
-    ];
-    const result = reshare(
-      [{ id: 1, start: at(3), amount: 3 * RENT, currency: 'IQD' }],
-      NOTHING_PAID,
-      prices,
-      TODAY,
-    );
-    expect(result.ok && result.byReceipt.get(1)?.map((m) => [m.month, m.amount])).toEqual([
-      [3, 200_000],
-      [4, 200_000],
-      [5, 200_000],
-      [6, 150_000],
-    ]);
-  });
-
-  it('keeps money that stays put, and shares receipts oldest first', () => {
-    const kept = paid([[at(3), 100_000]]);
-    const result = reshare(
-      [
-        { id: 1, start: at(3), amount: 200_000, currency: 'IQD' },
-        { id: 2, start: at(3), amount: RENT, currency: 'IQD' },
-      ],
-      kept,
-      FROM_JANUARY,
-      TODAY,
-    );
-    expect(result.ok && result.byReceipt.get(1)).toEqual([
-      { year: 2026, month: 3, amount: 150_000 },
-      { year: 2026, month: 4, amount: 50_000 },
-    ]);
-    expect(result.ok && result.byReceipt.get(2)).toEqual([
-      { year: 2026, month: 4, amount: 200_000 },
-      { year: 2026, month: 5, amount: 50_000 },
-    ]);
-    expect(result.ok && result.paid.get(monthIndex(at(4)))).toBe(RENT);
-  });
-
-  it('a receipt for later months stays with those months', () => {
-    const result = reshare(
-      [{ id: 1, start: at(7), amount: RENT, currency: 'IQD' }],
-      NOTHING_PAID,
-      FROM_JANUARY,
-      TODAY,
-    );
-    expect(result.ok && result.byReceipt.get(1)?.[0]?.month).toBe(7);
-  });
-
-  it('refuses when the money would have nowhere to go', () => {
-    const vacant: PriceRow[] = [
-      { year: 2026, month: 1, monthlyPrice: RENT, currency: 'IQD' },
-      { year: 2026, month: 3, monthlyPrice: 0, currency: 'IQD' },
-    ];
-    expect(
-      reshare(
-        [{ id: 1, start: at(3), amount: RENT, currency: 'IQD' }],
-        NOTHING_PAID,
-        vacant,
-        TODAY,
-      ),
-    ).toEqual({
-      ok: false,
-      reason: 'no_room',
-    });
   });
 });

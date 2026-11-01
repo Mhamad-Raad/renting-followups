@@ -204,7 +204,7 @@ describe('receipt numbers after a restore', () => {
         {
           areaId: 1,
           isBackfill: false,
-          amount: 250_000,
+          monthCount: 1,
           from: { year: 2026, month: 1 },
           paidOn,
           note: '',
@@ -223,7 +223,7 @@ describe('receipt numbers after a restore', () => {
         {
           areaId: 1,
           isBackfill: false,
-          amount: 250_000,
+          monthCount: 1,
           from: { year: 2026, month: 1 },
           paidOn: '2026-10-20',
           note: '',

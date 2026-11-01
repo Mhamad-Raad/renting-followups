@@ -16,8 +16,6 @@ import {
   withPriceFrom,
   type PriceRow,
 } from '@shared/prices';
-import { reshare, type ReshareReceipt, type ReshareResult } from '../../services/allocation';
-import { statusChanges, type PaidHistory } from '../../services/monthStatus';
 import type { Db } from '../connection';
 import type { AllocationRepository } from './allocations';
 import type { AreaRepository } from './areas';
@@ -35,10 +33,13 @@ interface Dependencies {
   renters: RenterRepository;
 }
 
+/** What saving a price row can answer (money with nowhere to go is thrown as `NoRoom`). */
+type SaveResult = { ok: true } | { ok: false; reason: 'not_found' | 'before_rent_start' };
+
 /** Money that would have no month to go to; thrown so the whole save is undone. */
 class NoRoom extends Error {}
 
-/** Changing an area's rent from a month onward, and sharing paid money out again. */
+/** Changing an area's rent from a month onward; months already paid stay as they are. */
 export function createPriceChangeRepository(
   db: Db,
   { allocations, areas, audit, monthPayments, prices, renters }: Dependencies,
@@ -57,49 +58,24 @@ export function createPriceChangeRepository(
   };
 
   /**
-   * How the money already paid from `from` onward would be shared out again
-   * with `newPrices` (oldest receipt first), plus what is paid now, for the
-   * warning and for saving. Cancelled receipts are left alone.
+   * The paid months from `from` onward whose rent `newPrices` change. They
+   * stay paid at the rent they had (a month is paid whole or not at all), so
+   * the form only says so; nothing is moved.
    */
-  const planReshare = (
+  const keptPaidMonths = (
     areaId: number,
     from: YearMonth,
-    newPrices: readonly PriceRow[],
-    today: YearMonth,
-  ): { now: PaidHistory; plan: ReshareResult } => {
-    const fromIndex = monthIndex(from);
-    const now = new Map<number, number>();
-    const kept = new Map<number, number>();
-    const receipts = new Map<number, ReshareReceipt>();
+    before: readonly PriceRow[],
+    after: readonly PriceRow[],
+  ): YearMonth[] => {
+    const months = new Map<number, YearMonth>();
     for (const row of allocations.countingForArea(areaId)) {
       const index = monthIndex(row);
-      now.set(index, (now.get(index) ?? 0) + row.amount);
-      const receipt = receipts.get(row.receiptId);
-      if (index < fromIndex) {
-        kept.set(index, (kept.get(index) ?? 0) + row.amount);
-        // A receipt that started before the change restarts at the change month.
-        if (!receipt) {
-          receipts.set(row.receiptId, {
-            id: row.receiptId,
-            start: from,
-            amount: 0,
-            currency: row.currency,
-          });
-        }
-      } else if (receipt) {
-        receipt.amount += row.amount;
-      } else {
-        receipts.set(row.receiptId, {
-          id: row.receiptId,
-          start: { year: row.year, month: row.month },
-          amount: row.amount,
-          currency: row.currency,
-        });
-      }
+      if (index < monthIndex(from) || priceForMonth(before, row) === priceForMonth(after, row))
+        continue;
+      months.set(index, { year: row.year, month: row.month });
     }
-    // Rows come oldest receipt first, so the map keeps that order.
-    const affected = [...receipts.values()].filter((receipt) => receipt.amount > 0);
-    return { now, plan: reshare(affected, kept, newPrices, today) };
+    return [...months.entries()].sort(([a], [b]) => a - b).map(([, month]) => month);
   };
 
   /**
@@ -141,10 +117,7 @@ export function createPriceChangeRepository(
   };
 
   const save = db.transaction(
-    (
-      { areaId, from, monthlyPrice, currency, takeOutVacantMonths }: PriceChange,
-      today: YearMonth,
-    ): PriceChangeResult => {
+    ({ areaId, from, monthlyPrice, currency, takeOutVacantMonths }: PriceChange): SaveResult => {
       if (!areas.isActive(areaId)) return { ok: false, reason: 'not_found' };
       const history = prices.forArea(areaId);
       if (isBeforeRentStart(history, from)) return { ok: false, reason: 'before_rent_start' };
@@ -156,21 +129,17 @@ export function createPriceChangeRepository(
         }
         for (const month of months.values()) monthPayments.takeOut({ areaId, ...month });
       }
-      const { plan } = planReshare(areaId, from, after, today);
-      // Thrown so that any months already taken out are put back.
-      if (!plan.ok) throw new NoRoom();
+      // Paid months left without rent in their money's currency: thrown so that any months
+      // already taken out are put back. Other paid months keep their money as it is.
+      if (vacantPayments(areaId, from, after).length > 0) throw new NoRoom();
       const row = priceRowForMonth(after, from);
       prices.set(areaId, from, monthlyPrice, row?.currency ?? 'IQD');
-      for (const [receiptId, months] of plan.byReceipt) {
-        allocations.replaceFrom(receiptId, areaId, from, months);
-      }
       audit.record('change_price', 'area', areaId, {
         from,
         previousPrice: priceForMonth(history, from),
         previousCurrency: currencyForMonth(history, from),
         monthlyPrice,
         currency: row?.currency ?? null,
-        resharedReceipts: [...plan.byReceipt.keys()],
       });
       if (monthlyPrice === 0) endRenterForVacancy(areaId, from);
       return { ok: true };
@@ -182,10 +151,12 @@ export function createPriceChangeRepository(
    * from the month they start, all saved together or not at all.
    */
   const saveRenter = db.transaction(
-    (
-      { monthlyPrice, currency, takeOutVacantMonths, ...renter }: RenterChange,
-      today: YearMonth,
-    ): RenterChangeResult => {
+    ({
+      monthlyPrice,
+      currency,
+      takeOutVacantMonths,
+      ...renter
+    }: RenterChange): RenterChangeResult => {
       const start = parseDateString(renter.startedOn);
       const from = start && { year: start.year, month: start.month };
       const history = prices.forArea(renter.areaId);
@@ -199,16 +170,13 @@ export function createPriceChangeRepository(
       const result = areas.changeRenter(renter);
       if (!result.ok || !rentChanges) return result;
       // Money with nowhere to go is thrown out of `save`, which undoes the renter too.
-      return save(
-        {
-          areaId: renter.areaId,
-          from,
-          monthlyPrice,
-          ...(currency && { currency }),
-          ...(takeOutVacantMonths && { takeOutVacantMonths }),
-        },
-        today,
-      );
+      return save({
+        areaId: renter.areaId,
+        from,
+        monthlyPrice,
+        ...(currency && { currency }),
+        ...(takeOutVacantMonths && { takeOutVacantMonths }),
+      });
     },
   );
 
@@ -224,39 +192,40 @@ export function createPriceChangeRepository(
 
   return {
     /**
-     * What a price change would do to money already paid: the receipts from
-     * that month onward are shared out again with the new rent. Lists every
-     * month that gains or loses money or changes colour, or says the money
-     * would have nowhere to go. Null when the area does not exist.
+     * What a price change would do to money already paid: the paid months
+     * whose rent it changes (they stay paid as they are), or the paid months
+     * it would leave without rent in their money's currency, which must be
+     * taken out first. Null when the area does not exist.
      */
-    priceChangeImpact(change: PriceChange, today: YearMonth): PriceChangeImpact | null {
+    priceChangeImpact(change: PriceChange): PriceChangeImpact | null {
       if (!areas.isActive(change.areaId)) return null;
       const before = prices.forArea(change.areaId);
       const after = withPriceFrom(before, change.from, change.monthlyPrice, change.currency);
-      const { now, plan } = planReshare(change.areaId, change.from, after, today);
-      if (!plan.ok) {
-        return { ...plan, vacantPayments: vacantPayments(change.areaId, change.from, after) };
-      }
-      return {
-        ok: true,
-        changes: statusChanges(before, after, now, plan.paid, change.from, today),
-      };
+      const vacant = vacantPayments(change.areaId, change.from, after);
+      if (vacant.length > 0) return { ok: false, reason: 'no_room', vacantPayments: vacant };
+      return { ok: true, keptPaid: keptPaidMonths(change.areaId, change.from, before, after) };
     },
 
     /**
      * A new price from a month onward. Earlier months keep their price; 0 means
-     * vacant, which also ends the current renter. Money already paid from that
-     * month onward is shared out again with the new rent, in the same
-     * transaction; with `takeOutVacantMonths`, paid months that become vacant
-     * are first taken out of their receipts (as clicking their month box does).
+     * vacant, which also ends the current renter. Months already paid stay
+     * paid with the money they have; with `takeOutVacantMonths`, paid months
+     * that become vacant (or another currency) are first taken out of their
+     * receipts (as clicking their month box does), in the same transaction.
      */
-    changePrice(change: PriceChange, today: YearMonth): PriceChangeResult {
-      return refusingNoRoom(() => save(change, today));
+    changePrice(change: PriceChange): PriceChangeResult {
+      // An empty place gets rent again only with a new renter (see `changeRenter`).
+      const { areaId, from, monthlyPrice } = change;
+      if (monthlyPrice > 0 && !renters.current(areaId)) {
+        if (priceForMonth(prices.forArea(areaId), from) === 0)
+          return { ok: false, reason: 'vacant' };
+      }
+      return refusingNoRoom(() => save(change));
     },
 
     /** Change renter (see `saveRenter`). */
-    changeRenter(change: RenterChange, today: YearMonth): RenterChangeResult {
-      return refusingNoRoom(() => saveRenter(change, today));
+    changeRenter(change: RenterChange): RenterChangeResult {
+      return refusingNoRoom(() => saveRenter(change));
     },
   };
 }
