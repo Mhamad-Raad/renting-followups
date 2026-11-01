@@ -104,7 +104,9 @@ describe('four years of use', () => {
           else counted.refused += 1;
         }
       }
-      if (random.chance(0.02)) {
+      // One roll per month decides the rent change, if any: vacant, new renter or new rent.
+      const change = random.int(1, 100);
+      if (change <= 2) {
         expect(
           repos.priceChanges.changePrice({
             areaId,
@@ -114,7 +116,7 @@ describe('four years of use', () => {
           }),
         ).toEqual({ ok: true });
         counted.vacant += 1;
-      } else if (random.chance(0.02)) {
+      } else if (change <= 4) {
         expect(
           repos.priceChanges.changeRenter({
             areaId,
@@ -126,7 +128,7 @@ describe('four years of use', () => {
           }),
         ).toEqual({ ok: true });
         counted.renters += 1;
-      } else if (random.chance(0.02)) {
+      } else if (change <= 6) {
         expect(
           repos.priceChanges.changePrice({ areaId, from: month, monthlyPrice: newRent() }),
         ).toEqual({ ok: true });
@@ -136,7 +138,9 @@ describe('four years of use', () => {
         .filter((receipt) => !receipt.voided);
       const receipt = receipts.length > 0 ? random.pick(receipts) : undefined;
       const first = receipt?.allocations[0];
-      if (receipt && first && random.chance(0.02)) {
+      // One roll decides what happens to a receipt, if anything: edit, cancel or take a month out.
+      const fix = random.int(1, 100);
+      if (receipt && first && fix <= 2) {
         const result = repos.payments.update(
           {
             id: receipt.id,
@@ -148,10 +152,10 @@ describe('four years of use', () => {
           today,
         );
         if (result.ok) counted.edits += 1;
-      } else if (receipt && random.chance(0.01)) {
+      } else if (receipt && fix === 3) {
         expect(repos.payments.void(receipt.id)).toEqual({ ok: true });
         counted.voids += 1;
-      } else if (receipt && first && random.chance(0.01)) {
+      } else if (receipt && first && fix === 4) {
         expect(repos.monthPayments.takeOut({ areaId, ...first }).ok).toBe(true);
       }
     }
