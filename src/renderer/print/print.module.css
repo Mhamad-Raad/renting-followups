@@ -87,18 +87,24 @@
   white-space: nowrap;
 }
 
-/* Fixed column widths, so a long name or phone never pushes the table past the page edge. */
-.upright {
-  table-layout: fixed;
+/* The status word under a place's months. */
+.status {
+  display: block;
+  margin-block-start: 0.5mm;
+  font-weight: 700;
 }
 
-/* A place's lines stay together on one page, with a firmer line above each place. */
-.place {
-  break-inside: avoid;
-  border-top: 0.6mm solid #555;
+/* The 12 months in one row, sharing the column's width evenly. */
+.months ol {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
 }
 
-/* The small line under a cell's main text: the address or category, the phone. */
+.notes {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* The small line in a cell: the address under the place, the phone under the renter. */
 .second {
   display: block;
   margin-block-start: 0.5mm;
@@ -106,18 +112,43 @@
   font-size: 8pt;
 }
 
-.months {
-  display: flex;
-  align-items: center;
-  gap: 3mm;
+/* Fixed column widths, so a long name never pushes the table past the page edge. */
+.table {
+  table-layout: fixed;
 }
 
-.strip {
-  flex: 0 1 120mm;
-  min-width: 0;
+/* One upright A4 writing area; print.css sets the margins. Sizes match PAGE in ReportPrint. */
+.uprightPage {
+  position: relative;
+  width: 186mm;
+  height: 269mm;
+  overflow: hidden;
 }
 
-.notes {
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
+.uprightPage:not(:last-child) {
+  break-after: page;
+}
+
+/* A landscape area turned to read from the bottom of the page to the top. */
+.turned {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 268mm;
+  height: 185mm;
+  transform-origin: top left;
+  transform: translateY(269mm) rotate(-90deg);
+}
+
+/* Measured at the turned page's width, never seen or printed. */
+.measure {
+  position: absolute;
+  width: 268mm;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Counts the margins of what is inside, so a measured part is as tall as on paper. */
+.measure > div {
+  display: flow-root;
 }

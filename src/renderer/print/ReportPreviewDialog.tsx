@@ -3,6 +3,7 @@ import type { ReportQuery } from '@shared/reports';
 import { BigButton } from '../components/BigButton';
 import { Dialog, DialogActions } from '../components/Dialog';
 import { Notice } from '../components/Notice';
+import { PrintLogo } from './PrintLayout';
 import styles from './ReportPreviewDialog.module.css';
 import { ReportPaper } from './ReportPrint';
 import { usePrint } from './usePrint';
@@ -35,7 +36,9 @@ function PreviewBody({ query, onClose }: { query: ReportQuery; onClose: () => vo
       <div className={styles.desk}>
         {/* Light like the printed page, in dark mode too. */}
         <div className={styles.sheet} data-theme="light">
-          <ReportPaper query={query} preview />
+          <PrintLogo>
+            <ReportPaper query={query} preview />
+          </PrintLogo>
         </div>
       </div>
       {message && <Notice tone={message.tone}>{message.text}</Notice>}

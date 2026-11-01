@@ -102,6 +102,54 @@ test('the report saves as PDF and as an Excel sheet that reads right to left', a
   }
 });
 
+test('the sideways report keeps every row and the footer on its pages', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    await page.evaluate(async () => {
+      await window.api.invoke('settings:update', { language: 'en' });
+      const category = await window.api.invoke('categories:create', { name: 'Shops', color: null });
+      if (!category.ok || !category.data.ok) throw new Error('category failed');
+      for (let n = 0; n < 40; n += 1) {
+        await window.api.invoke('areas:create', {
+          categoryId: category.data.id,
+          name: `Shop ${n}`,
+          currency: 'IQD',
+          monthlyPrice: 250_000,
+          rentStartsFrom: { year: 2026, month: 1 },
+          renter: { fullName: 'Karwan', phone: '0750 123 4567', startedOn: '2026-01-01' },
+          address: n % 2 ? 'Main street' : '',
+          contractStart: null,
+          notes: n % 3 ? '' : 'Pays in cash at the start of each month. '.repeat(3),
+        });
+      }
+    });
+    await reloadApp(page);
+    await page.getByRole('link', { name: en.nav.reports, exact: true }).click();
+    await page.getByRole('button', { name: en.print.actions.pdf }).click();
+    const preview = page.getByRole('dialog', { name: en.print.preview.title });
+    await expect(preview.getByText('Shop 39').last()).toBeAttached();
+    const pages = await preview.locator('section').evaluateAll((sections) =>
+      sections.map((section) => {
+        const turned = section.firstElementChild as HTMLElement;
+        return turned.scrollHeight <= turned.clientHeight;
+      }),
+    );
+    expect(pages.length).toBeGreaterThan(1);
+    expect(pages.every(Boolean)).toBe(true);
+    await expect(
+      preview
+        .locator('section')
+        .last()
+        .getByText(/counts/),
+    ).toBeAttached();
+    await expect(preview.locator('tbody tr')).toHaveCount(40);
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
 test('a PDF that cannot be written says so plainly', async () => {
   const dataDir = createDataDir();
   const { app, page } = await launchUnlocked(dataDir);
@@ -172,7 +220,7 @@ test('the buttons on screen print and export, with a plain message each time', a
     // Export to PDF opens the report in a pop-up first; Save as PDF and Print are in it.
     await page.getByRole('button', { name: en.print.actions.pdf }).click();
     const preview = page.getByRole('dialog', { name: en.print.preview.title });
-    await expect(preview.getByRole('cell', { name: /دوکانی ١/ }).first()).toBeVisible();
+    await expect(preview.getByRole('cell', { name: /دوکانی ١/ }).last()).toBeVisible();
     expect(existsSync(pdf)).toBe(false);
     await preview.getByRole('button', { name: en.print.actions.savePdf }).click();
     await expect(preview.getByText(en.print.results.savedPdf)).toBeVisible();

@@ -12,7 +12,8 @@ interface PrintFrameProps {
   title: string;
   /** Short lines under the title, such as the filters used and the date. */
   details?: readonly string[];
-  children: ReactNode;
+  /** The page's content, given the heading to place where it belongs. */
+  children: (heading: ReactNode) => ReactNode;
 }
 
 /**
@@ -44,8 +45,14 @@ export function PrintFrame({ title, details = [], children }: PrintFrameProps) {
         size: A4 portrait;
         @bottom-center { content: ${pageNumbers}; font-family: "${FONT_NAMES[settings.fontFamily]}", sans-serif; font-size: 9pt; }
       }`}</style>
-      <PrintHeader logo={logo} printTitle={settings.printTitle} title={title} details={details} />
-      {children}
+      {children(
+        <PrintHeader
+          logo={logo}
+          printTitle={settings.printTitle}
+          title={title}
+          details={details}
+        />,
+      )}
     </div>
   );
 }

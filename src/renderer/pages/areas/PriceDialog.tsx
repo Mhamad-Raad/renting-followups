@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AreaDetails } from '@shared/areas';
+import { CURRENCIES, type Currency } from '@shared/currency';
 import { formatYearMonth, yearMonthOf, type YearMonth } from '@shared/dates';
 import { currencyForMonth } from '@shared/prices';
 import { callIpc } from '../../app/ipc';
@@ -8,6 +9,7 @@ import { useMountedRef } from '../../app/useMountedRef';
 import { useSettings } from '../../app/SettingsContext';
 import { AmountField } from '../../components/AmountField';
 import { BigButton } from '../../components/BigButton';
+import { ChoiceGroup } from '../../components/ChoiceGroup';
 import { Dialog, DialogActions } from '../../components/Dialog';
 import { Form } from '../../components/Form';
 import { MonthYearField } from '../../components/MonthYearField';
@@ -53,14 +55,22 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
   const [busy, setBusy] = useState(false);
   const rentCheck = useRentCheck();
   const needsPrice = mode !== 'vacant';
-  // A new price is in the currency of the month it starts from.
-  const currency = currencyForMonth(area.prices, from) ?? area.currency;
+  // Null keeps the currency of the month the price starts from; a choice here stays until changed.
+  const [chosenCurrency, setChosenCurrency] = useState<Currency | null>(null);
+  const monthCurrency = (month: YearMonth) => currencyForMonth(area.prices, month) ?? area.currency;
+  const currency = chosenCurrency ?? monthCurrency(from);
   const rentStart = area.prices[0];
 
   // A month in another currency empties the rent: a typed amount never changes currency silently.
   const changeFrom = (next: YearMonth) => {
-    if ((currencyForMonth(area.prices, next) ?? area.currency) !== currency) setPrice(null);
+    if ((chosenCurrency ?? monthCurrency(next)) !== currency) setPrice(null);
     setFrom(next);
+  };
+
+  // The same number means something else in another currency, so the rent is typed again.
+  const changeCurrency = (next: Currency) => {
+    if (next !== currency) setPrice(null);
+    setChosenCurrency(next);
   };
 
   const edit =
@@ -79,6 +89,7 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
       areaId: area.id,
       from,
       monthlyPrice: needsPrice ? (price ?? 0) : 0,
+      ...(needsPrice && { currency }),
       ...(rentCheck.takeOut && { takeOutVacantMonths: true }),
     };
     const checked = await rentCheck.check(change);
@@ -120,6 +131,14 @@ function PriceForm({ area, mode, onDone, onClose }: PriceDialogProps & { mode: P
         onChange={edit(changeFrom)}
         hint={t(mode === 'vacant' ? 'priceDialog.vacantHint' : 'priceDialog.changeHint')}
       />
+      {needsPrice && (
+        <ChoiceGroup
+          label={t('areaForm.currency')}
+          value={currency}
+          choices={CURRENCIES.map((code) => ({ value: code, label: t(`currency.${code}`) }))}
+          onChange={edit(changeCurrency)}
+        />
+      )}
       {/* A new key re-creates the amount box when the currency (and its decimals) changes. */}
       {needsPrice && (
         <AmountField

@@ -222,6 +222,13 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
               dir="auto"
             />
           )}
+          <TextField
+            label={`${t('areaForm.address')} ${t('common.optional')}`}
+            value={address}
+            onChange={setAddress}
+            maxLength={ADDRESS_MAX}
+            dir="auto"
+          />
         </section>
 
         <section className={styles.section}>
@@ -247,13 +254,6 @@ function AreaForm({ area }: { area: AreaDetails | null }) {
 
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>{t('areaForm.sections.more')}</h2>
-          <TextField
-            label={`${t('areaForm.address')} ${t('common.optional')}`}
-            value={address}
-            onChange={setAddress}
-            maxLength={ADDRESS_MAX}
-            dir="auto"
-          />
           <Checkbox
             label={`${t('areaForm.contractStart')} ${t('common.optional')}`}
             checked={hasContractStart}

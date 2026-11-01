@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { Outlet } from 'react-router';
 import { useIpcQuery } from '../app/ipc';
 
@@ -10,16 +10,25 @@ export function usePrintLogo(): string | null {
 }
 
 /**
- * Wraps every print page: loads the logo once, and only then shows the page,
- * so a page never says it is ready before its logo is there. A logo that
- * cannot be read is left out rather than stopping the print.
+ * Loads the logo once, and only then shows what is inside, so a page never
+ * says it is ready before its logo is there. A logo that cannot be read is
+ * left out rather than stopping the print.
  */
-export function PrintLayout() {
+export function PrintLogo({ children }: { children: ReactNode }) {
   const logo = useIpcQuery('settings:logo');
   if (logo.state.status === 'loading') return null;
   return (
     <LogoContext.Provider value={logo.state.status === 'ready' ? logo.state.data : null}>
-      <Outlet />
+      {children}
     </LogoContext.Provider>
+  );
+}
+
+/** Wraps every print page. */
+export function PrintLayout() {
+  return (
+    <PrintLogo>
+      <Outlet />
+    </PrintLogo>
   );
 }
