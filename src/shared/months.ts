@@ -65,10 +65,10 @@ export interface AreaYear {
 export interface AreaStanding {
   /** Unpaid rent of every month up to and including this one, per currency (none when nothing is owed). */
   owed: CurrencyAmount[];
-  /** Past months not fully paid, in any year. */
+  /** Past months not paid, in any year. */
   lateMonths: number;
   /** The currencies of those late months, IQD first. */
   lateIn: Currency[];
-  /** This month is not fully paid yet. */
+  /** This month is not paid yet. */
   dueNow: boolean;
 }

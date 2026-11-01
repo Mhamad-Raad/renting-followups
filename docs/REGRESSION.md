@@ -94,7 +94,7 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 
 - [ ] Home with no areas shows "Add your first area".
 - [ ] Home shows Received, Still owed and Late areas for this year, one row per currency.
-- [ ] Needs attention lists areas late in any year (with the number of late months) or due this month; fully paid areas are not listed.
+- [ ] Needs attention lists areas late in any year (with the number of late months) or due this month; paid-up areas are not listed.
 - [ ] Record payment on an attention row opens that area with the payment form ready.
 - [ ] Area page: choosing another year shows its boxes, figures and receipts; choosing a month shows "Total for the month" and outlines that month.
 - [ ] A price change over paid months says they stay paid at the old rent ("… month 2/2025.") and saves on the next press of Save; the paid months stay green and their receipts do not change.
@@ -109,7 +109,7 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 Automated (`npm run test:e2e`) unless marked _manual_.
 
 - [ ] Reports shows one totals card per currency first, then one slim row per area with rent, received, still owed, the month strip and status; there is no Print button, only PDF and Excel.
-- [ ] Status Late / Paid / Due or partly paid and Currency narrow the list; the totals follow.
+- [ ] Status Late / Paid / Not paid this month and Currency narrow the list; the totals follow.
 - [ ] The area picker leaves areas out; Select none shows "No areas match"; Select all brings them back.
 - [ ] Filters except the year are remembered after a restart.
 - [ ] _manual_ Choosing a month shows that month's figures, outlines it in every strip and shows its status word.

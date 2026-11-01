@@ -341,7 +341,7 @@ Notifications are computed from the data (not stored), shown in two places:
 
 Types:
 - **Late rent:** an area has a month that has passed unpaid. Shows area, renter, month number(s), amount owed, with **Record Payment**. Vacant months never appear.
-- **Month reminder:** the current month is unpaid or partly paid and the month ends within *N* days (setting `remind_days_before_month_end`, default **7**). Also shown on the **last 3 days** regardless.
+- **Month reminder:** the current month is unpaid and the month ends within *N* days (setting `remind_days_before_month_end`, default **7**). Also shown on the **last 3 days** regardless.
 - **Backup reminder:** a backup has not been made this calendar month (see section 13).
 
 The popup and the page use the same function so they never disagree. Also fire a normal Windows toast once per day if the app is running and something needs attention (optional; do not make it a dependency).

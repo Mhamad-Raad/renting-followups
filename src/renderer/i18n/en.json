@@ -615,14 +615,14 @@
     "count": "Reminders: {{number}}",
     "late": "Late rent",
     "monthEnd": "This month ends soon",
-    "lastDay": "Month {{month}} is not fully paid and ends today.",
+    "lastDay": "Month {{month}} is not paid and ends today.",
     "owes": "Still owes",
     "none": "Nothing needs attention. All rent is paid up to this month.",
     "popupTitle": "Areas that need attention",
     "goTo": "Go to Notifications",
     "more": "… and {{number}} more",
     "toastBody": "Reminders that need attention: {{number}}. Open the app to see them.",
-    "endsOn": "Month {{month}} is not fully paid. It ends on {{date}}.",
+    "endsOn": "Month {{month}} is not paid. It ends on {{date}}.",
     "backupDue": "Save a safety copy of your data for this month, so nothing is lost if the computer breaks.",
     "popupSummary": "Number of areas: {{number}}. You can see all of them on the Notifications page."
   }
