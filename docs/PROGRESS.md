@@ -2,7 +2,7 @@
 
 ## Current iteration
 
-**Iteration 14 (packaging) is in progress on `iter-14-packaging`.** At the owner's request on 2026-10-28, everything so far was merged into `main` and pushed (no `iter-14` tag yet: that comes when the installer is done). The new app icon is done; on 2026-10-26 to 2026-10-28 the owner asked for many UI and business changes first (listed below). The installer itself is not started.
+**Iteration 14 (packaging) is in progress on `iter-14-packaging`.** On 2026-11-01 the whole-month payments and empty-place changes were merged into `main` and pushed, and the installer was rebuilt with them (`release/Rent-Tracker-Setup-1.0.0.exe`, not committed); it waits for the owner's Windows test. At the owner's request on 2026-10-28, everything so far was merged into `main` and pushed (no `iter-14` tag yet: that comes when the installer is done). The new app icon is done; on 2026-10-26 to 2026-10-28 the owner asked for many UI and business changes first (listed below). The installer itself is not started.
 
 ## Done
 
