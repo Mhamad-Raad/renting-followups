@@ -156,6 +156,10 @@ test('price changes, vacant and renter changes are kept as history', async () =>
     await reloadApp(page);
     await page.getByRole('link', { name: 'Shop 1' }).click();
 
+    // The address is always in the top card, a dash while it is empty.
+    const address = page.locator('dt', { hasText: en.area.address }).locator('..');
+    await expect(address.locator('dd')).toHaveText('—');
+
     await page.getByRole('button', { name: en.area.changePrice }).click();
     const dialog = page.getByRole('dialog');
     await expect(dialog.getByLabel(en.priceDialog.newRent)).toBeFocused();

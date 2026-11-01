@@ -54,7 +54,7 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] Change price from a month keeps earlier months' price; both rows show in Price history.
 - [ ] Mark as vacant shows "Vacant" on the list; the place then offers no Change price or Mark as vacant (rent comes back with Change renter).
 - [ ] Change price offers IQD / USD; choosing the other one empties the rent; later payments are in the new currency; months paid in the old currency go through Take out and save.
-- [ ] The address box is in the Place section of the area form.
+- [ ] The address box is in the Place section of the area form; the area page's top card always shows the address, a dash when empty.
 - [ ] Record payment from a paid or empty month says which months it skipped and why.
 - [ ] First column on the Areas list, Reports, Home and the printed report: name with the address under it; no address → the category; no name → the category with the address; neither → the category alone. A place without an address never breaks a screen.
 - [ ] Export to PDF opens a pop-up with the report on white paper (also in dark mode), with Save as PDF, Print and Close; nothing is saved until Save as PDF.

@@ -51,12 +51,11 @@ export function AreaFacts({
           <dt>{t('area.currency')}</dt>
           <dd>{t(`currency.${currency}`)}</dd>
         </div>
-        {area.address && (
-          <div>
-            <dt>{t('area.address')}</dt>
-            <dd>{area.address}</dd>
-          </div>
-        )}
+        {/* Always there, so an address still to fill in can be seen. */}
+        <div>
+          <dt>{t('area.address')}</dt>
+          <dd dir="auto">{area.address || '—'}</dd>
+        </div>
         {area.contractStart && (
           <div>
             <dt>{t('area.contractStart')}</dt>

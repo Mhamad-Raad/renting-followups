@@ -263,7 +263,7 @@ Large password field and one **Open** button. A "Forgot password?" link goes to 
 - Checkboxes to select several areas, then **Print selected** / **Export selected**.
 
 ### 8.4 Area page (the key screen)
-Top: area name, category, currency, address, notes, current renter (name + phone), current monthly price (or "Vacant"), and buttons **Record Payment** (primary), **Record past payment**, Edit, **Change price** and **Mark as vacant** (both hidden while the place is empty), **Change renter**.
+Top: area name, category, currency, notes, current renter (name + phone), current monthly price (or "Vacant"), address (always shown, a dash when empty; owner's request, 2026-11-01), and buttons **Record Payment** (primary), **Record past payment**, Edit, **Change price** and **Mark as vacant** (both hidden while the place is empty), **Change renter**.
 
 Filter bar on top: **Year** selector (default **current year**, range from the earliest year with data, or the current year, up to the current year + 2) and optional **Month** selector (All / 1-12).
 
