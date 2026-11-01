@@ -76,13 +76,13 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 
 Automated (`npm run test:e2e`) unless marked _manual_.
 
-- [ ] Record payment: the amount box has the cursor; typing 300,000 for a 250,000 rent previews "full" for one month and "partial, 50,000 of 250,000" for the next.
+- [ ] Record payment: there is no amount box; "How many months?" starts at 1 (− is greyed out); + makes it 2 and the preview lists both months at 250,000 and "Amount received: 500,000 IQD" (whole months only, the business, 2026-11-01).
 - [ ] Save shows "Payment saved. Receipt No. 0001" and the month turns green; the receipt appears under Payments.
-- [ ] Cancel receipt crosses it out ("Cancelled") and the month goes back to orange; the next payment gets No. 0002. The message after saving has no Undo button (owner's decision, 2026-10-29).
-- [ ] Edit a receipt: change the amount and the month colours follow; the number stays the same.
+- [ ] Cancel receipt crosses it out ("Cancelled") and the month goes back to red; the next payment gets No. 0002. The message after saving has no Undo button (owner's decision, 2026-10-29).
+- [ ] Edit a receipt: it opens with its own number of months; one fewer lowers the amount, the month colours follow, the number stays the same.
 - [ ] Cancel receipt asks first ("Cancel receipt" / "Keep it"), then crosses it out and stops it counting.
 - [ ] Record past payment explains it gets no number, and shows as "Past record".
-- [ ] An amount above two years of rent shows a warning in the preview and cannot be saved.
+- [ ] Typing more months than are open up to two years ahead stops at the open months, and + is greyed out.
 - [ ] _manual_ A date received after today is refused in plain words.
 - [ ] _manual_ With the computer clock set before the last date money was received, the app opens with "The computer date looks wrong".
 - [ ] _manual_ Amounts typed with Arabic-Indic digits (٢٥٠٠٠٠) are accepted; USD accepts cents.
@@ -97,7 +97,7 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] Needs attention lists areas late in any year (with the number of late months) or due this month; fully paid areas are not listed.
 - [ ] Record payment on an attention row opens that area with the payment form ready.
 - [ ] Area page: choosing another year shows its boxes, figures and receipts; choosing a month shows "Total for the month" and outlines that month.
-- [ ] A price change over paid months lists them ("Month 2/2025: Paid 100,000 → Late 100,000") and needs "Save anyway"; afterwards the month shows its new colour.
+- [ ] A price change over paid months says they stay paid at the old rent ("… month 2/2025.") and saves on the next press of Save; the paid months stay green and their receipts do not change.
 - [ ] _manual_ A lower rent moves the extra money on to the next months; a higher rent fills fewer months; the receipt keeps its number and total.
 - [ ] Marking vacant months that are paid lists each receipt and its months; Take out and save takes them out and marks the area vacant in one step.
 - [ ] _manual_ Still owed does not count months after this one; a prepaid future month counts as Received.
@@ -221,7 +221,7 @@ Automated (`npm run test:e2e` and unit tests) unless marked _manual_.
 - [ ] The sidebar always shows each page as an icon with its name under it, Settings at the bottom; there is no open/close button.
 - [ ] Change renter: "Same rent as now" is ticked; unticking shows IQD/USD and the rent; a new currency from the renter's start month makes later payments in that currency; dinar payments for the new dollar months are listed with Take out and save.
 - [ ] A year with two currencies shows both amounts on separate lines (area page, Areas list, Reports, Home), never added together; Excel has one row per currency.
-- [ ] A coming month paid in part is filled half green, corner to corner, in list strips and on the area page.
+- [ ] No month is "partly paid": a month is green (paid) or not; no half-filled boxes; Reports' status filter offers All / Paid / Not paid this month / Late.
 - [ ] Report titles and file names name the place (area page) or the chosen category, and the year or the chosen month.
 - [ ] `npm run dist` builds `release/Rent-Tracker-Setup-<version>.exe`; the package holds only `out/`, `resources/`, `package.json`, production dependencies and the Windows x64 SQLite file.
 - [ ] _manual_ On Windows with no internet: the installer runs (SmartScreen: More info, Run anyway), installs for the user without an administrator password, makes desktop and Start menu shortcuts and opens the app with a fresh password setup.
