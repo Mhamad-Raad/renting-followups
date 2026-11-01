@@ -502,6 +502,7 @@
     "editPastTitle": "Edit past record",
     "from": "From which month?",
     "monthCount": "How many months?",
+    "monthCountRequired": "Please enter how many months (1 or more).",
     "fewer": "One month fewer",
     "more": "One month more",
     "fromHint": "The first month this payment pays. Months already paid are skipped.",

@@ -41,6 +41,15 @@
   box-shadow: var(--field-focus);
 }
 
+.input[aria-invalid='true'] {
+  border-color: var(--status-late);
+}
+
+.error {
+  color: var(--status-late);
+  font-weight: 600;
+}
+
 .hint {
   color: var(--color-text-muted);
   font-size: var(--text-sm);

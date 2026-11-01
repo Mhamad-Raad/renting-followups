@@ -251,9 +251,22 @@ test('edit and cancel a receipt, record a past payment, and refuse too much', as
     const count = dialog.getByLabel(en.paymentDialog.monthCount);
     await expect(dialog.getByText(/^Amount received/)).toBeVisible();
     await count.fill('999');
-    await count.blur();
     await expect(count).toHaveValue('24');
     await expect(dialog.getByRole('button', { name: en.paymentDialog.more })).toBeDisabled();
+    // A start month with fewer open months brings the count down with it.
+    const later = nextMonth(year + 1, month);
+    const start = dialog.getByRole('group', { name: en.paymentDialog.from });
+    await start.getByLabel(en.common.year, { exact: true }).selectOption(String(later.year));
+    await start.getByLabel(en.common.month, { exact: true }).selectOption(String(later.month));
+    // From that month up to two years after this one: 12 months.
+    await expect(count).toHaveValue('12');
+    // An empty box is not saved as some hidden number: it says what is wrong.
+    await count.fill('');
+    await count.press('Enter');
+    await expect(dialog.getByText(en.paymentDialog.monthCountRequired)).toBeVisible();
+    await count.blur();
+    await expect(count).toHaveValue('12');
+    await expect(dialog.getByText(en.paymentDialog.monthCountRequired)).toHaveCount(0);
     await dialog.getByRole('button', { name: en.common.cancel }).click();
     await expect(page.getByText(en.receipts.number.replace('{{number}}', '0002'))).toHaveCount(0);
   } finally {

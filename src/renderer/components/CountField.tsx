@@ -9,7 +9,8 @@ import { Icon } from './Icon';
 interface CountFieldProps {
   label: string;
   value: number;
-  onChange: (value: number) => void;
+  /** The new count, or null while the box holds something that is not a count (empty, 0, letters). */
+  onChange: (value: number | null) => void;
   min?: number;
   /** The largest count allowed, when known. */
   max?: number | undefined;
@@ -17,6 +18,8 @@ interface CountFieldProps {
   lessLabel: string;
   moreLabel: string;
   hint?: string | undefined;
+  /** Shown under the field and announced; also marks the field as wrong. */
+  error?: string | null | undefined;
 }
 
 /**
@@ -32,18 +35,32 @@ export function CountField({
   lessLabel,
   moreLabel,
   hint,
+  error,
 }: CountFieldProps) {
   const id = useId();
   const { settings } = useSettings();
   const shown = formatPlain(value, settings.digitStyle);
-  // While typing, the box may be empty for a moment; it shows the count again on leaving.
+  // What is being typed, until it is left; null shows the count itself.
   const [text, setText] = useState<string | null>(null);
   const clamp = (count: number) => Math.max(min, max === undefined ? count : Math.min(max, count));
-  const type = (raw: string) => {
-    setText(raw);
-    const parsed = parseInteger(raw);
-    if (parsed.ok && parsed.value >= min) onChange(clamp(parsed.value));
+  const step = (count: number) => {
+    setText(null);
+    onChange(clamp(count));
   };
+  const type = (raw: string) => {
+    const parsed = parseInteger(raw);
+    if (!parsed.ok || parsed.value < min) {
+      setText(raw);
+      onChange(null);
+      return;
+    }
+    const count = clamp(parsed.value);
+    // A number above the most allowed shows that most at once, so the box never says one thing and uses another.
+    setText(count === parsed.value ? raw : null);
+    onChange(count);
+  };
+  const noteId = `${id}-note`;
+  const note = error ?? hint;
 
   return (
     <div className={styles.field}>
@@ -55,7 +72,7 @@ export function CountField({
           className={styles.step}
           aria-label={lessLabel}
           disabled={value <= min}
-          onClick={() => onChange(clamp(value - 1))}
+          onClick={() => step(value - 1)}
         >
           <Icon name="minus" />
         </BigButton>
@@ -66,21 +83,25 @@ export function CountField({
           value={text ?? shown}
           onChange={(event) => type(event.target.value)}
           onFocus={(event) => event.target.select()}
-          onBlur={() => setText(null)}
-          aria-describedby={hint ? `${id}-hint` : undefined}
+          onBlur={() => {
+            // Leaving an unusable box puts the count back.
+            if (text !== null) step(value);
+          }}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={note ? noteId : undefined}
         />
         <BigButton
           className={styles.step}
           aria-label={moreLabel}
           disabled={max !== undefined && value >= max}
-          onClick={() => onChange(clamp(value + 1))}
+          onClick={() => step(value + 1)}
         >
           <Icon name="plus" />
         </BigButton>
       </div>
-      {hint && (
-        <p id={`${id}-hint`} className={styles.hint}>
-          {hint}
+      {note && (
+        <p id={noteId} className={error ? styles.error : styles.hint}>
+          {note}
         </p>
       )}
     </div>

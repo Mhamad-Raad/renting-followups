@@ -8,6 +8,7 @@ import { formatAmount } from '@shared/formatNumber';
 import { paymentCurrency } from '@shared/prices';
 import {
   formatReceiptNumber,
+  MAX_MONTH_COUNT,
   PAYMENT_NOTE_MAX,
   type AllocationResult,
   type PaymentCreateResult,
@@ -100,7 +101,14 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
   const { settings } = useSettings();
   const editing = mode.kind === 'edit' ? mode.receipt : null;
   // A month is paid whole or not at all: the form asks how many months, and the amount follows.
-  const [monthCount, setMonthCount] = useState(editing?.allocations.length || 1);
+  const [chosenCount, setChosenCount] = useState(editing?.allocations.length || 1);
+  // False while the count box holds something that is not a number of months.
+  const [countTyped, setCountTyped] = useState(true);
+  const [showProblems, setShowProblems] = useState(false);
+  // How many months are open from the chosen month, once the preview knows.
+  const [open, setOpen] = useState<number | undefined>(undefined);
+  // A start month with fewer open months brings the count down with it.
+  const monthCount = open === undefined ? chosenCount : Math.min(chosenCount, Math.max(open, 1));
   const [from, setFrom] = useState<YearMonth>({ year: start.year, month: start.month });
   // A receipt is in one currency: a saved one keeps its own, new money takes that of its first month.
   const currency = editing?.currency ?? paymentCurrency(area.prices, from) ?? area.currency;
@@ -124,10 +132,12 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
   const previewQuery = useDebouncedValue(previewInput, PREVIEW_DELAY_MS);
   const preview = useIpcQuery('payments:preview', previewQuery);
   const plan = preview.state.status === 'ready' ? preview.state.data : null;
-  const open = plan && (plan.ok || plan.reason === 'too_much') ? plan.open : undefined;
+  const planOpen = plan && (plan.ok || plan.reason === 'too_much') ? plan.open : undefined;
+  if (planOpen !== undefined && planOpen !== open) setOpen(planOpen);
 
   const submit = async () => {
-    if (busy) return;
+    setShowProblems(true);
+    if (busy || !countTyped) return;
     setBusy(true);
     const details = { monthCount, from, paidOn, note };
     if (editing) {
@@ -168,8 +178,12 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
       <CountField
         label={t('paymentDialog.monthCount')}
         value={monthCount}
-        onChange={setMonthCount}
-        max={open}
+        onChange={(count) => {
+          setCountTyped(count !== null);
+          if (count !== null) setChosenCount(count);
+        }}
+        max={open ?? MAX_MONTH_COUNT}
+        error={showProblems && !countTyped ? t('paymentDialog.monthCountRequired') : null}
         lessLabel={t('paymentDialog.fewer')}
         moreLabel={t('paymentDialog.more')}
       />
