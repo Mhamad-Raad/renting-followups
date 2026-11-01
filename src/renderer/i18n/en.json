@@ -594,6 +594,7 @@
     "fileNamed": "Rent report {{name}} {{period}}",
     "printedOn": "Printed on {{date}}",
     "page": "Page",
+    "currencyShort": "Cur.",
     "pdfFiles": "PDF files",
     "excelFiles": "Excel files",
     "preview": {

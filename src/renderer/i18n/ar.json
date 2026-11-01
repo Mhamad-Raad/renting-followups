@@ -594,6 +594,7 @@
     "fileNamed": "تقرير الإيجارات {{name}} {{period}}",
     "printedOn": "طُبع في {{date}}",
     "page": "صفحة",
+    "currencyShort": "عملة",
     "pdfFiles": "ملفات PDF",
     "excelFiles": "ملفات Excel",
     "preview": {

@@ -18,7 +18,7 @@ import { PrintFrame } from './PrintFrame';
 import { usePrintReady } from './printPage';
 
 /** The share of the table's width each column gets; the notes have the most room of the text. */
-const COLUMN_WIDTHS = ['13.5%', '14%', '12%', '4.5%', '6.5%', '7%', '7%', '21%', '15%'];
+const COLUMN_WIDTHS = ['14.3%', '14%', '12%', '3.7%', '6.5%', '7%', '7%', '21%', '15%'];
 
 /**
  * The upright A4 page's writing area in mm (print.css: margins 14mm and 12mm),
@@ -120,7 +120,7 @@ export function ReportPaper({ query, preview = false }: { query: ReportQuery; pr
                   <th scope="col">{t('reports.columns.area')}</th>
                   <th scope="col">{t('area.category')}</th>
                   <th scope="col">{t('reports.columns.renter')}</th>
-                  <th scope="col">{t('areaForm.currency')}</th>
+                  <th scope="col">{t('print.currencyShort')}</th>
                   <th scope="col">{t('reports.columns.rent')}</th>
                   <th scope="col">{t('reports.columns.received')}</th>
                   <th scope="col">{t('reports.columns.remaining')}</th>
