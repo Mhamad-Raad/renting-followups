@@ -197,6 +197,27 @@ describe('price changes keep paid months as they are', () => {
     expect(receipts()[0]).toMatchObject({ receiptNumber, totalAmount: 3 * RENT });
   });
 
+  it('editing a receipt after a rent change keeps its paid months at the old rent', () => {
+    const { id } = payOk({ monthCount: 2, from: { year: 2026, month: 3 } });
+    changePrice(3, 300_000);
+    const edit = {
+      id,
+      monthCount: 3,
+      from: { year: 2026, month: 3 },
+      paidOn: TODAY.date,
+      note: '',
+    };
+    const preview = repos.payments.preview(areaId, 3, edit.from, TODAY.month, id);
+    expect(preview?.ok && preview.months.map((m) => m.amount)).toEqual([RENT, RENT, 300_000]);
+    expect(repos.payments.update(edit, TODAY)).toEqual({ ok: true });
+    expect(months(id)).toEqual([
+      [3, RENT],
+      [4, RENT],
+      [5, 300_000],
+    ]);
+    expect(receipts()[0]?.totalAmount).toBe(2 * RENT + 300_000);
+  });
+
   it('says which paid months keep their old rent, without saving', () => {
     payOk({ monthCount: 2, from: { year: 2026, month: 3 } });
     const change = { areaId, from: { year: 2026, month: 4 }, monthlyPrice: 300_000 };

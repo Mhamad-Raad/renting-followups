@@ -1,5 +1,5 @@
 import type { Currency } from '@shared/currency';
-import type { BusinessToday, YearMonth } from '@shared/dates';
+import { monthIndex, type BusinessToday, type YearMonth } from '@shared/dates';
 import type {
   Allocation,
   AllocationResult,
@@ -128,6 +128,21 @@ export function createPaymentRepository(
     return same ? months : null;
   };
 
+  /**
+   * After an edit works a receipt's months out again, the months it already paid keep the
+   * amount they were paid at (a rent change since does not re-price them); only months it
+   * did not pay before take the current rent.
+   */
+  const atOwnRent = (receiptId: number, months: readonly Allocation[]): Allocation[] => {
+    const own = new Map(
+      selectAllocationsForReceipt.all(receiptId).map((paid) => [monthIndex(paid), paid.amount]),
+    );
+    return months.map((month) => ({
+      ...month,
+      amount: own.get(monthIndex(month)) ?? month.amount,
+    }));
+  };
+
   // Numbers only ever go up: the stored counter survives even if a receipt row were lost.
   const nextReceiptNumber = () => {
     const stored = Number(store.read(LAST_NUMBER_KEY) ?? 0);
@@ -156,8 +171,11 @@ export function createPaymentRepository(
       const receipt = receiptId === null ? undefined : selectReceipt.get(receiptId);
       const currency = receipt?.currency ?? currencyFrom(areaId, from, area.currency);
       const planned = plan(areaId, monthCount, from, today, currency, receiptId ?? 0);
-      const kept = receiptId === null ? null : keptMonths(receiptId, monthCount, from);
-      if (!kept) return planned;
+      if (receiptId === null) return planned;
+      const kept = keptMonths(receiptId, monthCount, from);
+      if (!kept) {
+        return planned.ok ? { ...planned, months: atOwnRent(receiptId, planned.months) } : planned;
+      }
       // The receipt's own months are open to it, so at least that many can be paid.
       const open = Math.max(
         kept.length,
@@ -226,7 +244,7 @@ export function createPaymentRepository(
           input.id,
         );
         if (!planned.ok) return { ok: false, reason: planned.reason };
-        months = planned.months;
+        months = atOwnRent(input.id, planned.months);
         allocations.replace(input.id, before.area_id, months);
       }
       const amount = totalOf(months);
