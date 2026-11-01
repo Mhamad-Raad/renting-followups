@@ -39,7 +39,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, rent }: Dependen
     { categoryId: number | null; namePattern: string; phonePattern: string | null },
     AreaListRecord
   >(
-    `SELECT a.id, a.name, a.currency, a.category_id, a.notes, a.address,
+    `SELECT a.id, a.name, a.currency, a.category_id, a.notes, COALESCE(a.address, '') AS address,
        c.name AS category_name, c.color AS category_color,
        r.full_name AS renter_name, r.phone AS renter_phone
      FROM areas a

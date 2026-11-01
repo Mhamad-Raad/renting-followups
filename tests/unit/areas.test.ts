@@ -243,12 +243,29 @@ describe('areaLines', () => {
     });
   });
 
-  it('the Areas list and the report carry the address', () => {
+  it('the Areas list, Home and the report carry the address, empty when there is none', () => {
     const id = createArea({ address: 'Main street' });
-    expect(repos.areaViews.list({ search: '', categoryId: null }, TODAY)[0]).toMatchObject({
-      id,
-      address: 'Main street',
-    });
+    // An empty address is stored as nothing (NULL); it must still reach the screens as text.
+    const bare = createArea({ name: 'Shop 2', address: '' });
+    const list = repos.areaViews.list({ search: '', categoryId: null }, TODAY);
+    expect(list.find((area) => area.id === id)?.address).toBe('Main street');
+    expect(list.find((area) => area.id === bare)?.address).toBe('');
+    expect(repos.areaViews.overviews(TODAY).find((area) => area.id === bare)?.address).toBe('');
+    const report = repos.reports.build(
+      {
+        year: 2026,
+        month: null,
+        categoryId: null,
+        currency: null,
+        status: 'all',
+        excludedIds: [],
+        onlyIds: null,
+      },
+      TODAY,
+      'en',
+    );
+    expect(report.rows.find((row) => row.id === bare)?.address).toBe('');
+    expect(report.rows.find((row) => row.id === id)?.address).toBe('Main street');
   });
 });
 
