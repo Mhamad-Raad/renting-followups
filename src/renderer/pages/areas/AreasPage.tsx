@@ -6,6 +6,7 @@ import {
   areaSubline,
   compareAreaLabels,
   hasOwnName,
+  isEmptyPlace,
   nameCollator,
   SEARCH_MAX,
   type AreaDetails,
@@ -73,10 +74,9 @@ function rowActions(
     onSelect: () => choose(area.id, key),
   });
   // An empty place keeps no rent: it comes back, with its currency, with a new renter.
-  const rentActions =
-    area.currentPrice === 0
-      ? []
-      : [action('changePrice', t('area.changePrice')), action('markVacant', t('area.markVacant'))];
+  const rentActions = isEmptyPlace(area.currentPrice, area.renterName !== null)
+    ? []
+    : [action('changePrice', t('area.changePrice')), action('markVacant', t('area.markVacant'))];
   return [
     action('payment', t('area.recordPayment')),
     action('pastPayment', t('area.recordPastPayment')),

@@ -29,7 +29,7 @@ export function createRepositories(db: Db) {
   const rent = createRentRepository({ paid, prices, renters });
   const allocations = createAllocationRepository(db);
   const payments = createPaymentRepository(db, { allocations, audit, paid, rent, renters });
-  const areas = createAreaRepository(db, { audit, categories, prices, renters });
+  const areas = createAreaRepository(db, { audit, categories, prices, rent, renters });
   const monthPayments = createMonthPaymentRepository(db, { areas, audit, payments });
   return {
     settings: createSettingsRepository(db),

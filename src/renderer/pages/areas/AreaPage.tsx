@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { areaLabel, currentRenter, type AreaDetails } from '@shared/areas';
+import { areaLabel, currentRenter, isEmptyPlace, type AreaDetails } from '@shared/areas';
 import { yearMonthOf } from '@shared/dates';
 import { useIpcQuery } from '../../app/ipc';
 import { currencyForMonth, priceForMonth } from '@shared/prices';
@@ -54,8 +54,10 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
   }, [searchParams, setSearchParams]);
 
   const today = yearMonthOf(new Date());
-  const price = priceForMonth(area.prices, today);
+  // This month's rent as charged, as the boxes and the Areas list show it.
+  const price = priceForMonth(area.chargedPrices, today);
   const currency = currencyForMonth(area.prices, today) ?? area.currency;
+  const empty = isEmptyPlace(price, currentRenter(area.renters) !== null);
   const period = useAreaPeriod(area.id, today.year);
 
   const actions = useAreaActions(area, {
@@ -107,7 +109,7 @@ function AreaView({ area, onChanged }: { area: AreaDetails; onChanged: () => voi
             {t('area.recordPastPayment')}
           </BigButton>
           {/* An empty place keeps no rent: it comes back, with its currency, with a new renter. */}
-          {price !== 0 && (
+          {!empty && (
             <>
               <BigButton onClick={() => open(ACTION_DIALOGS.changePrice)}>
                 {t('area.changePrice')}

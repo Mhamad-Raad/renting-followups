@@ -131,7 +131,7 @@ function PaymentForm({ area, mode, start, onSaved, onClose }: PaymentFormProps) 
       : { year: start.year, month: start.month },
   );
   // A receipt is in one currency: a saved one keeps its own, new money takes that of its first month.
-  const currency = editing?.currency ?? paymentCurrency(area.prices, from) ?? area.currency;
+  const currency = editing?.currency ?? paymentCurrency(area.chargedPrices, from) ?? area.currency;
   const [paidOn, setPaidOn] = useState(editing?.paidOn ?? dateStringFromLocal(new Date()));
   const [note, setNote] = useState(editing?.note ?? '');
   const [problem, setProblem] = useState<string | null>(null);
