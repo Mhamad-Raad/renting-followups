@@ -32,7 +32,6 @@ export function registerPrintIpc({ areas, categories, reports, settings }: Repos
   const printOrSave = async (
     route: string,
     output: PrintOutput,
-    landscape: boolean,
     fileName: string,
   ): Promise<PrintResult> => {
     if (isPrinting()) return { ok: false, reason: 'busy' };
@@ -42,7 +41,7 @@ export function registerPrintIpc({ areas, categories, reports, settings }: Repos
       if (!path) return { ok: true, done: 'cancelled' };
     }
     const job = await withHiddenPage<Buffer | 'printed' | 'cancelled'>(route, (contents) =>
-      path ? renderPdf(contents) : sendToPrinter(contents, landscape),
+      path ? renderPdf(contents) : sendToPrinter(contents),
     );
     if (!job.ok) return job;
     if (typeof job.value === 'string') return { ok: true, done: job.value };
@@ -72,7 +71,7 @@ export function registerPrintIpc({ areas, categories, reports, settings }: Repos
   });
 
   handle('print:report', printReportSchema, ({ query, output }) =>
-    printOrSave(PRINT_ROUTES.report(query), output, true, reportFileName(query)),
+    printOrSave(PRINT_ROUTES.report(query), output, reportFileName(query)),
   );
 
   handle('export:reportExcel', exportReportSchema, async ({ query }): Promise<PrintResult> => {

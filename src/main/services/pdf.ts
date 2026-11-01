@@ -72,13 +72,10 @@ export async function withHiddenPage<T>(
   }
 }
 
-/** Shows the Windows print dialog for the page. */
-export function sendToPrinter(
-  contents: WebContents,
-  landscape: boolean,
-): Promise<'printed' | 'cancelled'> {
+/** Shows the Windows print dialog for the page (A4 upright, as every printed page is). */
+export function sendToPrinter(contents: WebContents): Promise<'printed' | 'cancelled'> {
   return new Promise((resolve, reject) => {
-    contents.print({ silent: false, printBackground: true, landscape }, (success, reason) => {
+    contents.print({ silent: false, printBackground: true }, (success, reason) => {
       if (success) resolve('printed');
       else if (reason === 'cancelled') resolve('cancelled');
       else reject(new Error(`print failed: ${reason}`));
@@ -86,7 +83,7 @@ export function sendToPrinter(
   });
 }
 
-/** The page as an A4 PDF; the page's own CSS decides the orientation and page numbers. */
+/** The page as an A4 PDF; the page's own CSS sets the page numbers. */
 export function renderPdf(contents: WebContents): Promise<Buffer> {
   return contents.printToPDF({ pageSize: 'A4', printBackground: true, preferCSSPageSize: true });
 }

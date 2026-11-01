@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
-import { areaLabel, hasOwnName } from '@shared/areas';
+import { areaLabel, areaLines } from '@shared/areas';
 import { dateStringFromLocal, formatDate } from '@shared/dates';
 import { formatPlain } from '@shared/formatNumber';
 import { PART_SEPARATOR, reportFilterParts, reportTitle } from '@shared/reportText';
@@ -17,6 +17,11 @@ import styles from './print.module.css';
 import { PrintFrame } from './PrintFrame';
 import { usePrintReady } from './printPage';
 
+/** The widths of the figures row's columns (place, renter, currency, rent, received, still owed). */
+const COLUMN_WIDTHS = ['27%', '23%', '8%', '14%', '14%', '14%'];
+/** The months and notes rows span every column. */
+const COLUMNS = COLUMN_WIDTHS.length;
+
 /** The query in the address, checked like every other input; null when it is not valid. */
 function parseQuery(raw: string | null): ReportQuery | null {
   if (raw === null) return null;
@@ -29,9 +34,10 @@ function parseQuery(raw: string | null): ReportQuery | null {
 }
 
 /**
- * The printed report (ARCHITECTURE.md sections 8.5 and 14): A4 landscape,
- * the separate columns of the spec, the header row repeated on every page,
- * totals per currency at the bottom and page numbers.
+ * The printed report (ARCHITECTURE.md sections 8.5 and 14): A4 upright, each
+ * place as one group of lines (figures, months, notes at full width), the
+ * header row repeated on every page, totals per currency at the bottom and
+ * page numbers.
  */
 export function ReportPrint() {
   const [params] = useSearchParams();
@@ -79,40 +85,51 @@ function ReportPaper({ query }: { query: ReportQuery }) {
 
   return (
     <PrintFrame
-      landscape
       title={title}
       details={[
         filters,
         t('print.printedOn', { date: formatDate(dateStringFromLocal(new Date()), digits) }),
       ]}
     >
-      <table className={styles.table}>
+      <table className={`${styles.table} ${styles.upright}`}>
+        <colgroup>
+          {COLUMN_WIDTHS.map((width, index) => (
+            <col key={index} style={{ width }} />
+          ))}
+        </colgroup>
         <thead>
           <tr>
             <th scope="col">{t('reports.columns.area')}</th>
-            <th scope="col">{t('area.category')}</th>
             <th scope="col">{t('reports.columns.renter')}</th>
-            <th scope="col">{t('area.phone')}</th>
             <th scope="col">{t('areaForm.currency')}</th>
             <th scope="col">{t('reports.columns.rent')}</th>
             <th scope="col">{t('reports.columns.received')}</th>
             <th scope="col">{t('reports.columns.remaining')}</th>
-            <th scope="col">{t('months.title', { year: formatPlain(query.year, digits) })}</th>
-            <th scope="col">{t('area.notes')}</th>
           </tr>
         </thead>
-        <tbody>
-          {rows.map((row) => {
-            const chosen =
-              query.month === null ? null : row.boxes.find((box) => box.month === query.month);
-            return (
-              <tr key={row.id}>
-                <td className={styles.strong}>{areaLabel(row)}</td>
-                {/* Already the label when the place has no name of its own. */}
-                <td>{hasOwnName(row) ? row.categoryName : ''}</td>
-                <td>{row.renterName ?? '—'}</td>
-                <td className={styles.number}>
-                  {row.renterPhone && <PhoneText phone={row.renterPhone} />}
+        {/* One group per place, never split across pages: its figures, then its months, then its notes. */}
+        {rows.map((row) => {
+          const chosen =
+            query.month === null ? null : row.boxes.find((box) => box.month === query.month);
+          const lines = areaLines(row);
+          return (
+            <tbody key={row.id} className={styles.place}>
+              <tr>
+                <td>
+                  <span className={styles.strong}>{lines.title}</span>
+                  {lines.subline && (
+                    <span className={styles.second}>
+                      <bdi>{lines.subline}</bdi>
+                    </span>
+                  )}
+                </td>
+                <td>
+                  {row.renterName ?? '—'}
+                  {row.renterPhone && (
+                    <span className={`${styles.second} ${styles.number}`}>
+                      <PhoneText phone={row.renterPhone} />
+                    </span>
+                  )}
                 </td>
                 <td className={styles.strong}>
                   <PerCurrency items={row.figures}>
@@ -148,25 +165,43 @@ function ReportPaper({ query }: { query: ReportQuery }) {
                     )}
                   </PerCurrency>
                 </td>
-                <td>
-                  <MonthBoxes boxes={row.boxes} year={query.year} compact selected={query.month} />
-                  <span className={styles.status}>
-                    {chosen
-                      ? t(`months.status.${monthWord(chosen)}`)
-                      : t(`months.summary.${row.summary}`)}
-                  </span>
-                </td>
-                <td className={styles.notes} dir="auto">
-                  {row.notes}
+              </tr>
+              <tr>
+                <td colSpan={COLUMNS}>
+                  <div className={styles.months}>
+                    <span className={styles.strip}>
+                      <MonthBoxes
+                        boxes={row.boxes}
+                        year={query.year}
+                        compact
+                        selected={query.month}
+                      />
+                    </span>
+                    <span className={styles.strong}>
+                      {chosen
+                        ? t(`months.status.${monthWord(chosen)}`)
+                        : t(`months.summary.${row.summary}`)}
+                    </span>
+                  </div>
                 </td>
               </tr>
-            );
-          })}
-        </tbody>
+              {/* The notes get the whole width, so they are never squeezed (the business, 2026-11-01). */}
+              {row.notes && (
+                <tr>
+                  <td colSpan={COLUMNS} className={styles.notes}>
+                    <span className={styles.strong}>{t('area.notes')}: </span>
+                    {/* Notes in another language keep their own direction, the label stays in place. */}
+                    <bdi>{row.notes}</bdi>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          );
+        })}
         <tfoot>
           {report.state.data.totals.map((total) => (
             <tr key={total.currency}>
-              <th scope="row" colSpan={4}>
+              <th scope="row" colSpan={2}>
                 {t('reports.total', {
                   currency: t(`currency.${total.currency}`),
                   number: formatPlain(total.areas, digits),
@@ -186,7 +221,6 @@ function ReportPaper({ query }: { query: ReportQuery }) {
                   withCurrency={false}
                 />
               </td>
-              <td colSpan={2} />
             </tr>
           ))}
         </tfoot>
