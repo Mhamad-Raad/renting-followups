@@ -18,7 +18,7 @@ import { PrintFrame } from './PrintFrame';
 import { usePrintReady } from './printPage';
 
 /** The share of the table's width each column gets; the notes have the most room of the text. */
-const COLUMN_WIDTHS = ['15%', '7%', '10%', '9%', '4.5%', '6.5%', '7%', '7%', '21%', '13.5%'];
+const COLUMN_WIDTHS = ['15%', '7%', '12%', '4.5%', '6.5%', '7%', '7%', '21%', '20.5%'];
 
 /**
  * The upright A4 page's writing area in mm (print.css: margins 14mm and 12mm),
@@ -120,7 +120,6 @@ export function ReportPaper({ query, preview = false }: { query: ReportQuery; pr
                   <th scope="col">{t('reports.columns.area')}</th>
                   <th scope="col">{t('area.category')}</th>
                   <th scope="col">{t('reports.columns.renter')}</th>
-                  <th scope="col">{t('area.phone')}</th>
                   <th scope="col">{t('areaForm.currency')}</th>
                   <th scope="col">{t('reports.columns.rent')}</th>
                   <th scope="col">{t('reports.columns.received')}</th>
@@ -140,7 +139,7 @@ export function ReportPaper({ query, preview = false }: { query: ReportQuery; pr
                 <tfoot>
                   {totals.map((total) => (
                     <tr key={total.currency}>
-                      <th scope="row" colSpan={4}>
+                      <th scope="row" colSpan={3}>
                         {t('reports.total', {
                           currency: t(`currency.${total.currency}`),
                           number: formatPlain(total.areas, digits),
@@ -211,8 +210,12 @@ function PlaceRow({ row, query }: { row: ReportRow; query: ReportQuery }) {
       </td>
       <td>
         <bdi>{row.renterName ?? '—'}</bdi>
+        {row.renterPhone && (
+          <span className={`${styles.second} ${styles.number}`}>
+            <PhoneText phone={row.renterPhone} />
+          </span>
+        )}
       </td>
-      <td className={styles.number}>{row.renterPhone && <PhoneText phone={row.renterPhone} />}</td>
       <td className={styles.strong}>
         <PerCurrency items={row.figures}>{(part) => t(`currency.${part.currency}`)}</PerCurrency>
       </td>
