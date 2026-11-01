@@ -214,7 +214,7 @@ Numbers display as thousands-separated. IQD has no decimals; USD shows 2 decimal
 Button: **Record Payment**, always visible on the area page and on rows of the "Needs attention" list.
 
 Form (large, single column):
-1. **From which month** (defaults to the oldest month that is not paid; year + month number selectors). It offers no month before the **current renter's first month** (the month they started), and the main process refuses one (`before_renter`): a renter pays only from the month they came *(the business, 2026-11-01)*. Editing a saved receipt that already starts earlier may keep its start. Without a current renter there is no such limit.
+1. **From which month** (defaults to the oldest month that is not paid; year + month number selectors). It offers no month before the **current renter's first month** (the month they started), and the main process refuses one (`before_renter`): a renter pays only from the month they came *(the business, 2026-11-01)*. Editing a saved receipt that already starts earlier may keep its start. Without a current renter there is no such limit, and **Record past payment** has none either: a past record is history and may pay an earlier renter's months (needed to bring in old notebooks).
 2. **How many months** (a number with − and + buttons, starting at 1; it can also be typed). There is no amount to type: the amount is worked out from the months *(owner's choice, 2026-11-01)*.
 3. **Date received** (defaults to today).
 4. **Note** (optional).

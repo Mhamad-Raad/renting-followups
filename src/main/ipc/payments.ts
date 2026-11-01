@@ -22,8 +22,11 @@ export function registerPaymentIpc({
   handle('payments:suggestedStart', areaPaymentsQuerySchema, ({ areaId }) =>
     payments.suggestedStart(areaId, businessToday().month),
   );
-  handle('payments:preview', paymentPreviewSchema, ({ areaId, monthCount, from, receiptId }) =>
-    payments.preview(areaId, monthCount, from, businessToday().month, receiptId),
+  handle(
+    'payments:preview',
+    paymentPreviewSchema,
+    ({ areaId, monthCount, from, receiptId, isBackfill }) =>
+      payments.preview(areaId, monthCount, from, businessToday().month, receiptId, isBackfill),
   );
   handle('payments:create', paymentCreateSchema, (input) =>
     payments.create(input, businessToday()),

@@ -695,6 +695,40 @@ describe('months without a renter (the business, 2026-11-01)', () => {
     });
   });
 
+  it("records an earlier renter's months as past records after a new renter came in", () => {
+    // The first renter from January, a new one from July: January–June are the first renter's.
+    const id = placeWithRenterFrom('2026-01-01');
+    repos.priceChanges.changeRenter({
+      areaId: id,
+      fullName: 'Aram Ali',
+      phone: '',
+      startedOn: '2026-07-01',
+      monthlyPrice: RENT,
+    });
+    const january = { year: 2026, month: 1 };
+    expect(repos.payments.preview(id, 6, january, NOVEMBER.month, null, true)).toMatchObject({
+      ok: true,
+    });
+    const past = repos.payments.create(
+      {
+        areaId: id,
+        isBackfill: true,
+        monthCount: 6,
+        from: january,
+        paidOn: '2026-06-30',
+        note: '',
+      },
+      NOVEMBER,
+    );
+    expect(past).toMatchObject({ ok: true, receiptNumber: null });
+    expect(boxes(id)?.slice(0, 6)).toEqual(Array<string>(6).fill('paid'));
+    // A normal payment still starts from the new renter's first month.
+    expect(repos.payments.preview(id, 1, january, NOVEMBER.month, null)).toEqual({
+      ok: false,
+      reason: 'before_renter',
+    });
+  });
+
   it("pays from the renter's first month only", () => {
     const id = placeWithRenterFrom('2026-09-15');
     expect(repos.payments.suggestedStart(id, NOVEMBER.month)).toEqual({ year: 2026, month: 9 });

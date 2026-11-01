@@ -28,6 +28,8 @@ export const paymentPreviewSchema = z
     from: yearMonthSchema,
     /** When editing, the receipt being changed: its own months count as open again. */
     receiptId: id.nullable(),
+    /** A past record: history, so it may start before the current renter's first month. */
+    isBackfill: z.boolean(),
   })
   .strict();
 export type PaymentPreviewQuery = z.infer<typeof paymentPreviewSchema>;

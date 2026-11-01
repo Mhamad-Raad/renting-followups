@@ -121,7 +121,7 @@ export function createPaymentRepository(
   /**
    * The first month a payment may pay: the current renter's first month, so
    * no one pays for a month before their renter started (owner's request,
-   * 2026-11-01). A receipt being edited may still start where it already does,
+   * 2026-11-01). Past records and single month boxes are not limited (see `plan`'s `anyStart`). A receipt being edited may still start where it already does,
    * for a receipt saved before this rule or for an earlier renter. Null while
    * the place has no renter: an earlier renter's old debts can then be paid.
    */
@@ -183,6 +183,7 @@ export function createPaymentRepository(
       from: YearMonth,
       today: YearMonth,
       receiptId: number | null,
+      isBackfill = false,
     ): AllocationResult | null {
       const area = selectAreaCurrency.get(areaId);
       if (!area) return null;
@@ -190,7 +191,8 @@ export function createPaymentRepository(
       const found = receiptId === null ? undefined : selectReceipt.get(receiptId);
       const receipt = found?.area_id === areaId ? found : undefined;
       const currency = receipt?.currency ?? currencyFrom(areaId, from, area.currency);
-      const planned = plan(areaId, monthCount, from, today, currency, receipt?.id ?? 0);
+      const pastRecord = isBackfill || receipt?.is_backfill === 1;
+      const planned = plan(areaId, monthCount, from, today, currency, receipt?.id ?? 0, pastRecord);
       if (!receipt) return planned;
       const kept = keptMonths(receipt.id, monthCount, from);
       if (!kept) {
@@ -228,7 +230,8 @@ export function createPaymentRepository(
         today.month,
         currency,
         0,
-        input.monthBox === true && input.monthCount === 1,
+        // A past record is history (an earlier renter's months too), so it may start anywhere.
+        input.isBackfill || (input.monthBox === true && input.monthCount === 1),
       );
       if (!planned.ok) return { ok: false, reason: planned.reason };
       // A month box pays that month itself, never a later one in its place.
@@ -279,6 +282,7 @@ export function createPaymentRepository(
           today.month,
           before.currency,
           input.id,
+          before.is_backfill === 1,
         );
         if (!planned.ok) return { ok: false, reason: planned.reason };
         months = atOwnRent(input.id, planned.months);
