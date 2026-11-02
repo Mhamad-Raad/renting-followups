@@ -104,6 +104,14 @@
   white-space: pre-wrap;
 }
 
+/* Very long notes stop with "…" after 30 lines, so a row never runs past its page (full text on screen and in Excel). */
+.notes bdi {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 30;
+}
+
 /* The small line in a cell: the address under the place, the phone under the renter. */
 .second {
   display: block;

@@ -120,7 +120,13 @@ test('the sideways report keeps every row and the footer on its pages', async ()
           renter: { fullName: 'Karwan', phone: '0750 123 4567', startedOn: '2026-01-01' },
           address: n % 2 ? 'Main street' : '',
           contractStart: null,
-          notes: n % 3 ? '' : 'Pays in cash at the start of each month. '.repeat(3),
+          // The first place has the longest notes allowed: its row must still fit on a page.
+          notes:
+            n === 0
+              ? 'A very long note about this place. '.repeat(140).slice(0, 5000)
+              : n % 3
+                ? ''
+                : 'Pays in cash at the start of each month. '.repeat(3),
         });
       }
     });
