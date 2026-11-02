@@ -291,6 +291,9 @@ function SidewaysPages<T>({ heading, rows, table, footer, onLaidOut }: SidewaysP
       const columnNames = sheet?.tHead?.offsetHeight ?? 0;
       setLaidOut({ rows, pages: sharePages(rows, heights, part('heading'), columnNames, end) });
     };
+    // Laying the hidden table out first makes the browser start loading the fonts its text needs,
+    // so the heights are measured in the chosen font, not a fallback.
+    box.getBoundingClientRect();
     void document.fonts.ready.then(() => {
       layOut();
       if (!cancelled) latestDone.current();
