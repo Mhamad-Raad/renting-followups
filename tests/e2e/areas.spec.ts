@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
 import { phoneForDisplay } from '../../src/shared/digits';
 import en from '../../src/renderer/i18n/en.json' with { type: 'json' };
 import {
@@ -40,6 +40,48 @@ async function createAreasThroughIpc(page: Page, names: string[], categoryName =
     [names, categoryName] as const,
   );
 }
+
+/** Sets the main process clock to `time` (it keeps running from there). */
+async function setMainClock(app: ElectronApplication, time: number) {
+  await app.evaluate((_electron, target) => {
+    const holder = globalThis as unknown as { realDate?: DateConstructor; Date: DateConstructor };
+    const Real = holder.realDate ?? Date;
+    holder.realDate = Real;
+    const offset = target - Real.now();
+    class Shifted extends Real {
+      constructor(...args: unknown[]) {
+        if (args.length === 0) super(Real.now() + offset);
+        else super(...(args as [string]));
+      }
+      static override now() {
+        return Real.now() + offset;
+      }
+    }
+    holder.Date = Shifted as DateConstructor;
+  }, time);
+}
+
+test('the Areas list left open past New Year moves on to the new year', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    await createAreasThroughIpc(page, ['Shop 1']);
+    const newYearsEve = new Date(2026, 11, 31, 23, 59, 0).getTime();
+    await setMainClock(app, newYearsEve);
+    await page.clock.install({ time: newYearsEve });
+    await reloadApp(page);
+    await page.getByRole('link', { name: en.nav.areas }).click();
+    await expect(page.getByRole('list', { name: 'Months of 2026' })).toBeVisible();
+
+    // Two minutes later it is 2027: the open list loads the new year by itself.
+    await setMainClock(app, newYearsEve + 120_000);
+    await page.clock.fastForward(120_000);
+    await expect(page.getByRole('list', { name: 'Months of 2027' })).toBeVisible();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
 
 test('with one category chosen, the table looks the same as under All', async () => {
   const dataDir = createDataDir();

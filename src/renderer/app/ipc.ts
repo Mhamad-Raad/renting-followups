@@ -8,6 +8,7 @@ import {
   type IpcResult,
 } from '@shared/ipc';
 import { announceDataChanged } from './dataChanged';
+import { useNewMonth } from './newMonth';
 
 /** Calls the main process. Never throws: a broken bridge becomes an 'unexpected' error. */
 export async function callIpc<C extends IpcChannel>(
@@ -27,8 +28,8 @@ export type QueryState<T> =
   { status: 'loading' } | { status: 'ready'; data: T } | { status: 'error'; error: IpcErrorCode };
 
 /**
- * Loads data from the main process when the component appears and whenever
- * the input changes. Answers that arrive after the component is gone, or after
+ * Loads data from the main process when the component appears, whenever
+ * the input changes, and again when a new month starts while it is open. Answers that arrive after the component is gone, or after
  * a newer request, are ignored, so there are no stale updates or leaks.
  */
 export function useIpcQuery<C extends IpcChannel>(channel: C, ...args: InvokeArgs<C>) {
@@ -61,6 +62,7 @@ export function useIpcQuery<C extends IpcChannel>(channel: C, ...args: InvokeArg
   }, []);
   /** Loads again while the current data stays on screen (after a change was saved). */
   const refresh = useCallback(() => setReloadCount((count) => count + 1), []);
+  useNewMonth(refresh);
   /** Replaces the loaded data, for example with the result of a save, or derives it from the current data. */
   const setData = useCallback(
     (next: IpcOutput<C> | ((current: IpcOutput<C>) => IpcOutput<C>)) =>

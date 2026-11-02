@@ -6,6 +6,7 @@ import { CrashScreen } from './CrashScreen';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useIpcQuery } from './ipc';
 import styles from './Layout.module.css';
+import { useMonthWatch } from './newMonth';
 import { Sidebar } from './Sidebar';
 
 /**
@@ -17,6 +18,7 @@ export function Layout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  useMonthWatch();
   // Checked once when the app opens: money received "after today" means the clock is behind.
   const clock = useIpcQuery('clock:check');
   return (
