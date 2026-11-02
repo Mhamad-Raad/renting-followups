@@ -29,11 +29,11 @@ export function Layout() {
       <Sidebar />
       <StartupReminders />
       <main className={styles.main}>
-        {clock.state.status === 'ready' && clock.state.data.futureDate && (
+        {clock.state.status === 'ready' && clock.state.data.future && (
           <div className={styles.warning}>
             <Notice tone="warning">
-              {t('clock.wrong', {
-                date: formatDate(clock.state.data.futureDate, settings.digitStyle),
+              {t(clock.state.data.future.kind === 'backup' ? 'clock.wrongBackup' : 'clock.wrong', {
+                date: formatDate(clock.state.data.future.date, settings.digitStyle),
               })}
             </Notice>
           </div>

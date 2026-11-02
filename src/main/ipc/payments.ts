@@ -45,9 +45,14 @@ export function registerPaymentIpc({
   // The latest such date is named, so the owner can find it once the clock is right again.
   handle('clock:check', z.undefined(), () => {
     const today = businessToday().date;
-    const future = [paid.latestPaidOn(), backupSettings.lastBackupOn()]
-      .filter((date): date is DateString => date !== null && date > today)
-      .sort();
-    return { futureDate: future.at(-1) ?? null };
+    const dated = [
+      { date: paid.latestPaidOn(), kind: 'payment' as const },
+      { date: backupSettings.lastBackupOn(), kind: 'backup' as const },
+    ].filter(
+      (item): item is { date: DateString; kind: 'payment' | 'backup' } =>
+        item.date !== null && item.date > today,
+    );
+    const latest = dated.sort((a, b) => a.date.localeCompare(b.date)).at(-1);
+    return { future: latest ?? null };
   });
 }

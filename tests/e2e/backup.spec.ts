@@ -7,8 +7,9 @@ import {
   createDataDir,
   launchApp,
   launchUnlocked,
-  removeDataDir,
   reloadApp,
+  removeDataDir,
+  setMainClock,
   TEST_PASSWORD,
 } from './launch';
 
@@ -228,6 +229,30 @@ test('a damaged data file shows the recovery screen, and a backup brings the dat
     expect(kept && existsSync(join(dataDir, 'safety-copies', kept))).toBe(true);
     await third.app.close();
   } finally {
+    removeDataDir(dataDir);
+  }
+});
+
+test('a backup made while the clock was a year ahead is named in the clock warning', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    const ahead = new Date();
+    ahead.setFullYear(ahead.getFullYear() + 1, 2, 15);
+    await setMainClock(app, ahead.getTime());
+    await addArea(page, 'Shop 1');
+    await openSettingsInEnglish(page);
+    const folder = join(dataDir, 'backups');
+    mkdirSync(folder);
+    await backUpFromSettings(app, page, folder);
+
+    // The clock is put right: the warning names the backup's date and says to back up again.
+    await setMainClock(app, Date.now());
+    await reloadApp(page);
+    const date = `15/3/${ahead.getFullYear()}`;
+    await expect(page.getByText(en.clock.wrongBackup.replace('{{date}}', date))).toBeVisible();
+  } finally {
+    await app.close();
     removeDataDir(dataDir);
   }
 });

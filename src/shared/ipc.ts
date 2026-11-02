@@ -127,7 +127,11 @@ export interface IpcContract {
   'payments:void': { input: IdInput; output: PaymentVoidResult };
   'payments:monthTakeOutPreview': { input: AreaMonth; output: MonthTakeOutResult };
   'payments:monthTakeOut': { input: AreaMonth; output: MonthTakeOutResult };
-  'clock:check': { input: undefined; output: { futureDate: DateString | null } };
+  'clock:check': {
+    input: undefined;
+    /** The latest payment or backup dated after today, if any: the computer date looks wrong. */
+    output: { future: { date: DateString; kind: 'payment' | 'backup' } | null };
+  };
   'home:summary': { input: undefined; output: HomeSummary };
   'reports:build': { input: ReportQuery; output: Report };
   'reports:lastFilters': { input: undefined; output: ReportFilters };
