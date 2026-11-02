@@ -96,11 +96,6 @@ export function areaLines(
   };
 }
 
-/** True when the area has its own name, so its category is worth showing under it. */
-export function hasOwnName(area: Pick<AreaNaming, 'name'>): boolean {
-  return area.name !== '';
-}
-
 /** Compares names in the reader's language, with numbers in number order: "Shop 2" before "Shop 10". */
 export function nameCollator(language: string): Intl.Collator {
   return new Intl.Collator(language, { numeric: true });

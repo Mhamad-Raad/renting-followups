@@ -7,7 +7,6 @@ import {
   areaLines,
   compareAreaLabels,
   areaSubline,
-  hasOwnName,
   isEmptyPlace,
   nameCollator,
 } from '@shared/areas';
@@ -150,8 +149,6 @@ describe('creating areas', () => {
     );
     expect(areaSubline({ name: '', categoryName: 'Lands', renterName: 'Aram' })).toBe('Aram');
     expect(areaSubline({ name: '', categoryName: 'Lands', renterName: null })).toBeNull();
-    expect(hasOwnName({ name: 'Shop 1' })).toBe(true);
-    expect(hasOwnName({ name: '' })).toBe(false);
   });
 
   it('refuses a missing or deleted category', () => {
