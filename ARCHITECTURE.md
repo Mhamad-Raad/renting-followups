@@ -117,13 +117,13 @@ Database settings: WAL mode, `foreign_keys = ON`, all multi-row writes inside tr
 `id, name, color (nullable hex), sort_order, deleted_at`
 
 ### areas
-`id, category_id → categories, name, name_normalized, currency ('IQD' | 'USD'), address (nullable), contract_start (nullable date, informational only), notes (text), deleted_at`
+`id, category_id → categories, name, name_normalized, currency ('IQD' | 'USD'), address (nullable), address_normalized, contract_start (nullable date, informational only), notes (text), deleted_at`
 - `currency` is chosen when the area is created and is always the currency of its **newest rent period** (`area_prices.currency`, kept in step by the app). It can be **corrected on Edit until the area has a payment that counts** (cancelled receipts keep their own currency and do not block it); the rent keeps its written number (250,000 dinar becomes 250,000 dollars). From the first payment on, Edit cannot change it. *(Owner's decision, 2026-10-27: a wrongly chosen currency must be fixable.)*
 - A **new renter may pay in another currency** from the month they start (**Change renter**, section 4 renters): the rent period from that month carries the new currency, and earlier months keep theirs. *(Owner's decision, 2026-10-29.)*
 - The area form requires **"Rent starts from" (month number + year, default current month)**. It becomes the first `area_prices` row and decides which months count as applicable.
 - The area name is **optional**: many owners know a place only by its category and its renter. An area without a name is shown everywhere by its **category** as its name, with the renter in their own column beside it (or on the line under it where there is no renter column), so places of one category are told apart by their renter. Lists sort by that name, then by renter. *(Owner's decision, iteration 13; the category replaced the renter as the name on 2026-10-26 at the client's request.)*
 - Area names that are filled in are unique within a category (warn, do not crash). Areas without a name never clash.
-- `name_normalized` supports search (section 9).
+- `name_normalized` and `address_normalized` support search (section 9).
 
 ### area_prices (rent price history)
 `id, area_id, monthly_price (int), currency ('IQD' | 'USD'), effective_from_year, effective_from_month`
@@ -257,7 +257,7 @@ Large password field and one **Open** button. A "Forgot password?" link goes to 
 
 ### 8.3 Areas list
 - Category chips (All + each category, in its colour). Add / edit / delete categories from here.
-- Search box (by area name, renter name, phone), using normalized text matching (section 9).
+- Search box (by area name, address, renter name, phone), using normalized text matching (section 9).
 - Each row: the place in its first column on two lines (`areaLines`, the business, 2026-11-01): the **name with the address under it**; without an address, the name with the category under it; without a name, the category with the address under it; with neither, the category alone. The same first column is used on Reports and Home's list; the printed report has the address under the name and the category in its own column. Then renter name, phone, **currency** (IQD / USD, in its own column, so the amounts beside it are bare numbers lined up on the right), monthly rent, then for the current year: **Total for the year**, **Received**, **Still owed**, the compact 12-box strip with a status word, then **Notes** (two lines at most) and a **⋯ menu** with the area page's actions (Record payment, Record past payment, Edit, Change price and Mark as vacant (not while empty), Change renter, Delete); each opens its form right on the list, without leaving it; Edit opens its own page and returns to the list after saving. Click a row to open the area page.
 - Big **Add area** button and an **Import from Excel** button (section 16).
 - Checkboxes to select several areas, then **Print selected** / **Export selected**.
@@ -317,7 +317,7 @@ Reachable from Settings. Read-only list of the audit log (who/what/when for edit
 - Dates use the Gregorian calendar.
 - Printed documents use the language chosen at print time (default: current app language).
 - **Fonts:** bundle fonts locally (no web fonts). Every bundled font must be checked for the full Sorani character set (ڕ ڵ ۆ ێ ە ڤ پ چ ژ گ ک); a font that lacks a letter must not be offered in Settings.
-- **Search normalization:** searching treats equivalent letters as the same: Arabic ي / Kurdish ی, Arabic ك / Kurdish ک, ه / ە, ة, and ignores diacritics and the tatweel (ـ). Store normalized copies (`name_normalized`, `full_name_normalized`) and normalize the query the same way (`normalizeText.ts`).
+- **Search normalization:** searching treats equivalent letters as the same: Arabic ي / Kurdish ی, Arabic ك / Kurdish ک, ه / ە, ة, and ignores diacritics and the tatweel (ـ). Store normalized copies (`name_normalized`, `address_normalized`, `full_name_normalized`) and normalize the query the same way (`normalizeText.ts`).
 - **Number input parsing** (`parseNumber.ts`): the user may type Western digits (123), Arabic-Indic digits (١٢٣) or Persian digits (۱۲۳), with or without thousands separators (`,` or `٬`) and decimal separators (`.` or `٫`). All must parse to the same value regardless of the digit-style display setting.
 - **Sorting:** sort names with `Intl.Collator` using the locale for the active language (`ckb`, `ar`, `en`).
 - **Mixed text:** phone numbers and amounts inside RTL text must keep correct visual order (use `dir="ltr"` / `<bdi>`). Test printed output and Excel for this.

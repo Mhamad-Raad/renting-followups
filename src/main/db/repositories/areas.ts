@@ -50,14 +50,17 @@ export function createAreaRepository(
        AND deleted_at IS NULL AND id <> ?`,
   );
   const insert = db.prepare<
-    [number, string, string, Currency, string | null, string | null, string]
+    [number, string, string, Currency, string | null, string, string | null, string]
   >(
-    `INSERT INTO areas (category_id, name, name_normalized, currency, address, contract_start, notes)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO areas (category_id, name, name_normalized, currency, address, address_normalized,
+       contract_start, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   );
-  const update = db.prepare<[number, string, string, string | null, string | null, string, number]>(
+  const update = db.prepare<
+    [number, string, string, string | null, string, string | null, string, number]
+  >(
     `UPDATE areas SET category_id = ?, name = ?, name_normalized = ?, address = ?,
-       contract_start = ?, notes = ?
+       address_normalized = ?, contract_start = ?, notes = ?
      WHERE id = ?`,
   );
   const selectHasPayments = db.prepare<[number], { found: number }>(
@@ -138,6 +141,7 @@ export function createAreaRepository(
           normalizeText(input.name),
           input.currency,
           emptyToNull(input.address),
+          normalizeText(input.address),
           input.contractStart,
           input.notes,
         ).lastInsertRowid,
@@ -182,6 +186,7 @@ export function createAreaRepository(
         input.name,
         normalizeText(input.name),
         emptyToNull(input.address),
+        normalizeText(input.address),
         input.contractStart,
         input.notes,
         input.id,

@@ -1,3 +1,4 @@
+import { normalizeText } from '@shared/normalizeText';
 import type { Db } from './connection';
 
 export interface Migration {
@@ -72,6 +73,11 @@ export function migrate(
 
   const pending = migrations.filter((migration) => migration.version > from);
   if (pending.length === 0) return { from, to: from };
+
+  // Migrations can fill search copies of text with the same rules as the app (normalizeText.ts).
+  db.function('normalize_text', { deterministic: true }, (text: unknown) =>
+    normalizeText(typeof text === 'string' ? text : ''),
+  );
 
   // A brand-new database has nothing to protect yet.
   if (from > 0) options.beforeMigrate?.(from);

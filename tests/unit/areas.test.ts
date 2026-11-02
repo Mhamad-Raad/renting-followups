@@ -565,6 +565,27 @@ describe('searching and filtering', () => {
     expect(search('nothing like this')).toEqual([]);
   });
 
+  it('finds a place by its address across letter variants, also after the address is changed', () => {
+    const id = createArea({ name: 'Shop 1', address: 'شەقامی سالم، سلێمانی' });
+    createArea({ name: 'Shop 2', address: '' });
+    const search = (text: string) =>
+      repos.areaViews.list({ search: text, categoryId: null }, TODAY).map((area) => area.name);
+    expect(search('سالم')).toEqual(['Shop 1']);
+    // Typed on an Arabic keyboard: ه for ە and ي for ی.
+    expect(search('شهقامي')).toEqual(['Shop 1']);
+    repos.areas.update({
+      id,
+      categoryId,
+      name: 'Shop 1',
+      address: 'Main street 40',
+      contractStart: null,
+      notes: '',
+      renter: { fullName: 'Karwan Ahmed', phone: '0750 123 4567' },
+    });
+    expect(search('سالم')).toEqual([]);
+    expect(search('main STREET ٤٠')).toEqual(['Shop 1']);
+  });
+
   it('treats % and _ in a search as plain characters', () => {
     createArea({ name: '100% Shop' });
     createArea({ name: 'Other' });

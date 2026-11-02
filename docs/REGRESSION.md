@@ -62,6 +62,7 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] Printed notes longer than 30 lines stop with "…" and the row stays on its page; Excel keeps the full note (end-to-end test).
 - [ ] The Export to PDF preview splits the rows into the same pages at every text size (end-to-end test).
 - [ ] Excel column widths: phone and amounts wide enough, currency narrow, notes widest (unit test).
+- [ ] Areas search finds a place by its address, also typed with Arabic-keyboard letters or Arabic-Indic digits; addresses saved before the update are found too (unit tests).
 - [ ] Change renter: the new renter shows on the list; the old one stays in Renter history with an end date.
 - [ ] Delete an area (with confirmation), then Settings → Deleted items → Restore brings it back.
 - [ ] 200 areas open in under a second; search with Arabic letters (ي ك ه) finds Kurdish names.

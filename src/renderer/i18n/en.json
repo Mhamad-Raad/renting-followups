@@ -160,7 +160,7 @@
     "add": "Add area",
     "actionsFor": "Actions for {{name}}",
     "categories": "Categories",
-    "search": "Search by area, renter or phone",
+    "search": "Search by area, address, renter or phone",
     "all": "All",
     "count": "Areas shown: {{number}}",
     "empty": {

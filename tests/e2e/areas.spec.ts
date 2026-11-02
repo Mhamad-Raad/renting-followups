@@ -83,6 +83,7 @@ test('the first area is added from the empty screen and shows on the list', asyn
     await expect(page.getByLabel(en.areaForm.monthlyRent)).toHaveValue('1,250,000');
     await page.getByLabel(en.areaForm.renterName).fill('Karwan Ahmed');
     await page.getByLabel(en.areaForm.renterPhone).fill('0750 123 4567');
+    await page.getByLabel(new RegExp(`^${en.areaForm.address}`)).fill('Salim street');
     await page.getByRole('button', { name: en.areaForm.save }).click();
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Shop 12');
@@ -93,6 +94,13 @@ test('the first area is added from the empty screen and shows on the list', asyn
     const rows = page.getByRole('row');
     await expect(rows).toHaveCount(2);
     await expect(rows.nth(1)).toContainText('Karwan Ahmed');
+
+    // The search box finds the place by its address.
+    const search = page.getByLabel(en.areas.search);
+    await search.fill('SALIM');
+    await expect(rows).toHaveCount(2);
+    await search.fill('Erbil road');
+    await expect(page.getByText(en.areas.noMatch)).toBeVisible();
   } finally {
     await app.close();
     removeDataDir(dataDir);

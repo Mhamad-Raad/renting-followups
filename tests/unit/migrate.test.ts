@@ -1,3 +1,4 @@
+import { normalizeText } from '@shared/normalizeText';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -227,6 +228,27 @@ describe('real schema upgrades keep existing data', () => {
     expect(db.prepare('SELECT currency FROM areas WHERE id = 1').get()).toEqual({
       currency: 'IQD',
     });
+  });
+
+  it("7: existing addresses get a search copy with the app's letter rules", () => {
+    const db = memoryDb();
+    migrate(db, MIGRATIONS.slice(0, 6));
+    db.prepare(
+      "INSERT INTO categories (id, name, name_normalized) VALUES (1, 'Shops', 'shops')",
+    ).run();
+    const addArea = db.prepare(
+      `INSERT INTO areas (id, category_id, name, name_normalized, currency, address)
+       VALUES (?, 1, ?, ?, 'IQD', ?)`,
+    );
+    addArea.run(1, 'Shop 1', 'shop 1', 'شەقامی  سالم ٤٠');
+    addArea.run(2, 'Shop 2', 'shop 2', null);
+
+    migrate(db, MIGRATIONS.slice(0, 7));
+    expect(db.prepare('SELECT id, address_normalized FROM areas ORDER BY id').all()).toEqual([
+      { id: 1, address_normalized: normalizeText('شەقامی  سالم ٤٠') },
+      { id: 2, address_normalized: '' },
+    ]);
+    expect(normalizeText('شەقامی  سالم ٤٠')).toContain('40');
   });
 });
 
