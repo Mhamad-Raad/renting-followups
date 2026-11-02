@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import en from '../../src/renderer/i18n/en.json' with { type: 'json' };
-import { createDataDir, launchUnlocked, removeDataDir, reloadApp } from './launch';
+import { createDataDir, launchUnlocked, removeDataDir, reloadApp, setMainClock } from './launch';
 
 const RENT = 250_000;
 
@@ -363,6 +363,60 @@ test('a renter pays from the month they came: earlier months are empty and not o
     expect(Math.min(...months)).toBe(start.month);
     const years = (await year.locator('option').allTextContents()).map(Number);
     expect(Math.min(...years)).toBe(start.year);
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
+test('a payment form left open past midnight on New Year keeps what was typed', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    const newYearsEve = new Date(2026, 11, 31, 23, 59, 0).getTime();
+    await setMainClock(app, newYearsEve);
+    await page.clock.install({ time: newYearsEve });
+    await page.evaluate(async () => {
+      await window.api.invoke('settings:update', { language: 'en' });
+      const category = await window.api.invoke('categories:create', { name: 'Shops', color: null });
+      if (!category.ok || !category.data.ok) throw new Error('category failed');
+      await window.api.invoke('areas:create', {
+        categoryId: category.data.id,
+        name: 'Shop 9',
+        currency: 'IQD',
+        monthlyPrice: 250_000,
+        rentStartsFrom: { year: 2026, month: 12 },
+        renter: { fullName: 'Karwan Ahmed', phone: '', startedOn: '2026-12-01' },
+        address: '',
+        contractStart: null,
+        notes: '',
+      });
+    });
+    await reloadApp(page);
+    await page.getByRole('link', { name: en.nav.areas }).click();
+    await page.getByRole('link', { name: 'Shop 9' }).click();
+    await page.getByRole('button', { name: en.area.recordPayment }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: en.paymentDialog.more }).click();
+    await dialog.getByRole('button', { name: en.paymentDialog.more }).click();
+    await dialog.getByLabel(en.paymentDialog.note).fill('Paid by his brother');
+    await expect(dialog.getByText(previewMonth(12, 2026, '250,000'))).toBeVisible();
+
+    // Midnight passes while the form is open: the screens load the new month behind it.
+    await setMainClock(app, newYearsEve + 120_000);
+    await page.clock.fastForward(120_000);
+    await expect(page.getByRole('list', { name: /2026/ }).first()).toBeVisible();
+    await expect(dialog.getByLabel(en.paymentDialog.monthCount)).toHaveValue('3');
+    await expect(dialog.getByLabel(en.paymentDialog.note)).toHaveValue('Paid by his brother');
+    await expect(dialog.getByText(previewMonth(12, 2026, '250,000'))).toBeVisible();
+    await expect(dialog.getByText(previewMonth(2, 2027, '250,000'))).toBeVisible();
+
+    await dialog.getByRole('button', { name: en.common.save, exact: true }).click();
+    await expect(page.getByText('Payment saved. Receipt No. 0001')).toBeVisible();
+    const receipts = await page.evaluate(() =>
+      window.api.invoke('payments:forArea', { areaId: 1, year: 2027, month: null }),
+    );
+    expect(receipts.ok && receipts.data.length).toBe(1);
   } finally {
     await app.close();
     removeDataDir(dataDir);
