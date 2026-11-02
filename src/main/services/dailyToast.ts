@@ -5,10 +5,13 @@ import { businessToday } from './clock';
 /**
  * The optional Windows notification (ARCHITECTURE.md section 11): at most
  * once a day while the app is running, only when something needs attention.
- * The day the app is opened is skipped, because the popup already shows then.
+ * The day the app is opened is skipped, because the popup already shows then,
+ * and it waits for the morning.
  */
 
 const CHECK_EVERY_MS = 60 * 60 * 1000;
+/** No notification before this hour, so an app left running overnight does not show one at midnight. */
+const FIRST_HOUR = 9;
 
 let timer: NodeJS.Timeout | null = null;
 let lastShownOn: DateString | null = null;
@@ -28,7 +31,7 @@ export function startDailyToast({ countReminders, texts, onClick }: DailyToastOp
   lastShownOn = businessToday().date;
   timer = setInterval(() => {
     const today = businessToday().date;
-    if (lastShownOn === today) return;
+    if (lastShownOn === today || new Date().getHours() < FIRST_HOUR) return;
     const count = countReminders();
     if (count === 0) return;
     const notification = new Notification(texts(count));
