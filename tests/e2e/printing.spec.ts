@@ -150,6 +150,19 @@ test('the sideways report keeps every row and the footer on its pages', async ()
         .getByText(/counts/),
     ).toBeAttached();
     await expect(preview.locator('tbody tr')).toHaveCount(40);
+
+    // At the largest screen text size the preview still shares the rows into the PDF's pages.
+    const rowsPerPage = () =>
+      preview
+        .locator('section')
+        .evaluateAll((sections) => sections.map((s) => s.querySelectorAll('tbody tr').length));
+    const normal = await rowsPerPage();
+    await page.evaluate(() => window.api.invoke('settings:update', { fontSize: 'extraLarge' }));
+    await reloadApp(page);
+    await page.getByRole('link', { name: en.nav.reports, exact: true }).click();
+    await page.getByRole('button', { name: en.print.actions.pdf }).click();
+    await expect(preview.getByText('Shop 39').last()).toBeAttached();
+    expect(await rowsPerPage()).toEqual(normal);
   } finally {
     await app.close();
     removeDataDir(dataDir);
