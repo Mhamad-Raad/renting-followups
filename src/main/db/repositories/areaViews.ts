@@ -84,6 +84,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, rent }: Dependen
             renterPhone: row.renter_phone,
             currentPrice: priceForMonth(history, today),
             notes: row.notes,
+            year: today.year,
             months: boxes,
             figures,
             summary,

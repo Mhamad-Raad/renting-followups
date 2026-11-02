@@ -223,6 +223,8 @@ export interface AreaListItem {
   /** This month's price; 0 = vacant, null = rent has not started yet. */
   currentPrice: number | null;
   notes: string;
+  /** The year `months` and `figures` are for: the current year when the list was loaded. */
+  year: number;
   /** The 12 months of the current year. */
   months: MonthBox[];
   /** Rent, total, received and still owed for the current year, per currency used in it. */
