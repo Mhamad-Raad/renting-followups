@@ -47,3 +47,18 @@ Scope:
 
 - **Safety copies:** one is made before each restore and each upgrade, and none is ever deleted. They are small, a few MB each, so this is harmless for years. Keep them all, or keep only the newest 10?
 - **Reports area picker:** it searches by name and renter, not by address. Should it also find the address?
+
+## Second pass: review of the fixes above
+
+An independent reviewer checked every screen that loads data, because the new-month reload touches all of them. It found nothing serious. Forms keep what is typed, nothing is saved twice, and no query writes. A new end-to-end test confirms this: a payment form left open past midnight on New Year keeps its month count and note, and saves one receipt.
+
+Fixed, each in its own commit with a test that fails without the fix:
+
+1. **Medium: the startup popup could open in the middle of work.** This happened when the app opened with nothing to report and a reminder appeared at the start of a new month. The popup now decides once, from its first answer (`fix(notifications): a new month never opens the startup popup mid-work`).
+2. **Medium: the clock warning said "payment" when the future date was a backup's.** It now names which one, and for a backup says to make a new one once the date is right (`fix(app): the clock warning says when the date is a backup's`).
+3. **Low: a failed background reload replaced the screen with Try again.** It could also wipe a form being filled in. The data on screen now stays (`fix(app): a failed background reload keeps the screen as it was`).
+4. **Low: Home's Print report used the computer's year,** not the year its cards show (`fix(home): Print report uses the year the cards show`).
+
+Left as is: safety copies named in local time could repeat during a daylight-saving hour. Iraq has had no daylight saving since 2008, so this cannot happen there.
+
+Checks: 736 unit tests and 73 end-to-end tests pass.
