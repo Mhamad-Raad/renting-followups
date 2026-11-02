@@ -112,6 +112,20 @@ describe('Excel report', () => {
     expect(sheet?.getRow(6).getCell(7).numFmt).toBe('#,##0.00');
   });
 
+  it('gives each column a width that fits it: phone and amounts wide, currency narrow, notes widest', () => {
+    const sheet = buildReportWorkbook(REPORT, QUERY, { ...OPTIONS, language: 'en' }).worksheets[0];
+    const names = (sheet?.getRow(4).values ?? []) as unknown[];
+    const width = (name: string) => sheet?.getColumn(names.indexOf(name)).width;
+    expect(sheet?.columnCount).toBe(22);
+    expect(width('Address')).toBe(22);
+    expect(width('Phone')).toBe(16);
+    expect(width('Currency')).toBe(10);
+    expect(width('Still owed')).toBe(16);
+    expect(width('1')).toBe(12);
+    expect(width('12')).toBe(12);
+    expect(width('Notes')).toBe(40);
+  });
+
   it('names an area without a name by its category', () => {
     const [shop, office] = REPORT.rows;
     if (!shop || !office) throw new Error('fixture changed');

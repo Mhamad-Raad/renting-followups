@@ -7,6 +7,7 @@ import {
   removeDataDir,
   type LaunchedApp,
   reloadApp,
+  setMainClock,
 } from './launch';
 
 /** Starts unlocked, in English (so the test reads like the screens), on the Areas page. */
@@ -40,6 +41,28 @@ async function createAreasThroughIpc(page: Page, names: string[], categoryName =
     [names, categoryName] as const,
   );
 }
+
+test('the Areas list left open past New Year moves on to the new year', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await openAreas(dataDir);
+  try {
+    await createAreasThroughIpc(page, ['Shop 1']);
+    const newYearsEve = new Date(2026, 11, 31, 23, 59, 0).getTime();
+    await setMainClock(app, newYearsEve);
+    await page.clock.install({ time: newYearsEve });
+    await reloadApp(page);
+    await page.getByRole('link', { name: en.nav.areas }).click();
+    await expect(page.getByRole('list', { name: 'Months of 2026' })).toBeVisible();
+
+    // Two minutes later it is 2027: the open list loads the new year by itself.
+    await setMainClock(app, newYearsEve + 120_000);
+    await page.clock.fastForward(120_000);
+    await expect(page.getByRole('list', { name: 'Months of 2027' })).toBeVisible();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
 
 test('with one category chosen, the table looks the same as under All', async () => {
   const dataDir = createDataDir();
@@ -83,6 +106,7 @@ test('the first area is added from the empty screen and shows on the list', asyn
     await expect(page.getByLabel(en.areaForm.monthlyRent)).toHaveValue('1,250,000');
     await page.getByLabel(en.areaForm.renterName).fill('Karwan Ahmed');
     await page.getByLabel(en.areaForm.renterPhone).fill('0750 123 4567');
+    await page.getByLabel(new RegExp(`^${en.areaForm.address}`)).fill('Salim street');
     await page.getByRole('button', { name: en.areaForm.save }).click();
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Shop 12');
@@ -93,6 +117,13 @@ test('the first area is added from the empty screen and shows on the list', asyn
     const rows = page.getByRole('row');
     await expect(rows).toHaveCount(2);
     await expect(rows.nth(1)).toContainText('Karwan Ahmed');
+
+    // The search box finds the place by its address.
+    const search = page.getByLabel(en.areas.search);
+    await search.fill('SALIM');
+    await expect(rows).toHaveCount(2);
+    await search.fill('Erbil road');
+    await expect(page.getByText(en.areas.noMatch)).toBeVisible();
   } finally {
     await app.close();
     removeDataDir(dataDir);

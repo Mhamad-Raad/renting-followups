@@ -96,11 +96,6 @@ export function areaLines(
   };
 }
 
-/** True when the area has its own name, so its category is worth showing under it. */
-export function hasOwnName(area: Pick<AreaNaming, 'name'>): boolean {
-  return area.name !== '';
-}
-
 /** Compares names in the reader's language, with numbers in number order: "Shop 2" before "Shop 10". */
 export function nameCollator(language: string): Intl.Collator {
   return new Intl.Collator(language, { numeric: true });
@@ -228,6 +223,8 @@ export interface AreaListItem {
   /** This month's price; 0 = vacant, null = rent has not started yet. */
   currentPrice: number | null;
   notes: string;
+  /** The year `months` and `figures` are for: the current year when the list was loaded. */
+  year: number;
   /** The 12 months of the current year. */
   months: MonthBox[];
   /** Rent, total, received and still owed for the current year, per currency used in it. */

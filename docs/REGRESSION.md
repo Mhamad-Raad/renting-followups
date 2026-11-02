@@ -59,6 +59,17 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] First column on the Areas list, Reports and Home: name with the address under it; no address → the category; no name → the category with the address; neither → the category alone. A place without an address never breaks a screen.
 - [ ] Export to PDF opens a pop-up with the report on white paper (also in dark mode), with Save as PDF, Print and Close; nothing is saved until Save as PDF.
 - [ ] The printed report is an upright A4 page with the table turned sideways along the long edge, one row per place with all columns and the 12 months on one line; column names on every page, no row split, totals at the end, upright page numbers, no empty last page. Excel has an Address column.
+- [ ] Printed notes longer than 30 lines stop with "…" and the row stays on its page; Excel keeps the full note (end-to-end test).
+- [ ] The Export to PDF preview splits the rows into the same pages at every text size (end-to-end test).
+- [ ] Excel column widths: phone and amounts wide enough, currency narrow, notes widest (unit test).
+- [ ] Areas search finds a place by its address, also typed with Arabic-keyboard letters or Arabic-Indic digits; addresses saved before the update are found too (unit tests).
+- [ ] The Areas list left open past New Year shows and pays the new year by itself (end-to-end test with a moved clock).
+- [ ] A payment or backup saved while the clock was ahead makes the clock warning name that date, and say which it was (end-to-end tests).
+- [ ] A payment form open past midnight on New Year keeps what was typed and saves one receipt (end-to-end test).
+- [ ] A new month starting while the app is open never opens the startup popup (end-to-end test).
+- [ ] If a screen cannot load again when a month starts, it stays as it was, with no Try again (end-to-end test).
+- [ ] Six years and a quarter of use with 200 places keep every figure, colour and receipt right (unit test, `longRun.test.ts`).
+- [ ] _manual_ With the app left open overnight on Windows, the daily notification comes after 9:00, not at midnight.
 - [ ] Change renter: the new renter shows on the list; the old one stays in Renter history with an end date.
 - [ ] Delete an area (with confirmation), then Settings → Deleted items → Restore brings it back.
 - [ ] 200 areas open in under a second; search with Arabic letters (ي ك ه) finds Kurdish names.

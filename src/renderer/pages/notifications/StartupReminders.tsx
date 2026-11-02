@@ -30,7 +30,13 @@ export function StartupReminders() {
   // The layout, and so this popup, stays on screen for the whole session: it shows once per start.
   const [dismissed, setDismissed] = useState(false);
   const items = reminders.state.status === 'ready' ? reminders.state.data : [];
-  const open = !dismissed && items.length > 0;
+  // Decided by the first answer only: the list loads again when a new month starts,
+  // and that must never open the popup in the middle of the owner's work.
+  const [shownOnStart, setShownOnStart] = useState<boolean | null>(null);
+  if (shownOnStart === null && reminders.state.status !== 'loading') {
+    setShownOnStart(items.length > 0);
+  }
+  const open = shownOnStart === true && !dismissed && items.length > 0;
   // The backup reminder has its own box at the top, so a long late-rent list never hides it.
   const backup = items.find((item) => item.kind === 'backup');
   const areaItems = items.filter(isAreaReminder);

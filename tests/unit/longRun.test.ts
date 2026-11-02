@@ -7,16 +7,16 @@ import { totalsByCurrency } from '../../src/main/services/monthStatus';
 import { areaInput, createTestDatabase } from './helpers';
 
 /**
- * Four years of daily use, month by month (2026–2029, with the leap year
- * 2028): payments of one or several months, past records, month boxes,
+ * Six years and a quarter of daily use, month by month (January 2026 to
+ * March 2032, with the leap years 2028 and 2032): payments of one or several months, past records, month boxes,
  * renters leaving and coming, rent changes, receipt edits and cancellations.
  * After every month the money and the screens must still add up. Random but
  * repeatable (seeded), on a real SQLite database.
  */
 
-const AREAS = 150;
+const AREAS = 200;
 const FIRST = { year: 2026, month: 1 };
-const LAST = { year: 2029, month: 12 };
+const LAST = { year: 2032, month: 3 };
 
 function seeded(seed: number) {
   let state = seed;
@@ -33,7 +33,7 @@ function seeded(seed: number) {
   };
 }
 
-describe('four years of use', () => {
+describe('six years of use', () => {
   it('keeps every figure, colour and receipt right, month after month', () => {
     const { db, repos } = createTestDatabase();
     const random = seeded(2026);
@@ -265,12 +265,12 @@ describe('four years of use', () => {
     }
 
     // Busy years: the scenario really happened, not just a quiet run.
-    expect(counted.payments).toBeGreaterThan(4_000);
-    expect(counted.renters).toBeGreaterThan(100);
-    expect(counted.vacant).toBeGreaterThan(50);
-    expect(counted.edits + counted.voids).toBeGreaterThan(50);
+    expect(counted.payments).toBeGreaterThan(10_000);
+    expect(counted.renters).toBeGreaterThan(250);
+    expect(counted.vacant).toBeGreaterThan(125);
+    expect(counted.edits + counted.voids).toBeGreaterThan(125);
 
-    // The file is healthy, and the screens are still quick after four years.
+    // The file is healthy, and the screens are still quick after six years.
     expect(db.prepare('PRAGMA integrity_check').pluck().get()).toBe('ok');
     expect(db.prepare('PRAGMA foreign_key_check').all()).toEqual([]);
     const started = performance.now();
@@ -291,5 +291,5 @@ describe('four years of use', () => {
     );
     expect(performance.now() - started).toBeLessThan(1_000);
     db.close();
-  }, 300_000);
+  }, 600_000);
 });

@@ -50,12 +50,13 @@ export function createAreaViewRepository(db: Db, { areas, paid, rent }: Dependen
        AND (a.name_normalized LIKE @namePattern ESCAPE '\\'
          -- The category is the name of a place without one, so it is searched too.
          OR c.name_normalized LIKE @namePattern ESCAPE '\\'
+         OR a.address_normalized LIKE @namePattern ESCAPE '\\'
          OR r.full_name_normalized LIKE @namePattern ESCAPE '\\'
          OR (@phonePattern IS NOT NULL AND r.phone_digits LIKE @phonePattern ESCAPE '\\'))`,
   );
 
   return {
-    /** Areas in use, optionally in one category and matching a search on area name, renter name or phone. */
+    /** Areas in use, optionally in one category and matching a search on area name, address, renter name or phone. */
     list({ search, categoryId }: AreaListQuery, today: YearMonth): AreaListItem[] {
       const query = normalizeText(search);
       const digits = normalizePhone(search);
@@ -83,6 +84,7 @@ export function createAreaViewRepository(db: Db, { areas, paid, rent }: Dependen
             renterPhone: row.renter_phone,
             currentPrice: priceForMonth(history, today),
             notes: row.notes,
+            year: today.year,
             months: boxes,
             figures,
             summary,

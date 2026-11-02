@@ -52,14 +52,13 @@ function sortedIds(state: QueryState<AreaListItem[]>): number[] {
 
 interface AreaStripProps {
   area: AreaListItem;
-  year: number;
   onPick: (area: AreaListItem, box: MonthBox) => void;
 }
 
 /** One row's month strip, drawn again only when that area's months change (not on every key press). */
-const AreaStrip = memo(function AreaStrip({ area, year, onPick }: AreaStripProps) {
+const AreaStrip = memo(function AreaStrip({ area, onPick }: AreaStripProps) {
   const pick = useCallback((box: MonthBox) => onPick(area, box), [area, onPick]);
-  return <MonthBoxes boxes={area.months} year={year} compact onPick={pick} />;
+  return <MonthBoxes boxes={area.months} year={area.year} compact onPick={pick} />;
 });
 
 /** The ⋯ menu of one row: the area page's actions, opened here on the list. Edit is its own page. */
@@ -100,8 +99,9 @@ export function AreasPage() {
   const query = useDebouncedValue(search, SEARCH_DELAY_MS);
   const categories = useIpcQuery('categories:list');
   const areas = useIpcQuery('areas:list', { search: query, categoryId });
-  // The list shows the current year; the main process decides each month's status.
-  const year = new Date().getFullYear();
+  // The list shows the year it was loaded for (the main process decides it and each month's
+  // status), so a list left open past New Year never pays a month of the wrong year.
+  const year = areas.state.status === 'ready' ? areas.state.data[0]?.year : undefined;
   const [pickOutcome, setPickOutcome] = useState<MonthPickOutcome | null>(null);
   const { refresh: refreshAreas } = areas;
   const monthPick = useMonthPick((outcome) => {
@@ -129,8 +129,8 @@ export function AreasPage() {
   const editArea = (areaId: number) =>
     void navigate(editAreaLink(areaId), { state: { returnTo: '/areas' } });
   const pickMonth = useCallback(
-    (area: AreaListItem, box: MonthBox) => void pick({ areaId: area.id, year, box }),
-    [pick, year],
+    (area: AreaListItem, box: MonthBox) => void pick({ areaId: area.id, year: area.year, box }),
+    [pick],
   );
 
   // Only ticked areas that are still shown count, so a search never prints hidden areas.
@@ -227,7 +227,7 @@ export function AreasPage() {
           <ReportOutputButtons
             printLabel={t('print.actions.printSelected')}
             query={{
-              year: new Date().getFullYear(),
+              year: year ?? new Date().getFullYear(),
               month: null,
               categoryId: null,
               currency: null,
@@ -376,7 +376,7 @@ export function AreasPage() {
                       </td>
                       <td>
                         <div className={styles.year}>
-                          <AreaStrip area={area} year={year} onPick={pickMonth} />
+                          <AreaStrip area={area} onPick={pickMonth} />
                           <YearSummaryText summary={area.summary} />
                         </div>
                       </td>

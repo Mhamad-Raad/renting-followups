@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
-import { createDataDir, launchUnlocked, removeDataDir, reloadApp } from './launch';
+import en from '../../src/renderer/i18n/en.json' with { type: 'json' };
+import { createDataDir, launchUnlocked, removeDataDir, reloadApp, setMainClock } from './launch';
 
 async function rootAttributes(page: Page) {
   return page.evaluate(() => {
@@ -157,6 +158,51 @@ test('the sidebar always shows every page by icon and name, Settings last', asyn
     expect(
       (settings?.y ?? 0) - ((notifications?.y ?? 0) + (notifications?.height ?? 0)),
     ).toBeGreaterThan(100);
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
+test('a payment saved while the clock was a year ahead is named in the clock warning', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    const ahead = new Date();
+    ahead.setFullYear(ahead.getFullYear() + 1, 2, 15);
+    await setMainClock(app, ahead.getTime());
+    await page.evaluate(async (year) => {
+      await window.api.invoke('settings:update', { language: 'en' });
+      const category = await window.api.invoke('categories:create', { name: 'Shops', color: null });
+      if (!category.ok || !category.data.ok) throw new Error('category failed');
+      const area = await window.api.invoke('areas:create', {
+        categoryId: category.data.id,
+        name: 'Shop 1',
+        currency: 'IQD',
+        monthlyPrice: 250_000,
+        rentStartsFrom: { year, month: 1 },
+        renter: { fullName: 'Karwan', phone: '', startedOn: `${year}-01-01` },
+        address: '',
+        contractStart: null,
+        notes: '',
+      });
+      if (!area.ok || !area.data.ok) throw new Error('area failed');
+      const paid = await window.api.invoke('payments:create', {
+        areaId: area.data.id,
+        isBackfill: false,
+        monthCount: 1,
+        from: { year, month: 1 },
+        paidOn: `${year}-03-15`,
+        note: '',
+      });
+      if (!paid.ok || !paid.data.ok) throw new Error('payment failed');
+    }, ahead.getFullYear());
+
+    // The clock is put right: the warning names the date that is "after today".
+    await setMainClock(app, Date.now());
+    await reloadApp(page);
+    const date = `15/3/${ahead.getFullYear()}`;
+    await expect(page.getByText(en.clock.wrong.replace('{{date}}', date))).toBeVisible();
   } finally {
     await app.close();
     removeDataDir(dataDir);

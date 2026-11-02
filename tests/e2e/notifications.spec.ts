@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import en from '../../src/renderer/i18n/en.json' with { type: 'json' };
 import { mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { createDataDir, launchUnlocked, removeDataDir } from './launch';
+import { createDataDir, launchUnlocked, reloadApp, removeDataDir, setMainClock } from './launch';
 
 /**
  * One area that has paid nothing from January last year until this month, and
@@ -155,6 +155,47 @@ test('with nothing to report there is no popup and the page says so', async () =
     await page.getByRole('link', { name: new RegExp(`^${en.nav.notifications}`) }).click();
     await expect(page.getByText(en.notifications.none)).toBeVisible();
     await expect(page.getByRole('dialog')).toBeHidden();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
+test('a new month starting while the app is open never opens the popup', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    // Opened with nothing to report (no places yet), so no popup this time.
+    await page.evaluate(() => window.api.invoke('settings:update', { language: 'en' }));
+    const monthEnd = new Date(2026, 10, 30, 23, 59, 0).getTime();
+    await setMainClock(app, monthEnd);
+    await page.clock.install({ time: monthEnd });
+    await reloadApp(page);
+    await page.evaluate(async () => {
+      const category = await window.api.invoke('categories:create', { name: 'Shops', color: null });
+      if (!category.ok || !category.data.ok) throw new Error('category failed');
+      await window.api.invoke('areas:create', {
+        categoryId: category.data.id,
+        name: 'Shop 1',
+        currency: 'IQD',
+        monthlyPrice: 250_000,
+        rentStartsFrom: { year: 2026, month: 11 },
+        renter: { fullName: 'Karwan', phone: '', startedOn: '2026-11-01' },
+        address: '',
+        contractStart: null,
+        notes: '',
+      });
+    });
+    await page.getByRole('link', { name: en.nav.areas }).click();
+    const november = (status: string) =>
+      page.getByLabel(en.months.box.replace('{{month}}', '11').replace('{{status}}', status));
+    await expect(november(en.months.status.due)).toBeVisible();
+
+    // December starts: the screens load again (November is now late), but the popup stays shut.
+    await setMainClock(app, monthEnd + 120_000);
+    await page.clock.fastForward(120_000);
+    await expect(november(en.months.status.late)).toBeVisible();
+    await expect(page.getByRole('dialog', { name: en.notifications.popupTitle })).toHaveCount(0);
   } finally {
     await app.close();
     removeDataDir(dataDir);

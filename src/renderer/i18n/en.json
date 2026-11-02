@@ -160,7 +160,7 @@
     "add": "Add area",
     "actionsFor": "Actions for {{name}}",
     "categories": "Categories",
-    "search": "Search by area, renter or phone",
+    "search": "Search by area, address, renter or phone",
     "all": "All",
     "count": "Areas shown: {{number}}",
     "empty": {
@@ -539,7 +539,8 @@
     "separator": ", "
   },
   "clock": {
-    "wrong": "The computer date looks wrong. Late rent colours may be incorrect."
+    "wrong": "The computer date looks wrong: something was saved on {{date}}, after today. Late rent colours may be incorrect. Check the computer's date; if it is right, correct the date of that payment.",
+    "wrongBackup": "The computer date looks wrong: a backup was made on {{date}}, after today. Late rent colours may be incorrect. Check the computer's date; once it is right, make a new backup."
   },
   "home": {
     "cardsTitle": "This year ({{year}})",

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import en from '../../src/renderer/i18n/en.json' with { type: 'json' };
-import { createDataDir, launchUnlocked, removeDataDir, reloadApp } from './launch';
+import { createDataDir, launchUnlocked, removeDataDir, reloadApp, setMainClock } from './launch';
 
 const RENT = 100_000;
 
@@ -129,6 +129,51 @@ test('the area page filters by year and month, and warns before a price change',
       .replace('{{status}}', en.months.status.paid);
     // The box's label also says what a click does ("… Mark as paid").
     await expect(page.getByLabel(new RegExp(`^${february}\\.`))).toBeVisible();
+  } finally {
+    await app.close();
+    removeDataDir(dataDir);
+  }
+});
+
+test('if Home cannot load again when a month starts, its cards stay on screen', async () => {
+  const dataDir = createDataDir();
+  const { app, page } = await launchUnlocked(dataDir);
+  try {
+    await page.evaluate(async () => {
+      await window.api.invoke('settings:update', { language: 'en' });
+      const category = await window.api.invoke('categories:create', { name: 'Shops', color: null });
+      if (!category.ok || !category.data.ok) throw new Error('category failed');
+      await window.api.invoke('areas:create', {
+        categoryId: category.data.id,
+        name: 'Shop 1',
+        currency: 'IQD',
+        monthlyPrice: 250_000,
+        rentStartsFrom: { year: 2026, month: 1 },
+        renter: { fullName: 'Karwan', phone: '', startedOn: '2026-01-01' },
+        address: '',
+        contractStart: null,
+        notes: '',
+      });
+    });
+    const monthEnd = new Date(2026, 10, 30, 23, 59, 0).getTime();
+    await setMainClock(app, monthEnd);
+    await page.clock.install({ time: monthEnd });
+    await reloadApp(page);
+    const title = page.getByRole('heading', {
+      name: en.home.cardsTitle.replace('{{year}}', '2026'),
+    });
+    await expect(title).toBeVisible();
+
+    // Home's information cannot be read for a moment, just as December starts.
+    await app.evaluate(({ ipcMain }) => {
+      ipcMain.removeHandler('home:summary');
+      ipcMain.handle('home:summary', () => ({ ok: false, error: 'unexpected' }));
+    });
+    await setMainClock(app, monthEnd + 120_000);
+    await page.clock.fastForward(120_000);
+    await page.clock.fastForward(1_000);
+    await expect(page.getByRole('button', { name: en.common.tryAgain })).toHaveCount(0);
+    await expect(title).toBeVisible();
   } finally {
     await app.close();
     removeDataDir(dataDir);

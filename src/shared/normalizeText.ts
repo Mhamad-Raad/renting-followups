@@ -19,8 +19,8 @@ const LETTER_EQUIVALENTS = new Map<string, string>([
 const EQUIVALENT_LETTER = new RegExp(`[${[...LETTER_EQUIVALENTS.keys()].join('')}]`, 'g');
 
 /**
- * Builds the search form of a name or phone number. Stored copies
- * (`name_normalized`, `full_name_normalized`) and every search query go through
+ * Builds the search form of a name, address or phone number. Stored copies
+ * (`name_normalized`, `address_normalized`, `full_name_normalized`) and every search query go through
  * this one function, so they always match the same way.
  */
 export function normalizeText(text: string): string {

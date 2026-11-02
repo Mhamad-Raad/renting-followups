@@ -31,13 +31,13 @@ export function HomePage() {
   const navigate = useNavigate();
   const summary = useIpcQuery('home:summary');
   const printing = usePrint();
-  // Print report: this year's report for every area, as the Reports page shows it by default.
+  // Print report: the year the cards show, for every area, as the Reports page shows it by default.
   const printReport = () =>
     void printing.run({
       kind: 'report',
       output: 'printer',
       query: {
-        year: new Date().getFullYear(),
+        year: summary.state.status === 'ready' ? summary.state.data.year : new Date().getFullYear(),
         ...DEFAULT_REPORT_FILTERS,
         excludedIds: [],
         onlyIds: null,

@@ -120,7 +120,13 @@ test('the sideways report keeps every row and the footer on its pages', async ()
           renter: { fullName: 'Karwan', phone: '0750 123 4567', startedOn: '2026-01-01' },
           address: n % 2 ? 'Main street' : '',
           contractStart: null,
-          notes: n % 3 ? '' : 'Pays in cash at the start of each month. '.repeat(3),
+          // The first place has the longest notes allowed: its row must still fit on a page.
+          notes:
+            n === 0
+              ? 'A very long note about this place. '.repeat(140).slice(0, 5000)
+              : n % 3
+                ? ''
+                : 'Pays in cash at the start of each month. '.repeat(3),
         });
       }
     });
@@ -144,6 +150,19 @@ test('the sideways report keeps every row and the footer on its pages', async ()
         .getByText(/counts/),
     ).toBeAttached();
     await expect(preview.locator('tbody tr')).toHaveCount(40);
+
+    // At the largest screen text size the preview still shares the rows into the PDF's pages.
+    const rowsPerPage = () =>
+      preview
+        .locator('section')
+        .evaluateAll((sections) => sections.map((s) => s.querySelectorAll('tbody tr').length));
+    const normal = await rowsPerPage();
+    await page.evaluate(() => window.api.invoke('settings:update', { fontSize: 'extraLarge' }));
+    await reloadApp(page);
+    await page.getByRole('link', { name: en.nav.reports, exact: true }).click();
+    await page.getByRole('button', { name: en.print.actions.pdf }).click();
+    await expect(preview.getByText('Shop 39').last()).toBeAttached();
+    expect(await rowsPerPage()).toEqual(normal);
   } finally {
     await app.close();
     removeDataDir(dataDir);

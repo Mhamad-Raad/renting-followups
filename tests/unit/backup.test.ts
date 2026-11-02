@@ -18,6 +18,7 @@ import {
   dateInBackupName,
   isSameDrive,
   pruneBackups,
+  safetyCopyName,
 } from '../../src/main/services/backup';
 import { areaInput, createTestDatabase } from './helpers';
 
@@ -113,6 +114,14 @@ describe('createBackup', () => {
     expect(left).toContain(made);
     expect(left).toHaveLength(BACKUPS_KEPT);
     expect(left).not.toContain('rent-backup-2027-01-01.db');
+  });
+});
+
+describe('safetyCopyName', () => {
+  it('uses the local date and time, as the owner reads the clock', () => {
+    expect(safetyCopyName('before-restore', new Date(2026, 9, 22, 8, 5, 3))).toBe(
+      'before-restore_2026-10-22_08-05-03',
+    );
   });
 });
 
