@@ -30,6 +30,8 @@ const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
 /** Rent, received and still owed, after the currency column. */
 const MONEY_COLUMNS = [7, 8, 9];
 const FIRST_MONTH_COLUMN = 10;
+/** Column widths in the order of the column names: area, category, address, renter, phone, currency, the three amounts, the 12 months, notes. */
+const COLUMN_WIDTHS = [22, 22, 22, 22, 16, 10, 16, 16, 16, ...MONTHS.map(() => 12), 40];
 
 export interface ExcelOptions {
   language: Language;
@@ -155,7 +157,7 @@ export function buildReportWorkbook(
   ]);
 
   sheet.columns.forEach((column, index) => {
-    column.width = index < 4 ? 22 : index === 4 ? 10 : index < 8 ? 16 : index < 20 ? 12 : 40;
+    column.width = COLUMN_WIDTHS[index] ?? 12;
   });
   return workbook;
 }
