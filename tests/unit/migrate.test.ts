@@ -264,7 +264,7 @@ describe('writeSafetySnapshot', () => {
       db,
       join(dir, 'safety'),
       'before-migration-v2',
-      new Date('2026-10-20T08:30:00Z'),
+      new Date(2026, 9, 20, 8, 30, 0),
     );
     expect(file).toMatch(/before-migration-v2_2026-10-20_08-30-00\.db$/);
     const copy = createConnection(file);
