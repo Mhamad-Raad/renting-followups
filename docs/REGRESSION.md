@@ -59,6 +59,9 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] First column on the Areas list, Reports and Home: name with the address under it; no address → the category; no name → the category with the address; neither → the category alone. A place without an address never breaks a screen.
 - [ ] Export to PDF opens a pop-up with the report on white paper (also in dark mode), with Save as PDF, Print and Close; nothing is saved until Save as PDF.
 - [ ] The printed report is an upright A4 page with the table turned sideways along the long edge, one row per place with all columns and the 12 months on one line; column names on every page, no row split, totals at the end, upright page numbers, no empty last page. Excel has an Address column.
+- [ ] Printed notes longer than 30 lines stop with "…" and the row stays on its page; Excel keeps the full note (end-to-end test).
+- [ ] The Export to PDF preview splits the rows into the same pages at every text size (end-to-end test).
+- [ ] Excel column widths: phone and amounts wide enough, currency narrow, notes widest (unit test).
 - [ ] Change renter: the new renter shows on the list; the old one stays in Renter history with an end date.
 - [ ] Delete an area (with confirmation), then Settings → Deleted items → Restore brings it back.
 - [ ] 200 areas open in under a second; search with Arabic letters (ي ك ه) finds Kurdish names.
