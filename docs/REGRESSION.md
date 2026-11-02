@@ -63,6 +63,10 @@ Automated (`npm run test:e2e`) unless marked _manual_.
 - [ ] The Export to PDF preview splits the rows into the same pages at every text size (end-to-end test).
 - [ ] Excel column widths: phone and amounts wide enough, currency narrow, notes widest (unit test).
 - [ ] Areas search finds a place by its address, also typed with Arabic-keyboard letters or Arabic-Indic digits; addresses saved before the update are found too (unit tests).
+- [ ] The Areas list left open past New Year shows and pays the new year by itself (end-to-end test with a moved clock).
+- [ ] A payment saved while the clock was ahead makes the clock warning name that date (end-to-end test).
+- [ ] Six years and a quarter of use with 200 places keep every figure, colour and receipt right (unit test, `longRun.test.ts`).
+- [ ] _manual_ With the app left open overnight on Windows, the daily notification comes after 9:00, not at midnight.
 - [ ] Change renter: the new renter shows on the list; the old one stays in Renter history with an end date.
 - [ ] Delete an area (with confirmation), then Settings → Deleted items → Restore brings it back.
 - [ ] 200 areas open in under a second; search with Arabic letters (ي ك ه) finds Kurdish names.

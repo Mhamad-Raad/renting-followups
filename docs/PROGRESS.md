@@ -46,6 +46,7 @@
 - Printed report (2026-11-01, owner's choices): the table is turned sideways on upright A4 (rows shared into pages by measuring them), one row per place, 9 columns: place with address, category, renter with phone, currency, rent, received, still owed, the 12 months on one line, notes. The area page's top card always shows the address. The earlier upright and places-as-columns versions were dropped. The independent review was done on 2026-11-02 (below); the installer must be rebuilt.
 - Review of the address, preview, print and currency changes (2026-11-02, `docs/reviews/review-2026-11-02-address-print.md`): independent review plus PDFs from the running app in all three languages. Fixed in separate commits: very long notes cut off on paper (now 30 lines and "…"), Excel widths one column off, row heights measured before fonts loaded, preview pages differing at larger text sizes, an unused helper. Nothing wrong with money or currency. 733 unit tests and 67 end-to-end tests pass. The installer must still be rebuilt.
 - Search finds the address (2026-11-02, owner's answer): the Areas search matches the address with the same letter and digit rules as names (migration 007 adds `address_normalized` and fills it for existing places; the upgrade runner gives SQLite the app's `normalizeText`). Tested on a copy of the dev data. 735 unit tests and 67 end-to-end tests pass.
+- Review for five years of use (2026-11-02, `docs/reviews/review-2026-11-02-five-years.md`): address search reviewed (no bugs); the whole app checked for problems over years (no date limits, no harmful growth). Fixed: the Areas list left open past New Year paid the wrong year; open screens now load again when a month starts; the daily notification waits for 9:00; the clock warning names the date after today; safety copies are named in local time. The long-run test now covers January 2026 to March 2032 with 200 places. 736 unit tests and 69 end-to-end tests pass.
 - Dev data: `test-1` … `test-10` were added to the dev data folder in a `Test` category (5 IQD, 5 USD, payments as past records); the data before that is kept as `rent-tracker.before-test-data.db` in the same folder.
 
 ## Next
@@ -54,6 +55,7 @@
 
 ## Open questions
 
+- The Reports area picker searches name and renter, not the address. Should it find the address too?
 - Review note (2026-10-29): a rent change or new renter dated before an already planned later rent row (for example a raise saved for December) does not replace that later row, so from that month the planned rent applies again. Warn when later rows exist?
 
 - The window-size end-to-end test ("starts maximized") fails now and then on the Mac, also on older code and with the app closed; it passes on other runs. Look into it (probably the hidden window is not maximized when the screen is asleep or locked).
