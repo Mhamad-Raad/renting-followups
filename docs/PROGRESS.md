@@ -2,7 +2,7 @@
 
 ## Current iteration
 
-**Iteration 14 (packaging) is in progress on `iter-14-packaging`.** On 2026-11-01 the whole-month payments and empty-place changes were merged into `main` and pushed, and the installer was rebuilt with them (`release/Rent-Tracker-Setup-1.0.0.exe`, not committed); it waits for the owner's Windows test. At the owner's request on 2026-10-28, everything so far was merged into `main` and pushed (no `iter-14` tag yet: that comes when the installer is done). The new app icon is done; on 2026-10-26 to 2026-10-28 the owner asked for many UI and business changes first (listed below). The installer itself is not started.
+**Iteration 14 (packaging): waiting for the owner's Windows test.** At the end of 2026-11-02 everything was merged into `main` and pushed (`iter-14-packaging` equals `main`). The installer `release/Rent-Tracker-Setup-1.0.0.exe` (not committed) was rebuilt at 11:50 on 2026-11-02 with every change and review fix. It waits for the owner to install it on the Windows laptop with no internet and print on real paper. Then comes the `v1.0.0` tag and a GitHub Release, after asking the owner.
 
 ## Done
 
@@ -51,7 +51,10 @@
 
 ## Next
 
-- Iteration 14, on a new branch `iter-14-packaging` from `main` (packaging and release): the Windows installer, with an explicit file list (`out/`, `resources/` and `package.json` only; the installer icon is `build/icon.ico`) and a check that no demo data (`demo-data/`, `scripts/`) is packed; then the Windows-only checks listed in `docs/reviews/iteration-13.md`, including printing to paper (the Print buttons failed on the Mac). Put the owner's new logo (white ring, slightly darker green: `~/Desktop/logo-option-2.png`) into `build/icon.png`, `build/icon.ico` and `resources/icon.png`.
+1. The owner tests the installer on the Windows laptop: no "[DEV]" in the title bar, the printed report on real paper, uninstall keeps the data, and the daily notification after 9:00 when the app stays open overnight.
+2. Fix what the test finds, review those fixes, rebuild the installer.
+3. Tag `v1.0.0` and create a GitHub Release with the installer (ask the owner first).
+4. The client's data (owner's plan, 2026-11-02): the password is set and the first data loaded when the client sends their data. Until then nothing is needed. Then: make the import file, enter past payments as past records, make a backup, and on their PC install, set a temporary password, and use Settings → Restore.
 
 ## Open questions
 
