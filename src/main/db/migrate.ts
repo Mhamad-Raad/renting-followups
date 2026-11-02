@@ -75,6 +75,7 @@ export function migrate(
   if (pending.length === 0) return { from, to: from };
 
   // Migrations can fill search copies of text with the same rules as the app (normalizeText.ts).
+  // It exists only while migrations run: never use it in a trigger, index, view or default.
   db.function('normalize_text', { deterministic: true }, (text: unknown) =>
     normalizeText(typeof text === 'string' ? text : ''),
   );
