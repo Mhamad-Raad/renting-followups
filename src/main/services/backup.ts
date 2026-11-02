@@ -10,7 +10,7 @@ import {
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
 import { BACKUPS_KEPT } from '@shared/backup';
-import type { DateString } from '@shared/dates';
+import { dateStringFromLocal, type DateString } from '@shared/dates';
 import type { Db } from '../db/connection';
 import { LOGO_KINDS, type LogoKind } from './logo';
 
@@ -136,8 +136,12 @@ export function isSameDrive(folder: string, dataDirectory: string): boolean {
   }
 }
 
+/** The computer's local date and time, as the owner reads the clock: `2026-10-22_08-15-00`. */
 function fileTimestamp(date: Date): string {
-  return date.toISOString().replace(/[:.]/g, '-').replace('T', '_').slice(0, 19);
+  const time = [date.getHours(), date.getMinutes(), date.getSeconds()]
+    .map((part) => String(part).padStart(2, '0'))
+    .join('-');
+  return `${dateStringFromLocal(date)}_${time}`;
 }
 
 /** A name for a safety copy, such as `before-restore_2026-10-22_08-15-00`. */
