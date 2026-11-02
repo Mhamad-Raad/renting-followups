@@ -74,3 +74,23 @@ export async function reloadApp(page: Page): Promise<void> {
     await popup.waitFor({ state: 'hidden' });
   }
 }
+
+/** Sets the main process clock to `time` (it keeps running from there). */
+export async function setMainClock(app: ElectronApplication, time: number) {
+  await app.evaluate((_electron, target) => {
+    const holder = globalThis as unknown as { realDate?: DateConstructor; Date: DateConstructor };
+    const Real = holder.realDate ?? Date;
+    holder.realDate = Real;
+    const offset = target - Real.now();
+    class Shifted extends Real {
+      constructor(...args: unknown[]) {
+        if (args.length === 0) super(Real.now() + offset);
+        else super(...(args as [string]));
+      }
+      static override now() {
+        return Real.now() + offset;
+      }
+    }
+    holder.Date = Shifted as DateConstructor;
+  }, time);
+}

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { idInputSchema } from '@shared/categories';
+import type { DateString } from '@shared/dates';
 import {
   areaMonthSchema,
   areaPaymentsQuerySchema,
@@ -41,9 +42,12 @@ export function registerPaymentIpc({
   );
   handle('payments:monthTakeOut', areaMonthSchema, (query) => monthPayments.takeOut(query));
   // The computer date looks wrong when money was received, or a backup made, "after" today.
+  // The latest such date is named, so the owner can find it once the clock is right again.
   handle('clock:check', z.undefined(), () => {
     const today = businessToday().date;
-    const latest = [paid.latestPaidOn(), backupSettings.lastBackupOn()];
-    return { looksWrong: latest.some((date) => date !== null && date > today) };
+    const future = [paid.latestPaidOn(), backupSettings.lastBackupOn()]
+      .filter((date): date is DateString => date !== null && date > today)
+      .sort();
+    return { futureDate: future.at(-1) ?? null };
   });
 }

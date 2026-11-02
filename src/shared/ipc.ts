@@ -40,7 +40,7 @@ import type {
   CategoryUpdate,
   IdInput,
 } from './categories';
-import type { YearMonth } from './dates';
+import type { DateString, YearMonth } from './dates';
 import type { HomeSummary } from './home';
 import type { AreaYear } from './months';
 import type { Reminder } from './notifications';
@@ -127,7 +127,7 @@ export interface IpcContract {
   'payments:void': { input: IdInput; output: PaymentVoidResult };
   'payments:monthTakeOutPreview': { input: AreaMonth; output: MonthTakeOutResult };
   'payments:monthTakeOut': { input: AreaMonth; output: MonthTakeOutResult };
-  'clock:check': { input: undefined; output: { looksWrong: boolean } };
+  'clock:check': { input: undefined; output: { futureDate: DateString | null } };
   'home:summary': { input: undefined; output: HomeSummary };
   'reports:build': { input: ReportQuery; output: Report };
   'reports:lastFilters': { input: undefined; output: ReportFilters };
